@@ -159,7 +159,7 @@ export default function Index() {
 
         <MobileAuth />
 
-        {taskQuery.data && taskQuery.data.length === 0 ? (
+        {taskQuery.data?.length === 0 ? (
           <Text className="text-muted-foreground text-center italic">
             No tasks yet. Create one below!
           </Text>

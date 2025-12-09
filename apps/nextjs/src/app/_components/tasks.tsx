@@ -51,7 +51,8 @@ export function CreateTaskForm() {
       description: "",
     },
     validators: {
-      onSubmit: CreateTaskSchema,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+      onSubmit: CreateTaskSchema as any,
     },
     onSubmit: (data) => createTask.mutate(data.value),
   });
@@ -167,9 +168,7 @@ export function TaskCard(props: {
         queryClient.setQueryData(trpc.task.all.queryKey(), (old) => {
           if (!old) return old;
           return old.map((task) =>
-            task.id === variables.id
-              ? { ...task, ...variables }
-              : task,
+            task.id === variables.id ? { ...task, ...variables } : task,
           );
         });
 
@@ -208,31 +207,72 @@ export function TaskCard(props: {
     });
   };
 
+  // Category color mapping
+  // const categoryColors: Record<string, string> = {
+  //   Work: "border-primary text-primary",
+  //   Chores: "border-[#BA68C8] text-[#BA68C8]",
+  //   Groceries: "border-[#FFD700] text-[#FFD700]",
+  //   Personal: "border-[#4DD0E1] text-[#4DD0E1]",
+  // };
+
+  // Default category if none exists
+  const category = "Work";
+
   return (
-    <div className="bg-muted flex flex-row items-center gap-4 rounded-lg p-4">
+    <div
+      className={cn(
+        "group relative flex flex-row items-center gap-4 rounded-2xl p-6 transition-all duration-300",
+        props.task.completed
+          ? "glass-card border-primary/50 shadow-glow bg-primary/5"
+          : "glass-card hover:bg-white/5 hover:border-primary/30 hover:shadow-glowHover"
+      )}
+    >
       <Checkbox
         checked={props.task.completed}
         onCheckedChange={handleToggleComplete}
         disabled={updateTask.isPending}
+        className={cn(
+          "size-6 rounded-full border-2 transition-all",
+          props.task.completed 
+            ? "bg-primary border-primary text-black" 
+            : "border-white/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        )}
       />
       <div className="grow">
         <h2
           className={cn(
-            "text-primary text-2xl font-bold",
-            props.task.completed && "text-muted-foreground line-through",
+            "text-lg font-medium transition-colors",
+            props.task.completed
+              ? "text-white/70"
+              : "text-white",
           )}
         >
           {props.task.title}
         </h2>
         {props.task.description && (
-          <p className="mt-2 text-sm">{props.task.description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {props.task.description}
+          </p>
         )}
       </div>
+
+      {/* Category pill */}
+      <div
+        className={cn(
+          "rounded-full px-4 py-1.5 text-xs font-medium backdrop-blur-md border",
+          "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+        )}
+      >
+        {category}
+      </div>
+
+      {/* Delete button - hidden, shows on hover */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => deleteTask.mutate(props.task.id)}
         disabled={deleteTask.isPending}
+        className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400"
       >
         Delete
       </Button>

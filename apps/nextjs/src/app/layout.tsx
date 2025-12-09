@@ -2,11 +2,14 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { cn } from "@acme/ui";
+import { SidebarProvider } from "@acme/ui/sidebar";
 import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
+
+import { DotScreenShader } from "~/components/ui/dot-shader-background";
 
 import "~/app/styles.css";
 
@@ -57,8 +60,13 @@ export default function RootLayout(props: { children: React.ReactNode }) {
           geistMono.variable,
         )}
       >
+        <div className="fixed inset-0 -z-10">
+          <DotScreenShader />
+        </div>
         <ThemeProvider>
-          <TRPCReactProvider>{props.children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <SidebarProvider>{props.children}</SidebarProvider>
+          </TRPCReactProvider>
           <div className="absolute right-4 bottom-4">
             <ThemeToggle />
           </div>

@@ -15,6 +15,7 @@ import { env } from "~/env";
  */
 function getNetworkUrl(): string {
   const interfaces = networkInterfaces();
+  // eslint-disable-next-line no-restricted-properties
   const port = process.env.PORT ?? 3000;
 
   // Find the first non-internal IPv4 address
