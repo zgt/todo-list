@@ -26,6 +26,7 @@ export function initAuth<
     plugins: [
       oAuthProxy({
         productionURL: options.productionUrl,
+        currentURL: "expo://", // Must differ from productionURL for oAuthProxy to activate
       }),
       expo(),
       ...(options.extraPlugins ?? []),
@@ -34,10 +35,18 @@ export function initAuth<
       discord: {
         clientId: options.discordClientId,
         clientSecret: options.discordClientSecret,
+        // Use baseUrl for local and production, it defaults to production on Vercel
         redirectURI: `${options.baseUrl}/api/auth/callback/discord`,
       },
     },
-    trustedOrigins: ["expo://"],
+    trustedOrigins: [
+      "expo://",
+      "exp://",
+      "https://*.exp.direct",
+      "http://localhost:*",
+      options.productionUrl,
+      options.baseUrl,
+    ],
     onAPIError: {
       onError(error, ctx) {
         console.error("BETTER AUTH API ERROR", error, ctx);

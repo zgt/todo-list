@@ -129,7 +129,11 @@ function MobileAuth() {
 
 export default function Index() {
   const queryClient = useQueryClient();
-  const taskQuery = useQuery(trpc.task.all.queryOptions());
+  const { data: session } = authClient.useSession();
+  const taskQuery = useQuery({
+    ...trpc.task.all.queryOptions(),
+    enabled: !!session?.user,
+  });
 
   const updateTaskMutation = useMutation(
     trpc.task.update.mutationOptions({
