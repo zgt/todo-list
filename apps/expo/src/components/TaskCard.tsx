@@ -10,7 +10,7 @@ interface TaskCardProps {
   onDelete: () => void;
 }
 
-export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onToggle, onDelete: _onDelete }: TaskCardProps) {
   return (
     <View
       style={[

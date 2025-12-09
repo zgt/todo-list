@@ -4,8 +4,15 @@ import Svg, { Circle, Defs, Pattern, Rect } from "react-native-svg";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
+/* eslint-disable react-hooks/refs */
+// Animated.Value pattern requires ref access during render - this is the standard React Native Animated API usage
 export function DotBackground() {
   const animatedValue = useRef(new Animated.Value(0)).current;
+
+  const opacity = animatedValue.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.3, 0.5, 0.3],
+  });
 
   useEffect(() => {
     Animated.loop(
@@ -23,11 +30,6 @@ export function DotBackground() {
       ])
     ).start();
   }, [animatedValue]);
-
-  const opacity = animatedValue.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.5, 0.3],
-  });
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">

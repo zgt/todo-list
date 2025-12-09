@@ -31,9 +31,10 @@ export function NewTaskModal() {
         setDate(undefined);
         toast.success("Task created successfully");
       },
-      onError: (err: any) => {
+      onError: (err: unknown) => {
+        const error = err as { data?: { code?: string } };
         toast.error(
-          err.data?.code === "UNAUTHORIZED"
+          error.data?.code === "UNAUTHORIZED"
             ? "You must be logged in to create a task"
             : "Failed to create task",
         );
