@@ -21,43 +21,49 @@ export function TaskCard({ task, onToggle, onDelete: _onDelete }: TaskCardProps)
     >
       <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
 
-      <View className="flex-row items-center gap-4 p-6">
-        <Pressable onPress={onToggle}>
+      <View className="flex-col h-full p-6 justify-between">
+        {/* Top Row: Category and Checkbox */}
+        <View className="flex-row justify-between items-start w-full">
           <View
-            className={`h-6 w-6 items-center justify-center rounded-full border-2 ${
-              task.completed
-                ? "bg-primary border-primary"
-                : "border-white/30"
-            }`}
+            style={styles.categoryPill}
+            className="rounded-full border px-4 py-1.5"
           >
-            {task.completed && <Check size={16} color="#0A1A1A" strokeWidth={3} />}
+            <RNText className="text-xs font-medium text-emerald-300">
+              Work
+            </RNText>
           </View>
-        </Pressable>
 
-        <View className="flex-1">
+          <Pressable onPress={onToggle}>
+            <View
+              className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
+                task.completed
+                  ? "bg-primary border-primary"
+                  : "border-white/30"
+              }`}
+            >
+              {task.completed && <Check size={20} color="#0A1A1A" strokeWidth={3} />}
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Middle: Title and Description */}
+        <View className="flex-1 justify-center gap-2">
           <RNText
-            className={`text-lg font-medium ${
+            className={`text-4xl font-bold leading-tight ${
               task.completed ? "text-white/70" : "text-white"
             }`}
           >
             {task.title}
           </RNText>
           {task.description && (
-            <RNText className="text-muted-foreground mt-1 text-sm">
+            <RNText className="text-white/60 text-lg leading-relaxed">
               {task.description}
             </RNText>
           )}
         </View>
-
-        {/* Category pill */}
-        <View
-          style={styles.categoryPill}
-          className="rounded-full border px-4 py-1.5"
-        >
-          <RNText className="text-xs font-medium text-emerald-300">
-            Work
-          </RNText>
-        </View>
+        
+        {/* Bottom Spacer or Date if available (keeping empty for now to push content up/center) */}
+        <View />
       </View>
     </View>
   );
