@@ -1,135 +1,68 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { FlatList, Image, ScrollView, View, Text as RNText } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-import { LegendList } from "@legendapp/list";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { RouterOutputs } from "~/utils/api";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
+import { CategoryPill } from "../components/CategoryPill";
+import { FAB } from "../components/FAB";
+import { GradientBackground } from "../components/GradientBackground";
+import { TaskCard } from "../components/TaskCard";
+import  CreateTask  from "./_components/create-task";
 
-function TaskCard(props: {
-  task: RouterOutputs["task"]["all"][number];
-  onToggle: () => void;
-  onDelete: () => void;
-}) {
+function Header() {
+  const { data: session } = authClient.useSession();
   return (
-    <View className="bg-muted flex flex-row items-center gap-4 rounded-lg p-4">
-      <Pressable onPress={props.onToggle}>
-        <View
-          className={`h-6 w-6 rounded border-2 ${
-            props.task.completed
-              ? "bg-primary border-primary"
-              : "border-foreground"
-          } items-center justify-center`}
-        >
-          {props.task.completed && (
-            <Text className="text-background text-lg">✓</Text>
-          )}
-        </View>
-      </Pressable>
-      <View className="grow">
-        <Text
-          className={`text-foreground text-lg font-semibold ${
-            props.task.completed ? "text-muted-foreground line-through" : ""
-          }`}
-        >
-          {props.task.title}
-        </Text>
-        {props.task.description && (
-          <Text className="text-muted-foreground mt-1 text-sm">
-            {props.task.description}
-          </Text>
+    <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
+      <RNText className="text-4xl font-bold text-foreground">
+        Todo <RNText className="text-primary">list</RNText>
+      </RNText>
+      <View className="h-10 w-10 overflow-hidden rounded-full border-2 border-white/20">
+        {session?.user.image ? (
+            <Image source={{ uri: session.user.image }} className="h-full w-full" />
+        ) : (
+            <View className="h-full w-full items-center justify-center bg-muted">
+                <RNText className="text-muted-foreground font-bold">
+                    {session?.user.name.charAt(0) ?? "?"}
+                </RNText>
+            </View>
         )}
       </View>
-      <Pressable onPress={props.onDelete}>
-        <Text className="text-destructive font-bold uppercase">Delete</Text>
-      </Pressable>
     </View>
   );
 }
 
-function CreateTask() {
-  const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-
-  const { mutate, error } = useMutation(
-    trpc.task.create.mutationOptions({
-      async onSuccess() {
-        setTitle("");
-        setDescription("");
-        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
-      },
-    }),
-  );
+function Categories() {
+  const categories = ["All", "Work", "Chores", "Groceries"];
+  const [active, setActive] = useState("All");
 
   return (
-    <View className="mt-4 flex gap-2">
-      <TextInput
-        className="border-input bg-background text-foreground items-center rounded-md border px-3 text-lg leading-tight"
-        value={title}
-        onChangeText={setTitle}
-        placeholder="What needs to be done?"
-      />
-      {error?.data?.zodError?.fieldErrors.title && (
-        <Text className="text-destructive">
-          {error.data.zodError.fieldErrors.title}
-        </Text>
-      )}
-      <TextInput
-        className="border-input bg-background text-foreground items-center rounded-md border px-3 text-lg leading-tight"
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Description (optional)"
-        multiline
-      />
-      <Pressable
-        className="bg-primary flex items-center rounded-md p-3"
-        onPress={() => mutate({ title, description })}
+    <View className="mb-6">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
       >
-        <Text className="text-primary-foreground font-semibold">Add Task</Text>
-      </Pressable>
-      {error?.data?.code === "UNAUTHORIZED" && (
-        <Text className="text-destructive mt-2">
-          You need to be logged in to create tasks
-        </Text>
-      )}
+        {categories.map((cat) => (
+          <CategoryPill
+            key={cat}
+            label={cat}
+            active={active === cat}
+            onPress={() => setActive(cat)}
+          />
+        ))}
+      </ScrollView>
     </View>
-  );
-}
-
-function MobileAuth() {
-  const { data: session } = authClient.useSession();
-
-  return (
-    <>
-      <Text className="text-foreground pb-2 text-center text-xl font-semibold">
-        {session?.user.name ? `Hello, ${session.user.name}` : "Not logged in"}
-      </Text>
-      <Pressable
-        onPress={() =>
-          session
-            ? authClient.signOut()
-            : authClient.signIn.social({
-                provider: "discord",
-                callbackURL: "/",
-              })
-        }
-        className="bg-primary mb-4 flex items-center rounded-md p-3"
-      >
-        <Text className="text-primary-foreground font-semibold">
-          {session ? "Sign Out" : "Sign In With Discord"}
-        </Text>
-      </Pressable>
-    </>
   );
 }
 
 export default function Index() {
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
+  const [isCreating, setIsCreating] = useState(false);
+
   const taskQuery = useQuery({
     ...trpc.task.all.queryOptions(),
     enabled: !!session?.user,
@@ -150,42 +83,48 @@ export default function Index() {
   );
 
   return (
-    <SafeAreaView className="bg-background">
-      <Stack.Screen options={{ title: "Todo List" }} />
-      <View className="bg-background h-full w-full p-4">
-        <Text className="text-foreground pb-2 text-center text-5xl font-bold">
-          Todo <Text className="text-primary">List</Text>
-        </Text>
+    <GradientBackground>
+      <SafeAreaView className="flex-1" edges={["top"]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        
+        <Header />
+        <Categories />
 
-        <MobileAuth />
+        <FlatList
+          data={taskQuery.data ?? []}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TaskCard
+              task={item}
+              onToggle={() =>
+                updateTaskMutation.mutate({
+                  id: item.id,
+                  completed: !item.completed,
+                })
+              }
+              onDelete={() => deleteTaskMutation.mutate(item.id)}
+            />
+          )}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          ListEmptyComponent={
+            <View className="mt-10 items-center">
+              <RNText className="text-muted-foreground text-center italic">
+                No tasks yet. Tap + to create one!
+              </RNText>
+            </View>
+          }
+        />
 
-        {taskQuery.data?.length === 0 ? (
-          <Text className="text-muted-foreground text-center italic">
-            No tasks yet. Create one below!
-          </Text>
-        ) : (
-          <LegendList
-            data={taskQuery.data ?? []}
-            estimatedItemSize={80}
-            keyExtractor={(item) => item.id}
-            ItemSeparatorComponent={() => <View className="h-2" />}
-            renderItem={(item) => (
-              <TaskCard
-                task={item.item}
-                onToggle={() =>
-                  updateTaskMutation.mutate({
-                    id: item.item.id,
-                    completed: !item.item.completed,
-                  })
-                }
-                onDelete={() => deleteTaskMutation.mutate(item.item.id)}
-              />
-            )}
-          />
+        {/* Temporary: Show CreateTask when creating is true, or just put it at bottom */}
+        {isCreating && (
+            <View className="absolute bottom-24 left-4 right-4 z-10 rounded-xl bg-background/90 p-4 backdrop-blur-xl">
+                <CreateTask onSuccess={() => setIsCreating(false)} />
+            </View>
         )}
 
-        <CreateTask />
-      </View>
-    </SafeAreaView>
+        <FAB onPress={() => setIsCreating(!isCreating)} />
+      </SafeAreaView>
+    </GradientBackground>
   );
 }
+

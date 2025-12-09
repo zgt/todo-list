@@ -39,22 +39,7 @@ const BellIcon = () => (
   </svg>
 );
 
-const PlusIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M5 12h14" />
-    <path d="M12 5v14" />
-  </svg>
-);
+import { NewTaskModal } from "./new-task-modal";
 
 export function TaskHeader() {
   return (
@@ -92,13 +77,7 @@ export function TaskHeader() {
         </Button>
 
         {/* New Task button */}
-        <Button
-          size="lg"
-          className="bg-primary shadow-glow hover:shadow-glowHover gap-2 rounded-full px-6"
-        >
-          <span className="font-semibold">New Task</span>
-          <PlusIcon />
-        </Button>
+        <NewTaskModal />
       </div>
     </header>
   );

@@ -53,7 +53,6 @@ export function initAuth<
       },
     },
   } satisfies BetterAuthOptions;
-  console.log(options);
 
   return betterAuth(config);
 }

@@ -30,6 +30,18 @@ build
 # misc
 .DS_Store
 *.pem
+*.log
+
+# editor
+.vscode/
+.idea/
+
+# claude code
+.claude/
+
+# temporary files
+**/.temp/
+.temp/
 
 # debug
 npm-debug.log*
