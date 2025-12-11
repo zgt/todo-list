@@ -210,6 +210,7 @@ function Scene() {
   }, [theme, dotMaterial, themeColors]);
 
   const manualRippleTimeRemaining = useRef(0);
+  const prevIsMutating = useRef(0);
 
   useFrame((state, delta) => {
     // eslint-disable-next-line react-hooks/immutability
@@ -223,8 +224,14 @@ function Scene() {
     }
 
     if (isMutating > 0) {
-      isActive = true;
+        isActive = true;
+        
+         // Reset on rising edge of mutation
+        if (prevIsMutating.current === 0) {
+             dotMaterial.uniforms.rippleTime.value = 0;
+        }
     }
+    prevIsMutating.current = isMutating;
 
     // Intensity Ramping Logic
     const targetIntensity = isActive ? 1.0 : 0.0;
@@ -252,7 +259,8 @@ function Scene() {
   useEffect(() => {
     const handleTriggerRipple = () => {
       manualRippleTimeRemaining.current = 2.0; // Run for 2 seconds
-      dotMaterial.uniforms.rippleCenter.value.set(0.5, 0.5);
+      dotMaterial.uniforms.rippleTime.value = 0; // Restart
+      dotMaterial.uniforms.rippleCenter.value.set(0.5, 0.5); 
     };
 
     window.addEventListener("trigger-ripple", handleTriggerRipple);
