@@ -97,19 +97,19 @@ const DotMaterial = shaderMaterial(
           // Continuous ripples using sine wave
           float speed = 2.0;
           float frequency = 20.0;
-          
+
           // Thinner waves: Map sin to 0-1 and power it
           float baseWave = sin(dist * frequency - rippleTime * speed);
           float sharpWave = pow(baseWave * 0.5 + 0.5, 10.0); // High power = thinner peaks
-          
+
           // Distance decay so they fade out as they get further
           float decay = exp(-dist * 2.0);
-          
+
           // Wavefront mask: expanding circle to hide pre-existing outer waves
           // Matches the wave phase speed (speed/frequency = 2.0/20.0 = 0.1)
           float wavefront = rippleTime * 0.15; // slightly faster than phase to reveal waves
           float mask = 1.0 - smoothstep(wavefront - 0.1, wavefront, dist);
-          
+
           ripple = sharpWave * decay * rippleIntensity * mask;
       }
 
@@ -133,7 +133,7 @@ function Scene() {
   const { theme } = useTheme();
 
   const rotation = 0;
-  const gridSize = 100;
+  const gridSize = 250;
 
   const getThemeColors = () => {
     switch (theme) {
@@ -163,7 +163,7 @@ function Scene() {
 
   const [trail, onMove] = useTrailTexture({
     size: 512,
-    radius: 0.1,
+    radius: 0.025,
     maxAge: 400,
     interpolate: 1,
     ease: function easeInOutCirc(x) {
@@ -224,35 +224,39 @@ function Scene() {
     }
 
     if (isMutating > 0) {
-        isActive = true;
-        
-         // Reset on rising edge of mutation
-        if (prevIsMutating.current === 0) {
-             dotMaterial.uniforms.rippleTime.value = 0;
-        }
+      isActive = true;
+
+      // Reset on rising edge of mutation
+      if (prevIsMutating.current === 0) {
+        dotMaterial.uniforms.rippleTime.value = 0;
+      }
     }
     prevIsMutating.current = isMutating;
 
     // Intensity Ramping Logic
     const targetIntensity = isActive ? 1.0 : 0.0;
     const currentIntensity = dotMaterial.uniforms.rippleIntensity.value;
-    
+
     // Smooth damp towards target
     // If going up, go fast. If going down, go slow (calm exit).
     const dampSpeed = isActive ? 4.0 : 1.0;
-    const nextIntensity = THREE.MathUtils.lerp(currentIntensity, targetIntensity, delta * dampSpeed);
-    
+    const nextIntensity = THREE.MathUtils.lerp(
+      currentIntensity,
+      targetIntensity,
+      delta * dampSpeed,
+    );
+
     dotMaterial.uniforms.rippleIntensity.value = nextIntensity;
-    
+
     // Increment time as long as we have some visible intensity
     if (nextIntensity > 0.001) {
-         if (dotMaterial.uniforms.rippleTime.value === 0 && isActive) {
-             // Reset time only on fresh activation from 0
-             // But here we just keep incrementing to make it continuous
-         }
-         dotMaterial.uniforms.rippleTime.value += delta * 2.0; // speed factor
+      if (dotMaterial.uniforms.rippleTime.value === 0 && isActive) {
+        // Reset time only on fresh activation from 0
+        // But here we just keep incrementing to make it continuous
+      }
+      dotMaterial.uniforms.rippleTime.value += delta * 2.0; // speed factor
     } else {
-        dotMaterial.uniforms.rippleTime.value = 0;
+      dotMaterial.uniforms.rippleTime.value = 0;
     }
   });
 
@@ -260,7 +264,7 @@ function Scene() {
     const handleTriggerRipple = () => {
       manualRippleTimeRemaining.current = 2.0; // Run for 2 seconds
       dotMaterial.uniforms.rippleTime.value = 0; // Restart
-      dotMaterial.uniforms.rippleCenter.value.set(0.5, 0.5); 
+      dotMaterial.uniforms.rippleCenter.value.set(0.5, 0.5);
     };
 
     window.addEventListener("trigger-ripple", handleTriggerRipple);
