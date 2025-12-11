@@ -1,9 +1,10 @@
 "use client";
 
 import type { ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { shaderMaterial, useTrailTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useIsMutating } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import * as THREE from "three";
 
@@ -18,6 +19,9 @@ const DotMaterial = shaderMaterial(
     rotation: 0,
     gridSize: 50,
     dotOpacity: 0.05,
+    rippleTime: 0,
+    rippleCenter: new THREE.Vector2(0.5, 0.5),
+    rippleIntensity: 0,
   },
   /* glsl */ `
     void main() {
@@ -34,6 +38,9 @@ const DotMaterial = shaderMaterial(
     uniform float rotation;
     uniform float gridSize;
     uniform float dotOpacity;
+    uniform float rippleTime;
+    uniform vec2 rippleCenter;
+    uniform float rippleIntensity;
 
     vec2 rotate(vec2 uv, float angle) {
         float s = sin(angle);
@@ -67,7 +74,7 @@ const DotMaterial = shaderMaterial(
 
       // Screen mask
       float screenMask = smoothstep(0.0, 1.0, 1.0 - uv.y); // 0 at the top, 1 at the bottom
-      
+
       float combinedMask = screenMask;
 
       // Mouse trail effect
@@ -84,12 +91,34 @@ const DotMaterial = shaderMaterial(
 
       float opacityInfluence = mouseInfluence * 50.0;
 
+      float ripple = 0.0;
+      if (rippleIntensity > 0.0) {
+          float dist = distance(uv, rippleCenter);
+          // Continuous ripples using sine wave
+          float speed = 2.0;
+          float frequency = 20.0;
+          
+          // Thinner waves: Map sin to 0-1 and power it
+          float baseWave = sin(dist * frequency - rippleTime * speed);
+          float sharpWave = pow(baseWave * 0.5 + 0.5, 10.0); // High power = thinner peaks
+          
+          // Distance decay so they fade out as they get further
+          float decay = exp(-dist * 2.0);
+          
+          // Wavefront mask: expanding circle to hide pre-existing outer waves
+          // Matches the wave phase speed (speed/frequency = 2.0/20.0 = 0.1)
+          float wavefront = rippleTime * 0.15; // slightly faster than phase to reveal waves
+          float mask = 1.0 - smoothstep(wavefront - 0.1, wavefront, dist);
+          
+          ripple = sharpWave * decay * rippleIntensity * mask;
+      }
+
     // Mix background color with dot color, using animated opacity to increase visibility
       // vec3 composition = mix(bgColor, dotColor, smoothDot * combinedMask * dotOpacity * (1.0 + opacityInfluence));
 
       // gl_FragColor = vec4(composition, 1.0);
 
-      float finalAlpha = smoothDot * combinedMask * dotOpacity * (1.0 + opacityInfluence);
+      float finalAlpha = smoothDot * combinedMask * dotOpacity * (1.0 + opacityInfluence + ripple * 20.0);
       gl_FragColor = vec4(dotColor, finalAlpha);
 
       #include <tonemapping_fragment>
@@ -130,6 +159,7 @@ function Scene() {
   };
 
   const themeColors = getThemeColors();
+  const isMutating = useIsMutating();
 
   const [trail, onMove] = useTrailTexture({
     size: 512,
@@ -159,6 +189,9 @@ function Scene() {
       rotation: { value: number };
       gridSize: { value: number };
       dotOpacity: { value: number };
+      rippleTime: { value: number };
+      rippleCenter: { value: THREE.Vector2 };
+      rippleIntensity: { value: number };
     };
   };
 
@@ -176,10 +209,57 @@ function Scene() {
     dotMaterial.needsUpdate = true;
   }, [theme, dotMaterial, themeColors]);
 
-  useFrame((state) => {
+  const manualRippleTimeRemaining = useRef(0);
+
+  useFrame((state, delta) => {
     // eslint-disable-next-line react-hooks/immutability
     dotMaterial.uniforms.time.value = state.clock.elapsedTime;
+
+    let isActive = false;
+
+    if (manualRippleTimeRemaining.current > 0) {
+      manualRippleTimeRemaining.current -= delta;
+      isActive = true;
+    }
+
+    if (isMutating > 0) {
+      isActive = true;
+    }
+
+    // Intensity Ramping Logic
+    const targetIntensity = isActive ? 1.0 : 0.0;
+    const currentIntensity = dotMaterial.uniforms.rippleIntensity.value;
+    
+    // Smooth damp towards target
+    // If going up, go fast. If going down, go slow (calm exit).
+    const dampSpeed = isActive ? 4.0 : 1.0;
+    const nextIntensity = THREE.MathUtils.lerp(currentIntensity, targetIntensity, delta * dampSpeed);
+    
+    dotMaterial.uniforms.rippleIntensity.value = nextIntensity;
+    
+    // Increment time as long as we have some visible intensity
+    if (nextIntensity > 0.001) {
+         if (dotMaterial.uniforms.rippleTime.value === 0 && isActive) {
+             // Reset time only on fresh activation from 0
+             // But here we just keep incrementing to make it continuous
+         }
+         dotMaterial.uniforms.rippleTime.value += delta * 2.0; // speed factor
+    } else {
+        dotMaterial.uniforms.rippleTime.value = 0;
+    }
   });
+
+  useEffect(() => {
+    const handleTriggerRipple = () => {
+      manualRippleTimeRemaining.current = 2.0; // Run for 2 seconds
+      dotMaterial.uniforms.rippleCenter.value.set(0.5, 0.5);
+    };
+
+    window.addEventListener("trigger-ripple", handleTriggerRipple);
+    return () => {
+      window.removeEventListener("trigger-ripple", handleTriggerRipple);
+    };
+  }, [dotMaterial]);
 
   const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
     onMove(e);
@@ -197,10 +277,7 @@ function Scene() {
       const sy = innerHeight / maxDim;
 
       onMove({
-        uv: new THREE.Vector2(
-          (x - 0.5) * sx + 0.5,
-          (y - 0.5) * sy + 0.5,
-        ),
+        uv: new THREE.Vector2((x - 0.5) * sx + 0.5, (y - 0.5) * sy + 0.5),
       });
     };
 
