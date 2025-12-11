@@ -1,4 +1,4 @@
-import { StyleSheet, Pressable, View, Text as RNText } from "react-native";
+import { Pressable, Text as RNText, StyleSheet, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { Check } from "lucide-react-native";
 
@@ -10,7 +10,11 @@ interface TaskCardProps {
   onDelete: () => void;
 }
 
-export function TaskCard({ task, onToggle, onDelete: _onDelete }: TaskCardProps) {
+export function TaskCard({
+  task,
+  onToggle,
+  onDelete: _onDelete,
+}: TaskCardProps) {
   return (
     <View
       style={[
@@ -21,9 +25,9 @@ export function TaskCard({ task, onToggle, onDelete: _onDelete }: TaskCardProps)
     >
       <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
 
-      <View className="flex-col h-full p-6 justify-between">
+      <View className="h-full flex-col justify-between p-6">
         {/* Top Row: Category and Checkbox */}
-        <View className="flex-row justify-between items-start w-full">
+        <View className="w-full flex-row items-start justify-between">
           <View
             style={styles.categoryPill}
             className="rounded-full border px-4 py-1.5"
@@ -36,12 +40,12 @@ export function TaskCard({ task, onToggle, onDelete: _onDelete }: TaskCardProps)
           <Pressable onPress={onToggle}>
             <View
               className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
-                task.completed
-                  ? "bg-primary border-primary"
-                  : "border-white/30"
+                task.completed ? "bg-primary border-primary" : "border-white/30"
               }`}
             >
-              {task.completed && <Check size={20} color="#0A1A1A" strokeWidth={3} />}
+              {task.completed && (
+                <Check size={20} color="#0A1A1A" strokeWidth={3} />
+              )}
             </View>
           </Pressable>
         </View>
@@ -49,19 +53,19 @@ export function TaskCard({ task, onToggle, onDelete: _onDelete }: TaskCardProps)
         {/* Middle: Title and Description */}
         <View className="flex-1 justify-center gap-2">
           <RNText
-            className={`text-4xl font-bold leading-tight ${
+            className={`text-4xl leading-tight font-bold ${
               task.completed ? "text-white/70" : "text-white"
             }`}
           >
             {task.title}
           </RNText>
           {task.description && (
-            <RNText className="text-white/60 text-lg leading-relaxed">
+            <RNText className="text-lg leading-relaxed text-white/60">
               {task.description}
             </RNText>
           )}
         </View>
-        
+
         {/* Bottom Spacer or Date if available (keeping empty for now to push content up/center) */}
         <View />
       </View>

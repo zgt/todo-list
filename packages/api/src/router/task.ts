@@ -8,8 +8,8 @@ import { protectedProcedure } from "../trpc";
 
 export const taskRouter = {
   // Get all non-deleted tasks for current user
-  all: protectedProcedure.query(({ ctx }) => {
-    return ctx.db.query.Task.findMany({
+  all: protectedProcedure.query(async ({ ctx }) => {
+    const tasks = await ctx.db.query.Task.findMany({
       where: and(
         eq(Task.userId, ctx.session.user.id),
         isNull(Task.deletedAt),
@@ -17,19 +17,43 @@ export const taskRouter = {
       orderBy: [desc(Task.createdAt)],
       limit: 100,
     });
+
+    // Ensure dates are proper Date objects for SuperJSON serialization
+    return tasks.map((task) => ({
+      ...task,
+      createdAt: new Date(task.createdAt),
+      updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
+      completedAt: task.completedAt ? new Date(task.completedAt) : null,
+      archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
+      deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
+      lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+    }));
   }),
 
   // Get single task by ID
   byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
-    .query(({ ctx, input }) => {
-      return ctx.db.query.Task.findFirst({
+    .query(async ({ ctx, input }) => {
+      const task = await ctx.db.query.Task.findFirst({
         where: and(
           eq(Task.id, input.id),
           eq(Task.userId, ctx.session.user.id),
           isNull(Task.deletedAt),
         ),
       });
+
+      if (!task) return null;
+
+      // Ensure dates are proper Date objects for SuperJSON serialization
+      return {
+        ...task,
+        createdAt: new Date(task.createdAt),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
+        completedAt: task.completedAt ? new Date(task.completedAt) : null,
+        archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
+        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+      };
     }),
 
   // Create new task
@@ -44,7 +68,21 @@ export const taskRouter = {
           lastSyncedAt: new Date(),
         })
         .returning();
-      return task;
+
+      if (!task) {
+        throw new Error("Failed to create task");
+      }
+
+      // Ensure dates are proper Date objects for SuperJSON serialization
+      return {
+        ...task,
+        createdAt: new Date(task.createdAt),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
+        completedAt: task.completedAt ? new Date(task.completedAt) : null,
+        archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
+        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+      };
     }),
 
   // Update existing task
@@ -69,7 +107,20 @@ export const taskRouter = {
         .where(and(eq(Task.id, id), eq(Task.userId, ctx.session.user.id)))
         .returning();
 
-      return task;
+      if (!task) {
+        throw new Error("Task not found or update failed");
+      }
+
+      // Ensure dates are proper Date objects for SuperJSON serialization
+      return {
+        ...task,
+        createdAt: new Date(task.createdAt),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
+        completedAt: task.completedAt ? new Date(task.completedAt) : null,
+        archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
+        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+      };
     }),
 
   // Soft delete task
@@ -83,6 +134,7 @@ export const taskRouter = {
           lastSyncedAt: new Date(),
         })
         .where(and(eq(Task.id, input), eq(Task.userId, ctx.session.user.id)));
+
       return { success: true };
     }),
 } satisfies TRPCRouterRecord;

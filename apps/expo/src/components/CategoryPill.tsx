@@ -1,4 +1,4 @@
-import { StyleSheet, Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 
 interface CategoryPillProps {

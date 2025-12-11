@@ -1,34 +1,43 @@
-import { useState} from "react";
-import { Image, View, Text as RNText, KeyboardAvoidingView, Platform } from "react-native";
+import { useState } from "react";
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Text as RNText,
+  View,
+} from "react-native";
 import Animated, { FadeOut, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
-import  CreateTask  from "./_components/create-task";
-
+import CreateTask from "./_components/create-task";
 
 function Header() {
   const { data: session } = authClient.useSession();
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
-      <RNText className="text-4xl font-bold text-foreground">
+      <RNText className="text-foreground text-4xl font-bold">
         Todo <RNText className="text-primary">list</RNText>
       </RNText>
       <View className="h-10 w-10 overflow-hidden rounded-full border-2 border-white/20">
         {session?.user.image ? (
-            <Image source={{ uri: session.user.image }} className="h-full w-full" />
+          <Image
+            source={{ uri: session.user.image }}
+            className="h-full w-full"
+          />
         ) : (
-            <View className="h-full w-full items-center justify-center bg-muted">
-                <RNText className="text-muted-foreground font-bold">
-                    {session?.user.name.charAt(0) ?? "?"}
-                </RNText>
-            </View>
+          <View className="bg-muted h-full w-full items-center justify-center">
+            <RNText className="text-muted-foreground font-bold">
+              {session?.user.name.charAt(0) ?? "?"}
+            </RNText>
+          </View>
         )}
       </View>
     </View>
@@ -81,7 +90,7 @@ export default function Index() {
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
-        
+
         <Header />
 
         {taskQuery.data && taskQuery.data.length > 0 ? (
@@ -102,15 +111,15 @@ export default function Index() {
 
         {/* Temporary: Show CreateTask when creating is true, or just put it at bottom */}
         {isCreating && (
-          <View className="absolute inset-0 z-50 justify-end items-end bg-black/20 p-4">
+          <View className="absolute inset-0 z-50 items-end justify-end bg-black/20 p-4">
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : "height"}
               style={{ width: "100%", alignItems: "flex-end" }}
             >
-              <Animated.View 
-                entering={ZoomIn.duration(250)} 
+              <Animated.View
+                entering={ZoomIn.duration(250)}
                 exiting={FadeOut}
-                className="mb-20 mr-2 w-full max-w-[300px] rounded-2xl bg-background p-6 shadow-2xl"
+                className="bg-background mr-2 mb-20 w-full max-w-[300px] rounded-2xl p-6 shadow-2xl"
               >
                 <CreateTask onSuccess={() => setIsCreating(false)} />
               </Animated.View>

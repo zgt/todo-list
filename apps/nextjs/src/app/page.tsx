@@ -2,8 +2,8 @@ import { Suspense } from "react";
 
 import { SidebarInset } from "@acme/ui/sidebar";
 
-import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { getSession } from "~/auth/server";
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { AppSidebar } from "./_components/sidebar-nav";
 import { TaskHeader } from "./_components/task-header";
 import { TaskCardSkeleton, TaskList } from "./_components/tasks";
@@ -15,30 +15,29 @@ export default async function HomePage() {
     void prefetch(trpc.task.all.queryOptions());
   }
 
-
   return (
     <HydrateClient>
       <div className="relative flex min-h-screen w-full overflow-hidden">
         {/* Background effects are in global css */}
-        
+
         <AppSidebar user={session?.user} />
-        
-        <SidebarInset className="bg-transparent flex-1 flex flex-col h-screen overflow-hidden">
+
+        <SidebarInset className="flex h-screen flex-1 flex-col overflow-hidden bg-transparent">
           {/* Top Header Area */}
 
           {/* Main Content Area */}
-          <main className="flex-1 px-6 pb-6 pt-6 overflow-hidden">
-            <div className="glass-panel h-full w-full flex flex-col p-8 rounded-3xl relative overflow-hidden">
+          <main className="flex-1 overflow-hidden px-6 pt-6 pb-6">
+            <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-3xl p-8">
               {/* Aurora effect inside panel */}
-              <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none rounded-3xl">
-                <div className="absolute top-[-50%] left-[-20%] w-[80%] h-[80%] bg-primary/10 blur-[100px] rounded-full mix-blend-screen"></div>
-                <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-emerald-600/10 blur-[80px] rounded-full mix-blend-screen"></div>
+              <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden rounded-3xl">
+                <div className="bg-primary/10 absolute top-[-50%] left-[-20%] h-[80%] w-[80%] rounded-full mix-blend-screen blur-[100px]"></div>
+                <div className="absolute right-[-10%] bottom-[-20%] h-[60%] w-[60%] rounded-full bg-emerald-600/10 mix-blend-screen blur-[80px]"></div>
               </div>
 
-              <div className="relative z-10 flex flex-col h-full">
+              <div className="relative z-10 flex h-full flex-col">
                 <TaskHeader />
-                
-                <div className="mt-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+
+                <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto px-2 pr-4 pt-2 pb-2">
                   {session?.user ? (
                     <Suspense
                       fallback={
@@ -52,9 +51,13 @@ export default async function HomePage() {
                       <TaskList />
                     </Suspense>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                      <h2 className="text-2xl font-bold mb-2 text-white">Welcome to Todo List</h2>
-                      <p className="text-muted-foreground mb-6">Please sign in to manage your tasks</p>
+                    <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                      <h2 className="mb-2 text-2xl font-bold text-white">
+                        Welcome to Todo List
+                      </h2>
+                      <p className="text-muted-foreground mb-6">
+                        Please sign in to manage your tasks
+                      </p>
                     </div>
                   )}
                 </div>
