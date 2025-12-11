@@ -16,21 +16,37 @@ export function initAuth<
   discordClientId: string;
   discordClientSecret: string;
   extraPlugins?: TExtraPlugins;
+  /**
+   * Enable OAuth proxy for Expo mobile app support.
+   * Set to true only if you need to support OAuth redirects from Expo.
+   * Default: false (web-only, no proxy interference)
+   *
+   * @see https://www.better-auth.com/docs/plugins/oauth-proxy
+   */
+  enableOAuthProxy?: boolean;
 }) {
+  const plugins: BetterAuthPlugin[] = [];
+
+  // Only enable oAuthProxy when explicitly requested (for Expo support)
+  if (options.enableOAuthProxy) {
+    plugins.push(
+      oAuthProxy({
+        productionURL: options.productionUrl,
+        currentURL: "expo://",
+      }),
+    );
+  }
+
+  plugins.push(expo());
+  plugins.push(...(options.extraPlugins ?? []));
+
   const config = {
     database: drizzleAdapter(db, {
       provider: "pg",
     }),
     baseURL: options.baseUrl,
     secret: options.secret,
-    plugins: [
-      oAuthProxy({
-        productionURL: options.productionUrl,
-        currentURL: "expo://", // Must differ from productionURL for oAuthProxy to activate
-      }),
-      expo(),
-      ...(options.extraPlugins ?? []),
-    ],
+    plugins,
     socialProviders: {
       discord: {
         clientId: options.discordClientId,
@@ -40,7 +56,7 @@ export function initAuth<
       },
     },
     trustedOrigins: [
-      "expo://",
+      "todolist://",
       "exp://",
       "https://*.exp.direct",
       "http://localhost:*",

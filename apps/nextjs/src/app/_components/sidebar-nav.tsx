@@ -1,16 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { cn } from "@acme/ui";
+import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import {
   Sidebar,
   SidebarContent,
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from "@acme/ui/sidebar";
-import { cn } from "@acme/ui";
+
+import { signOut } from "./auth-actions";
+import { SidebarSignInButton } from "./sidebar-signin-button";
 
 // Simple SVG icon components
 const HomeIcon = () => (
@@ -103,16 +108,20 @@ const navigation = [
   },
 ];
 
-export function AppSidebar({ user }: { user?: { name?: string | null; email?: string | null; image?: string | null } }) {
+export function AppSidebar({
+  user,
+}: {
+  user?: { name?: string | null; email?: string | null; image?: string | null };
+}) {
   const pathname = usePathname();
 
   return (
-    <Sidebar 
-      collapsible="none" 
-      className="bg-transparent border-none w-64 hidden md:flex h-[calc(100vh-3rem)] mt-6 ml-6"
+    <Sidebar
+      collapsible="none"
+      className="mt-6 ml-6 hidden h-[calc(100vh-3rem)] w-64 border-none bg-transparent md:flex"
     >
       <SidebarContent className="bg-transparent p-0">
-        <div className="glass-panel h-full flex flex-col p-4 rounded-3xl">
+        <div className="glass-panel flex h-full flex-col rounded-3xl p-4">
           <SidebarMenu className="gap-2">
             {navigation.map((item) => {
               const isActive =
@@ -125,10 +134,10 @@ export function AppSidebar({ user }: { user?: { name?: string | null; email?: st
                     asChild
                     isActive={isActive}
                     className={cn(
-                      "text-base h-12 px-4 rounded-xl transition-all duration-300",
-                      isActive 
-                        ? "bg-primary/20 text-primary shadow-glow border border-primary/20" 
-                        : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                      "h-12 rounded-xl px-4 text-base transition-all duration-300",
+                      isActive
+                        ? "bg-primary/20 text-primary shadow-glow border-primary/20 border"
+                        : "text-muted-foreground hover:text-foreground hover:bg-white/5",
                     )}
                   >
                     <Link href={item.href}>
@@ -142,27 +151,57 @@ export function AppSidebar({ user }: { user?: { name?: string | null; email?: st
           </SidebarMenu>
 
           <div className="mt-auto pt-4">
-            <div className="glass-card flex items-center gap-3 p-3 rounded-2xl border border-white/10">
-              <div className="size-10 rounded-full bg-linear-to-br from-primary to-emerald-700 p-[2px]">
-                {user?.image ? (
-                  <Image 
-                    src={user.image}
-                    alt={user.name ?? "User"} 
-                    width={40}
-                    height={40}
-                    className="rounded-full size-full object-cover border-2 border-black"
-                  />
-                ) : (
-                  <div className="rounded-full size-full bg-muted flex items-center justify-center border-2 border-black">
-                    <span className="text-xs font-bold">{user?.name?.[0] ?? "?"}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium truncate text-white">{user?.name ?? "Guest"}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email ?? "Sign in to continue"}</p>
-              </div>
-            </div>
+            {user ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="glass-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-white/10 p-3 transition-colors hover:bg-white/5">
+                    <div className="from-primary size-10 rounded-full bg-linear-to-br to-emerald-700 p-[2px]">
+                      {user.image ? (
+                        <Image
+                          src={user.image}
+                          alt={user.name ?? "User"}
+                          width={40}
+                          height={40}
+                          className="size-full rounded-full border-2 border-black object-cover"
+                        />
+                      ) : (
+                        <div className="bg-muted flex size-full items-center justify-center rounded-full border-2 border-black">
+                          <span className="text-xs font-bold">
+                            {user.name?.[0] ?? "?"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 overflow-hidden text-left">
+                      <p className="truncate text-sm font-medium text-white">
+                        {user.name}
+                      </p>
+                      <p className="text-muted-foreground truncate text-xs">
+                        {user.email}
+                      </p>
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="glass-card w-56 border-white/10 p-2"
+                  side="top"
+                  align="start"
+                  sideOffset={8}
+                >
+                  <form>
+                    <button
+                      type="submit"
+                      formAction={signOut}
+                      className="hover:text-foreground w-full rounded-lg px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <SidebarSignInButton />
+            )}
           </div>
         </div>
       </SidebarContent>

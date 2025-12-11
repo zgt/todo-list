@@ -7,6 +7,9 @@
     "base": {
       "node": "22.12.0",
       "pnpm": "9.15.4",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://your-api-url.com"
+      },
       "ios": {
         "resourceClass": "m-medium"
       }
@@ -14,7 +17,10 @@
     "development": {
       "extends": "base",
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000"
+      }
     },
     "preview": {
       "extends": "base",

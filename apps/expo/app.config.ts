@@ -2,9 +2,9 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "expo",
-  slug: "expo",
-  scheme: "expo",
+  name: "Todo List",
+  slug: "todolist",
+  scheme: "todolist",
   version: "0.1.0",
   orientation: "portrait",
   icon: "./assets/icon-light.png",
@@ -15,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   assetBundlePatterns: ["**/*"],
   ios: {
-    bundleIdentifier: "your.bundle.identifier",
+    bundleIdentifier: "app.todolist",
     supportsTablet: true,
     icon: {
       light: "./assets/icon-light.png",
@@ -23,18 +23,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
   },
   android: {
-    package: "your.bundle.identifier",
+    package: "app.todolist",
     adaptiveIcon: {
       foregroundImage: "./assets/icon-light.png",
-      backgroundColor: "#1F104A",
+      backgroundColor: "#0A1A1A",
     },
     edgeToEdgeEnabled: true,
   },
-  // extra: {
-  //   eas: {
-  //     projectId: "your-eas-project-id",
-  //   },
-  // },
+  extra: {
+    eas: {
+      projectId: "8d1cfb02-5da5-4ca3-8ca8-65ed8d802307",
+    },
+  },
   experiments: {
     tsconfigPaths: true,
     typedRoutes: true,

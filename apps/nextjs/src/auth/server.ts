@@ -1,7 +1,7 @@
 import "server-only";
 
+//import { networkInterfaces } from "node:os";
 import { cache } from "react";
-import { networkInterfaces } from "node:os";
 import { headers } from "next/headers";
 import { nextCookies } from "better-auth/next-js";
 
@@ -12,7 +12,7 @@ import { env } from "~/env";
 /**
  * Get the local network IP address (e.g., 192.168.x.x or 10.0.0.x)
  * Falls back to localhost if not found
- */
+
 function getNetworkUrl(): string {
   const interfaces = networkInterfaces();
   // eslint-disable-next-line no-restricted-properties
@@ -33,17 +33,19 @@ function getNetworkUrl(): string {
   // Fallback to localhost if no network interface found
   return `http://localhost:${port}`;
 }
-
+ */
 const baseUrl =
   env.VERCEL_ENV === "production"
     ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
     : env.VERCEL_ENV === "preview"
       ? `https://${env.VERCEL_URL}`
-      : getNetworkUrl();
+      : `http://localhost:3000`;
 
 export const auth = initAuth({
   baseUrl,
-  productionUrl: env.AUTH_REDIRECT_PROXY_URL ?? `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "turbo.t3.gg"}`,
+  productionUrl:
+    env.AUTH_REDIRECT_PROXY_URL ??
+    `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "turbo.t3.gg"}`,
   secret: env.AUTH_SECRET,
   discordClientId: env.AUTH_DISCORD_ID,
   discordClientSecret: env.AUTH_DISCORD_SECRET,

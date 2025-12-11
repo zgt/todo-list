@@ -24,4 +24,5 @@ export const auth = initAuth({
   secret: "secret",
   discordClientId: "1234567890",
   discordClientSecret: "1234567890",
+  enableOAuthProxy: false, // Not needed for schema generation
 });
