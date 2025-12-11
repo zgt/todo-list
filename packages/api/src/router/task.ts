@@ -13,6 +13,7 @@ export const taskRouter = {
       where: and(eq(Task.userId, ctx.session.user.id), isNull(Task.deletedAt)),
       orderBy: [desc(Task.createdAt)],
       limit: 100,
+      with: { category: true },
     });
 
     // Ensure dates are proper Date objects for SuperJSON serialization
@@ -37,6 +38,7 @@ export const taskRouter = {
           eq(Task.userId, ctx.session.user.id),
           isNull(Task.deletedAt),
         ),
+        with: { category: true },
       });
 
       if (!task) return null;

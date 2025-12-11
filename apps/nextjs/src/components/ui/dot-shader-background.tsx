@@ -1,23 +1,23 @@
-'use client'
+"use client";
 
-import { useMemo, useEffect } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import type { ThreeEvent } from '@react-three/fiber'
-import { shaderMaterial, useTrailTexture } from '@react-three/drei'
-import { useTheme } from 'next-themes'
-import * as THREE from 'three'
+import type { ThreeEvent } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
+import { shaderMaterial, useTrailTexture } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useTheme } from "next-themes";
+import * as THREE from "three";
 
 const DotMaterial = shaderMaterial(
   {
     time: 0,
     resolution: new THREE.Vector2(),
-    dotColor: new THREE.Color('#FFFFFF'),
-    bgColor: new THREE.Color('#121212'),
+    dotColor: new THREE.Color("#FFFFFF"),
+    bgColor: new THREE.Color("#121212"),
     mouseTrail: null,
     render: 0,
     rotation: 0,
     gridSize: 50,
-    dotOpacity: 0.05
+    dotOpacity: 0.05,
   },
   /* glsl */ `
     void main() {
@@ -67,73 +67,69 @@ const DotMaterial = shaderMaterial(
 
       // Screen mask
       float screenMask = smoothstep(0.0, 1.0, 1.0 - uv.y); // 0 at the top, 1 at the bottom
-      vec2 centerDisplace = vec2(0.7, 1.1);
-      float circleMaskCenter = length(uv - centerDisplace);
-      float circleMaskFromCenter = smoothstep(0.5, 1.0, circleMaskCenter);
       
-      float combinedMask = screenMask * circleMaskFromCenter;
-      float circleAnimatedMask = sin(time * 2.0 + circleMaskCenter * 10.0);
+      float combinedMask = screenMask;
 
       // Mouse trail effect
       float mouseInfluence = texture2D(mouseTrail, gridUvCenterInScreenCoords).r;
-      
-      float scaleInfluence = max(mouseInfluence * 0.5, circleAnimatedMask * 0.3);
+
+      float scaleInfluence = mouseInfluence * 0.5;
 
       // Create dots with animated scale, influenced by mouse
-      float dotSize = min(pow(circleMaskCenter, 2.0) * 0.3, 0.3);
+      float dotSize = 0.2;
 
       float sdfDot = sdfCircle(gridUv, dotSize * (1.0 + scaleInfluence * 0.5));
 
       float smoothDot = smoothstep(0.05, 0.0, sdfDot);
 
-      float opacityInfluence = max(mouseInfluence * 50.0, circleAnimatedMask * 0.5);
+      float opacityInfluence = mouseInfluence * 50.0;
 
     // Mix background color with dot color, using animated opacity to increase visibility
       // vec3 composition = mix(bgColor, dotColor, smoothDot * combinedMask * dotOpacity * (1.0 + opacityInfluence));
 
       // gl_FragColor = vec4(composition, 1.0);
-      
+
       float finalAlpha = smoothDot * combinedMask * dotOpacity * (1.0 + opacityInfluence);
       gl_FragColor = vec4(dotColor, finalAlpha);
 
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }
-  `
-)
+  `,
+);
 
 function Scene() {
-  const size = useThree((s) => s.size)
-  const viewport = useThree((s) => s.viewport)
-  const { theme } = useTheme()
-  
-  const rotation = 0
-  const gridSize = 100
+  const size = useThree((s) => s.size);
+  const viewport = useThree((s) => s.viewport);
+  const { theme } = useTheme();
+
+  const rotation = 0;
+  const gridSize = 100;
 
   const getThemeColors = () => {
     switch (theme) {
-      case 'dark':
+      case "dark":
         return {
-          dotColor: '#4ade80', // Green-400 from styles.css
-          bgColor: '#000000', // Ignored due to transparency
-          dotOpacity: 0.3 // Increased opacity for visibility
-        }
-      case 'light':
+          dotColor: "#4ade80", // Green-400 from styles.css
+          bgColor: "#000000", // Ignored due to transparency
+          dotOpacity: 0.3, // Increased opacity for visibility
+        };
+      case "light":
         return {
-          dotColor: '#e1e1e1',
-          bgColor: '#F4F5F5',
-          dotOpacity: 0.15
-        }
+          dotColor: "#e1e1e1",
+          bgColor: "#F4F5F5",
+          dotOpacity: 0.15,
+        };
       default:
         return {
-          dotColor: '#4ade80',
-          bgColor: '#000000',
-          dotOpacity: 0.3
-        }
+          dotColor: "#4ade80",
+          bgColor: "#000000",
+          dotOpacity: 0.3,
+        };
     }
-  }
+  };
 
-  const themeColors = getThemeColors()
+  const themeColors = getThemeColors();
 
   const [trail, onMove] = useTrailTexture({
     size: 512,
@@ -141,65 +137,80 @@ function Scene() {
     maxAge: 400,
     interpolate: 1,
     ease: function easeInOutCirc(x) {
-      return x < 0.5 ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2 : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2
-    }
-  })
+      return x < 0.5
+        ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
+        : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2;
+    },
+  });
 
   const dotMaterial = useMemo(() => {
     return new DotMaterial({
       transparent: true,
       depthWrite: false,
-    })
+    });
   }, []) as unknown as THREE.ShaderMaterial & {
     uniforms: {
-      time: { value: number }
-      resolution: { value: THREE.Vector2 }
-      dotColor: { value: THREE.Color }
-      bgColor: { value: THREE.Color }
-      mouseTrail: { value: THREE.Texture | null }
-      render: { value: number }
-      rotation: { value: number }
-      gridSize: { value: number }
-      dotOpacity: { value: number }
-    }
-  }
+      time: { value: number };
+      resolution: { value: THREE.Vector2 };
+      dotColor: { value: THREE.Color };
+      bgColor: { value: THREE.Color };
+      mouseTrail: { value: THREE.Texture | null };
+      render: { value: number };
+      rotation: { value: number };
+      gridSize: { value: number };
+      dotOpacity: { value: number };
+    };
+  };
 
   useEffect(() => {
-    dotMaterial.uniforms.dotColor.value.setHex(parseInt(themeColors.dotColor.replace('#', ''), 16))
-    dotMaterial.uniforms.bgColor.value.setHex(parseInt(themeColors.bgColor.replace('#', ''), 16))
+    dotMaterial.uniforms.dotColor.value.setHex(
+      parseInt(themeColors.dotColor.replace("#", ""), 16),
+    );
+    dotMaterial.uniforms.bgColor.value.setHex(
+      parseInt(themeColors.bgColor.replace("#", ""), 16),
+    );
     // eslint-disable-next-line react-hooks/immutability
-    dotMaterial.uniforms.dotOpacity.value = themeColors.dotOpacity
+    dotMaterial.uniforms.dotOpacity.value = themeColors.dotOpacity;
     // eslint-disable-next-line react-hooks/immutability
-    dotMaterial.transparent = true
-    dotMaterial.needsUpdate = true
-  }, [theme, dotMaterial, themeColors])
+    dotMaterial.transparent = true;
+    dotMaterial.needsUpdate = true;
+  }, [theme, dotMaterial, themeColors]);
 
   useFrame((state) => {
     // eslint-disable-next-line react-hooks/immutability
-    dotMaterial.uniforms.time.value = state.clock.elapsedTime
-  })
+    dotMaterial.uniforms.time.value = state.clock.elapsedTime;
+  });
 
   const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    onMove(e)
-  }
+    onMove(e);
+  };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
+      const { innerWidth, innerHeight } = window;
+      const x = e.clientX / innerWidth;
+      const y = 1 - e.clientY / innerHeight;
+
+      // Apply aspect ratio correction (cover logic) to match shader
+      const maxDim = Math.max(innerWidth, innerHeight);
+      const sx = innerWidth / maxDim;
+      const sy = innerHeight / maxDim;
+
       onMove({
         uv: new THREE.Vector2(
-          e.clientX / window.innerWidth,
-          1 - e.clientY / window.innerHeight
-        )
-      })
-    }
+          (x - 0.5) * sx + 0.5,
+          (y - 0.5) * sy + 0.5,
+        ),
+      });
+    };
 
-    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-    }
-  }, [onMove])
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [onMove]);
 
-  const scale = Math.max(viewport.width, viewport.height) / 2
+  const scale = Math.max(viewport.width, viewport.height) / 2;
 
   return (
     <mesh scale={[scale, scale, 1]} onPointerMove={handlePointerMove}>
@@ -213,7 +224,7 @@ function Scene() {
         render={0}
       />
     </mesh>
-  )
+  );
 }
 
 export const DotScreenShader = () => {
@@ -221,12 +232,13 @@ export const DotScreenShader = () => {
     <Canvas
       gl={{
         antialias: true,
-        powerPreference: 'high-performance',
+        powerPreference: "high-performance",
         outputColorSpace: THREE.SRGBColorSpace,
         toneMapping: THREE.NoToneMapping,
-        alpha: true
-      }}>
+        alpha: true,
+      }}
+    >
       <Scene />
     </Canvas>
-  )
-}
+  );
+};

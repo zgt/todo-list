@@ -6,6 +6,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { Pencil, Trash2 } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
 import { CreateTaskSchema } from "@acme/db/schema";
@@ -216,15 +217,15 @@ export function TaskCard(props: {
   // };
 
   // Default category if none exists
-  const category = "Work";
+  const category = props.task.category;
 
   return (
     <div
       className={cn(
-        "group relative flex flex-row items-center gap-4 rounded-2xl p-6 transition-all duration-300",
+        "group relative flex flex-row items-center gap-4 overflow-hidden rounded-2xl p-6 transition-all duration-300",
         props.task.completed
           ? "glass-card border-primary/50 shadow-glow bg-primary/5"
-          : "glass-card hover:bg-white/5 hover:border-primary/30 hover:shadow-glowHover"
+          : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
       )}
     >
       <Checkbox
@@ -233,49 +234,66 @@ export function TaskCard(props: {
         disabled={updateTask.isPending}
         className={cn(
           "size-6 rounded-full border-2 transition-all",
-          props.task.completed 
-            ? "bg-primary border-primary text-black" 
-            : "border-white/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          props.task.completed
+            ? "bg-primary border-primary text-black"
+            : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
         )}
       />
       <div className="grow">
         <h2
           className={cn(
             "text-lg font-medium transition-colors",
-            props.task.completed
-              ? "text-white/70"
-              : "text-white",
+            props.task.completed ? "text-white/70" : "text-white",
           )}
         >
           {props.task.title}
         </h2>
         {props.task.description && (
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-fobreground mt-1 text-sm">
             {props.task.description}
           </p>
         )}
       </div>
 
       {/* Category pill */}
-      <div
-        className={cn(
-          "rounded-full px-4 py-1.5 text-xs font-medium backdrop-blur-md border",
-          "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-        )}
-      >
-        {category}
-      </div>
+      {category && (
+        <div
+          className={cn(
+            "z-10 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+            "transition-transform duration-300 ease-in-out group-hover:-translate-x-32",
+          )}
+          style={{
+            backgroundColor: `${category.color}60`, // Increased opacity
+            borderColor: `${category.color}80`, // Increased opacity
+            color: category.color,
+          }}
+        >
+          {category.name}
+        </div>
+      )}
 
-      {/* Delete button - hidden, shows on hover */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => deleteTask.mutate(props.task.id)}
-        disabled={deleteTask.isPending}
-        className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400"
-      >
-        Delete
-      </Button>
+      {/* Hover Actions */}
+      <div className="absolute inset-y-0 right-0 flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-full w-16 rounded-none bg-blue-500 text-white hover:text-white"
+          onClick={() => toast.info("Edit feature coming soon")}
+        >
+          <Pencil className="h-5 w-5" />
+          <span className="sr-only">Edit</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hover:bg-red h-full w-16 rounded-none bg-red-500 text-white hover:text-white"
+          onClick={() => deleteTask.mutate(props.task.id)}
+          disabled={deleteTask.isPending}
+        >
+          <Trash2 className="h-5 w-5" />
+          <span className="sr-only">Delete</span>
+        </Button>
+      </div>
     </div>
   );
 }
