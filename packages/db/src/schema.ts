@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+
 import { index, pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -9,10 +9,11 @@ export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
   content: t.text().notNull(),
-  createdAt: t.timestamp().defaultNow().notNull(),
+  createdAt: t.timestamp({ withTimezone: true, mode: "date" }).$defaultFn(() => new Date()).notNull(),
   updatedAt: t
     .timestamp({ mode: "date", withTimezone: true })
-    .$onUpdateFn(() => sql`now()`),
+    .$defaultFn(() => new Date())
+    .$onUpdate(() => new Date()),
 }));
 
 export const CreatePostSchema = createInsertSchema(Post, {
@@ -37,13 +38,14 @@ export const Category = pgTable(
     icon: t.varchar({ length: 50 }),
     sortOrder: t.integer("sort_order").notNull().default(0),
     createdAt: t
-      .timestamp("created_at", { withTimezone: true })
-      .defaultNow()
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
       .notNull(),
     updatedAt: t
       .timestamp("updated_at", { withTimezone: true, mode: "date" })
-      .$onUpdateFn(() => sql`now()`),
-    deletedAt: t.timestamp("deleted_at", { withTimezone: true }),
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+    deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
   }),
   (table) => [
     index("category_user_id_idx").on(table.userId),
@@ -66,18 +68,19 @@ export const Task = pgTable(
     description: t.text(),
     completed: t.boolean().notNull().default(false),
     createdAt: t
-      .timestamp("created_at", { withTimezone: true })
-      .defaultNow()
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
       .notNull(),
     updatedAt: t
       .timestamp("updated_at", { withTimezone: true, mode: "date" })
-      .$onUpdateFn(() => sql`now()`),
-    completedAt: t.timestamp("completed_at", { withTimezone: true }),
-    archivedAt: t.timestamp("archived_at", { withTimezone: true }),
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+    completedAt: t.timestamp("completed_at", { withTimezone: true, mode: "date" }),
+    archivedAt: t.timestamp("archived_at", { withTimezone: true, mode: "date" }),
     orderIndex: t.integer("order_index"),
     version: t.integer().notNull().default(1),
-    deletedAt: t.timestamp("deleted_at", { withTimezone: true }),
-    lastSyncedAt: t.timestamp("last_synced_at", { withTimezone: true }),
+    deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
+    lastSyncedAt: t.timestamp("last_synced_at", { withTimezone: true, mode: "date" }),
   }),
   (table) => [
     index("task_user_id_deleted_at_order_idx").on(
@@ -119,6 +122,10 @@ export const UpdateTaskSchema = z.object({
   completed: z.boolean().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   orderIndex: z.number().int().optional(),
+  createdAt: z.date().optional(),
+  completedAt: z.date().nullable().optional(),
+  archivedAt: z.date().nullable().optional(),
+  deletedAt: z.date().nullable().optional(),
 });
 
 export const CreateCategorySchema = createInsertSchema(Category, {

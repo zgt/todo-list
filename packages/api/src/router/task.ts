@@ -10,10 +10,7 @@ export const taskRouter = {
   // Get all non-deleted tasks for current user
   all: protectedProcedure.query(async ({ ctx }) => {
     const tasks = await ctx.db.query.Task.findMany({
-      where: and(
-        eq(Task.userId, ctx.session.user.id),
-        isNull(Task.deletedAt),
-      ),
+      where: and(eq(Task.userId, ctx.session.user.id), isNull(Task.deletedAt)),
       orderBy: [desc(Task.createdAt)],
       limit: 100,
     });
@@ -21,12 +18,12 @@ export const taskRouter = {
     // Ensure dates are proper Date objects for SuperJSON serialization
     return tasks.map((task) => ({
       ...task,
-      createdAt: new Date(task.createdAt),
-      updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
-      completedAt: task.completedAt ? new Date(task.completedAt) : null,
-      archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
-      deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
-      lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+      createdAt: new Date(task.createdAt as string | number | Date),
+      updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
+      completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
+      archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
+      deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
+      lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
     }));
   }),
 
@@ -47,12 +44,12 @@ export const taskRouter = {
       // Ensure dates are proper Date objects for SuperJSON serialization
       return {
         ...task,
-        createdAt: new Date(task.createdAt),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
-        completedAt: task.completedAt ? new Date(task.completedAt) : null,
-        archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
-        deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
-        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+        createdAt: new Date(task.createdAt as string | number | Date),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
+        completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
+        archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
+        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
       };
     }),
 
@@ -76,12 +73,12 @@ export const taskRouter = {
       // Ensure dates are proper Date objects for SuperJSON serialization
       return {
         ...task,
-        createdAt: new Date(task.createdAt),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
-        completedAt: task.completedAt ? new Date(task.completedAt) : null,
-        archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
-        deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
-        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+        createdAt: new Date(task.createdAt as string | number | Date),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
+        completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
+        archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
+        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
       };
     }),
 
@@ -97,9 +94,13 @@ export const taskRouter = {
         updatedAt: new Date(),
       };
 
-      if (updates.completed !== undefined) {
+      // Handle completedAt logic
+      if (updates.completed !== undefined && updates.completedAt === undefined) {
         updateData.completedAt = updates.completed ? new Date() : null;
       }
+      
+      // If completedAt is explicitly provided, it is already in ...updates and will be used.
+      // Same for archivedAt, deletedAt, etc.
 
       const [task] = await ctx.db
         .update(Task)
@@ -114,27 +115,35 @@ export const taskRouter = {
       // Ensure dates are proper Date objects for SuperJSON serialization
       return {
         ...task,
-        createdAt: new Date(task.createdAt),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt) : null,
-        completedAt: task.completedAt ? new Date(task.completedAt) : null,
-        archivedAt: task.archivedAt ? new Date(task.archivedAt) : null,
-        deletedAt: task.deletedAt ? new Date(task.deletedAt) : null,
-        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt) : null,
+        createdAt: new Date(task.createdAt as string | number | Date),
+        updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
+        completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
+        archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
+        deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
+        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
       };
     }),
 
   // Soft delete task
   delete: protectedProcedure
-    .input(z.string().uuid())
+    .input(z.uuid())
     .mutation(async ({ ctx, input }) => {
-      await ctx.db
-        .update(Task)
-        .set({
-          deletedAt: new Date(),
-          lastSyncedAt: new Date(),
-        })
-        .where(and(eq(Task.id, input), eq(Task.userId, ctx.session.user.id)));
+      try {
+        const newDate = new Date();
+        await ctx.db
+          .update(Task)
+          .set({
+            deletedAt: newDate,
+            lastSyncedAt: newDate,
+          })
+          .where(and(eq(Task.id, input), eq(Task.userId, ctx.session.user.id)));
 
-      return { success: true };
+        return { success: true };
+      } catch (error) {
+        console.error("Failed to delete task:", error);
+        throw new Error(
+          `Failed to delete task: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+      }
     }),
 } satisfies TRPCRouterRecord;
