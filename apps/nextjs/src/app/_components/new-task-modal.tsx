@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { PlusIcon } from "@radix-ui/react-icons";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@acme/ui/button";
@@ -17,6 +16,7 @@ import {
   SelectValue,
 } from "@acme/ui/select";
 import { toast } from "@acme/ui/toast";
+
 import { useTRPC } from "~/trpc/react";
 
 export function NewTaskModal() {
@@ -77,7 +77,7 @@ export function NewTaskModal() {
       <PopoverContent className="w-96 p-0" align="end">
         <form onSubmit={handleSubmit} className="grid gap-4 p-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">New Task</h4>
+            <h4 className="leading-none font-medium">New Task</h4>
             <p className="text-muted-foreground text-sm">
               Add a new task to your list.
             </p>
@@ -95,7 +95,7 @@ export function NewTaskModal() {
               placeholder="Description (optional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="bg-background/50 placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border-0 px-3 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-background/50 placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border-0 px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             />
             <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger className="bg-background/50 w-full border-0 focus-visible:ring-1">

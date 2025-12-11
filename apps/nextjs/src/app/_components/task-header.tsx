@@ -4,6 +4,9 @@ import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
 import { SidebarTrigger } from "@acme/ui/sidebar";
 
+import { CategoryFilter } from "./category-filter";
+import { NewTaskModal } from "./new-task-modal";
+
 // Simple SVG icon components
 const SearchIcon = () => (
   <svg
@@ -39,18 +42,17 @@ const BellIcon = () => (
   </svg>
 );
 
-import { NewTaskModal } from "./new-task-modal";
-
 export function TaskHeader() {
   return (
-    <header className="flex items-center justify-between gap-4 px-6 py-6">
-      {/* Mobile sidebar trigger - hidden on desktop */}
-      <SidebarTrigger className="md:hidden" />
+    <header className="flex items-center justify-between gap-4 px-6">
+      {/* Left side - Mobile trigger and Category Filter */}
+      <div className="flex items-center gap-4">
+        {/* Mobile sidebar trigger - hidden on desktop */}
+        <SidebarTrigger className="md:hidden" />
 
-      {/* Page title */}
-      <h1 className="text-foreground text-5xl font-bold tracking-tight">
-        Todo list
-      </h1>
+        {/* Category Filter */}
+        <CategoryFilter />
+      </div>
 
       {/* Right side controls */}
       <div className="flex items-center gap-3">

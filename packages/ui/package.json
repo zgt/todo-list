@@ -21,7 +21,8 @@
     "./sidebar": "./src/sidebar.tsx",
     "./sheet": "./src/sheet.tsx",
     "./skeleton": "./src/skeleton.tsx",
-    "./tooltip": "./src/tooltip.tsx"
+    "./tooltip": "./src/tooltip.tsx",
+    "./multiple-select": "./src/multiple-select.tsx"
   },
   "license": "MIT",
   "scripts": {
@@ -42,6 +43,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.26",
     "lucide-react": "^0.556.0",
     "radix-ui": "^1.4.3",
     "react-day-picker": "^8.10.1",

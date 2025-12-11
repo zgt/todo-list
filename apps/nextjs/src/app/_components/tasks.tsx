@@ -24,6 +24,7 @@ import { Input } from "@acme/ui/input";
 import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
+import { useCategoryFilter } from "./category-filter-context";
 
 export function CreateTaskForm() {
   const trpc = useTRPC();
@@ -125,6 +126,16 @@ export function TaskList() {
   const trpc = useTRPC();
   const { data: tasks } = useSuspenseQuery(trpc.task.all.queryOptions());
 
+  // Get selected category IDs from filter context
+  const { selectedCategoryIds } = useCategoryFilter();
+
+  // Filter tasks based on selected categories
+  const filteredTasks = selectedCategoryIds.length > 0
+    ? tasks.filter((task) =>
+        task.categoryId && selectedCategoryIds.includes(task.categoryId)
+      )
+    : tasks;
+
   if (tasks.length === 0) {
     return (
       <div className="relative flex w-full flex-col gap-4">
@@ -139,9 +150,22 @@ export function TaskList() {
     );
   }
 
+  if (filteredTasks.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <p className="text-xl font-semibold text-white">
+          No tasks match the selected categories
+        </p>
+        <p className="text-muted-foreground mt-2">
+          Try selecting different categories or clear the filter
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full flex-col gap-4">
-      {tasks.map((task) => (
+      {filteredTasks.map((task) => (
         <TaskCard key={task.id} task={task} />
       ))}
     </div>
