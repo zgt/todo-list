@@ -8,7 +8,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Calendar, Check, Pencil, Trash2, X } from "lucide-react";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@acme/api";
@@ -456,21 +456,7 @@ export function TaskCard(props: {
                   )}
                   disabled={updateTask.isPending}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-3.5 w-3.5"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
+                  <Calendar className="h-3.5 w-3.5" />
                   {editedDueDate
                     ? new Date(editedDueDate).toLocaleDateString("en-US", {
                         month: "short",
@@ -506,21 +492,7 @@ export function TaskCard(props: {
             </Popover>
           ) : editedDueDate ? (
             <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3.5 w-3.5"
-              >
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
+              <Calendar className="h-3.5 w-3.5" />
               {new Date(editedDueDate).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",

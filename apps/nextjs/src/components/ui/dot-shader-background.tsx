@@ -238,8 +238,8 @@ function Scene() {
     const currentIntensity = dotMaterial.uniforms.rippleIntensity.value;
 
     // Smooth damp towards target
-    // If going up, go fast. If going down, go slow (calm exit).
-    const dampSpeed = isActive ? 4.0 : 1.0;
+    // If going up, go fast. If going down, go faster for quicker fade (0.5s earlier).
+    const dampSpeed = isActive ? 4.0 : 2.5;
     const nextIntensity = THREE.MathUtils.lerp(
       currentIntensity,
       targetIntensity,
