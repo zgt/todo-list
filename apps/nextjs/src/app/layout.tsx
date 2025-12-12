@@ -6,27 +6,26 @@ import { SidebarProvider } from "@acme/ui/sidebar";
 import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
+import { RippleButton } from "~/components/ripple-button";
+import { DotScreenShader } from "~/components/ui/dot-shader-background";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
-
-import { DotScreenShader } from "~/components/ui/dot-shader-background";
-import { RippleButton } from "~/components/ripple-button";
 
 import "~/app/styles.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
     env.VERCEL_ENV === "production"
-      ? "https://turbo.t3.gg"
+      ? "https://calayo.net"
       : "http://localhost:3000",
   ),
-  title: "Create T3 Turbo",
+  title: "Todo List",
   description: "Simple monorepo with shared backend for web & mobile apps",
   openGraph: {
-    title: "Create T3 Turbo",
+    title: "Todo List",
     description: "Simple monorepo with shared backend for web & mobile apps",
-    url: "https://create-t3-turbo.vercel.app",
-    siteName: "Create T3 Turbo",
+    url: "https://calayo.net",
+    siteName: "Todo List",
   },
   twitter: {
     card: "summary_large_image",

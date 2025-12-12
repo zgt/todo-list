@@ -45,7 +45,7 @@ export const auth = initAuth({
   baseUrl,
   productionUrl:
     env.AUTH_REDIRECT_PROXY_URL ??
-    `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "turbo.t3.gg"}`,
+    `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "https://calayo.net"}`,
   secret: env.AUTH_SECRET,
   discordClientId: env.AUTH_DISCORD_ID,
   discordClientSecret: env.AUTH_DISCORD_SECRET,
