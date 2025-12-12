@@ -60,6 +60,7 @@ export function NewTaskModal() {
       title,
       description,
       categoryId,
+      dueDate: date,
     });
   };
 

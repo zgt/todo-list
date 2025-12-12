@@ -68,6 +68,7 @@ export const Task = pgTable(
     title: t.varchar({ length: 500 }).notNull(),
     description: t.text(),
     completed: t.boolean().notNull().default(false),
+    dueDate: t.timestamp("due_date", { withTimezone: true, mode: "date" }),
     createdAt: t
       .timestamp("created_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
@@ -103,6 +104,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).optional(),
   categoryId: z.string().uuid().optional(),
+  dueDate: z.date().optional(),
 }).omit({
   id: true,
   userId: true,
@@ -122,6 +124,7 @@ export const UpdateTaskSchema = z.object({
   description: z.string().max(5000).optional(),
   completed: z.boolean().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  dueDate: z.date().nullable().optional(),
   orderIndex: z.number().int().optional(),
   createdAt: z.date().optional(),
   completedAt: z.date().nullable().optional(),
