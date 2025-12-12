@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a T3 Turbo monorepo for a cross-platform todo list application with web (Next.js) and mobile (Expo) clients sharing a common tRPC API backend. The stack uses:
+This is a Turborepo monorepo for a cross-platform todo list application with web (Next.js) and mobile (Expo) clients sharing a common tRPC API backend. The stack uses:
 
 - **Turborepo** for monorepo management
 - **Next.js 15** with React 19 for web
@@ -105,6 +105,33 @@ pnpm ios
 # Android
 pnpm android
 ```
+
+### EAS Deployment (Mobile)
+
+The Expo app is configured for EAS (Expo Application Services) deployment. See `apps/expo/EAS_DEPLOYMENT.md` for complete setup and deployment guide.
+
+**Quick Start:**
+```bash
+cd apps/expo
+
+# First time setup
+eas login
+eas init
+
+# Build for development
+pnpm build:dev:ios      # iOS development build
+pnpm build:dev:android  # Android development build
+
+# Build for production
+pnpm build:prod:ios     # iOS App Store
+pnpm build:prod:android # Google Play Store
+```
+
+**App Configuration:**
+- **Bundle ID (iOS):** `app.todolist`
+- **Package Name (Android):** `app.todolist`
+- **App Name:** Todo List
+- **Scheme:** `todolist://`
 
 ## Architecture
 
@@ -237,12 +264,13 @@ Both use the same Zod schemas from `@acme/db/schema`.
 Required in `.env` at repository root:
 
 ```bash
-POSTGRES_URL=           # Neon/Supabase connection string
-AUTH_SECRET=            # Random secret for Better Auth
-AUTH_DISCORD_ID=        # Discord OAuth client ID
-AUTH_DISCORD_SECRET=    # Discord OAuth client secret
-AUTH_REDIRECT_PROXY_URL= # Auth proxy URL (for Expo OAuth)
-PORT=3000               # Optional: Next.js port
+POSTGRES_URL=                    # Neon/Supabase connection string
+AUTH_SECRET=                     # Random secret for Better Auth
+AUTH_DISCORD_ID=                 # Discord OAuth client ID
+AUTH_DISCORD_SECRET=             # Discord OAuth client secret
+AUTH_REDIRECT_PROXY_URL=         # Auth proxy URL (for Expo OAuth)
+PORT=3000                        # Optional: Next.js port
+EXPO_PUBLIC_EAS_PROJECT_ID=      # EAS Project ID (get from `eas init`)
 ```
 
 ## Troubleshooting

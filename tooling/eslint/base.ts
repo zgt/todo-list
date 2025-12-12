@@ -7,7 +7,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 /**
- * All packages that leverage t3-env should use this rule
+ * All packages that leverage @t3-oss/env-* should use this rule
  */
 export const restrictEnvAccess = defineConfig(
   { ignores: ["**/env.ts"] },
