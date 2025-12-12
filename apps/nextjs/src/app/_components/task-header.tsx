@@ -44,7 +44,7 @@ const BellIcon = () => (
 
 export function TaskHeader() {
   return (
-    <header className="flex items-center justify-between gap-4 px-6">
+    <header className="flex items-center justify-between gap-4 pr-6">
       {/* Left side - Mobile trigger and Category Filter */}
       <div className="flex items-center gap-4">
         {/* Mobile sidebar trigger - hidden on desktop */}
