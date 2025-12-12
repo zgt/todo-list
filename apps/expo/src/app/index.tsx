@@ -79,13 +79,6 @@ export default function Index() {
     }),
   );
 
-  const deleteTaskMutation = useMutation(
-    trpc.task.delete.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries(trpc.task.all.queryFilter()),
-    }),
-  );
-
   return (
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
@@ -99,7 +92,9 @@ export default function Index() {
             onToggle={(id, completed) =>
               updateTaskMutation.mutate({ id, completed })
             }
-            onDelete={(id) => deleteTaskMutation.mutate(id)}
+            onComplete={(id) =>
+              updateTaskMutation.mutate({ id, completed: true })
+            }
           />
         ) : (
           <View className="mt-10 items-center">
