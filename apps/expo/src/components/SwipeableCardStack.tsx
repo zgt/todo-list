@@ -11,14 +11,17 @@ interface SwipeableCardStackProps {
   tasks: RouterOutputs["task"]["all"];
   onToggle: (id: string, completed: boolean) => void;
   onComplete: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 export function SwipeableCardStack({
   tasks,
   onToggle,
   onComplete,
+  onDelete,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
 
   if (tasks.length === 0) {
@@ -28,6 +31,11 @@ export function SwipeableCardStack({
   const handleComplete = (taskId: string) => {
     // Just call the parent's complete handler - task stays in list
     onComplete(taskId);
+  };
+
+  const handleDelete = (taskId: string) => {
+    onDelete(taskId);
+    setDeletePendingId(null);
   };
 
   const handleEditStart = (taskId: string) => {
@@ -73,8 +81,12 @@ export function SwipeableCardStack({
             canGoNext={currentIndex < tasks.length - 1}
             canGoPrevious={currentIndex > 0}
             swipeProgress={swipeProgress}
+            deletePending={deletePendingId === task.id}
             onToggle={() => onToggle(task.id, !task.completed)}
             onComplete={() => handleComplete(task.id)}
+            onDelete={() => handleDelete(task.id)}
+            onDeletePending={() => setDeletePendingId(task.id)}
+            onCancelDelete={() => setDeletePendingId(null)}
             onEditStart={() => handleEditStart(task.id)}
             onNext={handleNext}
             onPrevious={handlePrevious}

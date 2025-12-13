@@ -32,8 +32,12 @@ interface SwipeableCardProps {
   canGoNext: boolean;
   canGoPrevious: boolean;
   swipeProgress: SharedValue<number>;
+  deletePending: boolean;
   onToggle: () => void;
   onComplete: () => void;
+  onDelete: () => void;
+  onDeletePending: () => void;
+  onCancelDelete: () => void;
   onEditStart: () => void;
   onNext: () => void;
   onPrevious: () => void;
@@ -47,8 +51,12 @@ export function SwipeableCard({
   canGoNext,
   canGoPrevious,
   swipeProgress,
+  deletePending,
   onToggle,
   onComplete,
+  onDelete,
+  onDeletePending,
+  onCancelDelete,
   onEditStart,
   onNext,
   onPrevious,
@@ -165,16 +173,34 @@ export function SwipeableCard({
           event.translationY < -SWIPE_THRESHOLD ||
           (event.translationY < 0 && velocityY > SWIPE_VELOCITY)
         ) {
-          // Up swipe - Complete task (stays in list)
-          runOnJS(onComplete)();
+          // Up swipe logic
+          if (task.completed) {
+            // If task is completed, handle delete logic
+            if (deletePending) {
+              // Second swipe - actually delete
+              runOnJS(onDelete)();
+            } else {
+              // First swipe - enter delete pending mode
+              runOnJS(onDeletePending)();
+            }
+          } else {
+            // Task not completed - complete it
+            runOnJS(onComplete)();
+          }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         } else if (
           event.translationY > SWIPE_THRESHOLD ||
           (event.translationY > 0 && velocityY > SWIPE_VELOCITY)
         ) {
-          // Down swipe - Edit mode (placeholder)
-          runOnJS(onEditStart)();
+          // Down swipe
+          if (deletePending) {
+            // Cancel delete mode
+            runOnJS(onCancelDelete)();
+          } else {
+            // Edit mode (placeholder)
+            runOnJS(onEditStart)();
+          }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         } else {
@@ -295,11 +321,17 @@ export function SwipeableCard({
           },
         ]}
       >
-        <TaskCard task={task} onToggle={onToggle} onDelete={() => {}} />
+        <TaskCard
+          task={task}
+          onToggle={onToggle}
+          onDelete={onDelete}
+          deletePending={deletePending}
+        />
         <SwipeOverlay
           direction={direction}
           translationX={translateX}
           translationY={translateY}
+          deletePending={deletePending}
         />
       </Animated.View>
     </GestureDetector>

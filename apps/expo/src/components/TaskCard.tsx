@@ -1,6 +1,6 @@
 import { Pressable, Text as RNText, StyleSheet, View } from "react-native";
 import { BlurView } from "expo-blur";
-import { Check } from "lucide-react-native";
+import { Calendar, Check, Trash2 } from "lucide-react-native";
 
 import type { RouterOutputs } from "~/utils/api";
 
@@ -8,18 +8,21 @@ interface TaskCardProps {
   task: RouterOutputs["task"]["all"][number];
   onToggle: () => void;
   onDelete: () => void;
+  deletePending: boolean;
 }
 
 export function TaskCard({
   task,
   onToggle,
-  onDelete: _onDelete,
+  onDelete,
+  deletePending,
 }: TaskCardProps) {
   return (
     <View
       style={[
         styles.cardContainer,
         task.completed ? styles.cardCompleted : styles.cardDefault,
+        deletePending && styles.cardDeletePending,
       ]}
       className="mb-3 overflow-hidden rounded-2xl"
     >
@@ -27,14 +30,49 @@ export function TaskCard({
 
       <View className="h-full flex-col justify-between p-6">
         {/* Top Row: Category and Checkbox */}
+        {/* Top Row: Category and Due Date vs Checkbox */}
         <View className="w-full flex-row items-start justify-between">
-          <View
-            style={styles.categoryPill}
-            className="rounded-full border px-4 py-1.5"
-          >
-            <RNText className="text-xs font-medium text-emerald-300">
-              Work
-            </RNText>
+          <View className="flex-col gap-2 min-h-14">
+            {/* Category Pill */}
+            {task.category && (
+              <View
+                style={[
+                  styles.categoryPill,
+                  task.category.color
+                    ? {
+                        backgroundColor: `${task.category.color}20`, // 10% opacity
+                        borderColor: `${task.category.color}50`, // 30% opacity
+                      }
+                    : {},
+                ]}
+                className="self-start rounded-full border px-4 py-1.5"
+              >
+                <RNText
+                  style={task.category.color ? { color: task.category.color } : {}}
+                  className="text-xs font-medium text-emerald-300"
+                >
+                  {task.category.name}
+                </RNText>
+              </View>
+            )}
+
+            {/* Due Date - Always render to reserve space, hide with opacity if missing */}
+            <View 
+              className="flex-row items-center gap-1.5 px-1"
+              style={{ opacity: task.dueDate ? 1 : 0 }}
+            >
+              <Calendar size={14} className="opacity-60" color="white" />
+              <RNText className="text-xs font-medium text-white/60">
+                {task.dueDate ? (
+                  new Intl.DateTimeFormat("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  }).format(task.dueDate)
+                ) : (
+                  "placeholder"
+                )}
+              </RNText>
+            </View>
           </View>
 
           <Pressable onPress={onToggle}>
@@ -66,8 +104,20 @@ export function TaskCard({
           )}
         </View>
 
-        {/* Bottom Spacer or Date if available (keeping empty for now to push content up/center) */}
-        <View />
+        {/* Bottom Spacer or Date if available and Delete Prompt */}
+        <View className="items-center">
+          {deletePending && (
+            <Pressable 
+              onPress={onDelete}
+              className="flex-row items-center gap-2 rounded-full bg-red-500/20 px-4 py-2 active:opacity-80"
+            >
+              <Trash2 size={16} color="#ef4444" />
+              <RNText className="font-bold text-red-500">
+                Swipe up again to delete
+              </RNText>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -94,6 +144,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(74, 222, 128, 0.05)",
     shadowColor: "#4ade80",
     shadowOpacity: 0.1,
+  },
+  cardDeletePending: {
+    borderWidth: 2,
+    borderColor: "rgba(239, 68, 68, 0.6)", // Red-500
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    shadowColor: "#ef4444",
+    shadowOpacity: 0.2,
   },
   categoryPill: {
     backgroundColor: "rgba(16, 185, 129, 0.1)",

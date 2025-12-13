@@ -79,6 +79,13 @@ export default function Index() {
     }),
   );
 
+  const deleteTaskMutation = useMutation(
+    trpc.task.delete.mutationOptions({
+      onSettled: () =>
+        queryClient.invalidateQueries(trpc.task.all.queryFilter()),
+    }),
+  );
+
   return (
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
@@ -95,6 +102,7 @@ export default function Index() {
             onComplete={(id) =>
               updateTaskMutation.mutate({ id, completed: true })
             }
+            onDelete={(id) => deleteTaskMutation.mutate(id)}
           />
         ) : (
           <View className="mt-10 items-center">
@@ -106,20 +114,18 @@ export default function Index() {
 
         {/* Temporary: Show CreateTask when creating is true, or just put it at bottom */}
         {isCreating && (
-          <View className="absolute inset-0 z-50 items-end justify-end bg-black/20 p-4">
-            <KeyboardAvoidingView
-              behavior={Platform.OS === "ios" ? "padding" : "height"}
-              style={{ width: "100%", alignItems: "flex-end" }}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            className="absolute inset-0 z-50 items-end justify-end bg-black/20 p-4"
+          >
+            <Animated.View
+              entering={ZoomIn.duration(250)}
+              exiting={FadeOut}
+              className="bg-background mb-20 mr-2 w-full max-w-[300px] rounded-2xl p-6 shadow-2xl"
             >
-              <Animated.View
-                entering={ZoomIn.duration(250)}
-                exiting={FadeOut}
-                className="bg-background mr-2 mb-20 w-full max-w-[300px] rounded-2xl p-6 shadow-2xl"
-              >
-                <CreateTask onSuccess={() => setIsCreating(false)} />
-              </Animated.View>
-            </KeyboardAvoidingView>
-          </View>
+              <CreateTask onSuccess={() => setIsCreating(false)} />
+            </Animated.View>
+          </KeyboardAvoidingView>
         )}
         <View className="flex-row items-center gap-4 px-4 pb-4">
           <View className="flex-1">
