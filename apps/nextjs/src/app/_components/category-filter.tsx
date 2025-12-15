@@ -6,24 +6,27 @@ import { useQuery } from "@tanstack/react-query";
 import type { TCategory } from "@acme/ui/multiple-select";
 import { MultipleSelect } from "@acme/ui/multiple-select";
 
+import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 
 export function CategoryFilter() {
   const trpc = useTRPC();
-  const { data: categories } = useQuery(trpc.category.all.queryOptions());
+  const { data: session } = useSession();
+  const { data: categories } = useQuery({
+    ...trpc.category.all.queryOptions(),
+    enabled: !!session?.user,
+  });
   const { selectedCategoryIds, setSelectedCategoryIds } = useCategoryFilter();
 
   const handleChange = useCallback(
     (selected: TCategory[]) => {
-      console.log(selected);
       setSelectedCategoryIds(selected.map((category) => category.key));
     },
     [setSelectedCategoryIds],
   );
 
   if (!categories || categories.length === 0) {
-    console.log(categories);
     return null;
   }
 
