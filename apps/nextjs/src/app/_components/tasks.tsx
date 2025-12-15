@@ -35,6 +35,7 @@ import {
 } from "@acme/ui/select";
 import { toast } from "@acme/ui/toast";
 
+import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 
@@ -197,6 +198,7 @@ export function TaskCard(props: {
 }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(props.task.title);
   const [editedDescription, setEditedDescription] = useState(
@@ -210,8 +212,11 @@ export function TaskCard(props: {
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch categories for the select dropdown
-  const { data: categories } = useQuery(trpc.category.all.queryOptions());
+  // Fetch categories for the select dropdown (only when user is logged in)
+  const { data: categories } = useQuery({
+    ...trpc.category.all.queryOptions(),
+    enabled: !!session?.user,
+  });
 
   const updateTask = useMutation(
     trpc.task.update.mutationOptions({

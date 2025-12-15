@@ -17,6 +17,7 @@ import {
 } from "@acme/ui/select";
 import { toast } from "@acme/ui/toast";
 
+import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 
 export function NewTaskModal() {
@@ -28,9 +29,13 @@ export function NewTaskModal() {
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
 
-  // Fetch categories
-  const { data: categories } = useQuery(trpc.category.all.queryOptions());
+  // Fetch categories only when user is logged in
+  const { data: categories } = useQuery({
+    ...trpc.category.all.queryOptions(),
+    enabled: !!session?.user,
+  });
 
   const createTask = useMutation(
     trpc.task.create.mutationOptions({
