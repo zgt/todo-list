@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Dimensions, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
-import type { RouterOutputs } from "~/utils/api";
+import type { LocalTask } from "~/db/client";
 import { SwipeableCard } from "./SwipeableCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface SwipeableCardStackProps {
-  tasks: RouterOutputs["task"]["all"];
+  tasks: LocalTask[];
   onToggle: (id: string, completed: boolean) => void;
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;

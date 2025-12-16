@@ -1,10 +1,11 @@
+import React from "react";
 import type { ReactNode } from "react";
 import { Text as RNText } from "react-native";
 import Animated, {
   interpolate,
   useAnimatedStyle,
-  type SharedValue,
 } from "react-native-reanimated";
+import type { SharedValue } from "react-native-reanimated";
 import { Check, Edit3, Trash2, X } from "lucide-react-native";
 
 export type SwipeDirection = "up" | "down" | "left" | "right" | null;
@@ -107,13 +108,33 @@ export function SwipeOverlay({
 
   return (
     <Animated.View
-      style={[overlayStyle]}
-      className="absolute inset-0 items-center justify-center rounded-2xl"
+      style={[
+        overlayStyle,
+        {
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 16,
+        },
+      ]}
       pointerEvents="none"
     >
       <Animated.View
-        style={[configStyle]}
-        className="items-center justify-center gap-3 rounded-3xl px-12 py-8"
+        style={[
+          configStyle,
+          {
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12, // gap-3
+            borderRadius: 24, // rounded-3xl
+            paddingHorizontal: 48, // px-12
+            paddingVertical: 32, // py-8
+          },
+        ]}
       >
         <OverlayContent direction={direction} deletePending={deletePending} />
       </Animated.View>
@@ -121,81 +142,65 @@ export function SwipeOverlay({
   );
 }
 
-function OverlayContent({ direction, deletePending }: { direction: SharedValue<SwipeDirection>, deletePending: boolean }) {
-  // We need to reactively render the icon/text based on the shared value
-  // Ideally this would be done with separate animated components or derived values
-  // But since we can't easily change the Icon component type with Reanimated, 
-  // we might need a simpler approach or just rely on state if it was passed down, 
-  // but here 'direction' is a shared value. 
-  //
-  // However, Reanimated doesn't easily let us switch React components based on SharedValues on the UI thread without 'useDerivedValue' + 'runOnJS' or similar, which might be overkill.
-  // BUT: 'deletePending' IS a React state passed from parent. 'direction' IS a shared value.
-  // We can use 'useAnimatedReaction' to set a local state for the icon, OR just render all icons and toggle opacity.
-  //
-  // Let's simplify: The generic design uses `directionConfigs`. We can just make the icon/text dynamic based on `deletePending`.
-  // Since `deletePending` is a JS prop, we can use it directly for the specific overrides.
-  
-  // Actually, we can just use a specific component that observes the direction shared value if we want perfect sync,
-  // but usually simple conditional rendering works if we just want to swap the "Up" icon.
-  // 
-  // Let's try to conditionally render the content based on the direction value using a derived value or just render all and hide/show.
-  // Actually, wait. 'direction' is a SharedValue. We can't use it in standard React render logic directly (like `if (direction.value === ...)`).
-  // 
-  // We can use `useAnimatedStyle` to hide/show specific icons.
-  
+const OverlayContent = React.memo(function OverlayContent({ direction, deletePending }: { direction: SharedValue<SwipeDirection>, deletePending: boolean }) {
   const upStyle = useAnimatedStyle(() => ({
-    display: direction.value === 'up' ? 'flex' : 'none',
+    opacity: direction.value === 'up' ? 1 : 0,
   }));
   const downStyle = useAnimatedStyle(() => ({
-    display: direction.value === 'down' ? 'flex' : 'none',
+    opacity: direction.value === 'down' ? 1 : 0,
   }));
   const leftStyle = useAnimatedStyle(() => ({
-    display: direction.value === 'left' ? 'flex' : 'none',
+    opacity: direction.value === 'left' ? 1 : 0,
   }));
   const rightStyle = useAnimatedStyle(() => ({
-    display: direction.value === 'right' ? 'flex' : 'none',
+    opacity: direction.value === 'right' ? 1 : 0,
   }));
 
-  // For UP specifically, we check deletePending
+  const textStyle = {
+    fontSize: 24, // text-2xl
+    fontWeight: "bold" as const, // font-bold
+    letterSpacing: 0.5, // tracking-wide
+  };
+
   return (
     <>
-      <Animated.View style={[upStyle, { alignItems: 'center', gap: 12 }]}>
+      <Animated.View style={[upStyle, { position: "absolute", alignItems: "center", gap: 12 }]}>
         {deletePending ? (
            <>
              <Trash2 size={48} color="#ef4444" strokeWidth={3} />
-             <RNText className="text-2xl font-bold tracking-wide text-red-500">Delete</RNText>
+             <RNText style={[textStyle, { color: "#ef4444" }]}>Delete</RNText>
            </>
         ) : (
            <>
              <Check size={48} color="#50C878" strokeWidth={3} />
-             <RNText className="text-2xl font-bold tracking-wide text-[#50C878]">Complete</RNText>
+             <RNText style={[textStyle, { color: "#50C878" }]}>Complete</RNText>
            </>
         )}
       </Animated.View>
 
-      <Animated.View style={[downStyle, { alignItems: 'center', gap: 12 }]}>
+      <Animated.View style={[downStyle, { position: "absolute", alignItems: "center", gap: 12 }]}>
         {deletePending ? (
           <>
             <X size={48} color="#9ca3af" strokeWidth={3} />
-            <RNText className="text-2xl font-bold tracking-wide text-gray-400">Cancel</RNText>
+            <RNText style={[textStyle, { color: "#9ca3af" }]}>Cancel</RNText>
           </>
         ) : (
           <>
             <Edit3 size={48} color="#3B82F6" strokeWidth={2.5} />
-            <RNText className="text-2xl font-bold tracking-wide text-[#3B82F6]">Edit</RNText>
+            <RNText style={[textStyle, { color: "#3B82F6" }]}>Edit</RNText>
           </>
         )}
       </Animated.View>
 
-      <Animated.View style={[leftStyle, { alignItems: 'center', gap: 12 }]}>
+      <Animated.View style={[leftStyle, { position: "absolute", alignItems: "center", gap: 12 }]}>
          <Check size={48} color="#8FA8A8" strokeWidth={3} />
-         <RNText className="text-2xl font-bold tracking-wide text-[#8FA8A8]">Next</RNText>
+         <RNText style={[textStyle, { color: "#8FA8A8" }]}>Next</RNText>
       </Animated.View>
 
-       <Animated.View style={[rightStyle, { alignItems: 'center', gap: 12 }]}>
+       <Animated.View style={[rightStyle, { position: "absolute", alignItems: "center", gap: 12 }]}>
          <Check size={48} color="#8FA8A8" strokeWidth={3} />
-         <RNText className="text-2xl font-bold tracking-wide text-[#8FA8A8]">Previous</RNText>
+         <RNText style={[textStyle, { color: "#8FA8A8" }]}>Previous</RNText>
       </Animated.View>
     </>
   );
-}
+});

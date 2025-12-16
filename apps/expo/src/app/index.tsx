@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -9,9 +9,13 @@ import {
 import Animated, { FadeOut, ZoomIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { desc, eq, isNull, sql } from "drizzle-orm";
+import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 
-import { trpc } from "~/utils/api";
+import type { LocalTask } from "~/db/client";
+import { db } from "~/db/client";
+import { localCategory, localTask } from "~/db/schema";
+import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
@@ -63,28 +67,102 @@ function Categories() {
 }
 
 export default function Index() {
-  const queryClient = useQueryClient();
-  const { data: session } = authClient.useSession();
+  // const { data: session } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
+  const [tasks, setTasks] = useState<LocalTask[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const taskQuery = useQuery({
-    ...trpc.task.all.queryOptions(),
-    enabled: !!session?.user,
-  });
-
-  const updateTaskMutation = useMutation(
-    trpc.task.update.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries(trpc.task.all.queryFilter()),
-    }),
+  // Separate live queries to ensure reactivity triggers correctly (joins can sometimes be flaky with listeners)
+  const { data: rawTasks } = useLiveQuery(
+    db
+      .select()
+      .from(localTask)
+      .where(isNull(localTask.deletedAt))
+      .orderBy(desc(localTask.createdAt)),
   );
 
-  const deleteTaskMutation = useMutation(
-    trpc.task.delete.mutationOptions({
-      onSettled: () =>
-        queryClient.invalidateQueries(trpc.task.all.queryFilter()),
-    }),
-  );
+  const { data: categories } = useLiveQuery(db.select().from(localCategory));
+
+  const formattedTasks = useMemo(() => {
+    // Add safety checks for loading states
+    if (!rawTasks || !categories) return [];
+
+    console.log(rawTasks);
+    return rawTasks.map((task) => {
+      const category = categories.find((c) => c.id === task.categoryId);
+      if (category) {
+        return {
+          ...task,
+          category: { name: category.name, color: category.color },
+        };
+      }
+      return { ...task, category: null };
+    });
+  }, [rawTasks, categories]);
+
+  // Register sync completion callback to refresh UI
+  useEffect(() => {
+    const unsubscribe = syncManager.onSyncComplete(() => {
+      console.log("Sync completed, refreshing UI...");
+      // Trigger a state update to ensure UI refreshes
+      setRefreshTrigger((prev) => prev + 1);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync formatted tasks from live query to local state
+  useEffect(() => {
+    setTasks(formattedTasks);
+  }, [formattedTasks, refreshTrigger]);
+
+  const handleToggle = async (id: string, completed: boolean) => {
+    try {
+      // 1. Optimistically update local state for immediate visual feedback
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === id
+            ? { ...task, completed, updatedAt: new Date() }
+            : task,
+        ),
+      );
+
+      // 2. Update local DB
+      await db
+        .update(localTask)
+        .set({
+          completed,
+          updatedAt: new Date(),
+          syncStatus: "pending",
+          localVersion: sql`${localTask.localVersion} + 1`,
+        })
+        .where(eq(localTask.id, id));
+
+      // 3. Queue for sync
+      await syncManager.queueOperation("task", id, "update", { completed });
+    } catch (error) {
+      console.error("Failed to toggle task:", error);
+      // Revert optimistic update on error
+      setTasks(formattedTasks);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      // 1. Optimistically update local state for immediate visual feedback
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+
+      // 2. Update local DB (hard delete to remove from UI instantly)
+      await db.delete(localTask).where(eq(localTask.id, id));
+
+      // 3. Queue for sync
+      await syncManager.queueOperation("task", id, "delete", {});
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      // Revert optimistic update on error
+      setTasks(formattedTasks);
+    }
+  };
 
   return (
     <GradientBackground>
@@ -93,16 +171,12 @@ export default function Index() {
 
         <Header />
 
-        {taskQuery.data && taskQuery.data.length > 0 ? (
+        {tasks.length > 0 ? (
           <SwipeableCardStack
-            tasks={taskQuery.data}
-            onToggle={(id, completed) =>
-              updateTaskMutation.mutate({ id, completed })
-            }
-            onComplete={(id) =>
-              updateTaskMutation.mutate({ id, completed: true })
-            }
-            onDelete={(id) => deleteTaskMutation.mutate(id)}
+            tasks={tasks}
+            onToggle={handleToggle}
+            onComplete={(id) => handleToggle(id, true)}
+            onDelete={handleDelete}
           />
         ) : (
           <View className="mt-10 items-center">
@@ -121,7 +195,7 @@ export default function Index() {
             <Animated.View
               entering={ZoomIn.duration(250)}
               exiting={FadeOut}
-              className="bg-background mb-20 mr-2 w-full max-w-[300px] rounded-2xl p-6 shadow-2xl"
+              className="bg-background mr-2 mb-20 w-full max-w-[300px] rounded-2xl p-6 shadow-2xl"
             >
               <CreateTask onSuccess={() => setIsCreating(false)} />
             </Animated.View>

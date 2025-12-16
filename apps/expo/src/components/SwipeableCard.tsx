@@ -12,7 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
-import type { RouterOutputs } from "~/utils/api";
+import type { LocalTask } from "~/db/client";
 import type { SwipeDirection } from "./SwipeOverlay";
 import { SwipeOverlay } from "./SwipeOverlay";
 import { TaskCard } from "./TaskCard";
@@ -25,7 +25,7 @@ const SWIPE_VELOCITY = 500; // Velocity threshold
 const ROTATION_FACTOR = 15; // Max rotation in degrees
 
 interface SwipeableCardProps {
-  task: RouterOutputs["task"]["all"][number];
+  task: LocalTask;
   index: number;
   totalCards: number;
   isTopCard: boolean;

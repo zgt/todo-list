@@ -2,10 +2,10 @@ import { Pressable, Text as RNText, StyleSheet, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { Calendar, Check, Trash2 } from "lucide-react-native";
 
-import type { RouterOutputs } from "~/utils/api";
+import type { LocalTask } from "~/db/client";
 
 interface TaskCardProps {
-  task: RouterOutputs["task"]["all"][number];
+  task: LocalTask & { category?: { name: string; color: string } | null };
   onToggle: () => void;
   onDelete: () => void;
   deletePending: boolean;
