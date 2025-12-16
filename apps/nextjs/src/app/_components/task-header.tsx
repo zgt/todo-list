@@ -1,15 +1,36 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { RefreshCw, Search } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
 import { SidebarTrigger } from "@acme/ui/sidebar";
+import { toast } from "@acme/ui/toast";
 
+import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { NewTaskModal } from "./new-task-modal";
 
 export function TaskHeader() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries(trpc.task.pathFilter());
+      toast.success("Tasks refreshed!");
+    } catch (error) {
+      console.error("Refresh failed:", error);
+      toast.error("Failed to refresh tasks");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <header className="flex items-center justify-between gap-4 pr-6">
       {/* Left side - Mobile trigger and Category Filter */}
@@ -35,14 +56,17 @@ export function TaskHeader() {
           />
         </div>
 
-        {/* Notification bell */}
+        {/* Refresh button */}
         <Button
           variant="ghost"
           size="icon"
-          className="bg-surface/50 relative size-12 rounded-full backdrop-blur-sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="bg-surface/50 size-12 rounded-full backdrop-blur-sm transition-opacity disabled:opacity-60"
         >
-          <Bell className="h-5 w-5" />
-          <span className="bg-destructive absolute top-2 right-2 size-2 rounded-full" />
+          <RefreshCw
+            className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
+          />
         </Button>
 
         {/* New Task button */}

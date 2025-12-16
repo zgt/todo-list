@@ -3,10 +3,18 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   Text as RNText,
   View,
 } from "react-native";
-import Animated, { FadeOut, ZoomIn } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  FadeOut,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  ZoomIn,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { desc, eq, isNull, sql } from "drizzle-orm";
@@ -17,6 +25,7 @@ import { db } from "~/db/client";
 import { localCategory, localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
+import { RefreshCw } from "lucide-react-native";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
@@ -66,11 +75,54 @@ function Categories() {
   );
 }
 
+function RefreshButton({
+  onPress,
+  isRefreshing,
+}: {
+  onPress: () => void;
+  isRefreshing: boolean;
+}) {
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (isRefreshing) {
+      rotation.value = withRepeat(
+        withTiming(360, { duration: 1000, easing: Easing.linear }),
+        -1,
+        false,
+      );
+    } else {
+      rotation.value = withTiming(0, { duration: 200 });
+    }
+  }, [isRefreshing, rotation]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={isRefreshing}
+      accessibilityRole="button"
+      accessibilityLabel={
+        isRefreshing ? "Refreshing tasks" : "Refresh tasks"
+      }
+    >
+      <Animated.View
+        className="h-12 w-12 items-center justify-center rounded-full border-2 border-border bg-surface"
+        style={[isRefreshing && { opacity: 0.6 }]}
+      >
+        <Animated.View style={{ transform: [{ rotate: `${rotation.value}deg` }] }}>
+          <RefreshCw size={24} color="#DCE4E4" />
+        </Animated.View>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 export default function Index() {
   // const { data: session } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [tasks, setTasks] = useState<LocalTask[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Separate live queries to ensure reactivity triggers correctly (joins can sometimes be flaky with listeners)
   const { data: rawTasks } = useLiveQuery(
@@ -164,6 +216,19 @@ export default function Index() {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await syncManager.fullSync();
+      // UI updates automatically via onSyncComplete callback
+    } catch (error) {
+      console.error("Manual refresh failed:", error);
+      // Silent failure acceptable - background sync will retry
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
@@ -205,6 +270,7 @@ export default function Index() {
           <View className="flex-1">
             <Categories />
           </View>
+          <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
           <FAB onPress={() => setIsCreating(!isCreating)} />
         </View>
       </SafeAreaView>
