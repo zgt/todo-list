@@ -88,25 +88,29 @@ export class QueueProcessor {
         ...localData,
         createdAt: new Date(localData.createdAt),
         updatedAt: new Date(localData.updatedAt),
-        completedAt: localData.completedAt ? new Date(localData.completedAt) : null,
-        archivedAt: localData.archivedAt ? new Date(localData.archivedAt) : null,
+        completedAt: localData.completedAt
+          ? new Date(localData.completedAt)
+          : null,
+        archivedAt: localData.archivedAt
+          ? new Date(localData.archivedAt)
+          : null,
         deletedAt: localData.deletedAt ? new Date(localData.deletedAt) : null,
         dueDate: localData.dueDate ? new Date(localData.dueDate) : null,
-        lastSyncedAt: localData.lastSyncedAt ? new Date(localData.lastSyncedAt) : null,
+        lastSyncedAt: localData.lastSyncedAt
+          ? new Date(localData.lastSyncedAt)
+          : null,
       };
 
       return {
         id: op.entityId,
-        operation: op.operation as "create" | "update",
+        operation: op.operation,
         data,
       };
     });
 
     try {
       // Call tRPC sync.push endpoint
-      // Cast to any to bypass strict client-side type checks that might expect full data even for deletes
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = await vanillaTrpc.sync.push.mutate({ tasks } as any);
+      const result = await vanillaTrpc.sync.push.mutate({ tasks });
 
       // Handle successful operations
       for (const success of result.successful) {
@@ -157,7 +161,11 @@ export class QueueProcessor {
    */
   private async handleConflict(
     queueItem: SyncQueueItem,
-    conflict: { id: string; serverVersion: number; serverData: any },
+    conflict: {
+      id: string;
+      serverVersion: number;
+      serverData: { version: number; [key: string]: unknown };
+    },
   ): Promise<void> {
     console.warn(`Conflict detected for task ${queueItem.entityId}`);
 
@@ -199,7 +207,10 @@ export class QueueProcessor {
 
     if (item.length === 0) return;
 
-    const retryCount = item[0]!.retryCount + 1;
+    const firstItem = item[0];
+    if (!firstItem) return;
+
+    const retryCount = firstItem.retryCount + 1;
 
     if (retryCount > MAX_RETRY_COUNT) {
       console.error(`Max retries exceeded for queue item ${queueId}`);

@@ -27,7 +27,7 @@ export function DotBackground() {
           duration: 3000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     ).start();
   }, [animatedValue]);
 

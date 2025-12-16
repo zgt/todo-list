@@ -1,7 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { auth } from "~/auth/server";
 
 export async function signInWithDiscord() {

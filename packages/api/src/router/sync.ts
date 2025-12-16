@@ -1,11 +1,12 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, desc, eq, gt, isNull } from "@acme/db";
+import { and, desc, eq, gt } from "@acme/db";
 import { Task } from "@acme/db/schema";
 
 import { protectedProcedure } from "../trpc";
+
+type TaskType = typeof Task.$inferSelect;
 
 /**
  * Sync Router
@@ -64,9 +65,13 @@ export const syncRouter = {
     .input(SyncPushInputSchema)
     .mutation(async ({ ctx, input }) => {
       const results = {
-        successful: [] as Array<{ id: string }>,
-        conflicts: [] as Array<{ id: string; serverVersion: number; serverData: any }>,
-        failures: [] as Array<{ id: string; error: string }>,
+        successful: [] as { id: string }[],
+        conflicts: [] as {
+          id: string;
+          serverVersion: number;
+          serverData: TaskType;
+        }[],
+        failures: [] as { id: string; error: string }[],
       };
 
       for (const taskOp of input.tasks) {
@@ -135,7 +140,9 @@ export const syncRouter = {
             }
 
             // Apply last-write-wins based on updatedAt timestamp
-            const serverUpdatedAt = new Date(serverTask.updatedAt as string | number | Date);
+            const serverUpdatedAt = new Date(
+              serverTask.updatedAt as string | number | Date,
+            );
             const clientUpdatedAt = data.updatedAt;
 
             if (serverUpdatedAt > clientUpdatedAt) {
@@ -157,7 +164,8 @@ export const syncRouter = {
 
             // Copy fields from client data
             if (data.title !== undefined) updateData.title = data.title;
-            if (data.description !== undefined) updateData.description = data.description;
+            if (data.description !== undefined)
+              updateData.description = data.description;
             if (data.completed !== undefined) {
               updateData.completed = data.completed;
               // Auto-set completedAt based on completed status
@@ -165,11 +173,15 @@ export const syncRouter = {
                 updateData.completedAt = data.completed ? new Date() : null;
               }
             }
-            if (data.completedAt !== undefined) updateData.completedAt = data.completedAt;
-            if (data.categoryId !== undefined) updateData.categoryId = data.categoryId;
+            if (data.completedAt !== undefined)
+              updateData.completedAt = data.completedAt;
+            if (data.categoryId !== undefined)
+              updateData.categoryId = data.categoryId;
             if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
-            if (data.archivedAt !== undefined) updateData.archivedAt = data.archivedAt;
-            if (data.deletedAt !== undefined) updateData.deletedAt = data.deletedAt;
+            if (data.archivedAt !== undefined)
+              updateData.archivedAt = data.archivedAt;
+            if (data.deletedAt !== undefined)
+              updateData.deletedAt = data.deletedAt;
 
             const [updatedTask] = await ctx.db
               .update(Task)
@@ -183,7 +195,7 @@ export const syncRouter = {
             }
 
             results.successful.push({ id });
-          } else if (operation === "delete") {
+          } else {
             // DELETE operation (soft delete)
             if (!serverTask) {
               // Already deleted or doesn't exist - consider successful
@@ -252,7 +264,7 @@ export const syncRouter = {
     .query(async ({ ctx, input }) => {
       const { lastSyncTimestamp, entityTypes } = input;
 
-      const results: { tasks: any[] } = {
+      const results: { tasks: TaskType[] } = {
         tasks: [],
       };
 
@@ -276,12 +288,24 @@ export const syncRouter = {
         results.tasks = tasks.map((task) => ({
           ...task,
           createdAt: new Date(task.createdAt as string | number | Date),
-          updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : new Date(),
-          dueDate: task.dueDate ? new Date(task.dueDate as string | number | Date) : null,
-          completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
-          archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
-          deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
-          lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
+          updatedAt: task.updatedAt
+            ? new Date(task.updatedAt as string | number | Date)
+            : new Date(),
+          dueDate: task.dueDate
+            ? new Date(task.dueDate as string | number | Date)
+            : null,
+          completedAt: task.completedAt
+            ? new Date(task.completedAt as string | number | Date)
+            : null,
+          archivedAt: task.archivedAt
+            ? new Date(task.archivedAt as string | number | Date)
+            : null,
+          deletedAt: task.deletedAt
+            ? new Date(task.deletedAt as string | number | Date)
+            : null,
+          lastSyncedAt: task.lastSyncedAt
+            ? new Date(task.lastSyncedAt as string | number | Date)
+            : null,
         }));
 
         console.log(

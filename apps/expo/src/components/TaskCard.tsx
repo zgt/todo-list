@@ -32,7 +32,7 @@ export function TaskCard({
         {/* Top Row: Category and Checkbox */}
         {/* Top Row: Category and Due Date vs Checkbox */}
         <View className="w-full flex-row items-start justify-between">
-          <View className="flex-col gap-2 min-h-14">
+          <View className="min-h-14 flex-col gap-2">
             {/* Category Pill */}
             {task.category && (
               <View
@@ -48,7 +48,9 @@ export function TaskCard({
                 className="self-start rounded-full border px-4 py-1.5"
               >
                 <RNText
-                  style={task.category.color ? { color: task.category.color } : {}}
+                  style={
+                    task.category.color ? { color: task.category.color } : {}
+                  }
                   className="text-xs font-medium text-emerald-300"
                 >
                   {task.category.name}
@@ -57,20 +59,18 @@ export function TaskCard({
             )}
 
             {/* Due Date - Always render to reserve space, hide with opacity if missing */}
-            <View 
+            <View
               className="flex-row items-center gap-1.5 px-1"
               style={{ opacity: task.dueDate ? 1 : 0 }}
             >
               <Calendar size={14} className="opacity-60" color="white" />
               <RNText className="text-xs font-medium text-white/60">
-                {task.dueDate ? (
-                  new Intl.DateTimeFormat("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  }).format(task.dueDate)
-                ) : (
-                  "placeholder"
-                )}
+                {task.dueDate
+                  ? new Intl.DateTimeFormat("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    }).format(task.dueDate)
+                  : "placeholder"}
               </RNText>
             </View>
           </View>
@@ -107,7 +107,7 @@ export function TaskCard({
         {/* Bottom Spacer or Date if available and Delete Prompt */}
         <View className="items-center">
           {deletePending && (
-            <Pressable 
+            <Pressable
               onPress={onDelete}
               className="flex-row items-center gap-2 rounded-full bg-red-500/20 px-4 py-2 active:opacity-80"
             >

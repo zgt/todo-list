@@ -1,5 +1,7 @@
+import type { SharedValue } from "react-native-reanimated";
 import { useEffect } from "react";
 import { Dimensions } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -8,12 +10,10 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
-  type SharedValue,
 } from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
-import type { LocalTask } from "~/db/client";
 import type { SwipeDirection } from "./SwipeOverlay";
+import type { LocalTask } from "~/db/client";
 import { SwipeOverlay } from "./SwipeOverlay";
 import { TaskCard } from "./TaskCard";
 
@@ -218,14 +218,21 @@ export function SwipeableCard({
           // Left swipe - Next card
           if (canGoNext) {
             swipeProgress.value = 0;
-            translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 300 }, () => {
-              runOnJS(onNext)();
-            });
+            translateX.value = withTiming(
+              -SCREEN_WIDTH * 1.5,
+              { duration: 300 },
+              () => {
+                runOnJS(onNext)();
+              },
+            );
             translateY.value = withTiming(0, { duration: 300 });
             opacity.value = withTiming(0, { duration: 250 });
           } else {
             // At end of list, bounce back
-            swipeProgress.value = withSpring(0, { damping: 15, stiffness: 150 });
+            swipeProgress.value = withSpring(0, {
+              damping: 15,
+              stiffness: 150,
+            });
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           }
@@ -243,7 +250,10 @@ export function SwipeableCard({
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           } else {
             // At start of list, bounce back
-            swipeProgress.value = withSpring(0, { damping: 15, stiffness: 150 });
+            swipeProgress.value = withSpring(0, {
+              damping: 15,
+              stiffness: 150,
+            });
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           }

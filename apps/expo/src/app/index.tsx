@@ -85,11 +85,13 @@ export default function Index() {
 
   const formattedTasks = useMemo(() => {
     // Add safety checks for loading states
-    if (!rawTasks || !categories) return [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!rawTasks) return [];
 
     console.log(rawTasks);
     return rawTasks.map((task) => {
-      const category = categories.find((c) => c.id === task.categoryId);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const category = categories?.find((c) => c.id === task.categoryId);
       if (category) {
         return {
           ...task,
@@ -121,9 +123,7 @@ export default function Index() {
       // 1. Optimistically update local state for immediate visual feedback
       setTasks((prevTasks) =>
         prevTasks.map((task) =>
-          task.id === id
-            ? { ...task, completed, updatedAt: new Date() }
-            : task,
+          task.id === id ? { ...task, completed, updatedAt: new Date() } : task,
         ),
       );
 

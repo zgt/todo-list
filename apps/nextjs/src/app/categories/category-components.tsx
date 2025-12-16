@@ -13,12 +13,7 @@ import type { RouterOutputs } from "@acme/api";
 import { CreateCategorySchema } from "@acme/db/schema";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
-import {
-  Field,
-  FieldContent,
-  FieldError,
-  FieldLabel,
-} from "@acme/ui/field";
+import { Field, FieldContent, FieldError, FieldLabel } from "@acme/ui/field";
 import { Input } from "@acme/ui/input";
 import { toast } from "@acme/ui/toast";
 
@@ -142,16 +137,20 @@ export function CategoryList() {
 
   if (categories.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center">
-        <div className="text-6xl mb-4">🏷️</div>
-        <h3 className="text-xl font-semibold text-white mb-2">No categories yet</h3>
-        <p className="text-muted-foreground">Create your first category to get started</p>
+      <div className="flex h-64 flex-col items-center justify-center text-center">
+        <div className="mb-4 text-6xl">🏷️</div>
+        <h3 className="mb-2 text-xl font-semibold text-white">
+          No categories yet
+        </h3>
+        <p className="text-muted-foreground">
+          Create your first category to get started
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+    <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2 lg:grid-cols-3">
       {categories.map((category) => (
         <CategoryCard key={category.id} category={category} />
       ))}
@@ -190,25 +189,25 @@ function CategoryCard({ category }: { category: Category }) {
 
   return (
     <div
-      className="glass-card border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all duration-300 group"
+      className="glass-card group rounded-2xl border border-white/10 p-6 transition-all duration-300 hover:border-white/20"
       style={{
         borderColor: `${category.color}20`,
       }}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center gap-3">
             <div
-              className="w-4 h-4 rounded-full flex-shrink-0"
+              className="h-4 w-4 flex-shrink-0 rounded-full"
               style={{ backgroundColor: category.color }}
             />
-            <h3 className="text-lg font-semibold text-white truncate">
+            <h3 className="truncate text-lg font-semibold text-white">
               {category.name}
             </h3>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <span
-              className="font-mono text-xs px-2 py-1 rounded border"
+              className="rounded border px-2 py-1 font-mono text-xs"
               style={{
                 borderColor: `${category.color}40`,
                 color: category.color,
@@ -223,10 +222,10 @@ function CategoryCard({ category }: { category: Category }) {
           onClick={handleDelete}
           disabled={isDeleting}
           className={cn(
-            "p-2 rounded-lg transition-all duration-200",
-            "text-muted-foreground hover:text-red-400 hover:bg-red-500/10",
+            "rounded-lg p-2 transition-all duration-200",
+            "text-muted-foreground hover:bg-red-500/10 hover:text-red-400",
             "opacity-0 group-hover:opacity-100",
-            isDeleting && "opacity-50 cursor-not-allowed",
+            isDeleting && "cursor-not-allowed opacity-50",
           )}
           title="Delete category"
         >
@@ -239,17 +238,17 @@ function CategoryCard({ category }: { category: Category }) {
 
 export function CategoryListSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="glass-card border border-white/10 rounded-2xl p-6 animate-pulse"
+          className="glass-card animate-pulse rounded-2xl border border-white/10 p-6"
         >
           <div className="flex items-start gap-3">
-            <div className="w-4 h-4 rounded-full bg-white/10" />
+            <div className="h-4 w-4 rounded-full bg-white/10" />
             <div className="flex-1">
-              <div className="h-6 bg-white/10 rounded w-3/4 mb-2" />
-              <div className="h-4 bg-white/10 rounded w-1/2" />
+              <div className="mb-2 h-6 w-3/4 rounded bg-white/10" />
+              <div className="h-4 w-1/2 rounded bg-white/10" />
             </div>
           </div>
         </div>

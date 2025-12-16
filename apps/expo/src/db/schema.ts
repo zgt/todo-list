@@ -55,9 +55,13 @@ export const localCategory = sqliteTable("local_category", {
 // Sync Queue table
 export const syncQueue = sqliteTable("sync_queue", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  entityType: text("entity_type", { enum: ["task", "category", "list", "tag"] }).notNull(),
+  entityType: text("entity_type", {
+    enum: ["task", "category", "list", "tag"],
+  }).notNull(),
   entityId: text("entity_id").notNull(),
-  operation: text("operation", { enum: ["create", "update", "delete"] }).notNull(),
+  operation: text("operation", {
+    enum: ["create", "update", "delete"],
+  }).notNull(),
   payload: text("payload").notNull(), // JSON string of the entity data
   retryCount: integer("retry_count").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),

@@ -1,7 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
-import type { LocalTask } from "~/db/client";
 import { db } from "~/db/client";
 import { localTask, syncMeta, syncQueue } from "~/db/schema";
 import { vanillaTrpc } from "~/utils/api";
@@ -12,7 +11,7 @@ export class SyncManager {
   private queueProcessor: QueueProcessor;
   private conflictResolver: ConflictResolver;
   private syncInProgress = false;
-  private syncCompletionCallbacks: Array<() => void> = [];
+  private syncCompletionCallbacks: (() => void)[] = [];
 
   constructor() {
     this.queueProcessor = new QueueProcessor(db);
@@ -137,7 +136,9 @@ export class SyncManager {
       ? parseInt(lastSyncResult[0].value, 10)
       : 0;
 
-    console.log(`Pulling changes since ${new Date(lastSyncTimestamp)}`);
+    console.log(
+      `Pulling changes since ${new Date(lastSyncTimestamp).toISOString()}`,
+    );
 
     try {
       // Fetch changes from server
@@ -148,7 +149,15 @@ export class SyncManager {
 
       // Apply server changes to local database
       for (const task of serverChanges.tasks) {
-        await this.applyServerTask(task);
+        await this.applyServerTask(
+          task as {
+            id: string;
+            deletedAt?: Date | null;
+            version: number;
+            updatedAt: Date | string | number;
+            [key: string]: unknown;
+          },
+        );
       }
 
       // Update last sync timestamp
@@ -172,7 +181,13 @@ export class SyncManager {
   /**
    * Apply a server task to local database
    */
-  private async applyServerTask(serverTask: any): Promise<void> {
+  private async applyServerTask(serverTask: {
+    id: string;
+    deletedAt?: Date | null;
+    version: number;
+    updatedAt: Date | string | number;
+    [key: string]: unknown;
+  }): Promise<void> {
     const existingTask = await db
       .select()
       .from(localTask)
@@ -187,20 +202,25 @@ export class SyncManager {
       return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const localData = {
       ...serverTask,
       syncStatus: "synced" as const,
       lastSyncedAt: new Date(),
       serverVersion: serverTask.version,
       localVersion: serverTask.version,
-    };
+      // Type assertion needed because serverTask contains all required fields from API
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
 
     if (existingTask.length === 0) {
       // New task from server
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await db.insert(localTask).values(localData);
     } else {
       // Check for conflicts
-      const existing = existingTask[0]!;
+      const existing = existingTask[0];
+      if (!existing) return;
 
       if (existing.syncStatus === "pending") {
         // Conflict: local has pending changes
@@ -213,6 +233,7 @@ export class SyncManager {
         // No conflict, apply server changes
         await db
           .update(localTask)
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           .set(localData)
           .where(eq(localTask.id, serverTask.id));
       }

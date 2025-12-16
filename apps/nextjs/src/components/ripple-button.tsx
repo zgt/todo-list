@@ -3,14 +3,14 @@
 import { Button } from "@acme/ui/button";
 
 export const RippleButton = () => {
-    const triggerRipple = () => {
-        // Dispatch custom event that the DotShader will listen to
-        window.dispatchEvent(new CustomEvent('trigger-ripple'));
-    };
+  const triggerRipple = () => {
+    // Dispatch custom event that the DotShader will listen to
+    window.dispatchEvent(new CustomEvent("trigger-ripple"));
+  };
 
-    return (
-        <Button onClick={triggerRipple} variant="outline" size="sm">
-            Ripple
-        </Button>
-    );
+  return (
+    <Button onClick={triggerRipple} variant="outline" size="sm">
+      Ripple
+    </Button>
+  );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import type { LocalTask } from "~/db/client";
@@ -41,7 +41,7 @@ export function useTasks(
   const [error, setError] = useState<Error | null>(null);
 
   // Load tasks from SQLite
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     if (!user) {
       setTasks([]);
       setLoading(false);
@@ -108,12 +108,12 @@ export function useTasks(
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, filter]);
 
   // Load tasks on mount and when filter changes
   useEffect(() => {
-    loadTasks();
-  }, [user?.id, filter]);
+    void loadTasks();
+  }, [loadTasks]);
 
   // Create task
   const createTask = async (data: CreateTaskData): Promise<LocalTask> => {

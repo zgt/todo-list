@@ -1,9 +1,13 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { DotBackground } from "./DotBackground";
 
-export function GradientBackground({ children }: { children: React.ReactNode }) {
+export function GradientBackground({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <View style={styles.container}>
       {/* Base gradient background */}

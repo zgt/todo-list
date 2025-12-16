@@ -1,5 +1,7 @@
+import type { NetInfoState } from "@react-native-community/netinfo";
 import { useEffect, useState } from "react";
-import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
+import NetInfo from "@react-native-community/netinfo";
+
 import { syncManager } from "~/sync/manager";
 
 export interface UseSyncResult {
@@ -25,7 +27,7 @@ export function useSync(): UseSyncResult {
     });
 
     // Get initial state
-    NetInfo.fetch().then((state) => {
+    void NetInfo.fetch().then((state) => {
       setIsOnline(state.isConnected ?? false);
     });
 
@@ -39,8 +41,10 @@ export function useSync(): UseSyncResult {
       setQueuedCount(stats.pending);
     };
 
-    updateQueueCount();
-    const interval = setInterval(updateQueueCount, 5000); // Every 5 seconds
+    void updateQueueCount();
+    const interval = setInterval(() => {
+      void updateQueueCount();
+    }, 5000); // Every 5 seconds
 
     return () => clearInterval(interval);
   }, []);

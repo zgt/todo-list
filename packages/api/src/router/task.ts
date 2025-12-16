@@ -20,12 +20,24 @@ export const taskRouter = {
     return tasks.map((task) => ({
       ...task,
       createdAt: new Date(task.createdAt as string | number | Date),
-      updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
-      dueDate: task.dueDate ? new Date(task.dueDate as string | number | Date) : null,
-      completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
-      archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
-      deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
-      lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
+      updatedAt: task.updatedAt
+        ? new Date(task.updatedAt as string | number | Date)
+        : null,
+      dueDate: task.dueDate
+        ? new Date(task.dueDate as string | number | Date)
+        : null,
+      completedAt: task.completedAt
+        ? new Date(task.completedAt as string | number | Date)
+        : null,
+      archivedAt: task.archivedAt
+        ? new Date(task.archivedAt as string | number | Date)
+        : null,
+      deletedAt: task.deletedAt
+        ? new Date(task.deletedAt as string | number | Date)
+        : null,
+      lastSyncedAt: task.lastSyncedAt
+        ? new Date(task.lastSyncedAt as string | number | Date)
+        : null,
     }));
   }),
 
@@ -48,12 +60,24 @@ export const taskRouter = {
       return {
         ...task,
         createdAt: new Date(task.createdAt as string | number | Date),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
-        dueDate: task.dueDate ? new Date(task.dueDate as string | number | Date) : null,
-        completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
-        archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
-        deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
-        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
+        updatedAt: task.updatedAt
+          ? new Date(task.updatedAt as string | number | Date)
+          : null,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate as string | number | Date)
+          : null,
+        completedAt: task.completedAt
+          ? new Date(task.completedAt as string | number | Date)
+          : null,
+        archivedAt: task.archivedAt
+          ? new Date(task.archivedAt as string | number | Date)
+          : null,
+        deletedAt: task.deletedAt
+          ? new Date(task.deletedAt as string | number | Date)
+          : null,
+        lastSyncedAt: task.lastSyncedAt
+          ? new Date(task.lastSyncedAt as string | number | Date)
+          : null,
       };
     }),
 
@@ -78,12 +102,24 @@ export const taskRouter = {
       return {
         ...task,
         createdAt: new Date(task.createdAt as string | number | Date),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
-        dueDate: task.dueDate ? new Date(task.dueDate as string | number | Date) : null,
-        completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
-        archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
-        deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
-        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
+        updatedAt: task.updatedAt
+          ? new Date(task.updatedAt as string | number | Date)
+          : null,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate as string | number | Date)
+          : null,
+        completedAt: task.completedAt
+          ? new Date(task.completedAt as string | number | Date)
+          : null,
+        archivedAt: task.archivedAt
+          ? new Date(task.archivedAt as string | number | Date)
+          : null,
+        deletedAt: task.deletedAt
+          ? new Date(task.deletedAt as string | number | Date)
+          : null,
+        lastSyncedAt: task.lastSyncedAt
+          ? new Date(task.lastSyncedAt as string | number | Date)
+          : null,
       };
     }),
 
@@ -100,10 +136,13 @@ export const taskRouter = {
       };
 
       // Handle completedAt logic
-      if (updates.completed !== undefined && updates.completedAt === undefined) {
+      if (
+        updates.completed !== undefined &&
+        updates.completedAt === undefined
+      ) {
         updateData.completedAt = updates.completed ? new Date() : null;
       }
-      
+
       // If completedAt is explicitly provided, it is already in ...updates and will be used.
       // Same for archivedAt, deletedAt, etc.
 
@@ -121,12 +160,24 @@ export const taskRouter = {
       return {
         ...task,
         createdAt: new Date(task.createdAt as string | number | Date),
-        updatedAt: task.updatedAt ? new Date(task.updatedAt as string | number | Date) : null,
-        dueDate: task.dueDate ? new Date(task.dueDate as string | number | Date) : null,
-        completedAt: task.completedAt ? new Date(task.completedAt as string | number | Date) : null,
-        archivedAt: task.archivedAt ? new Date(task.archivedAt as string | number | Date) : null,
-        deletedAt: task.deletedAt ? new Date(task.deletedAt as string | number | Date) : null,
-        lastSyncedAt: task.lastSyncedAt ? new Date(task.lastSyncedAt as string | number | Date) : null,
+        updatedAt: task.updatedAt
+          ? new Date(task.updatedAt as string | number | Date)
+          : null,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate as string | number | Date)
+          : null,
+        completedAt: task.completedAt
+          ? new Date(task.completedAt as string | number | Date)
+          : null,
+        archivedAt: task.archivedAt
+          ? new Date(task.archivedAt as string | number | Date)
+          : null,
+        deletedAt: task.deletedAt
+          ? new Date(task.deletedAt as string | number | Date)
+          : null,
+        lastSyncedAt: task.lastSyncedAt
+          ? new Date(task.lastSyncedAt as string | number | Date)
+          : null,
       };
     }),
 

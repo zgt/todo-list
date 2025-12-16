@@ -1,4 +1,5 @@
-import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
+import type { NetInfoState } from "@react-native-community/netinfo";
+import NetInfo from "@react-native-community/netinfo";
 
 export class NetworkMonitor {
   private unsubscribe: (() => void) | null = null;
@@ -23,7 +24,7 @@ export class NetworkMonitor {
     });
 
     // Check initial state
-    NetInfo.fetch().then((state) => {
+    void NetInfo.fetch().then((state) => {
       console.log(
         `Initial network state: ${state.isConnected ? "online" : "offline"}`,
       );

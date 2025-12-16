@@ -6,20 +6,20 @@ interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "sidebar" | "main" | "card";
 }
 
-export function GlassPanel({ 
-  children, 
-  className, 
+export function GlassPanel({
+  children,
+  className,
   variant = "main",
-  ...props 
+  ...props
 }: GlassPanelProps) {
   return (
     <div
       className={cn(
         "glass-panel rounded-3xl transition-all duration-300",
-        variant === "sidebar" && "h-full w-64 flex flex-col p-4",
-        variant === "main" && "flex-1 flex flex-col p-8",
-        variant === "card" && "glass-card p-4 rounded-xl",
-        className
+        variant === "sidebar" && "flex h-full w-64 flex-col p-4",
+        variant === "main" && "flex flex-1 flex-col p-8",
+        variant === "card" && "glass-card rounded-xl p-4",
+        className,
       )}
       {...props}
     >

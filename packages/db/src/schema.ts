@@ -1,4 +1,3 @@
-
 import { relations } from "drizzle-orm";
 import { index, pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -10,7 +9,10 @@ export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
   content: t.text().notNull(),
-  createdAt: t.timestamp({ withTimezone: true, mode: "date" }).$defaultFn(() => new Date()).notNull(),
+  createdAt: t
+    .timestamp({ withTimezone: true, mode: "date" })
+    .$defaultFn(() => new Date())
+    .notNull(),
   updatedAt: t
     .timestamp({ mode: "date", withTimezone: true })
     .$defaultFn(() => new Date())
@@ -77,12 +79,21 @@ export const Task = pgTable(
       .timestamp("updated_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
       .$onUpdate(() => new Date()),
-    completedAt: t.timestamp("completed_at", { withTimezone: true, mode: "date" }),
-    archivedAt: t.timestamp("archived_at", { withTimezone: true, mode: "date" }),
+    completedAt: t.timestamp("completed_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    archivedAt: t.timestamp("archived_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
     orderIndex: t.integer("order_index"),
     version: t.integer().notNull().default(1),
     deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
-    lastSyncedAt: t.timestamp("last_synced_at", { withTimezone: true, mode: "date" }),
+    lastSyncedAt: t.timestamp("last_synced_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
   }),
   (table) => [
     index("task_user_id_deleted_at_order_idx").on(
@@ -148,7 +159,10 @@ export const CreateCategorySchema = createInsertSchema(Category, {
 export const UpdateCategorySchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(100).optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color").optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color")
+    .optional(),
   icon: z.string().max(50).optional(),
   sortOrder: z.number().int().optional(),
 });

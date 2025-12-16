@@ -39,7 +39,7 @@ export default async function HomePage() {
                 <CategoryFilterProvider>
                   <TaskHeader />
 
-                  <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto px-2 pr-4 pt-2 pb-2">
+                  <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
                     {session?.user ? (
                       <Suspense
                         fallback={

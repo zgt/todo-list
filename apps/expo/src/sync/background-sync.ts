@@ -9,15 +9,15 @@ export const BACKGROUND_SYNC_TASK = "background-sync";
 // Define the background sync task
 // This must be called in the global scope or very early in startup
 TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
-    try {
+  try {
     console.log("Background sync started");
     await syncManager.fullSync();
     console.log("Background sync completed");
     return BackgroundTask.BackgroundTaskResult.Success;
-    } catch (error) {
+  } catch (error) {
     console.error("Background sync failed:", error);
     return BackgroundTask.BackgroundTaskResult.Failed;
-    }
+  }
 });
 console.log("Background sync task defined");
 
@@ -30,7 +30,9 @@ export async function registerBackgroundSync(): Promise<void> {
 
     const status = await BackgroundTask.getStatusAsync();
     if (status === BackgroundTask.BackgroundTaskStatus.Restricted) {
-      console.log("Background sync skipped: Not available in this environment (e.g. Expo Go)");
+      console.log(
+        "Background sync skipped: Not available in this environment (e.g. Expo Go)",
+      );
       return;
     }
 
