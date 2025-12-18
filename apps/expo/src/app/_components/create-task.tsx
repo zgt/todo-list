@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, TextInput, View } from "react-native";
+import { Send } from "lucide-react-native";
 
 import { db } from "~/db/client";
 import { localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
 
-// Simple UUID generator to avoid external deps if install fails
+// Simple UUID generator
 function generateUUID() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
@@ -19,25 +20,20 @@ export default function CreateTask({ onSuccess }: { onSuccess?: () => void }) {
   const { data: session } = authClient.useSession();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const handleCreate = async () => {
     if (!title.trim()) {
-      setError("Title is required");
       return;
     }
 
     if (!session?.user) {
-      setError("You need to be logged in to create tasks");
       return;
     }
 
     try {
-      setError(null);
       const newTaskId = generateUUID();
       const now = new Date();
 
-      // 1. Insert into local DB immediately
       await db.insert(localTask).values({
         id: newTaskId,
         userId: session.user.id,
@@ -51,7 +47,6 @@ export default function CreateTask({ onSuccess }: { onSuccess?: () => void }) {
         serverVersion: 0,
       });
 
-      // 2. Queue for sync
       await syncManager.queueOperation("task", newTaskId, "create", {
         id: newTaskId,
         title: title.trim(),
@@ -63,45 +58,46 @@ export default function CreateTask({ onSuccess }: { onSuccess?: () => void }) {
       onSuccess?.();
     } catch (e) {
       console.error("Failed to create task:", e);
-      setError("Failed to create task");
     }
   };
 
   return (
-    <View className="flex gap-2">
-      <Text className="text-foreground mb-2 text-lg font-semibold">
-        New Task
-      </Text>
-      <TextInput
-        className="border-input bg-background text-foreground items-center rounded-md border px-3 py-2 text-lg leading-tight"
-        value={title}
-        onChangeText={(text) => {
-          setTitle(text);
-          if (error) setError(null);
-        }}
-        placeholder="What needs to be done?"
-        placeholderTextColor="#8FA8A8"
-      />
-      {error && !error.includes("logged in") && (
-        <Text className="text-destructive">{error}</Text>
-      )}
-      <TextInput
-        className="border-input bg-background text-foreground items-center rounded-md border px-3 py-2 text-lg leading-tight"
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Description (optional)"
-        placeholderTextColor="#8FA8A8"
-        multiline
-      />
-      <Pressable
-        className="bg-primary mt-2 flex items-center rounded-md p-3"
-        onPress={handleCreate}
-      >
-        <Text className="text-primary-foreground font-semibold">Add Task</Text>
-      </Pressable>
-      {error && error.includes("logged in") && (
-        <Text className="text-destructive mt-2">{error}</Text>
-      )}
+    <View className="flex-col gap-4">
+      <View className="flex-row gap-3">
+        <View className="flex-1 gap-2">
+          <TextInput
+            className="p-0 text-xl leading-tight font-medium text-white"
+            value={title}
+            onChangeText={setTitle}
+            placeholder="What needs to be done?"
+            placeholderTextColor="#71717A"
+            autoFocus
+            selectionColor="#10B981"
+          />
+          <TextInput
+            className="p-0 text-base leading-tight text-zinc-400"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Description (optional)"
+            placeholderTextColor="#52525B"
+            multiline
+            numberOfLines={2}
+            selectionColor="#10B981"
+          />
+        </View>
+
+        <View className="justify-end">
+          <Pressable
+            onPress={handleCreate}
+            className={`h-10 w-10 items-center justify-center rounded-full ${
+              title.trim() ? "bg-emerald-500" : "bg-zinc-800"
+            }`}
+            disabled={!title.trim()}
+          >
+            <Send size={20} color={title.trim() ? "#fff" : "#fff"} />
+          </Pressable>
+        </View>
+      </View>
     </View>
   );
 }

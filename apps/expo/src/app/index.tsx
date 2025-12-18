@@ -1,31 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text as RNText,
-  View,
-} from "react-native";
+import { Image, Keyboard, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
   Easing,
+  FadeIn,
   FadeOut,
+  useAnimatedStyle,
   useSharedValue,
   withRepeat,
+  withSpring,
   withTiming,
-  ZoomIn,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { desc, eq, isNull, sql } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { RefreshCw } from "lucide-react-native";
 
 import type { LocalTask } from "~/db/client";
 import { db } from "~/db/client";
 import { localCategory, localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
-import { RefreshCw } from "lucide-react-native";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
@@ -101,15 +96,15 @@ function RefreshButton({
       onPress={onPress}
       disabled={isRefreshing}
       accessibilityRole="button"
-      accessibilityLabel={
-        isRefreshing ? "Refreshing tasks" : "Refresh tasks"
-      }
+      accessibilityLabel={isRefreshing ? "Refreshing tasks" : "Refresh tasks"}
     >
       <Animated.View
-        className="h-12 w-12 items-center justify-center rounded-full border-2 border-border bg-surface"
+        className="border-border bg-surface h-12 w-12 items-center justify-center rounded-full border-2"
         style={[isRefreshing && { opacity: 0.6 }]}
       >
-        <Animated.View style={{ transform: [{ rotate: `${rotation.value}deg` }] }}>
+        <Animated.View
+          style={{ transform: [{ rotate: `${rotation.value}deg` }] }}
+        >
           <RefreshCw size={24} color="#DCE4E4" />
         </Animated.View>
       </Animated.View>
@@ -123,6 +118,7 @@ export default function Index() {
   const [tasks, setTasks] = useState<LocalTask[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const sheetBottom = useSharedValue(0);
 
   // Separate live queries to ensure reactivity triggers correctly (joins can sometimes be flaky with listeners)
   const { data: rawTasks } = useLiveQuery(
@@ -153,6 +149,28 @@ export default function Index() {
       return { ...task, category: null };
     });
   }, [rawTasks, categories]);
+
+  // Track keyboard height and animate sheet position
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardWillShow", (e) => {
+      const height = e.endCoordinates.height;
+      sheetBottom.value = withSpring(height, {
+        damping: 50,
+        stiffness: 400,
+      });
+    });
+    const hideSubscription = Keyboard.addListener("keyboardWillHide", () => {
+      sheetBottom.value = withSpring(0, {
+        damping: 50,
+        stiffness: 400,
+      });
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, [sheetBottom]);
 
   // Register sync completion callback to refresh UI
   useEffect(() => {
@@ -229,6 +247,11 @@ export default function Index() {
     }
   };
 
+  // Animated style for sheet position
+  const sheetAnimatedStyle = useAnimatedStyle(() => ({
+    bottom: sheetBottom.value,
+  }));
+
   return (
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
@@ -252,20 +275,6 @@ export default function Index() {
         )}
 
         {/* Temporary: Show CreateTask when creating is true, or just put it at bottom */}
-        {isCreating && (
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            className="absolute inset-0 z-50 items-end justify-end bg-black/20 p-4"
-          >
-            <Animated.View
-              entering={ZoomIn.duration(250)}
-              exiting={FadeOut}
-              className="bg-background mr-2 mb-20 w-full max-w-[300px] rounded-2xl p-6 shadow-2xl"
-            >
-              <CreateTask onSuccess={() => setIsCreating(false)} />
-            </Animated.View>
-          </KeyboardAvoidingView>
-        )}
         <View className="flex-row items-center gap-4 px-4 pb-4">
           <View className="flex-1">
             <Categories />
@@ -274,6 +283,60 @@ export default function Index() {
           <FAB onPress={() => setIsCreating(!isCreating)} />
         </View>
       </SafeAreaView>
+
+      {/* Bottom Sheet Overlay for CreateTask */}
+      {isCreating && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 100,
+          }}
+          pointerEvents="box-none"
+        >
+          {/* Backdrop */}
+          <Pressable
+            onPress={() => setIsCreating(false)}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          >
+            <Animated.View
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
+              }}
+            />
+          </Pressable>
+
+          {/* Bottom Sheet */}
+          <Animated.View
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(200)}
+            style={[
+              {
+                position: "absolute",
+                left: 0,
+                right: 0,
+              },
+              sheetAnimatedStyle,
+            ]}
+          >
+            <View className="w-full rounded-t-3xl border-t border-white/10 bg-zinc-900 p-5 shadow-2xl">
+              <CreateTask onSuccess={() => setIsCreating(false)} />
+            </View>
+          </Animated.View>
+        </View>
+      )}
     </GradientBackground>
   );
 }
