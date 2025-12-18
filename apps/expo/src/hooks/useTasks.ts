@@ -202,6 +202,8 @@ export function useTasks(
     const existing = tasks.find((t) => t.id === id);
     if (!existing) throw new Error("Task not found");
 
+    const now = new Date();
+
     // Optimistic update
     setTasks((prev) => prev.filter((t) => t.id !== id));
 
@@ -210,14 +212,19 @@ export function useTasks(
       await db
         .update(localTask)
         .set({
-          deletedAt: new Date(),
+          deletedAt: now,
+          updatedAt: now,
           syncStatus: "pending",
+          localVersion: existing.localVersion + 1,
         })
         .where(eq(localTask.id, id));
 
-      // Queue for sync
+      // Queue for sync with version info for conflict detection
       await syncManager.queueOperation("task", id, "delete", {
-        deletedAt: new Date(),
+        deletedAt: now,
+        updatedAt: now,
+        localVersion: existing.localVersion + 1,
+        serverVersion: existing.serverVersion,
       });
     } catch (err) {
       // Rollback optimistic update

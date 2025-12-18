@@ -21,6 +21,7 @@ import { db } from "~/db/client";
 import { localCategory, localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
+import { generateUUID } from "~/utils/uuid";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
@@ -113,7 +114,7 @@ function RefreshButton({
 }
 
 export default function Index() {
-  // const { data: session } = authClient.useSession();
+  const { data: session } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [tasks, setTasks] = useState<LocalTask[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -234,6 +235,55 @@ export default function Index() {
     }
   };
 
+  const handleCreate = async (title: string, description: string) => {
+    if (!session?.user) {
+      throw new Error("User not authenticated");
+    }
+
+    const newTaskId = generateUUID();
+    const now = new Date();
+
+    const newTask: LocalTask = {
+      id: newTaskId,
+      userId: session.user.id,
+      title: title.trim(),
+      description: description.trim() || null,
+      completed: false,
+      createdAt: now,
+      completedAt: null,
+      archivedAt: null,
+      updatedAt: now,
+      deletedAt: null,
+      syncStatus: "pending",
+      lastSyncedAt: null,
+      localVersion: 1,
+      serverVersion: 0,
+      categoryId: null,
+      dueDate: null,
+      orderIndex: 0,
+    };
+
+    try {
+      // 1. Optimistically update local state for immediate visual feedback
+      setTasks((prevTasks) => [newTask, ...prevTasks]);
+
+      // 2. Insert into local DB
+      await db.insert(localTask).values(newTask);
+
+      // 3. Queue for sync
+      await syncManager.queueOperation("task", newTaskId, "create", {
+        id: newTaskId,
+        title: title.trim(),
+        description: description.trim() || null,
+      });
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      // Revert optimistic update on error
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== newTaskId));
+      throw error;
+    }
+  };
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -332,7 +382,10 @@ export default function Index() {
             ]}
           >
             <View className="w-full rounded-t-3xl border-t border-white/10 bg-zinc-900 p-5 shadow-2xl">
-              <CreateTask onSuccess={() => setIsCreating(false)} />
+              <CreateTask
+                onCreate={handleCreate}
+                onSuccess={() => setIsCreating(false)}
+              />
             </View>
           </Animated.View>
         </View>

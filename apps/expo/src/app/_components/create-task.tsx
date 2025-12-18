@@ -2,22 +2,12 @@ import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { Send } from "lucide-react-native";
 
-import { db } from "~/db/client";
-import { localTask } from "~/db/schema";
-import { syncManager } from "~/sync/manager";
-import { authClient } from "~/utils/auth";
-
-// Simple UUID generator
-function generateUUID() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+interface CreateTaskProps {
+  onCreate: (title: string, description: string) => Promise<void>;
+  onSuccess?: () => void;
 }
 
-export default function CreateTask({ onSuccess }: { onSuccess?: () => void }) {
-  const { data: session } = authClient.useSession();
+export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -26,38 +16,19 @@ export default function CreateTask({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    if (!session?.user) {
-      return;
-    }
+    // Clear form and close modal immediately for instant feedback
+    const taskTitle = title;
+    const taskDescription = description;
+    setTitle("");
+    setDescription("");
+    onSuccess?.();
 
+    // Create task in background (optimistic update already happened in parent)
     try {
-      const newTaskId = generateUUID();
-      const now = new Date();
-
-      await db.insert(localTask).values({
-        id: newTaskId,
-        userId: session.user.id,
-        title: title.trim(),
-        description: description.trim() || null,
-        completed: false,
-        createdAt: now,
-        updatedAt: now,
-        syncStatus: "pending",
-        localVersion: 1,
-        serverVersion: 0,
-      });
-
-      await syncManager.queueOperation("task", newTaskId, "create", {
-        id: newTaskId,
-        title: title.trim(),
-        description: description.trim() || null,
-      });
-
-      setTitle("");
-      setDescription("");
-      onSuccess?.();
+      await onCreate(taskTitle, taskDescription);
     } catch (e) {
       console.error("Failed to create task:", e);
+      // Error handling is managed by the parent's optimistic update rollback
     }
   };
 

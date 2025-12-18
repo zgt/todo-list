@@ -247,18 +247,19 @@ export class SyncManager {
     console.log("Starting full sync...");
 
     try {
-      // Step 1: Pull server changes first (populates local DB on first launch)
-      await this.pullFromServer();
-    } catch (error) {
-      console.error("Pull from server failed:", error);
-      // Don't throw - allow push to still happen
-    }
-
-    try {
-      // Step 2: Push local changes to server
+      // Step 1: Push local changes to server FIRST
+      // This ensures pending deletes/updates reach the server before pull overwrites them
       await this.processSyncQueue();
     } catch (error) {
       console.error("Process sync queue failed:", error);
+      // Don't throw - allow pull to still happen
+    }
+
+    try {
+      // Step 2: Pull server changes (gets latest state after our push)
+      await this.pullFromServer();
+    } catch (error) {
+      console.error("Pull from server failed:", error);
       // Don't throw - sync will retry on next trigger
     }
 

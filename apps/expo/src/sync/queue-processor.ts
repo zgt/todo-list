@@ -58,55 +58,123 @@ export class QueueProcessor {
         .where(inArray(localTask.id, allTaskIds));
     }
 
-    // 3. Construct payload with local data
-    const tasks = operations.map((op) => {
-      const localData = localTasks.find((t) => t.id === op.entityId);
+    // 3. Filter out stale operations and construct payload with local data
+    const validOperations: SyncQueueItem[] = [];
+    const tasks = operations
+      .map((op) => {
+        const localData = localTasks.find((t) => t.id === op.entityId);
 
-      if (!localData) {
-        // This shouldn't happen - local task should exist
-        throw new Error(
-          `Local task ${op.entityId} not found for ${op.operation} operation`,
-        );
-      }
+        if (!localData) {
+          // Task not found in local DB
+          if (op.operation === "delete") {
+            // For delete operations, try to use queue payload if it has version info
+            const payload: unknown =
+              typeof op.payload === "string"
+                ? JSON.parse(op.payload)
+                : op.payload;
 
-      if (op.operation === "delete") {
-        // Delete needs version fields for conflict detection
+            // Type guard for delete payload
+            const isValidDeletePayload = (
+              p: unknown,
+            ): p is {
+              updatedAt: string | number | Date;
+              localVersion: number;
+              serverVersion: number;
+            } => {
+              return (
+                p !== null &&
+                typeof p === "object" &&
+                "updatedAt" in p &&
+                "localVersion" in p &&
+                "serverVersion" in p &&
+                typeof (p as { localVersion: unknown }).localVersion ===
+                  "number" &&
+                typeof (p as { serverVersion: unknown }).serverVersion ===
+                  "number"
+              );
+            };
+
+            if (isValidDeletePayload(payload)) {
+              // We have version info in payload - can still send delete
+              console.log(
+                `Task ${op.entityId} not in local DB, using queue payload for delete`,
+              );
+              validOperations.push(op);
+              return {
+                id: op.entityId,
+                operation: op.operation as "delete",
+                data: {
+                  updatedAt: new Date(payload.updatedAt),
+                  localVersion: payload.localVersion,
+                  serverVersion: payload.serverVersion,
+                },
+              };
+            } else {
+              // No version info - task might be already deleted on server
+              console.log(
+                `Task ${op.entityId} not found and no version info in payload, removing from queue`,
+              );
+              void this.removeFromQueue(op.id);
+              return null;
+            }
+          } else {
+            // For create/update without local data, operation is stale
+            console.warn(
+              `Stale ${op.operation} operation for task ${op.entityId}, removing from queue`,
+            );
+            void this.removeFromQueue(op.id);
+            return null;
+          }
+        }
+
+        // Track valid operations for later error handling
+        validOperations.push(op);
+
+        if (op.operation === "delete") {
+          // Delete needs version fields for conflict detection
+          return {
+            id: op.entityId,
+            operation: op.operation as "delete",
+            data: {
+              updatedAt: localData.updatedAt,
+              localVersion: localData.localVersion,
+              serverVersion: localData.serverVersion,
+            },
+          };
+        }
+
+        // For create/update, send full local data
+        // Ensure dates are Date objects (SQLite might return them as strings)
+        const data = {
+          ...localData,
+          createdAt: new Date(localData.createdAt),
+          updatedAt: new Date(localData.updatedAt),
+          completedAt: localData.completedAt
+            ? new Date(localData.completedAt)
+            : null,
+          archivedAt: localData.archivedAt
+            ? new Date(localData.archivedAt)
+            : null,
+          deletedAt: localData.deletedAt ? new Date(localData.deletedAt) : null,
+          dueDate: localData.dueDate ? new Date(localData.dueDate) : null,
+          lastSyncedAt: localData.lastSyncedAt
+            ? new Date(localData.lastSyncedAt)
+            : null,
+        };
+
         return {
           id: op.entityId,
-          operation: op.operation as "delete",
-          data: {
-            updatedAt: localData.updatedAt,
-            localVersion: localData.localVersion,
-            serverVersion: localData.serverVersion,
-          },
+          operation: op.operation,
+          data,
         };
-      }
+      })
+      .filter((task) => task !== null);
 
-      // For create/update, send full local data
-      // Ensure dates are Date objects (SQLite might return them as strings)
-      const data = {
-        ...localData,
-        createdAt: new Date(localData.createdAt),
-        updatedAt: new Date(localData.updatedAt),
-        completedAt: localData.completedAt
-          ? new Date(localData.completedAt)
-          : null,
-        archivedAt: localData.archivedAt
-          ? new Date(localData.archivedAt)
-          : null,
-        deletedAt: localData.deletedAt ? new Date(localData.deletedAt) : null,
-        dueDate: localData.dueDate ? new Date(localData.dueDate) : null,
-        lastSyncedAt: localData.lastSyncedAt
-          ? new Date(localData.lastSyncedAt)
-          : null,
-      };
-
-      return {
-        id: op.entityId,
-        operation: op.operation,
-        data,
-      };
-    });
+    // Skip API call if no valid tasks to sync
+    if (tasks.length === 0) {
+      console.log("No valid tasks to sync after filtering");
+      return;
+    }
 
     try {
       // Call tRPC sync.push endpoint
@@ -114,7 +182,9 @@ export class QueueProcessor {
 
       // Handle successful operations
       for (const success of result.successful) {
-        const queueItem = operations.find((op) => op.entityId === success.id);
+        const queueItem = validOperations.find(
+          (op) => op.entityId === success.id,
+        );
         if (queueItem) {
           await this.removeFromQueue(queueItem.id);
           console.log(`Successfully synced task ${success.id}`);
@@ -123,7 +193,9 @@ export class QueueProcessor {
 
       // Handle conflicts
       for (const conflict of result.conflicts) {
-        const queueItem = operations.find((op) => op.entityId === conflict.id);
+        const queueItem = validOperations.find(
+          (op) => op.entityId === conflict.id,
+        );
         if (queueItem) {
           await this.handleConflict(queueItem, conflict);
         }
@@ -131,7 +203,9 @@ export class QueueProcessor {
 
       // Handle failures
       for (const failure of result.failures) {
-        const queueItem = operations.find((op) => op.entityId === failure.id);
+        const queueItem = validOperations.find(
+          (op) => op.entityId === failure.id,
+        );
         if (queueItem) {
           await this.handleFailure(queueItem, failure.error);
         }
@@ -139,8 +213,8 @@ export class QueueProcessor {
     } catch (error) {
       console.error("Batch sync failed:", error);
 
-      // Increment retry count for all items
-      for (const operation of operations) {
+      // Increment retry count for all valid items
+      for (const operation of validOperations) {
         await this.incrementRetryCount(
           operation.id,
           error instanceof Error ? error.message : "Unknown error",
