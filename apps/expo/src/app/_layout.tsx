@@ -1,7 +1,6 @@
-import "react-native-gesture-handler";
-
 import { useEffect } from "react";
 import { Text, useColorScheme, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as TaskManager from "expo-task-manager";
@@ -106,26 +105,28 @@ export default function RootLayout() {
       </View>
     );
   }
-
+  console.log(colorScheme);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        {/*
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          {/*
             The Stack component displays the current page.
             It also allows you to configure your screens
           */}
-        <Stack
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: "#c03484",
-            },
-            contentStyle: {
-              backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
-            },
-          }}
-        />
-        <StatusBar />
-      </QueryClientProvider>
+          <Stack
+            screenOptions={{
+              headerStyle: {
+                backgroundColor: "#c03484",
+              },
+              contentStyle: {
+                backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
+              },
+            }}
+          />
+          <StatusBar />
+        </QueryClientProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

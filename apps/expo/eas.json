@@ -5,10 +5,10 @@
   },
   "build": {
     "base": {
-      "node": "22.12.0",
-      "pnpm": "9.15.4",
+      "node": "25.2.1",
+      "pnpm": "10.27.0",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://your-api-url.com"
+        "EXPO_PUBLIC_API_URL": "https://calayo.net/"
       },
       "ios": {
         "resourceClass": "m-medium"

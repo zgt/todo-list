@@ -2,7 +2,13 @@
   "expo": {
     "extra": {
       "eas": {
-        "projectId": "6d0e7e0f-6488-4df6-9eeb-fb34be7adaf3"
+        "projectId": "8d1cfb02-5da5-4ca3-8ca8-65ed8d802307"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.zgtf.todolist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     }
   }

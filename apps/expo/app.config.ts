@@ -15,20 +15,23 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   assetBundlePatterns: ["**/*"],
   ios: {
-    bundleIdentifier: "app.todolist",
+    bundleIdentifier: "com.zgtf.todolist",
     supportsTablet: true,
     icon: {
       light: "./assets/icon-light.png",
       dark: "./assets/icon-dark.png",
     },
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
   android: {
-    package: "app.todolist",
+    package: "com.zgtf.todolist",
     adaptiveIcon: {
       foregroundImage: "./assets/icon-light.png",
       backgroundColor: "#0A1A1A",
     },
-    edgeToEdgeEnabled: true,
+    // edgeToEdgeEnabled: true, // Commented out - causes type error with new architecture
   },
   extra: {
     eas: {
