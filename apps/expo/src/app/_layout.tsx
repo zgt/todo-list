@@ -32,9 +32,9 @@ export default function RootLayout() {
 
   // Removed manual init effect since useMigrations handles it
 
-  // Initialize sync system
+  // Initialize sync system only when authenticated
   useEffect(() => {
-    if (!dbReady) return;
+    if (!dbReady || !session) return;
 
     // Start network monitor and set sync callback
     networkMonitor.setSyncCallback(() => syncManager.fullSync());
@@ -59,7 +59,7 @@ export default function RootLayout() {
     return () => {
       networkMonitor.stop();
     };
-  }, [dbReady]);
+  }, [dbReady, session]);
 
   if (dbError) {
     console.log(dbError);

@@ -37,16 +37,23 @@ export function ProfileButton({ user, onPress }: ProfileButtonProps) {
       accessibilityHint="Open profile menu"
     >
       <Animated.View
-        style={animatedStyle}
-        className="h-10 w-10 overflow-hidden rounded-full border-2 border-white/20"
+        style={[
+          animatedStyle,
+          { width: 40, height: 40, overflow: "hidden", borderRadius: 20 },
+        ]}
+        className="border-2 border-white/20"
       >
         {user.image ? (
           <Image
             source={{ uri: user.image }}
-            className="h-full w-full"
+            style={{ width: 40, height: 40 }}
+            resizeMode="cover"
           />
         ) : (
-          <View className="bg-muted h-full w-full items-center justify-center">
+          <View
+            className="bg-muted items-center justify-center"
+            style={{ width: 40, height: 40 }}
+          >
             <RNText className="text-muted-foreground font-bold">
               {user.name?.charAt(0) ?? "?"}
             </RNText>

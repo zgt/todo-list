@@ -25,17 +25,13 @@ import { generateUUID } from "~/utils/uuid";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
-import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
+import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import CreateTask from "./_components/create-task";
 
-function Header({
-  onProfilePress,
-}: {
-  onProfilePress: () => void;
-}) {
+function Header({ onProfilePress }: { onProfilePress: () => void }) {
   const { data: session } = authClient.useSession();
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
@@ -112,10 +108,9 @@ function RefreshButton({
 }
 
 export default function Index() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [tasks, setTasks] = useState<LocalTask[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sheetBottom = useSharedValue(0);
@@ -131,12 +126,12 @@ export default function Index() {
 
   const { data: categories } = useLiveQuery(db.select().from(localCategory));
 
-  const formattedTasks = useMemo(() => {
+  const tasks = useMemo(() => {
     // Add safety checks for loading states
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!rawTasks) return [];
 
-    console.log(rawTasks);
+    console.log("📊 Raw tasks from DB:", rawTasks.length);
     return rawTasks.map((task) => {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const category = categories?.find((c) => c.id === task.categoryId);
@@ -148,7 +143,17 @@ export default function Index() {
       }
       return { ...task, category: null };
     });
-  }, [rawTasks, categories]);
+  }, [rawTasks, categories, refreshTrigger]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("🔍 Index component render:", {
+      sessionExists: !!session,
+      isPending,
+      tasksCount: tasks.length,
+      rawTasksCount: rawTasks?.length ?? 0,
+    });
+  }, [session, isPending, tasks, rawTasks]);
 
   // Track keyboard height and animate sheet position
   useEffect(() => {
@@ -175,29 +180,17 @@ export default function Index() {
   // Register sync completion callback to refresh UI
   useEffect(() => {
     const unsubscribe = syncManager.onSyncComplete(() => {
-      console.log("Sync completed, refreshing UI...");
-      // Trigger a state update to ensure UI refreshes
+      console.log("Sync completed, triggering UI refresh...");
+      // Trigger a re-computation of tasks memoization
       setRefreshTrigger((prev) => prev + 1);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Sync formatted tasks from live query to local state
-  useEffect(() => {
-    setTasks(formattedTasks);
-  }, [formattedTasks, refreshTrigger]);
-
   const handleToggle = async (id: string, completed: boolean) => {
     try {
-      // 1. Optimistically update local state for immediate visual feedback
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === id ? { ...task, completed, updatedAt: new Date() } : task,
-        ),
-      );
-
-      // 2. Update local DB
+      // Update local DB - live query will automatically update UI
       await db
         .update(localTask)
         .set({
@@ -208,29 +201,22 @@ export default function Index() {
         })
         .where(eq(localTask.id, id));
 
-      // 3. Queue for sync
+      // Queue for sync
       await syncManager.queueOperation("task", id, "update", { completed });
     } catch (error) {
       console.error("Failed to toggle task:", error);
-      // Revert optimistic update on error
-      setTasks(formattedTasks);
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
-      // 1. Optimistically update local state for immediate visual feedback
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-
-      // 2. Update local DB (hard delete to remove from UI instantly)
+      // Update local DB (hard delete to remove from UI instantly) - live query will update UI
       await db.delete(localTask).where(eq(localTask.id, id));
 
-      // 3. Queue for sync
+      // Queue for sync
       await syncManager.queueOperation("task", id, "delete", {});
     } catch (error) {
       console.error("Failed to delete task:", error);
-      // Revert optimistic update on error
-      setTasks(formattedTasks);
     }
   };
 
@@ -263,13 +249,10 @@ export default function Index() {
     };
 
     try {
-      // 1. Optimistically update local state for immediate visual feedback
-      setTasks((prevTasks) => [newTask, ...prevTasks]);
-
-      // 2. Insert into local DB
+      // Insert into local DB - live query will automatically update UI
       await db.insert(localTask).values(newTask);
 
-      // 3. Queue for sync
+      // Queue for sync
       await syncManager.queueOperation("task", newTaskId, "create", {
         id: newTaskId,
         title: title.trim(),
@@ -277,8 +260,6 @@ export default function Index() {
       });
     } catch (error) {
       console.error("Failed to create task:", error);
-      // Revert optimistic update on error
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== newTaskId));
       throw error;
     }
   };
@@ -301,6 +282,32 @@ export default function Index() {
     bottom: sheetBottom.value,
   }));
 
+  // Show loading state while session is pending
+  if (isPending) {
+    return (
+      <GradientBackground>
+        <SafeAreaView className="flex-1" edges={["top"]}>
+          <View className="flex-1 items-center justify-center">
+            <RNText className="text-foreground text-lg">Loading...</RNText>
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
+
+  // Guard against no session (shouldn't happen due to _layout guard, but defensive)
+  if (!session) {
+    return (
+      <GradientBackground>
+        <SafeAreaView className="flex-1" edges={["top"]}>
+          <View className="flex-1 items-center justify-center">
+            <RNText className="text-foreground text-lg">Please sign in</RNText>
+          </View>
+        </SafeAreaView>
+      </GradientBackground>
+    );
+  }
+
   return (
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
@@ -308,23 +315,25 @@ export default function Index() {
 
         <Header onProfilePress={() => setShowProfileMenu(true)} />
 
-        {tasks.length > 0 ? (
-          <SwipeableCardStack
-            tasks={tasks}
-            onToggle={handleToggle}
-            onComplete={(id) => handleToggle(id, true)}
-            onDelete={handleDelete}
-          />
-        ) : (
-          <View className="mt-10 items-center">
-            <RNText className="text-muted-foreground text-center italic">
-              No tasks yet. Tap + to create one!
-            </RNText>
-          </View>
-        )}
+        <View className="px-4">
+          {tasks.length > 0 ? (
+            <SwipeableCardStack
+              tasks={tasks}
+              onToggle={handleToggle}
+              onComplete={(id) => handleToggle(id, true)}
+              onDelete={handleDelete}
+            />
+          ) : (
+            <View className="mt-10 items-center">
+              <RNText className="text-muted-foreground text-center italic">
+                No tasks yet. Tap + to create one!
+              </RNText>
+            </View>
+          )}
+        </View>
 
-        {/* Temporary: Show CreateTask when creating is true, or just put it at bottom */}
-        <View className="flex-row items-center gap-4 px-4 pb-4">
+        {/* Bottom button bar */}
+        <View className="flex-row items-center gap-4 px-4 pt-4 pb-4">
           <View className="flex-1">
             <Categories />
           </View>

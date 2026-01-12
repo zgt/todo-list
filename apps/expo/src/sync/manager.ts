@@ -147,6 +147,10 @@ export class SyncManager {
         entityTypes: ["task"], // MVP: only tasks
       });
 
+      console.log(
+        `📥 Received ${serverChanges.tasks.length} tasks from server`,
+      );
+
       // Apply server changes to local database
       for (const task of serverChanges.tasks) {
         await this.applyServerTask(
@@ -170,10 +174,10 @@ export class SyncManager {
         .where(eq(syncMeta.key, "last_sync_timestamp"));
 
       console.log(
-        `Pull from server completed: ${serverChanges.tasks.length} tasks synced`,
+        `✅ Pull from server completed: ${serverChanges.tasks.length} tasks synced`,
       );
     } catch (error) {
-      console.error("Pull from server failed:", error);
+      console.error("❌ Pull from server failed:", error);
       throw error;
     }
   }
@@ -217,6 +221,7 @@ export class SyncManager {
       // New task from server
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await db.insert(localTask).values(localData);
+      console.log(`✅ Inserted new task from server: ${serverTask.id}`);
     } else {
       // Check for conflicts
       const existing = existingTask[0];
@@ -229,6 +234,7 @@ export class SyncManager {
           .update(localTask)
           .set(resolved)
           .where(eq(localTask.id, serverTask.id));
+        console.log(`🔄 Resolved conflict for task: ${serverTask.id}`);
       } else {
         // No conflict, apply server changes
         await db
@@ -236,6 +242,7 @@ export class SyncManager {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           .set(localData)
           .where(eq(localTask.id, serverTask.id));
+        console.log(`📝 Updated task from server: ${serverTask.id}`);
       }
     }
   }

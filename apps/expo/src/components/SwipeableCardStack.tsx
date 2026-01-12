@@ -59,11 +59,9 @@ export function SwipeableCardStack({
   const startIndex = Math.max(0, currentIndex - 1);
   const displayTasks = tasks.slice(startIndex, currentIndex + 3);
   const baseIndexOffset = currentIndex - startIndex; // Offset to calculate relative index
-
   return (
     <View
       style={{
-        flex: 1,
         alignItems: "center",
         justifyContent: "center",
         minHeight: SCREEN_HEIGHT * 0.7,
