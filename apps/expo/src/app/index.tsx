@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Image, Keyboard, Pressable, Text as RNText, View } from "react-native";
+import { Keyboard, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
   Easing,
   FadeIn,
@@ -26,29 +26,27 @@ import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import { ProfileButton } from "../components/ProfileButton";
+import { ProfileMenu } from "../components/ProfileMenu";
+import { SignInButton } from "../components/SignInButton";
 import CreateTask from "./_components/create-task";
 
-function Header() {
+function Header({
+  onProfilePress,
+}: {
+  onProfilePress: () => void;
+}) {
   const { data: session } = authClient.useSession();
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
       <RNText className="text-foreground text-4xl font-bold">
         Todo <RNText className="text-primary">list</RNText>
       </RNText>
-      <View className="h-10 w-10 overflow-hidden rounded-full border-2 border-white/20">
-        {session?.user.image ? (
-          <Image
-            source={{ uri: session.user.image }}
-            className="h-full w-full"
-          />
-        ) : (
-          <View className="bg-muted h-full w-full items-center justify-center">
-            <RNText className="text-muted-foreground font-bold">
-              {session?.user.name.charAt(0) ?? "?"}
-            </RNText>
-          </View>
-        )}
-      </View>
+      {session ? (
+        <ProfileButton user={session.user} onPress={onProfilePress} />
+      ) : (
+        <SignInButton />
+      )}
     </View>
   );
 }
@@ -116,6 +114,7 @@ function RefreshButton({
 export default function Index() {
   const { data: session } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [tasks, setTasks] = useState<LocalTask[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -307,7 +306,7 @@ export default function Index() {
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
-        <Header />
+        <Header onProfilePress={() => setShowProfileMenu(true)} />
 
         {tasks.length > 0 ? (
           <SwipeableCardStack
@@ -389,6 +388,15 @@ export default function Index() {
             </View>
           </Animated.View>
         </View>
+      )}
+
+      {/* Profile Menu */}
+      {session && (
+        <ProfileMenu
+          visible={showProfileMenu}
+          onClose={() => setShowProfileMenu(false)}
+          user={session.user}
+        />
       )}
     </GradientBackground>
   );

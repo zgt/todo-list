@@ -74,4 +74,5 @@ export function initAuth<
 }
 
 export type Auth = ReturnType<typeof initAuth>;
-export type Session = Auth["$Infer"]["Session"];
+export type Session = Auth["$Infer"]["Session"]["session"];
+export type User = Auth["$Infer"]["Session"]["user"];

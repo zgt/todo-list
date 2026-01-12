@@ -8,9 +8,13 @@ export const authClient = createAuthClient({
   baseURL: getBaseUrl(),
   plugins: [
     expoClient({
-      scheme: "expo",
+      scheme: "todolist",
       storagePrefix: "expo",
       storage: SecureStore,
     }),
   ],
 });
+
+export type Auth = typeof authClient;
+export type Session = Auth["$Infer"]["Session"];
+export type User = Session["user"];

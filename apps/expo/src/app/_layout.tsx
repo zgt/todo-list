@@ -11,6 +11,8 @@ import { registerBackgroundSync } from "~/sync/background-sync";
 import { syncManager } from "~/sync/manager";
 import { networkMonitor } from "~/sync/network-monitor";
 import { queryClient } from "~/utils/api";
+import { authClient } from "~/utils/auth";
+import { AuthGuard } from "~/components/AuthGuard";
 
 import "../styles.css";
 
@@ -26,6 +28,7 @@ import migrations from "../../drizzle/migrations";
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success: dbReady, error: dbError } = useMigrations(db, migrations);
+  const { data: session, isPending } = authClient.useSession();
 
   // Removed manual init effect since useMigrations handles it
 
@@ -104,6 +107,25 @@ export default function RootLayout() {
         </Text>
       </View>
     );
+  }
+
+  if (isPending) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text
+          style={{
+            color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
+            fontSize: 16,
+          }}
+        >
+          Checking authentication...
+        </Text>
+      </View>
+    );
+  }
+
+  if (!session) {
+    return <AuthGuard />;
   }
   console.log(colorScheme);
   return (
