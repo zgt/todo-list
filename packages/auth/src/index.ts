@@ -32,7 +32,8 @@ export function initAuth<
     plugins.push(
       oAuthProxy({
         productionURL: options.productionUrl,
-        currentURL: "expo://",
+        //currentURL: "todolist://", // Use app scheme for deep linking
+        currentURL: "http://localhost:3000", // Use app scheme for deep linking
       }),
     );
   }
@@ -52,12 +53,14 @@ export function initAuth<
         clientId: options.discordClientId,
         clientSecret: options.discordClientSecret,
         // Use baseUrl for local and production, it defaults to production on Vercel
-        redirectURI: `${options.baseUrl}/api/auth/callback/discord`,
+        redirectURI: `${options.productionUrl}/api/auth/callback/discord`,
       },
     },
     trustedOrigins: [
       "todolist://",
       "exp://",
+      "exp://**", // Wildcard for development (Expo Go)
+      "exp://192.168.*.*:*/**", // Wildcard for local network development
       "https://*.exp.direct",
       "http://localhost:*",
       options.productionUrl,

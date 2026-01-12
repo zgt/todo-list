@@ -50,6 +50,7 @@ export const auth = initAuth({
   discordClientId: env.AUTH_DISCORD_ID,
   discordClientSecret: env.AUTH_DISCORD_SECRET,
   extraPlugins: [nextCookies()],
+  enableOAuthProxy: true, // Enable OAuth proxy for Expo OAuth support
 });
 
 export const getSession = cache(async () =>

@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "todolist",
     "extra": {
       "eas": {
         "projectId": "8d1cfb02-5da5-4ca3-8ca8-65ed8d802307"
