@@ -12,14 +12,22 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
+// SQLite imports preserved for future offline work
 import { desc, eq, isNull, sql } from "drizzle-orm";
 import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { RefreshCw } from "lucide-react-native";
 
+// SQLite imports preserved for future offline work (unused currently)
 import type { LocalTask } from "~/db/client";
 import { db } from "~/db/client";
 import { localCategory, localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { TRPCClientErrorLike } from "@trpc/client";
+
+import type { AppRouter } from "@acme/api";
+
+import { useTRPC } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { generateUUID } from "~/utils/uuid";
 import { CategoryPill } from "../components/CategoryPill";
@@ -115,35 +123,39 @@ export default function Index() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sheetBottom = useSharedValue(0);
 
-  // Separate live queries to ensure reactivity triggers correctly (joins can sometimes be flaky with listeners)
-  const { data: rawTasks } = useLiveQuery(
-    db
-      .select()
-      .from(localTask)
-      .where(isNull(localTask.deletedAt))
-      .orderBy(desc(localTask.createdAt)),
+  // Get tRPC client
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  // Fetch tasks from server via tRPC
+  const { data: serverTasks, isLoading: isLoadingTasks, refetch } = useQuery(
+    trpc.task.all.queryOptions(undefined, {
+      enabled: !!session,
+    })
   );
 
-  const { data: categories } = useLiveQuery(db.select().from(localCategory));
-
   const tasks = useMemo(() => {
-    // Add safety checks for loading states
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!rawTasks) return [];
+    if (!serverTasks) return [];
 
-    console.log("📊 Raw tasks from DB:", rawTasks.length);
-    return rawTasks.map((task) => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      const category = categories?.find((c) => c.id === task.categoryId);
-      if (category) {
-        return {
-          ...task,
-          category: { name: category.name, color: category.color },
-        };
-      }
-      return { ...task, category: null };
-    });
-  }, [rawTasks, categories, refreshTrigger]);
+    console.log("📊 Tasks from server:", serverTasks.length);
+
+    // Server response already includes category relations
+    // Map to include fields expected by SwipeableCardStack (LocalTask type)
+    return serverTasks.map((task) => ({
+      ...task,
+      updatedAt: task.updatedAt ?? task.createdAt, // Ensure updatedAt is never null
+      category: task.category ? {
+        name: task.category.name,
+        color: task.category.color
+      } : null,
+      // Add sync-related fields for type compatibility (unused in server-only mode)
+      syncStatus: "synced" as const,
+      localVersion: task.version,
+      serverVersion: task.version,
+      lastSyncedAt: new Date(),
+      orderIndex: 0,
+    }));
+  }, [serverTasks, refreshTrigger]);
 
   // Debug logging
   useEffect(() => {
@@ -151,9 +163,10 @@ export default function Index() {
       sessionExists: !!session,
       isPending,
       tasksCount: tasks.length,
-      rawTasksCount: rawTasks?.length ?? 0,
+      serverTasksCount: serverTasks?.length ?? 0,
+      isLoadingTasks,
     });
-  }, [session, isPending, tasks, rawTasks]);
+  }, [session, isPending, tasks, serverTasks, isLoadingTasks]);
 
   // Track keyboard height and animate sheet position
   useEffect(() => {
@@ -177,101 +190,81 @@ export default function Index() {
     };
   }, [sheetBottom]);
 
-  // Register sync completion callback to refresh UI
-  useEffect(() => {
-    const unsubscribe = syncManager.onSyncComplete(() => {
-      console.log("Sync completed, triggering UI refresh...");
-      // Trigger a re-computation of tasks memoization
-      setRefreshTrigger((prev) => prev + 1);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  // tRPC mutation for toggling task completion
+  const toggleMutation = useMutation(
+    trpc.task.update.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.task.pathFilter());
+      },
+      onError: (error: TRPCClientErrorLike<AppRouter>) => {
+        console.error("Failed to toggle task:", error);
+      },
+    })
+  );
 
   const handleToggle = async (id: string, completed: boolean) => {
     try {
-      // Update local DB - live query will automatically update UI
-      await db
-        .update(localTask)
-        .set({
-          completed,
-          updatedAt: new Date(),
-          syncStatus: "pending",
-          localVersion: sql`${localTask.localVersion} + 1`,
-        })
-        .where(eq(localTask.id, id));
-
-      // Queue for sync
-      await syncManager.queueOperation("task", id, "update", { completed });
+      await toggleMutation.mutateAsync({ id, completed });
     } catch (error) {
-      console.error("Failed to toggle task:", error);
+      // Error already logged in onError
     }
   };
+
+  // tRPC mutation for deleting task
+  const deleteMutation = useMutation(
+    trpc.task.delete.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.task.pathFilter());
+      },
+      onError: (error: TRPCClientErrorLike<AppRouter>) => {
+        console.error("Failed to delete task:", error);
+      },
+    })
+  );
 
   const handleDelete = async (id: string) => {
     try {
-      // Update local DB (hard delete to remove from UI instantly) - live query will update UI
-      await db.delete(localTask).where(eq(localTask.id, id));
-
-      // Queue for sync
-      await syncManager.queueOperation("task", id, "delete", {});
+      await deleteMutation.mutateAsync(id);
     } catch (error) {
-      console.error("Failed to delete task:", error);
+      // Error already logged in onError
     }
   };
+
+  // tRPC mutation for creating task
+  const createMutation = useMutation(
+    trpc.task.create.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.task.pathFilter());
+      },
+      onError: (error: TRPCClientErrorLike<AppRouter>) => {
+        console.error("Failed to create task:", error);
+      },
+    })
+  );
 
   const handleCreate = async (title: string, description: string) => {
     if (!session?.user) {
       throw new Error("User not authenticated");
     }
 
-    const newTaskId = generateUUID();
-    const now = new Date();
-
-    const newTask: LocalTask = {
-      id: newTaskId,
-      userId: session.user.id,
-      title: title.trim(),
-      description: description.trim() || null,
-      completed: false,
-      createdAt: now,
-      completedAt: null,
-      archivedAt: null,
-      updatedAt: now,
-      deletedAt: null,
-      syncStatus: "pending",
-      lastSyncedAt: null,
-      localVersion: 1,
-      serverVersion: 0,
-      categoryId: null,
-      dueDate: null,
-      orderIndex: 0,
-    };
-
     try {
-      // Insert into local DB - live query will automatically update UI
-      await db.insert(localTask).values(newTask);
-
-      // Queue for sync
-      await syncManager.queueOperation("task", newTaskId, "create", {
-        id: newTaskId,
+      await createMutation.mutateAsync({
         title: title.trim(),
-        description: description.trim() || null,
+        description: description.trim() || undefined,
       });
     } catch (error) {
-      console.error("Failed to create task:", error);
-      throw error;
+      // Error already logged in onError
+      throw error; // Re-throw for CreateTask component
     }
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await syncManager.fullSync();
-      // UI updates automatically via onSyncComplete callback
+      await refetch();
+      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Manual refresh failed:", error);
-      // Silent failure acceptable - background sync will retry
     } finally {
       setIsRefreshing(false);
     }
@@ -282,13 +275,15 @@ export default function Index() {
     bottom: sheetBottom.value,
   }));
 
-  // Show loading state while session is pending
-  if (isPending) {
+  // Show loading state while session or tasks are loading
+  if (isPending || isLoadingTasks) {
     return (
       <GradientBackground>
         <SafeAreaView className="flex-1" edges={["top"]}>
           <View className="flex-1 items-center justify-center">
-            <RNText className="text-foreground text-lg">Loading...</RNText>
+            <RNText className="text-foreground text-lg">
+              {isPending ? "Loading..." : "Loading tasks..."}
+            </RNText>
           </View>
         </SafeAreaView>
       </GradientBackground>

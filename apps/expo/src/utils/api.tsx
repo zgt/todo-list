@@ -1,6 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { createTRPCContext } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
 
 import type { AppRouter } from "@acme/api";
@@ -45,10 +45,15 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
 });
 
 /**
- * A set of typesafe hooks for consuming your API.
+ * tRPC React Query hooks and provider for consuming your API in React components.
  */
-export const trpc = createTRPCOptionsProxy<AppRouter>({
-  client: createTRPCClient({
+export const { useTRPC, TRPCProvider } = createTRPCContext<AppRouter>();
+
+/**
+ * Create the tRPC client for React components
+ */
+export const createTrpcClient = () =>
+  createTRPCClient<AppRouter>({
     links: [
       loggerLink({
         enabled: (opts) =>
@@ -71,8 +76,6 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         },
       }),
     ],
-  }),
-  queryClient,
-});
+  });
 
 export type { RouterInputs, RouterOutputs } from "@acme/api";
