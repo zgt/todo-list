@@ -1,19 +1,18 @@
-import { useEffect, useState } from "react";
 import { Text, useColorScheme, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 // Sync imports preserved for future offline work
-import * as TaskManager from "expo-task-manager";
+//import * as TaskManager from "expo-task-manager";
 import { QueryClientProvider } from "@tanstack/react-query";
 
-import { db } from "~/db/client";
-import { registerBackgroundSync } from "~/sync/background-sync";
-import { syncManager } from "~/sync/manager";
-import { networkMonitor } from "~/sync/network-monitor";
-import { createTrpcClient, queryClient, TRPCProvider } from "~/utils/api";
-import { authClient } from "~/utils/auth";
 import { AuthGuard } from "~/components/AuthGuard";
+import { db } from "~/db/client";
+//import { registerBackgroundSync } from "~/sync/background-sync";
+//import { syncManager } from "~/sync/manager";
+//import { networkMonitor } from "~/sync/network-monitor";
+import { queryClient } from "~/utils/api";
+import { authClient } from "~/utils/auth";
 
 import "../styles.css";
 
@@ -30,7 +29,6 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const { success: dbReady, error: dbError } = useMigrations(db, migrations);
   const { data: session, isPending } = authClient.useSession();
-  const [trpcClient] = useState(() => createTrpcClient());
 
   // Removed manual init effect since useMigrations handles it
 
@@ -129,29 +127,26 @@ export default function RootLayout() {
   if (!session) {
     return <AuthGuard />;
   }
-  console.log(colorScheme);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-          <QueryClientProvider client={queryClient}>
-            {/*
-              The Stack component displays the current page.
-              It also allows you to configure your screens
-            */}
-            <Stack
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: "#c03484",
-                },
-                contentStyle: {
-                  backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
-                },
-              }}
-            />
-            <StatusBar />
-          </QueryClientProvider>
-        </TRPCProvider>
+        <QueryClientProvider client={queryClient}>
+          {/*
+            The Stack component displays the current page.
+            It also allows you to configure your screens
+          */}
+          <Stack
+            screenOptions={{
+              headerStyle: {
+                backgroundColor: "#c03484",
+              },
+              contentStyle: {
+                backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
+              },
+            }}
+          />
+          <StatusBar />
+        </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

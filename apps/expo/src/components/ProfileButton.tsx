@@ -1,4 +1,4 @@
-import { Image, Pressable, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import { Text as RNText } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -12,12 +12,33 @@ interface ProfileButtonProps {
   onPress: () => void;
 }
 
+const AVATAR_SIZE = 40;
+
+const styles = StyleSheet.create({
+  container: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    overflow: "hidden",
+    borderRadius: AVATAR_SIZE / 2,
+  },
+  image: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+  },
+  placeholder: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+  },
+});
+
 export function ProfileButton({ user, onPress }: ProfileButtonProps) {
   const scale = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const handlePressIn = () => {
     scale.value = withSpring(0.95);
@@ -37,22 +58,19 @@ export function ProfileButton({ user, onPress }: ProfileButtonProps) {
       accessibilityHint="Open profile menu"
     >
       <Animated.View
-        style={[
-          animatedStyle,
-          { width: 40, height: 40, overflow: "hidden", borderRadius: 20 },
-        ]}
+        style={[styles.container, animatedStyle]}
         className="border-2 border-white/20"
       >
         {user.image ? (
           <Image
             source={{ uri: user.image }}
-            style={{ width: 40, height: 40 }}
+            style={styles.image}
             resizeMode="cover"
           />
         ) : (
           <View
             className="bg-muted items-center justify-center"
-            style={{ width: 40, height: 40 }}
+            style={styles.placeholder}
           >
             <RNText className="text-muted-foreground font-bold">
               {user.name?.charAt(0) ?? "?"}

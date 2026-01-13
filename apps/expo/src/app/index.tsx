@@ -1,3 +1,4 @@
+import type { TRPCClientErrorLike } from "@trpc/client";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Keyboard, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
@@ -12,24 +13,22 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-// SQLite imports preserved for future offline work
-import { desc, eq, isNull, sql } from "drizzle-orm";
-import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { RefreshCw } from "lucide-react-native";
-
 // SQLite imports preserved for future offline work (unused currently)
-import type { LocalTask } from "~/db/client";
-import { db } from "~/db/client";
-import { localCategory, localTask } from "~/db/schema";
-import { syncManager } from "~/sync/manager";
+//import type { LocalTask } from "~/db/client";
+//import { db } from "~/db/client";
+//import { localCategory, localTask } from "~/db/schema";
+//import { syncManager } from "~/sync/manager";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { TRPCClientErrorLike } from "@trpc/client";
+// SQLite imports preserved for future offline work
+//import { desc, eq, isNull, sql } from "drizzle-orm";
+//import { useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
-import { useTRPC } from "~/utils/api";
+import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
-import { generateUUID } from "~/utils/uuid";
+//import { generateUUID } from "~/utils/uuid";
 import { CategoryPill } from "../components/CategoryPill";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
@@ -123,35 +122,35 @@ export default function Index() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sheetBottom = useSharedValue(0);
 
-  // Get tRPC client
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
 
   // Fetch tasks from server via tRPC
-  const taskQueryKey = [["task", "all"], { input: undefined, type: "query" }] as const;
-  const { data: serverTasks, isLoading: isLoadingTasks, refetch } = useQuery(
+  const {
+    data: serverTasks,
+    isLoading: isLoadingTasks,
+    refetch,
+  } = useQuery(
     trpc.task.all.queryOptions(undefined, {
       enabled: !!session,
-    })
+    }),
   );
 
+  // Use useMemo with only serverTasks dependency to ensure optimistic updates work
+  // while maintaining stable reference for other hooks
   const tasks = useMemo(() => {
-    if (!serverTasks) {
-      console.log("🔍 useMemo: serverTasks is null/undefined");
-      return [];
-    }
-
-    console.log("🔍 useMemo recalculating - serverTasks count:", serverTasks.length);
+    if (!serverTasks) return [];
 
     // Server response already includes category relations
     // Map to include fields expected by SwipeableCardStack (LocalTask type)
     return serverTasks.map((task: RouterOutputs["task"]["all"][number]) => ({
       ...task,
       updatedAt: task.updatedAt ?? task.createdAt, // Ensure updatedAt is never null
-      category: task.category ? {
-        name: task.category.name,
-        color: task.category.color
-      } : null,
+      category: task.category
+        ? {
+            name: task.category.name,
+            color: task.category.color,
+          }
+        : null,
       // Add sync-related fields for type compatibility (unused in server-only mode)
       syncStatus: "synced" as const,
       localVersion: task.version,
@@ -159,7 +158,7 @@ export default function Index() {
       lastSyncedAt: new Date(),
       orderIndex: 0,
     }));
-  }, [serverTasks, refreshTrigger]);
+  }, [serverTasks]); // Only depend on serverTasks, not refreshTrigger
 
   // Debug logging
   useEffect(() => {
@@ -199,46 +198,54 @@ export default function Index() {
     trpc.task.update.mutationOptions({
       onMutate: async (updatedTask) => {
         // Cancel outgoing refetches
-        await queryClient.cancelQueries({ queryKey: taskQueryKey });
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
         // Snapshot the previous value
-        const previousTasks = queryClient.getQueryData<RouterOutputs["task"]["all"]>(
-          taskQueryKey
-        );
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
 
         // Optimistically update the task
         if (previousTasks) {
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
-            taskQueryKey,
+            trpc.task.all.queryKey(),
             previousTasks.map((task) =>
               task.id === updatedTask.id
-                ? { ...task, completed: updatedTask.completed!, updatedAt: new Date() }
-                : task
-            )
+                ? {
+                    ...task,
+                    completed: updatedTask.completed!,
+                    updatedAt: new Date(),
+                  }
+                : task,
+            ),
           );
         }
 
         return { previousTasks };
       },
-      onError: (error: TRPCClientErrorLike<AppRouter>, updatedTask, context) => {
+      onError: (
+        error: TRPCClientErrorLike<AppRouter>,
+        updatedTask,
+        context,
+      ) => {
         // Rollback on error
         if (context?.previousTasks) {
           queryClient.setQueryData(
-            taskQueryKey,
-            context.previousTasks
+            trpc.task.all.queryKey(),
+            context.previousTasks,
           );
         }
         console.error("Failed to toggle task:", error);
         Alert.alert(
           "Failed to update task",
-          "Your task couldn't be updated. Please try again."
+          "Your task couldn't be updated. Please try again.",
         );
       },
       onSettled: async () => {
         // Always refetch after error or success to ensure consistency
-        await queryClient.invalidateQueries({ queryKey: taskQueryKey });
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
-    })
+    }),
   );
 
   const handleToggle = async (id: string, completed: boolean) => {
@@ -254,18 +261,18 @@ export default function Index() {
     trpc.task.delete.mutationOptions({
       onMutate: async (taskId) => {
         // Cancel outgoing refetches
-        await queryClient.cancelQueries({ queryKey: taskQueryKey });
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
         // Snapshot the previous value
-        const previousTasks = queryClient.getQueryData<RouterOutputs["task"]["all"]>(
-          taskQueryKey
-        );
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
 
         // Optimistically remove the task
         if (previousTasks) {
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
-            taskQueryKey,
-            previousTasks.filter((task) => task.id !== taskId)
+            trpc.task.all.queryKey(),
+            previousTasks.filter((task) => task.id !== taskId),
           );
         }
 
@@ -275,21 +282,21 @@ export default function Index() {
         // Rollback on error
         if (context?.previousTasks) {
           queryClient.setQueryData(
-            taskQueryKey,
-            context.previousTasks
+            trpc.task.all.queryKey(),
+            context.previousTasks,
           );
         }
         console.error("Failed to delete task:", error);
         Alert.alert(
           "Failed to delete task",
-          "Your task couldn't be deleted. Please try again."
+          "Your task couldn't be deleted. Please try again.",
         );
       },
       onSettled: async () => {
         // Always refetch after error or success to ensure consistency
-        await queryClient.invalidateQueries({ queryKey: taskQueryKey });
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
-    })
+    }),
   );
 
   const handleDelete = async (id: string) => {
@@ -306,12 +313,12 @@ export default function Index() {
       onMutate: async (newTask) => {
         console.log("🚀 onMutate called for create");
         // Cancel outgoing refetches
-        await queryClient.cancelQueries({ queryKey: taskQueryKey });
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
         // Snapshot the previous value
-        const previousTasks = queryClient.getQueryData<RouterOutputs["task"]["all"]>(
-          taskQueryKey
-        );
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
         console.log("📊 Previous tasks:", previousTasks?.length);
 
         // Optimistically update to the new value
@@ -336,17 +343,20 @@ export default function Index() {
           };
 
           const newTasks = [...previousTasks, optimisticTask];
-          console.log("✨ Setting optimistic task, new count:", newTasks.length);
+          console.log(
+            "✨ Setting optimistic task, new count:",
+            newTasks.length,
+          );
 
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
-            taskQueryKey,
-            newTasks
+            trpc.task.all.queryKey(),
+            newTasks,
           );
 
           // Verify it was set
-          const afterSet = queryClient.getQueryData<RouterOutputs["task"]["all"]>(
-            taskQueryKey
-          );
+          const afterSet = queryClient.getQueryData<
+            RouterOutputs["task"]["all"]
+          >(trpc.task.all.queryKey());
           console.log("✅ After set, task count:", afterSet?.length);
         } else {
           console.log("❌ No previous tasks found in cache!");
@@ -358,21 +368,21 @@ export default function Index() {
         // Rollback on error
         if (context?.previousTasks) {
           queryClient.setQueryData(
-            taskQueryKey,
-            context.previousTasks
+            trpc.task.all.queryKey(),
+            context.previousTasks,
           );
         }
         console.error("Failed to create task:", error);
         Alert.alert(
           "Failed to create task",
-          "Your task couldn't be created. Please try again."
+          "Your task couldn't be created. Please try again.",
         );
       },
       onSettled: async () => {
         // Always refetch after error or success to ensure consistency
-        await queryClient.invalidateQueries({ queryKey: taskQueryKey });
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
-    })
+    }),
   );
 
   const handleCreate = async (title: string, description: string) => {
