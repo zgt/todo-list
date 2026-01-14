@@ -9,4 +9,12 @@ export default defineConfig(
   },
   baseConfig,
   reactConfig,
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: {
+      // Disable immutability check for React Native Reanimated worklets
+      // Worklet functions (marked with "worklet" directive) need to modify shared values
+      "react-hooks/immutability": "off",
+    },
+  },
 );

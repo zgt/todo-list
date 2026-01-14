@@ -1,5 +1,5 @@
-import { View } from "react-native";
-import { Text as RNText } from "react-native";
+import { Text as RNText, View } from "react-native";
+
 import { GradientBackground } from "./GradientBackground";
 import { SignInButton } from "./SignInButton";
 

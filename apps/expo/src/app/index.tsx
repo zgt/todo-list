@@ -118,7 +118,7 @@ export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [_refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const sheetBottom = useSharedValue(0);
 
@@ -176,14 +176,14 @@ export default function Index() {
     const showSubscription = Keyboard.addListener("keyboardWillShow", (e) => {
       const height = e.endCoordinates.height;
       sheetBottom.value = withSpring(height, {
-        damping: 50,
-        stiffness: 400,
+        damping: 90,
+        stiffness: 900,
       });
     });
     const hideSubscription = Keyboard.addListener("keyboardWillHide", () => {
       sheetBottom.value = withSpring(0, {
-        damping: 50,
-        stiffness: 400,
+        damping: 90,
+        stiffness: 900,
       });
     });
 
@@ -213,7 +213,7 @@ export default function Index() {
               task.id === updatedTask.id
                 ? {
                     ...task,
-                    completed: updatedTask.completed!,
+                    completed: updatedTask.completed ?? false,
                     updatedAt: new Date(),
                   }
                 : task,
@@ -249,11 +249,7 @@ export default function Index() {
   );
 
   const handleToggle = async (id: string, completed: boolean) => {
-    try {
-      await toggleMutation.mutateAsync({ id, completed });
-    } catch (error) {
-      // Error already handled in onError
-    }
+    await toggleMutation.mutateAsync({ id, completed });
   };
 
   // tRPC mutation for deleting task with optimistic update
@@ -300,11 +296,7 @@ export default function Index() {
   );
 
   const handleDelete = async (id: string) => {
-    try {
-      await deleteMutation.mutateAsync(id);
-    } catch (error) {
-      // Error already handled in onError
-    }
+    await deleteMutation.mutateAsync(id);
   };
 
   // tRPC mutation for creating task with optimistic update
@@ -322,7 +314,7 @@ export default function Index() {
         console.log("📊 Previous tasks:", previousTasks?.length);
 
         // Optimistically update to the new value
-        if (previousTasks) {
+        if (previousTasks && session) {
           const optimisticTask: RouterOutputs["task"]["all"][number] = {
             id: `temp-${Date.now()}`, // Temporary ID
             title: newTask.title,
@@ -332,7 +324,7 @@ export default function Index() {
             dueDate: null,
             archivedAt: null,
             categoryId: null,
-            userId: session!.user.id,
+            userId: session.user.id,
             version: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -390,15 +382,10 @@ export default function Index() {
       throw new Error("User not authenticated");
     }
 
-    try {
-      await createMutation.mutateAsync({
-        title: title.trim(),
-        description: description.trim() || undefined,
-      });
-    } catch (error) {
-      // Error already handled in onError
-      throw error; // Re-throw for CreateTask component
-    }
+    await createMutation.mutateAsync({
+      title: title.trim(),
+      description: description.trim() || undefined,
+    });
   };
 
   const handleRefresh = async () => {
@@ -538,13 +525,11 @@ export default function Index() {
       )}
 
       {/* Profile Menu */}
-      {session && (
-        <ProfileMenu
-          visible={showProfileMenu}
-          onClose={() => setShowProfileMenu(false)}
-          user={session.user}
-        />
-      )}
+      <ProfileMenu
+        visible={showProfileMenu}
+        onClose={() => setShowProfileMenu(false)}
+        user={session.user}
+      />
     </GradientBackground>
   );
 }

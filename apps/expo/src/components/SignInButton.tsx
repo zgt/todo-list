@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ActivityIndicator, Alert, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
 import { LogIn } from "lucide-react-native";
+
 import { authClient } from "~/utils/auth";
 
 interface SignInButtonProps {
@@ -24,10 +25,12 @@ export function SignInButton({ size = "default" }: SignInButtonProps) {
   }));
 
   const handlePressIn = () => {
+    "worklet";
     scale.value = withSpring(0.95);
   };
 
   const handlePressOut = () => {
+    "worklet";
     scale.value = withSpring(1);
   };
 

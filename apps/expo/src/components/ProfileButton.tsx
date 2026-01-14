@@ -1,10 +1,16 @@
-import { Image, Pressable, StyleSheet, View } from "react-native";
-import { Text as RNText } from "react-native";
+import {
+  Image,
+  Pressable,
+  Text as RNText,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+
 import type { User } from "~/utils/auth";
 
 interface ProfileButtonProps {
@@ -41,10 +47,12 @@ export function ProfileButton({ user, onPress }: ProfileButtonProps) {
   });
 
   const handlePressIn = () => {
+    "worklet";
     scale.value = withSpring(0.95);
   };
 
   const handlePressOut = () => {
+    "worklet";
     scale.value = withSpring(1);
   };
 
@@ -73,7 +81,7 @@ export function ProfileButton({ user, onPress }: ProfileButtonProps) {
             style={styles.placeholder}
           >
             <RNText className="text-muted-foreground font-bold">
-              {user.name?.charAt(0) ?? "?"}
+              {user.name ? user.name.charAt(0) : "?"}
             </RNText>
           </View>
         )}
