@@ -1,6 +1,6 @@
 import { Pressable, Text as RNText, StyleSheet, View } from "react-native";
 import { BlurView } from "expo-blur";
-import { Calendar, Check, Trash2 } from "lucide-react-native";
+import { Check, Trash2 } from "lucide-react-native";
 
 import type { LocalTask } from "~/db/client";
 
@@ -36,15 +36,7 @@ export function TaskCard({
             {/* Category Pill */}
             {task.category && (
               <View
-                style={[
-                  styles.categoryPill,
-                  task.category.color
-                    ? {
-                        backgroundColor: `${task.category.color}20`, // 10% opacity
-                        borderColor: `${task.category.color}50`, // 30% opacity
-                      }
-                    : {},
-                ]}
+                style={[styles.categoryPill]}
                 className="self-start rounded-full border px-4 py-1.5"
               >
                 <RNText
@@ -63,7 +55,6 @@ export function TaskCard({
               className="flex-row items-center gap-1.5 px-1"
               style={{ opacity: task.dueDate ? 1 : 0 }}
             >
-              <Calendar size={14} className="opacity-60" color="white" />
               <RNText className="text-xs font-medium text-white/60">
                 {task.dueDate
                   ? new Intl.DateTimeFormat("en-US", {
@@ -153,7 +144,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
   },
   categoryPill: {
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
     borderColor: "rgba(16, 185, 129, 0.3)",
   },
 });

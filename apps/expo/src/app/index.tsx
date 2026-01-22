@@ -514,11 +514,12 @@ export default function Index() {
               sheetAnimatedStyle,
             ]}
           >
-            <View className="w-full rounded-t-3xl border-t border-white/10 bg-zinc-900 p-5 shadow-2xl">
+            <View className="w-full rounded-3xl border-t border-white/10 bg-zinc-900 p-5 shadow-2xl">
               <CreateTask
                 onCreate={handleCreate}
                 onSuccess={() => setIsCreating(false)}
               />
+              <View className="h-full w-full"></View>
             </View>
           </Animated.View>
         </View>
