@@ -29,7 +29,7 @@ import type { AppRouter, RouterOutputs } from "@acme/api";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
-import { CategoryPill } from "../components/CategoryPill";
+import { Categories } from "../components/Categories";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
@@ -50,24 +50,6 @@ function Header({ onProfilePress }: { onProfilePress: () => void }) {
       ) : (
         <SignInButton />
       )}
-    </View>
-  );
-}
-
-function Categories() {
-  const categories = ["All", "Work", "Chores", "Groceries"];
-  const [active, setActive] = useState("All");
-
-  return (
-    <View className="flex-row flex-wrap gap-3">
-      {categories.map((cat) => (
-        <CategoryPill
-          key={cat}
-          label={cat}
-          active={active === cat}
-          onPress={() => setActive(cat)}
-        />
-      ))}
     </View>
   );
 }
@@ -120,6 +102,9 @@ export default function Index() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [_refreshTrigger, setRefreshTrigger] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
   const sheetBottom = useSharedValue(0);
 
   const queryClient = useQueryClient();
@@ -159,6 +144,12 @@ export default function Index() {
       orderIndex: 0,
     }));
   }, [serverTasks]); // Only depend on serverTasks, not refreshTrigger
+
+  // Filter tasks by selected category
+  const filteredTasks = useMemo(() => {
+    if (selectedCategoryId === null) return tasks;
+    return tasks.filter((task) => task.categoryId === selectedCategoryId);
+  }, [tasks, selectedCategoryId]);
 
   // Debug logging
   useEffect(() => {
@@ -440,10 +431,10 @@ export default function Index() {
 
         <Header onProfilePress={() => setShowProfileMenu(true)} />
 
-        <View className="px-4">
-          {tasks.length > 0 ? (
+        <View className="px-4" style={{ minHeight: 600 }}>
+          {filteredTasks.length > 0 ? (
             <SwipeableCardStack
-              tasks={tasks}
+              tasks={filteredTasks}
               onToggle={handleToggle}
               onComplete={(id) => handleToggle(id, true)}
               onDelete={handleDelete}
@@ -451,7 +442,9 @@ export default function Index() {
           ) : (
             <View className="mt-10 items-center">
               <RNText className="text-muted-foreground text-center italic">
-                No tasks yet. Tap + to create one!
+                {tasks.length === 0
+                  ? "No tasks yet. Tap + to create one!"
+                  : "No tasks in this category."}
               </RNText>
             </View>
           )}
@@ -460,7 +453,10 @@ export default function Index() {
         {/* Bottom button bar */}
         <View className="flex-row items-center gap-4 px-4 pt-4 pb-4">
           <View className="flex-1">
-            <Categories />
+            <Categories
+              selectedCategoryId={selectedCategoryId}
+              onCategoryChange={setSelectedCategoryId}
+            />
           </View>
           <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
           <FAB onPress={() => setIsCreating(!isCreating)} />
