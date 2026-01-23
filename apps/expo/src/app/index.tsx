@@ -312,7 +312,7 @@ export default function Index() {
             description: newTask.description ?? null,
             completed: false,
             completedAt: null,
-            dueDate: null,
+            dueDate: newTask.dueDate ?? null,
             archivedAt: null,
             categoryId: newTask.categoryId ?? null,
             userId: session.user.id,
@@ -372,6 +372,7 @@ export default function Index() {
     title: string,
     description: string,
     categoryId: string | undefined,
+    dueDate: Date | undefined,
   ) => {
     if (!session?.user) {
       throw new Error("User not authenticated");
@@ -381,6 +382,7 @@ export default function Index() {
       title: title.trim(),
       description: description.trim() || undefined,
       categoryId,
+      dueDate,
     });
   };
 

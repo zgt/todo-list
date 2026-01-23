@@ -232,11 +232,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   pill: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    height: 44,
+    justifyContent: "center",
     borderRadius: 9999,
     borderWidth: 2,
-    minWidth: 100,
+    minWidth: 80,
     alignItems: "center",
   },
   pillText: {

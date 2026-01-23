@@ -3,12 +3,14 @@ import { Pressable, TextInput, View } from "react-native";
 import { Send } from "lucide-react-native";
 
 import { CategoryWheelPicker } from "~/components/CategoryWheelPicker";
+import { DatePickerPill } from "~/components/DatePickerPill";
 
 interface CreateTaskProps {
   onCreate: (
     title: string,
     description: string,
     categoryId: string | undefined,
+    dueDate: Date | undefined,
   ) => Promise<void>;
   onSuccess?: () => void;
 }
@@ -19,6 +21,7 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -29,14 +32,16 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
     const taskTitle = title;
     const taskDescription = description;
     const taskCategoryId = selectedCategoryId ?? undefined;
+    const taskDueDate = selectedDate ?? undefined;
     setTitle("");
     setDescription("");
     setSelectedCategoryId(null);
+    setSelectedDate(null);
     onSuccess?.();
 
     // Create task in background (optimistic update already happened in parent)
     try {
-      await onCreate(taskTitle, taskDescription, taskCategoryId);
+      await onCreate(taskTitle, taskDescription, taskCategoryId, taskDueDate);
     } catch (e) {
       console.error("Failed to create task:", e);
       // Error handling is managed by the parent's optimistic update rollback
@@ -51,7 +56,7 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
             className="p-0 text-xl leading-tight font-medium text-white"
             value={title}
             onChangeText={setTitle}
-            placeholder="What needs to be done?"
+            placeholder="Title"
             placeholderTextColor="#71717A"
             autoFocus
             selectionColor="#10B981"
@@ -63,28 +68,39 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
             placeholder="Description (optional)"
             placeholderTextColor="#52525B"
             multiline
-            numberOfLines={2}
+            numberOfLines={1}
             selectionColor="#10B981"
           />
         </View>
 
-        {/* Category Picker */}
-        <View>
+        {/* Category and Date Pickers */}
+        <View className="flex-row items-end gap-2">
           <CategoryWheelPicker
             selectedCategoryId={selectedCategoryId}
             onCategoryChange={setSelectedCategoryId}
           />
+          <DatePickerPill
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
         </View>
 
-        <View className="justify-end">
+        <View
+          className="items-center justify-end"
+          style={{
+            borderRadius: 9999,
+            borderWidth: 2,
+            borderColor: "#8FA8A8",
+          }}
+        >
           <Pressable
             onPress={handleCreate}
-            className={`h-10 w-10 items-center justify-center rounded-full ${
+            className={`h-11 w-11 items-center justify-center rounded-full ${
               title.trim() ? "bg-emerald-500" : "bg-zinc-800"
             }`}
             disabled={!title.trim()}
           >
-            <Send size={20} color={title.trim() ? "#fff" : "#fff"} />
+            <Send size={18} color={title.trim() ? "#fff" : "#fff"} />
           </Pressable>
         </View>
       </View>
