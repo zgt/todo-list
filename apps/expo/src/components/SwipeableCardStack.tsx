@@ -104,9 +104,9 @@ export function SwipeableCardStack({
             onDeletePending={() => setDeletePendingId(task.id)}
             onCancelDelete={() => setDeletePendingId(null)}
             onEditStart={() => handleEditStart(task.id)}
-            onSave={(updates: Partial<{ title: string; description: string }>) =>
-              handleSave(task.id, updates)
-            }
+            onSave={(
+              updates: Partial<{ title: string; description: string }>,
+            ) => handleSave(task.id, updates)}
             onCancelEdit={handleCancelEdit}
             onNext={handleNext}
             onPrevious={handlePrevious}

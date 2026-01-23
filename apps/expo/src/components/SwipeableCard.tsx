@@ -194,7 +194,10 @@ export function SwipeableCard({
           // Up swipe logic
           if (isEditing) {
             // Edit mode: Swipe up to SAVE
-            runOnJS(onSave)({ title: title.trim(), description: description.trim() });
+            runOnJS(onSave)({
+              title: title.trim(),
+              description: description.trim(),
+            });
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
           } else if (task.completed) {

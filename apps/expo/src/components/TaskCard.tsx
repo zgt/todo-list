@@ -1,4 +1,10 @@
-import { Pressable, Text as RNText, StyleSheet, TextInput, View } from "react-native";
+import {
+  Pressable,
+  Text as RNText,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { BlurView } from "expo-blur";
 import { Check, Save, Trash2 } from "lucide-react-native";
 
