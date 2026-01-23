@@ -314,7 +314,7 @@ export default function Index() {
             completedAt: null,
             dueDate: null,
             archivedAt: null,
-            categoryId: null,
+            categoryId: newTask.categoryId ?? null,
             userId: session.user.id,
             version: 0,
             createdAt: new Date(),
@@ -322,7 +322,7 @@ export default function Index() {
             deletedAt: null,
             lastSyncedAt: null,
             orderIndex: 0,
-            category: null,
+            category: null, // Category details will be filled in after server response
           };
 
           const newTasks = [...previousTasks, optimisticTask];
@@ -368,7 +368,11 @@ export default function Index() {
     }),
   );
 
-  const handleCreate = async (title: string, description: string) => {
+  const handleCreate = async (
+    title: string,
+    description: string,
+    categoryId: string | undefined,
+  ) => {
     if (!session?.user) {
       throw new Error("User not authenticated");
     }
@@ -376,6 +380,7 @@ export default function Index() {
     await createMutation.mutateAsync({
       title: title.trim(),
       description: description.trim() || undefined,
+      categoryId,
     });
   };
 

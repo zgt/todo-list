@@ -2,14 +2,23 @@ import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import { Send } from "lucide-react-native";
 
+import { CategoryWheelPicker } from "~/components/CategoryWheelPicker";
+
 interface CreateTaskProps {
-  onCreate: (title: string, description: string) => Promise<void>;
+  onCreate: (
+    title: string,
+    description: string,
+    categoryId: string | undefined,
+  ) => Promise<void>;
   onSuccess?: () => void;
 }
 
 export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -19,13 +28,15 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
     // Clear form and close modal immediately for instant feedback
     const taskTitle = title;
     const taskDescription = description;
+    const taskCategoryId = selectedCategoryId ?? undefined;
     setTitle("");
     setDescription("");
+    setSelectedCategoryId(null);
     onSuccess?.();
 
     // Create task in background (optimistic update already happened in parent)
     try {
-      await onCreate(taskTitle, taskDescription);
+      await onCreate(taskTitle, taskDescription, taskCategoryId);
     } catch (e) {
       console.error("Failed to create task:", e);
       // Error handling is managed by the parent's optimistic update rollback
@@ -54,6 +65,14 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
             multiline
             numberOfLines={2}
             selectionColor="#10B981"
+          />
+        </View>
+
+        {/* Category Picker */}
+        <View>
+          <CategoryWheelPicker
+            selectedCategoryId={selectedCategoryId}
+            onCategoryChange={setSelectedCategoryId}
           />
         </View>
 
