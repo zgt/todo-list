@@ -243,6 +243,68 @@ export default function Index() {
     await toggleMutation.mutateAsync({ id, completed });
   };
 
+  // tRPC mutation for generic task updates
+  const updateMutation = useMutation(
+    trpc.task.update.mutationOptions({
+      onMutate: async (updatedTask) => {
+        // Cancel outgoing refetches
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+
+        // Snapshot the previous value
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
+
+        // Optimistically update the task
+        if (previousTasks) {
+          queryClient.setQueryData<RouterOutputs["task"]["all"]>(
+            trpc.task.all.queryKey(),
+            previousTasks.map((task) =>
+              task.id === updatedTask.id
+                ? {
+                    ...task,
+                    ...updatedTask,
+                    updatedAt: new Date(),
+                  }
+                : task,
+            ),
+          );
+        }
+
+        return { previousTasks };
+      },
+      onError: (
+        error: TRPCClientErrorLike<AppRouter>,
+        updatedTask,
+        context,
+      ) => {
+        // Rollback on error
+        if (context?.previousTasks) {
+          queryClient.setQueryData(
+            trpc.task.all.queryKey(),
+            context.previousTasks,
+          );
+        }
+        console.error("Failed to update task:", error);
+        Alert.alert(
+          "Failed to update task",
+          "Your task couldn't be updated. Please try again.",
+        );
+      },
+      onSettled: async () => {
+        // Always refetch after error or success to ensure consistency
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+      },
+    }),
+  );
+
+  const handleUpdate = async (
+    id: string,
+    updates: Partial<{ title: string; description: string }>,
+  ) => {
+    await updateMutation.mutateAsync({ id, ...updates });
+  };
+
   // tRPC mutation for deleting task with optimistic update
   const deleteMutation = useMutation(
     trpc.task.delete.mutationOptions({
@@ -445,6 +507,7 @@ export default function Index() {
               onToggle={handleToggle}
               onComplete={(id) => handleToggle(id, true)}
               onDelete={handleDelete}
+              onUpdate={handleUpdate}
             />
           ) : (
             <View className="mt-10 items-center">

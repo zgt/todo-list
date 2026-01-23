@@ -1,6 +1,6 @@
-import { Pressable, Text as RNText, StyleSheet, View } from "react-native";
+import { Pressable, Text as RNText, StyleSheet, TextInput, View } from "react-native";
 import { BlurView } from "expo-blur";
-import { Check, Trash2 } from "lucide-react-native";
+import { Check, Save, Trash2 } from "lucide-react-native";
 
 import type { LocalTask } from "~/db/client";
 
@@ -9,6 +9,12 @@ interface TaskCardProps {
   onToggle: () => void;
   onDelete: () => void;
   deletePending: boolean;
+  isEditing: boolean;
+  onSave: (updates: Partial<{ title: string; description: string }>) => void;
+  title: string;
+  description: string;
+  onChangeTitle: (text: string) => void;
+  onChangeDescription: (text: string) => void;
 }
 
 export function TaskCard({
@@ -16,13 +22,27 @@ export function TaskCard({
   onToggle,
   onDelete,
   deletePending,
+  isEditing,
+  onSave,
+  title,
+  description,
+  onChangeTitle,
+  onChangeDescription,
 }: TaskCardProps) {
+  // Local state removed in favor of controlled props from SwipeableCard
+
+  const handleSave = () => {
+    if (title.trim()) {
+      onSave({ title: title.trim(), description: description.trim() });
+    }
+  };
   return (
     <View
       style={[
         styles.cardContainer,
         task.completed ? styles.cardCompleted : styles.cardDefault,
         deletePending && styles.cardDeletePending,
+        isEditing && styles.cardEditing,
       ]}
       className="mb-3 overflow-hidden rounded-2xl"
     >
@@ -66,14 +86,22 @@ export function TaskCard({
             </View>
           </View>
 
-          <Pressable onPress={onToggle}>
+          <Pressable onPress={isEditing ? handleSave : onToggle}>
             <View
               className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
-                task.completed ? "bg-primary border-primary" : "border-white/30"
+                isEditing
+                  ? "bg-primary border-primary"
+                  : task.completed
+                    ? "bg-primary border-primary"
+                    : "border-white/30"
               }`}
             >
-              {task.completed && (
-                <Check size={20} color="#0A1A1A" strokeWidth={3} />
+              {isEditing ? (
+                <Save size={18} color="#0A1A1A" strokeWidth={3} />
+              ) : (
+                task.completed && (
+                  <Check size={20} color="#0A1A1A" strokeWidth={3} />
+                )
               )}
             </View>
           </Pressable>
@@ -81,17 +109,41 @@ export function TaskCard({
 
         {/* Middle: Title and Description */}
         <View className="flex-1 justify-center gap-2">
-          <RNText
-            className={`text-4xl leading-tight font-bold ${
-              task.completed ? "text-white/70" : "text-white"
-            }`}
-          >
-            {task.title}
-          </RNText>
-          {task.description && (
-            <RNText className="text-lg leading-relaxed text-white/60">
-              {task.description}
-            </RNText>
+          {isEditing ? (
+            <>
+              <TextInput
+                value={title}
+                onChangeText={onChangeTitle}
+                className="mb-2 border-b-2 border-white/50 bg-black/20 p-2 text-4xl leading-tight font-bold text-white"
+                placeholder="Task Title"
+                autoFocus
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+              />
+              <TextInput
+                value={description}
+                onChangeText={onChangeDescription}
+                className="border-b-2 border-white/50 bg-black/20 p-2 text-lg leading-relaxed text-white/90"
+                placeholder="Description (optional)"
+                placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                multiline
+                textAlignVertical="top"
+              />
+            </>
+          ) : (
+            <>
+              <RNText
+                className={`text-4xl leading-tight font-bold ${
+                  task.completed ? "text-white/70" : "text-white"
+                }`}
+              >
+                {task.title}
+              </RNText>
+              {task.description && (
+                <RNText className="text-lg leading-relaxed text-white/60">
+                  {task.description}
+                </RNText>
+              )}
+            </>
           )}
         </View>
 
@@ -141,6 +193,13 @@ const styles = StyleSheet.create({
     borderColor: "rgba(239, 68, 68, 0.6)", // Red-500
     backgroundColor: "rgba(239, 68, 68, 0.1)",
     shadowColor: "#ef4444",
+    shadowOpacity: 0.2,
+  },
+  cardEditing: {
+    borderWidth: 2,
+    borderColor: "rgba(249, 115, 22, 0.6)", // Orange-500
+    backgroundColor: "rgba(249, 115, 22, 0.1)",
+    shadowColor: "#f97316",
     shadowOpacity: 0.2,
   },
   categoryPill: {

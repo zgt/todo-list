@@ -12,6 +12,10 @@ interface SwipeableCardStackProps {
   onToggle: (id: string, completed: boolean) => void;
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
+  onUpdate: (
+    id: string,
+    updates: Partial<{ title: string; description: string }>,
+  ) => void;
 }
 
 export function SwipeableCardStack({
@@ -19,9 +23,11 @@ export function SwipeableCardStack({
   onToggle,
   onComplete,
   onDelete,
+  onUpdate,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
 
   if (tasks.length === 0) {
@@ -39,8 +45,19 @@ export function SwipeableCardStack({
   };
 
   const handleEditStart = (taskId: string) => {
-    // TODO: Implement edit mode
-    console.log("Edit mode triggered for task:", taskId);
+    setEditingId(taskId);
+  };
+
+  const handleSave = (
+    taskId: string,
+    updates: Partial<{ title: string; description: string }>,
+  ) => {
+    onUpdate(taskId, updates);
+    setEditingId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
   };
 
   const handleNext = () => {
@@ -80,12 +97,17 @@ export function SwipeableCardStack({
             canGoPrevious={currentIndex > 0}
             swipeProgress={swipeProgress}
             deletePending={deletePendingId === task.id}
+            isEditing={editingId === task.id}
             onToggle={() => onToggle(task.id, !task.completed)}
             onComplete={() => handleComplete(task.id)}
             onDelete={() => handleDelete(task.id)}
             onDeletePending={() => setDeletePendingId(task.id)}
             onCancelDelete={() => setDeletePendingId(null)}
             onEditStart={() => handleEditStart(task.id)}
+            onSave={(updates: Partial<{ title: string; description: string }>) =>
+              handleSave(task.id, updates)
+            }
+            onCancelEdit={handleCancelEdit}
             onNext={handleNext}
             onPrevious={handlePrevious}
           />

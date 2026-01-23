@@ -1,5 +1,5 @@
 import type { SharedValue } from "react-native-reanimated";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Dimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -39,6 +39,9 @@ interface SwipeableCardProps {
   onDeletePending: () => void;
   onCancelDelete: () => void;
   onEditStart: () => void;
+  onSave: (updates: Partial<{ title: string; description: string }>) => void;
+  onCancelEdit: () => void;
+  isEditing: boolean;
   onNext: () => void;
   onPrevious: () => void;
 }
@@ -58,6 +61,9 @@ export function SwipeableCard({
   onDeletePending,
   onCancelDelete,
   onEditStart,
+  onSave,
+  onCancelEdit,
+  isEditing,
   onNext,
   onPrevious,
 }: SwipeableCardProps) {
@@ -65,10 +71,21 @@ export function SwipeableCard({
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
   const direction = useSharedValue<SwipeDirection>(null);
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description ?? "");
+
+  // Reset local state when task changes or edit mode ends
+  useEffect(() => {
+    if (!isEditing) {
+      setTitle(task.title);
+      setDescription(task.description ?? "");
+    }
+  }, [task.title, task.description, isEditing]);
+
+  // Animated values for stacking effect
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
 
-  // Animated values for stacking effect
   const stackTranslateY = useSharedValue(-index * 18);
   const stackScale = useSharedValue(1 - index * 0.05);
   const stackOpacity = useSharedValue(1 - index * 0.15);
@@ -101,6 +118,7 @@ export function SwipeableCard({
   }, [index, stackTranslateY, stackScale, stackOpacity]);
 
   const panGesture = Gesture.Pan()
+    // .enabled(!isEditing) // Enable gestures during edit for save/cancel actions
     .onStart(() => {
       startX.value = translateX.value;
       startY.value = translateY.value;
@@ -174,7 +192,12 @@ export function SwipeableCard({
           (event.translationY < 0 && velocityY > SWIPE_VELOCITY)
         ) {
           // Up swipe logic
-          if (task.completed) {
+          if (isEditing) {
+            // Edit mode: Swipe up to SAVE
+            runOnJS(onSave)({ title: title.trim(), description: description.trim() });
+            translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+            translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+          } else if (task.completed) {
             // If task is completed, handle delete logic
             if (deletePending) {
               // Second swipe - actually delete
@@ -194,11 +217,16 @@ export function SwipeableCard({
           (event.translationY > 0 && velocityY > SWIPE_VELOCITY)
         ) {
           // Down swipe
-          if (deletePending) {
+          if (isEditing) {
+            // Edit mode: Swipe down to CANCEL
+            runOnJS(onCancelEdit)();
+            translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+            translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+          } else if (deletePending) {
             // Cancel delete mode
             runOnJS(onCancelDelete)();
           } else {
-            // Edit mode (placeholder)
+            // Edit mode start
             runOnJS(onEditStart)();
           }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -336,6 +364,12 @@ export function SwipeableCard({
           onToggle={onToggle}
           onDelete={onDelete}
           deletePending={deletePending}
+          isEditing={isEditing}
+          onSave={onSave}
+          title={title}
+          description={description}
+          onChangeTitle={setTitle}
+          onChangeDescription={setDescription}
         />
         <SwipeOverlay
           direction={direction}
