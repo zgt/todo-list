@@ -7,10 +7,6 @@ import Constants from "expo-constants";
  */
 export const getBaseUrl = () => {
   // Use environment variable for production builds (set in eas.json)
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-  if (apiUrl) {
-    return apiUrl.replace(/\/$/, ""); // Remove trailing slash if present
-  }
 
   // Development: use debugger host
   const debuggerHost = Constants.expoConfig?.hostUri;
