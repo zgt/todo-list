@@ -32,8 +32,7 @@ export function initAuth<
     plugins.push(
       oAuthProxy({
         productionURL: options.productionUrl,
-        //currentURL: "todolist://", // Use app scheme for deep linking
-        currentURL: "http://localhost:3000", // Use app scheme for deep linking
+        currentURL: options.baseUrl,
       }),
     );
   }
