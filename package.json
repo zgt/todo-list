@@ -1,5 +1,5 @@
 {
-  "name": "todolist",
+  "name": "tokilist",
   "private": true,
   "engines": {
     "node": "^25.2.1",

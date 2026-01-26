@@ -1,6 +1,6 @@
 # Design System & Visual Language
 
-> A comprehensive design system for the Todo List cross-platform app (Next.js + Expo)
+> A comprehensive design system for the Tokilist cross-platform app (Next.js + Expo)
 
 ## Design Philosophy
 

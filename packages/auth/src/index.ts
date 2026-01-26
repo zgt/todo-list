@@ -56,7 +56,7 @@ export function initAuth<
       },
     },
     trustedOrigins: [
-      "todolist://",
+      "tokilist://",
       "exp://",
       "exp://**", // Wildcard for development (Expo Go)
       "exp://192.168.*.*:*/**", // Wildcard for local network development

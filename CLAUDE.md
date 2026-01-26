@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Turborepo monorepo for a cross-platform todo list application with web (Next.js) and mobile (Expo) clients sharing a common tRPC API backend. The stack uses:
+This is a Turborepo monorepo for a cross-platform Tokilist application with web (Next.js) and mobile (Expo) clients sharing a common tRPC API backend. The stack uses:
 
 - **Turborepo** for monorepo management
 - **Next.js 15** with React 19 for web
@@ -128,10 +128,10 @@ pnpm build:prod:android # Google Play Store
 ```
 
 **App Configuration:**
-- **Bundle ID (iOS):** `app.todolist`
-- **Package Name (Android):** `app.todolist`
-- **App Name:** Todo List
-- **Scheme:** `todolist://`
+- **Bundle ID (iOS):** `com.zgtf.tokilist`
+- **Package Name (Android):** `com.zgtf.tokilist`
+- **App Name:** Tokilist
+- **Scheme:** `tokilist://`
 
 ## Architecture
 

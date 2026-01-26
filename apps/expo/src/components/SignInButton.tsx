@@ -41,7 +41,7 @@ export function SignInButton({ size = "default" }: SignInButtonProps) {
     try {
       await authClient.signIn.social({
         provider: "discord",
-        callbackURL: "todolist://",
+        callbackURL: "tokilist://",
       });
       // OAuth flow will redirect to Discord, then back to app
       // Session will update automatically via authClient.useSession()
