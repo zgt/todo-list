@@ -19,13 +19,13 @@ export const metadata: Metadata = {
       ? "https://calayo.net"
       : "http://localhost:3000",
   ),
-  title: "Todo List",
+  title: "Tokilist",
   description: "Simple monorepo with shared backend for web & mobile apps",
   openGraph: {
-    title: "Todo List",
+    title: "Tokilist",
     description: "Simple monorepo with shared backend for web & mobile apps",
     url: "https://calayo.net",
-    siteName: "Todo List",
+    siteName: "Tokilist",
   },
   twitter: {
     card: "summary_large_image",

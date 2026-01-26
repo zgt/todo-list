@@ -55,7 +55,7 @@ export default async function HomePage() {
                     ) : (
                       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
                         <h2 className="mb-2 text-2xl font-bold text-white">
-                          Welcome to Todo List
+                          Welcome to Tokilist
                         </h2>
                         <p className="text-muted-foreground mb-6">
                           Please sign in to manage your tasks

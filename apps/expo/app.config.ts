@@ -2,9 +2,9 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "Todo List",
-  slug: "todolist",
-  scheme: "todolist",
+  name: "Tokilist",
+  slug: "tokilist",
+  scheme: "tokilist",
   version: "0.1.0",
   orientation: "portrait",
   icon: "./assets/icon-light.png",
@@ -15,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   newArchEnabled: true,
   assetBundlePatterns: ["**/*"],
   android: {
-    package: "com.zgtf.todolist",
+    package: "com.zgtf.tokilist",
     adaptiveIcon: {
       foregroundImage: "./assets/icon-light.png",
       backgroundColor: "#0A1A1A",

@@ -1,4 +1,4 @@
-# Todo List App
+# Tokilist App
 
 > [!NOTE]
 >
