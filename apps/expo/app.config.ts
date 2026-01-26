@@ -14,17 +14,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   newArchEnabled: true,
   assetBundlePatterns: ["**/*"],
-  ios: {
-    bundleIdentifier: "com.zgtf.todolist",
-    supportsTablet: true,
-    icon: {
-      light: "./assets/icon-light.png",
-      dark: "./assets/icon-dark.png",
-    },
-    infoPlist: {
-      ITSAppUsesNonExemptEncryption: false,
-    },
-  },
   android: {
     package: "com.zgtf.todolist",
     adaptiveIcon: {
@@ -60,5 +49,27 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    [
+      "react-native-widget-extension",
+      {
+        widgetsFolder: "widgets",
+        deploymentTarget: "17.0",
+        groupIdentifier: "group.com.zgtf.todolist",
+      },
+    ],
   ],
+  ios: {
+    bundleIdentifier: "com.zgtf.todolist",
+    supportsTablet: true,
+    icon: {
+      light: "./assets/icon-light.png",
+      dark: "./assets/icon-dark.png",
+    },
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
+    entitlements: {
+      "com.apple.security.application-groups": ["group.com.zgtf.todolist"],
+    },
+  },
 });

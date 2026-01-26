@@ -26,6 +26,7 @@ import { RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
+import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
@@ -150,6 +151,9 @@ export default function Index() {
     if (selectedCategoryId === null) return tasks;
     return tasks.filter((task) => task.categoryId === selectedCategoryId);
   }, [tasks, selectedCategoryId]);
+
+  // Sync tasks to iOS widget whenever they change
+  useWidgetSync(tasks, !!session);
 
   // Debug logging
   useEffect(() => {
