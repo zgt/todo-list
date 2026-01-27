@@ -53,12 +53,13 @@ export function updateWidget(tasks: WidgetTask[]): void {
   }
 
   try {
-    // Filter to show only incomplete tasks, limited to 10
-    const incompleteTasks = tasks
-      .filter((task) => !task.completed)
+    // Sort tasks: incomplete first, then completed (for large widget display)
+    // Limit to 10 tasks total
+    const sortedTasks = [...tasks]
+      .sort((a, b) => Number(a.completed) - Number(b.completed))
       .slice(0, 10);
 
-    const widgetTasks: WidgetTaskItem[] = incompleteTasks.map((task) => ({
+    const widgetTasks: WidgetTaskItem[] = sortedTasks.map((task) => ({
       id: task.id,
       title: task.title,
       completed: task.completed,
@@ -88,7 +89,7 @@ export function updateWidget(tasks: WidgetTask[]): void {
     const success = setSharedData("widgetData", jsonData, APP_GROUP_ID);
 
     if (success) {
-      console.log("[Widget] Updated with", widgetTasks.length, "pending tasks");
+      console.log("[Widget] Updated with", widgetTasks.length, "tasks");
     } else {
       console.warn(
         "[Widget] setSharedData returned false - data may not have been written",

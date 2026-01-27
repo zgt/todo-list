@@ -80,9 +80,9 @@ struct TodoWidgetProvider: TimelineProvider {
         case .systemSmall:
             return 2
         case .systemMedium:
-            return 3
+            return 5
         case .systemLarge:
-            return 6
+            return 10
         case .systemExtraLarge:
             return 10
         @unknown default:
@@ -150,10 +150,7 @@ struct SmallWidgetView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
             HStack {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.primaryEmerald)
-                    .font(.headline)
-                Text("Tasks")
+                Text(entry.date, format: .dateTime.weekday(.wide).month(.abbreviated).day())
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.textPrimary)
@@ -194,14 +191,10 @@ struct MediumWidgetView: View {
         HStack(spacing: 16) {
             // Left: Stats
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.primaryEmerald)
-                    Text("Tasks")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.textPrimary)
-                }
+                Text(entry.date, format: .dateTime.month(.abbreviated).day())
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.textPrimary)
 
                 Spacer()
 
@@ -252,14 +245,16 @@ struct MediumWidgetView: View {
 struct LargeWidgetView: View {
     let entry: TodoWidgetEntry
 
+    // Sort tasks: incomplete first, completed at bottom
+    private var sortedTasks: [TaskItem] {
+        entry.tasks.sorted { !$0.completed && $1.completed }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.primaryEmerald)
-                    .font(.title2)
-                Text("Tasks")
+                Text(entry.date, format: .dateTime.weekday(.wide).month(.abbreviated).day())
                     .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.textPrimary)
@@ -284,7 +279,7 @@ struct LargeWidgetView: View {
 
             // Task list
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(entry.tasks) { task in
+                ForEach(sortedTasks) { task in
                     TaskRowView(task: task, showCategory: true)
                 }
 

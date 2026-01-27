@@ -44,7 +44,7 @@ function Header({ onProfilePress }: { onProfilePress: () => void }) {
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
       <RNText className="text-foreground text-4xl font-bold">
-        Todo <RNText className="text-primary">list</RNText>
+        Toki <RNText className="text-primary">list</RNText>
       </RNText>
       {session ? (
         <ProfileButton user={session.user} onPress={onProfilePress} />
