@@ -26,8 +26,10 @@ interface CategoryWheelPickerProps {
 
 const ITEM_HEIGHT = 44;
 const VISIBLE_ITEMS = 1;
-const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
-const VERTICAL_PADDING = 0;
+const VISIBLE_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
+const DRAG_EXTENSION = 40; // Extra invisible drag area above and below
+const TOUCH_AREA_HEIGHT = VISIBLE_HEIGHT + DRAG_EXTENSION * 2;
+const VERTICAL_PADDING = DRAG_EXTENSION;
 
 interface CategoryItem {
   id: string | null;
@@ -64,11 +66,11 @@ function CategoryPillItem({
     const opacity = interpolate(
       scrollY.value,
       [
-        (index - 1) * ITEM_HEIGHT,
+        (index - 0.5) * ITEM_HEIGHT,
         index * ITEM_HEIGHT,
-        (index + 1) * ITEM_HEIGHT,
+        (index + 0.5) * ITEM_HEIGHT,
       ],
-      [0.3, 1, 0.3],
+      [0, 1, 0],
       "clamp",
     );
 
@@ -217,12 +219,11 @@ export function CategoryWheelPicker({
 
 const styles = StyleSheet.create({
   container: {
-    height: CONTAINER_HEIGHT,
-    position: "relative",
-    overflow: "hidden",
+    height: TOUCH_AREA_HEIGHT,
+    marginVertical: -DRAG_EXTENSION,
   },
   loadingContainer: {
-    height: CONTAINER_HEIGHT,
+    height: VISIBLE_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
     marginVertical: 8,
