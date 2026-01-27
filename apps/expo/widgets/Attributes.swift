@@ -1,12 +1,4 @@
-import ActivityKit
-import WidgetKit
-import SwiftUI
+import Foundation
 
-struct TodoWidgetAttributes: ActivityAttributes {
-    public struct ContentState: Codable, Hashable {
-        var taskCount: Int
-        var completedCount: Int
-    }
-
-    var name: String
-}
+// Placeholder for future Live Activities support
+// Currently not used - widget uses StaticConfiguration

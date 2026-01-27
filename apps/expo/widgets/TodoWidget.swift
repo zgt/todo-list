@@ -26,12 +26,11 @@ struct TodoWidgetEntry: TimelineEntry {
     let tasks: [TaskItem]
     let totalCount: Int
     let completedCount: Int
-    let configuration: ConfigurationAppIntent
 }
 
 // MARK: - Timeline Provider
 
-struct TodoWidgetProvider: AppIntentTimelineProvider {
+struct TodoWidgetProvider: TimelineProvider {
 
     // App Group identifier for shared data
     private let appGroupId = "group.com.zgtf.todolist"
@@ -43,23 +42,22 @@ struct TodoWidgetProvider: AppIntentTimelineProvider {
                 TaskItem(id: "1", title: "Loading tasks...", completed: false, categoryName: nil, categoryColor: nil, dueDate: nil)
             ],
             totalCount: 0,
-            completedCount: 0,
-            configuration: ConfigurationAppIntent()
+            completedCount: 0
         )
     }
 
-    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> TodoWidgetEntry {
+    func getSnapshot(in context: Context, completion: @escaping (TodoWidgetEntry) -> Void) {
         let data = loadWidgetData()
-        return TodoWidgetEntry(
+        let entry = TodoWidgetEntry(
             date: Date(),
             tasks: Array(data.tasks.prefix(getMaxTasks(for: context.family))),
             totalCount: data.totalCount,
-            completedCount: data.completedCount,
-            configuration: configuration
+            completedCount: data.completedCount
         )
+        completion(entry)
     }
 
-    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<TodoWidgetEntry> {
+    func getTimeline(in context: Context, completion: @escaping (Timeline<TodoWidgetEntry>) -> Void) {
         let data = loadWidgetData()
         let maxTasks = getMaxTasks(for: context.family)
 
@@ -67,14 +65,14 @@ struct TodoWidgetProvider: AppIntentTimelineProvider {
             date: Date(),
             tasks: Array(data.tasks.prefix(maxTasks)),
             totalCount: data.totalCount,
-            completedCount: data.completedCount,
-            configuration: configuration
+            completedCount: data.completedCount
         )
 
         // Refresh every 15 minutes
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
 
-        return Timeline(entries: [entry], policy: .after(nextUpdate))
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        completion(timeline)
     }
 
     private func getMaxTasks(for family: WidgetFamily) -> Int {
@@ -109,13 +107,6 @@ struct TodoWidgetProvider: AppIntentTimelineProvider {
             return WidgetData(tasks: [], totalCount: 0, completedCount: 0, updatedAt: Date())
         }
     }
-}
-
-// MARK: - Configuration Intent
-
-struct ConfigurationAppIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Todo Widget"
-    static var description = IntentDescription("Display your pending tasks")
 }
 
 // MARK: - Design Colors
@@ -395,9 +386,8 @@ struct TodoWidget: Widget {
     let kind: String = "TodoWidget"
 
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(
+        StaticConfiguration(
             kind: kind,
-            intent: ConfigurationAppIntent.self,
             provider: TodoWidgetProvider()
         ) { entry in
             TodoWidgetEntryView(entry: entry)
@@ -420,8 +410,7 @@ struct TodoWidget: Widget {
             TaskItem(id: "2", title: "Call dentist", completed: true, categoryName: "Health", categoryColor: "#66D99A", dueDate: nil)
         ],
         totalCount: 5,
-        completedCount: 2,
-        configuration: ConfigurationAppIntent()
+        completedCount: 2
     )
 }
 
@@ -436,7 +425,6 @@ struct TodoWidget: Widget {
             TaskItem(id: "3", title: "Review PRs", completed: true, categoryName: "Work", categoryColor: "#66D99A", dueDate: nil)
         ],
         totalCount: 8,
-        completedCount: 3,
-        configuration: ConfigurationAppIntent()
+        completedCount: 3
     )
 }
