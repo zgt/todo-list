@@ -1,6 +1,13 @@
 import type { TRPCClientErrorLike } from "@trpc/client";
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Keyboard, Pressable, Text as RNText, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  Keyboard,
+  Pressable,
+  StyleSheet,
+  Text as RNText,
+  View,
+} from "react-native";
 import Animated, {
   Easing,
   FadeIn,
@@ -22,15 +29,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // SQLite imports preserved for future offline work
 //import { desc, eq, isNull, sql } from "drizzle-orm";
 //import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { RefreshCw } from "lucide-react-native";
+import { CopySlash, RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
+import type { CategoryManagementSheetRef } from "~/components/CategoryManagementSheet";
+import { CategoryManagementSheet } from "~/components/CategoryManagementSheet";
+import { CategoryWheelPicker } from "~/components/CategoryWheelPicker";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
-import { Categories } from "../components/Categories";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
@@ -106,6 +115,7 @@ export default function Index() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
+  const categorySheetRef = useRef<CategoryManagementSheetRef>(null);
   const sheetBottom = useSharedValue(0);
 
   const queryClient = useQueryClient();
@@ -304,7 +314,12 @@ export default function Index() {
 
   const handleUpdate = async (
     id: string,
-    updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>,
+    updates: Partial<{
+      title: string;
+      description: string;
+      categoryId: string | null;
+      dueDate: Date | null;
+    }>,
   ) => {
     await updateMutation.mutateAsync({ id, ...updates });
   };
@@ -526,12 +541,21 @@ export default function Index() {
 
         {/* Bottom button bar */}
         <View className="flex-row items-center gap-4 px-4 pt-4 pb-4">
-          <View className="flex-1">
-            <Categories
+          <View className="ml-5 flex-row items-center gap-2">
+            <CategoryWheelPicker
               selectedCategoryId={selectedCategoryId}
               onCategoryChange={setSelectedCategoryId}
             />
+            <Pressable
+              onPress={() => categorySheetRef.current?.present()}
+              style={styles.categoriesButton}
+              accessibilityLabel="Manage categories"
+              accessibilityRole="button"
+            >
+              <CopySlash size={20} color="#8FA8A8" />
+            </Pressable>
           </View>
+          <View className="flex-1" />
           <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
           <FAB onPress={() => setIsCreating(!isCreating)} />
         </View>
@@ -601,6 +625,22 @@ export default function Index() {
         onClose={() => setShowProfileMenu(false)}
         user={session.user}
       />
+
+      {/* Category Management Sheet */}
+      <CategoryManagementSheet ref={categorySheetRef} />
     </GradientBackground>
   );
 }
+
+const styles = StyleSheet.create({
+  categoriesButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 9999,
+    borderWidth: 2,
+    borderColor: "#164B49",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+  },
+});

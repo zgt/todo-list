@@ -95,7 +95,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
       >
         <View className="w-full rounded-t-3xl border-t border-[#164B49] bg-[#102A2A] p-6 shadow-2xl">
           {/* Profile Section */}
-          <View className="mb-4 flex-row items-center gap-4">
+          <View className="flex-row items-center gap-4">
             <View className="h-16 w-16 overflow-hidden rounded-full border-2 border-[#164B49]">
               {user.image ? (
                 <Image source={{ uri: user.image }} className="h-full w-full" />
@@ -116,23 +116,19 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                 <RNText className="text-sm text-[#8FA8A8]">{user.email}</RNText>
               )}
             </View>
+
+            <Pressable
+              onPress={handleSignOut}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              accessibilityLabel="Sign out"
+              accessibilityRole="button"
+            >
+              <LogOut size={20} color="#E57373" />
+              <RNText className="text-base font-medium text-[#E57373]">
+                Sign Out
+              </RNText>
+            </Pressable>
           </View>
-
-          {/* Divider */}
-          <View className="mb-4 h-px bg-[#164B49]" />
-
-          {/* Sign-Out Button */}
-          <Pressable
-            onPress={handleSignOut}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-            accessibilityLabel="Sign out"
-            accessibilityRole="button"
-          >
-            <LogOut size={20} color="#E57373" />
-            <RNText className="flex-1 text-base font-medium text-[#E57373]">
-              Sign Out
-            </RNText>
-          </Pressable>
         </View>
       </Animated.View>
     </View>

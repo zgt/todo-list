@@ -164,6 +164,7 @@ export function CategoryWheelPicker({
       const selectedItem = items[clampedIndex];
 
       if (selectedItem && selectedItem.id !== selectedCategoryId) {
+        console.log(selectedItem.id);
         onCategoryChange(selectedItem.id);
       }
     },

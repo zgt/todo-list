@@ -17,6 +17,7 @@ import { authClient } from "~/utils/auth";
 import "../styles.css";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 
 import migrations from "../../drizzle/migrations";
@@ -131,22 +132,24 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          {/*
-            The Stack component displays the current page.
-            It also allows you to configure your screens
-          */}
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              headerStyle: {
-                backgroundColor: "#1c4d2c",
-              },
-              contentStyle: {
-                backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
-              },
-            }}
-          />
-          <StatusBar />
+          <BottomSheetModalProvider>
+            {/*
+              The Stack component displays the current page.
+              It also allows you to configure your screens
+            */}
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                headerStyle: {
+                  backgroundColor: "#1c4d2c",
+                },
+                contentStyle: {
+                  backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
+                },
+              }}
+            />
+            <StatusBar />
+          </BottomSheetModalProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
