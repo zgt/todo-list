@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import {
   reloadAllTimelines,
   setSharedData,
-} from "../../modules/widget-data-sharing";
+} from "widget-data-sharing";
 
 // Types matching the Swift widget expectations
 interface WidgetTaskItem {

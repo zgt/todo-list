@@ -65,7 +65,8 @@
     "react-native-svg": "^15.12.1",
     "react-native-widget-extension": "^0.2.0",
     "react-native-worklets": "~0.5.1",
-    "superjson": "2.2.6"
+    "superjson": "2.2.6",
+    "widget-data-sharing": "file:./modules/widget-data-sharing"
   },
   "devDependencies": {
     "@acme/api": "workspace:*",

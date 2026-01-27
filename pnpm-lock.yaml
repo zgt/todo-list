@@ -227,6 +227,9 @@ importers:
       superjson:
         specifier: 2.2.6
         version: 2.2.6
+      widget-data-sharing:
+        specifier: file:./modules/widget-data-sharing
+        version: file:apps/expo/modules/widget-data-sharing(expo-modules-core@3.0.29(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4))(react@19.1.0))(expo@54.0.32)(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4))(react@19.1.0)
     devDependencies:
       '@acme/api':
         specifier: workspace:*
@@ -9552,6 +9555,14 @@ packages:
     resolution: {integrity: sha512-GlaYyEb07DPxYCKhKzplCWBJtvxZcZMrL+4UkrTSJHHPyZU4mYYTv3qaOe77H7EODLSSopAUFAc6W8U4yqvscg==}
     engines: {node: ^16.13.0 || >=18.0.0}
     hasBin: true
+
+  widget-data-sharing@file:apps/expo/modules/widget-data-sharing:
+    resolution: {directory: apps/expo/modules/widget-data-sharing, type: directory}
+    peerDependencies:
+      expo: '*'
+      expo-modules-core: '*'
+      react: '*'
+      react-native: '*'
 
   wonka@6.3.5:
     resolution: {integrity: sha512-SSil+ecw6B4/Dm7Pf2sAshKQ5hWFvfyGlfPbEd6A14dOH6VDjrmbY86u6nZvy9omGwwIPFR8V41+of1EezgoUw==}
@@ -23066,6 +23077,13 @@ snapshots:
     dependencies:
       isexe: 3.1.1
     optional: true
+
+  widget-data-sharing@file:apps/expo/modules/widget-data-sharing(expo-modules-core@3.0.29(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4))(react@19.1.0))(expo@54.0.32)(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4))(react@19.1.0):
+    dependencies:
+      expo: 54.0.32(@babel/core@7.28.6)(@expo/metro-runtime@6.1.1)(bufferutil@4.0.8)(expo-router@6.0.22)(graphql@15.8.0)(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4))(react@19.1.0)(utf-8-validate@6.0.4)
+      expo-modules-core: 3.0.29(react-native@0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4))(react@19.1.0)
+      react: 19.1.0
+      react-native: 0.81.5(@babel/core@7.28.6)(@types/react@19.1.17)(bufferutil@4.0.8)(react@19.1.0)(utf-8-validate@6.0.4)
 
   wonka@6.3.5: {}
 
