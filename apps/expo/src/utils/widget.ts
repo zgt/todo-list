@@ -49,7 +49,17 @@ export async function updateWidget(tasks: WidgetTask[]): Promise<void> {
 
   try {
     // Dynamically import to avoid issues on Android
-    const { setSharedData } = await import("react-native-widget-extension");
+    const widgetModule = await import("react-native-widget-extension");
+    const setSharedData = widgetModule.setSharedData as (
+      key: string,
+      value: string,
+      appGroupId: string,
+    ) => Promise<boolean>;
+
+    if (!setSharedData) {
+      console.warn("[Widget] setSharedData function not available");
+      return;
+    }
 
     // Filter to show only incomplete tasks, limited to 10
     const incompleteTasks = tasks.filter((task) => !task.completed).slice(0, 10);
@@ -73,11 +83,23 @@ export async function updateWidget(tasks: WidgetTask[]): Promise<void> {
     };
 
     // Write to shared UserDefaults via App Group
-    await setSharedData("widgetData", JSON.stringify(widgetData), APP_GROUP_ID);
+    const jsonData = JSON.stringify(widgetData);
+    console.log("[Widget] Writing data:", {
+      taskCount: widgetTasks.length,
+      totalCount: tasks.length,
+      completedCount,
+      dataLength: jsonData.length,
+    });
 
-    console.log("[Widget] Updated with", widgetTasks.length, "pending tasks");
+    const success = await setSharedData("widgetData", jsonData, APP_GROUP_ID);
+
+    if (success) {
+      console.log("[Widget] Updated with", widgetTasks.length, "pending tasks");
+    } else {
+      console.warn("[Widget] setSharedData returned false - data may not have been written");
+    }
   } catch (error) {
-    // Silently fail - widget updates are not critical
+    // Log error but don't crash - widget updates are not critical
     console.warn("[Widget] Failed to update:", error);
   }
 }
@@ -92,7 +114,14 @@ export async function reloadWidget(): Promise<void> {
   }
 
   try {
-    const { reloadAllTimelines } = await import("react-native-widget-extension");
+    const widgetModule = await import("react-native-widget-extension");
+    const reloadAllTimelines = widgetModule.reloadAllTimelines as () => Promise<void>;
+
+    if (!reloadAllTimelines) {
+      console.warn("[Widget] reloadAllTimelines function not available");
+      return;
+    }
+
     await reloadAllTimelines();
     console.log("[Widget] Triggered timeline reload");
   } catch (error) {
