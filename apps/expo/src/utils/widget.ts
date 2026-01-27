@@ -47,14 +47,16 @@ export interface WidgetTask {
  *
  * @param tasks - Array of tasks to display in the widget (supports both server and local tasks)
  */
-export async function updateWidget(tasks: WidgetTask[]): Promise<void> {
+export function updateWidget(tasks: WidgetTask[]): void {
   if (Platform.OS !== "ios") {
     return; // Widget is iOS only
   }
 
   try {
     // Filter to show only incomplete tasks, limited to 10
-    const incompleteTasks = tasks.filter((task) => !task.completed).slice(0, 10);
+    const incompleteTasks = tasks
+      .filter((task) => !task.completed)
+      .slice(0, 10);
 
     const widgetTasks: WidgetTaskItem[] = incompleteTasks.map((task) => ({
       id: task.id,
@@ -102,7 +104,7 @@ export async function updateWidget(tasks: WidgetTask[]): Promise<void> {
  * Triggers a widget refresh to reload the timeline.
  * Call this after updating widget data.
  */
-export async function reloadWidget(): Promise<void> {
+export function reloadWidget(): void {
   if (Platform.OS !== "ios") {
     return;
   }
@@ -121,7 +123,7 @@ export async function reloadWidget(): Promise<void> {
  *
  * @param tasks - Array of tasks (from tRPC or local database)
  */
-export async function syncWidget(tasks: WidgetTask[]): Promise<void> {
-  await updateWidget(tasks);
-  await reloadWidget();
+export function syncWidget(tasks: WidgetTask[]): void {
+  updateWidget(tasks);
+  reloadWidget();
 }

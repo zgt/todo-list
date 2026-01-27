@@ -20,10 +20,7 @@ export function setSharedData(
   return WidgetDataSharing.setSharedData(key, value, appGroupId);
 }
 
-export function getSharedData(
-  key: string,
-  appGroupId: string,
-): string | null {
+export function getSharedData(key: string, appGroupId: string): string | null {
   return WidgetDataSharing.getSharedData(key, appGroupId);
 }
 
