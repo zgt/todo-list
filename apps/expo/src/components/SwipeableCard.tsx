@@ -1,5 +1,5 @@
 import type { SharedValue } from "react-native-reanimated";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Dimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -39,7 +39,7 @@ interface SwipeableCardProps {
   onDeletePending: () => void;
   onCancelDelete: () => void;
   onEditStart: () => void;
-  onSave: (updates: Partial<{ title: string; description: string }>) => void;
+  onSave: (updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>) => void;
   onCancelEdit: () => void;
   isEditing: boolean;
   onNext: () => void;
@@ -73,14 +73,28 @@ export function SwipeableCard({
   const direction = useSharedValue<SwipeDirection>(null);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
+  const [categoryId, setCategoryId] = useState<string | null>(task.categoryId ?? null);
+  const [dueDate, setDueDate] = useState<Date | null>(task.dueDate ?? null);
 
   // Reset local state when task changes or edit mode ends
   useEffect(() => {
     if (!isEditing) {
       setTitle(task.title);
       setDescription(task.description ?? "");
+      setCategoryId(task.categoryId ?? null);
+      setDueDate(task.dueDate ?? null);
     }
-  }, [task.title, task.description, isEditing]);
+  }, [task.title, task.description, task.categoryId, task.dueDate, isEditing]);
+
+  // Handler for saving from gesture - captures current state values
+  const handleSwipeSave = useCallback(() => {
+    onSave({
+      title: title.trim(),
+      description: description.trim(),
+      categoryId,
+      dueDate,
+    });
+  }, [onSave, title, description, categoryId, dueDate]);
 
   // Animated values for stacking effect
   const startX = useSharedValue(0);
@@ -194,10 +208,7 @@ export function SwipeableCard({
           // Up swipe logic
           if (isEditing) {
             // Edit mode: Swipe up to SAVE
-            runOnJS(onSave)({
-              title: title.trim(),
-              description: description.trim(),
-            });
+            runOnJS(handleSwipeSave)();
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
           } else if (task.completed) {
@@ -373,6 +384,10 @@ export function SwipeableCard({
           description={description}
           onChangeTitle={setTitle}
           onChangeDescription={setDescription}
+          categoryId={categoryId}
+          dueDate={dueDate}
+          onChangeCategoryId={setCategoryId}
+          onChangeDueDate={setDueDate}
         />
         <SwipeOverlay
           direction={direction}

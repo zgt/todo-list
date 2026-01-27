@@ -24,7 +24,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
   useEffect(() => {
     if (visible) {
       backdropOpacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      translateY.value = withSpring(0, { damping: 40, stiffness: 150 });
     } else {
       backdropOpacity.value = withTiming(0, { duration: 150 });
       translateY.value = withTiming(300, { duration: 150 });

@@ -304,7 +304,7 @@ export default function Index() {
 
   const handleUpdate = async (
     id: string,
-    updates: Partial<{ title: string; description: string }>,
+    updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>,
   ) => {
     await updateMutation.mutateAsync({ id, ...updates });
   };

@@ -9,6 +9,8 @@ import { BlurView } from "expo-blur";
 import { Check, Save, Trash2 } from "lucide-react-native";
 
 import type { LocalTask } from "~/db/client";
+import { CategoryWheelPicker } from "./CategoryWheelPicker";
+import { DatePickerPill } from "./DatePickerPill";
 
 interface TaskCardProps {
   task: LocalTask & { category?: { name: string; color: string } | null };
@@ -16,11 +18,22 @@ interface TaskCardProps {
   onDelete: () => void;
   deletePending: boolean;
   isEditing: boolean;
-  onSave: (updates: Partial<{ title: string; description: string }>) => void;
+  onSave: (
+    updates: Partial<{
+      title: string;
+      description: string;
+      categoryId: string | null;
+      dueDate: Date | null;
+    }>,
+  ) => void;
   title: string;
   description: string;
   onChangeTitle: (text: string) => void;
   onChangeDescription: (text: string) => void;
+  categoryId: string | null;
+  dueDate: Date | null;
+  onChangeCategoryId: (categoryId: string | null) => void;
+  onChangeDueDate: (date: Date | null) => void;
 }
 
 export function TaskCard({
@@ -34,12 +47,21 @@ export function TaskCard({
   description,
   onChangeTitle,
   onChangeDescription,
+  categoryId,
+  dueDate,
+  onChangeCategoryId,
+  onChangeDueDate,
 }: TaskCardProps) {
   // Local state removed in favor of controlled props from SwipeableCard
 
   const handleSave = () => {
     if (title.trim()) {
-      onSave({ title: title.trim(), description: description.trim() });
+      onSave({
+        title: title.trim(),
+        description: description.trim(),
+        categoryId,
+        dueDate,
+      });
     }
   };
   return (
@@ -58,39 +80,56 @@ export function TaskCard({
         {/* Top Row: Category and Checkbox */}
         {/* Top Row: Category and Due Date vs Checkbox */}
         <View className="w-full flex-row items-start justify-between">
-          <View className="min-h-14 flex-col gap-2">
-            {/* Category Pill */}
-            {task.category && (
-              <View
-                style={[styles.categoryPill]}
-                className="self-start rounded-full border px-4 py-1.5"
-              >
-                <RNText
-                  style={
-                    task.category.color ? { color: task.category.color } : {}
-                  }
-                  className="text-xs font-medium text-emerald-300"
+          {isEditing ? (
+            /* Interactive Pickers in Edit Mode */
+            <View className="flex-row items-center gap-2">
+              <CategoryWheelPicker
+                selectedCategoryId={categoryId}
+                onCategoryChange={onChangeCategoryId}
+              />
+              <DatePickerPill
+                selectedDate={dueDate}
+                onDateChange={onChangeDueDate}
+              />
+            </View>
+          ) : (
+            /* Read-only Pills in View Mode */
+            <View className="flex-row items-center gap-2">
+              {task.category && (
+                <View
+                  style={[
+                    styles.miniPill,
+                    {
+                      backgroundColor: `${task.category.color}20`,
+                      borderColor: task.category.color,
+                    },
+                  ]}
                 >
-                  {task.category.name}
-                </RNText>
-              </View>
-            )}
+                  <RNText
+                    style={{ color: "#8FA8A8" }}
+                    className="text-xs font-medium"
+                    numberOfLines={1}
+                  >
+                    {task.category.name}
+                  </RNText>
+                </View>
+              )}
 
-            {/* Due Date - Always render to reserve space, hide with opacity if missing */}
-            <View
-              className="flex-row items-center gap-1.5 px-1"
-              style={{ opacity: task.dueDate ? 1 : 0 }}
-            >
-              <RNText className="text-xs font-medium text-white/60">
-                {task.dueDate
-                  ? new Intl.DateTimeFormat("en-US", {
+              {task.dueDate && (
+                <View style={styles.miniPillDate}>
+                  <RNText
+                    className="text-xs font-medium"
+                    style={styles.dateText}
+                  >
+                    {new Intl.DateTimeFormat("en-US", {
                       month: "short",
                       day: "numeric",
-                    }).format(task.dueDate)
-                  : "placeholder"}
-              </RNText>
+                    }).format(task.dueDate)}
+                  </RNText>
+                </View>
+              )}
             </View>
-          </View>
+          )}
 
           <Pressable onPress={isEditing ? handleSave : onToggle}>
             <View
@@ -208,7 +247,21 @@ const styles = StyleSheet.create({
     shadowColor: "#f97316",
     shadowOpacity: 0.2,
   },
-  categoryPill: {
-    borderColor: "rgba(16, 185, 129, 0.3)",
+  miniPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    borderWidth: 2,
+  },
+  miniPillDate: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    borderWidth: 2,
+    backgroundColor: "rgba(143, 168, 168, 0.15)",
+    borderColor: "rgba(143, 168, 168, 0.4)",
+  },
+  dateText: {
+    color: "#8FA8A8",
   },
 });

@@ -14,7 +14,7 @@ interface SwipeableCardStackProps {
   onDelete: (id: string) => void;
   onUpdate: (
     id: string,
-    updates: Partial<{ title: string; description: string }>,
+    updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>,
   ) => void;
 }
 
@@ -50,7 +50,7 @@ export function SwipeableCardStack({
 
   const handleSave = (
     taskId: string,
-    updates: Partial<{ title: string; description: string }>,
+    updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>,
   ) => {
     onUpdate(taskId, updates);
     setEditingId(null);
@@ -105,7 +105,7 @@ export function SwipeableCardStack({
             onCancelDelete={() => setDeletePendingId(null)}
             onEditStart={() => handleEditStart(task.id)}
             onSave={(
-              updates: Partial<{ title: string; description: string }>,
+              updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>,
             ) => handleSave(task.id, updates)}
             onCancelEdit={handleCancelEdit}
             onNext={handleNext}
