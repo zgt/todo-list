@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  cancelAnimation,
   Easing,
   FadeIn,
   FadeOut,
@@ -75,15 +76,23 @@ function RefreshButton({
 
   useEffect(() => {
     if (isRefreshing) {
+      // Start from current position and add 360 for continuous spin
+      const startRotation = rotation.value % 360;
+      rotation.value = startRotation;
       rotation.value = withRepeat(
-        withTiming(360, { duration: 1000, easing: Easing.linear }),
+        withTiming(startRotation + 360, { duration: 1000, easing: Easing.linear }),
         -1,
         false,
       );
     } else {
-      rotation.value = withTiming(0, { duration: 200 });
+      // Stop animation but keep current rotation
+      cancelAnimation(rotation);
     }
   }, [isRefreshing, rotation]);
+
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
 
   return (
     <Pressable
@@ -96,9 +105,7 @@ function RefreshButton({
         className="border-border bg-surface h-12 w-12 items-center justify-center rounded-full border-2"
         style={[isRefreshing && { opacity: 0.6 }]}
       >
-        <Animated.View
-          style={{ transform: [{ rotate: `${rotation.value}deg` }] }}
-        >
+        <Animated.View style={animatedIconStyle}>
           <RefreshCw size={24} color="#DCE4E4" />
         </Animated.View>
       </Animated.View>
