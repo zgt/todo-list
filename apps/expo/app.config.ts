@@ -12,6 +12,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   updates: {
     fallbackToCacheTimeout: 0,
   },
+  owner: "zgtf",
   newArchEnabled: true,
   assetBundlePatterns: ["**/*"],
   android: {
@@ -24,7 +25,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     eas: {
-      projectId: "8d1cfb02-5da5-4ca3-8ca8-65ed8d802307",
+      projectId: "02742173-7649-4eb5-a065-307f33cddd7f",
     },
   },
   experiments: {
