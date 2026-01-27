@@ -1,9 +1,5 @@
 import { Platform } from "react-native";
-
-import {
-  reloadAllTimelines,
-  setSharedData,
-} from "widget-data-sharing";
+import { reloadAllTimelines, setSharedData } from "widget-data-sharing";
 
 // Types matching the Swift widget expectations
 interface WidgetTaskItem {

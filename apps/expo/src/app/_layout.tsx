@@ -144,7 +144,8 @@ export default function RootLayout() {
                   backgroundColor: "#1c4d2c",
                 },
                 contentStyle: {
-                  backgroundColor: colorScheme == "dark" ? "#09090B" : "#FFFFFF",
+                  backgroundColor:
+                    colorScheme == "dark" ? "#09090B" : "#FFFFFF",
                 },
               }}
             />

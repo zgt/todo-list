@@ -39,7 +39,14 @@ interface SwipeableCardProps {
   onDeletePending: () => void;
   onCancelDelete: () => void;
   onEditStart: () => void;
-  onSave: (updates: Partial<{ title: string; description: string; categoryId: string | null; dueDate: Date | null }>) => void;
+  onSave: (
+    updates: Partial<{
+      title: string;
+      description: string;
+      categoryId: string | null;
+      dueDate: Date | null;
+    }>,
+  ) => void;
   onCancelEdit: () => void;
   isEditing: boolean;
   onNext: () => void;
@@ -73,7 +80,9 @@ export function SwipeableCard({
   const direction = useSharedValue<SwipeDirection>(null);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
-  const [categoryId, setCategoryId] = useState<string | null>(task.categoryId ?? null);
+  const [categoryId, setCategoryId] = useState<string | null>(
+    task.categoryId ?? null,
+  );
   const [dueDate, setDueDate] = useState<Date | null>(task.dueDate ?? null);
 
   // Reset local state when task changes or edit mode ends

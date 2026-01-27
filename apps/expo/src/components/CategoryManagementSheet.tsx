@@ -27,12 +27,6 @@ import { CopyPlus, Trash2, X } from "lucide-react-native";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
-
 export interface CategoryManagementSheetRef {
   present: () => void;
   dismiss: () => void;
@@ -47,14 +41,17 @@ const PRESET_COLORS = [
   "#EC4899", // Pink
   "#06B6D4", // Cyan
   "#84CC16", // Lime
-];
+] as const;
+
+type PresetColor = (typeof PRESET_COLORS)[number];
+const DEFAULT_COLOR: PresetColor = PRESET_COLORS[0];
 
 export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
   (_, ref) => {
     const bottomSheetRef = useRef<BottomSheetModal>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
-    const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]!);
+    const [selectedColor, setSelectedColor] = useState<PresetColor>(DEFAULT_COLOR);
 
     const { data: session } = authClient.useSession();
     const queryClient = useQueryClient();
@@ -108,7 +105,7 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
     const resetCreateForm = () => {
       setIsCreating(false);
       setNewCategoryName("");
-      setSelectedColor(PRESET_COLORS[0]!);
+      setSelectedColor(DEFAULT_COLOR);
     };
 
     const handleCreateCategory = () => {
@@ -124,20 +121,23 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
       });
     };
 
-    const handleDeleteCategory = (category: Category) => {
-      Alert.alert(
-        "Delete Category",
-        `Are you sure you want to delete "${category.name}"?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Delete",
-            style: "destructive",
-            onPress: () => deleteCategory.mutate(category.id),
-          },
-        ],
-      );
-    };
+    const handleDeleteCategory = useCallback(
+      (category: NonNullable<typeof categories>[number]) => {
+        Alert.alert(
+          "Delete Category",
+          `Are you sure you want to delete "${category.name}"?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Delete",
+              style: "destructive",
+              onPress: () => deleteCategory.mutate(category.id),
+            },
+          ],
+        );
+      },
+      [deleteCategory],
+    );
 
     const renderBackdrop = useCallback(
       (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
@@ -152,7 +152,7 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
     );
 
     const renderCategoryItem = useCallback(
-      ({ item }: { item: Category }) => (
+      ({ item }: { item: NonNullable<typeof categories>[number] }) => (
         <View style={styles.categoryItem}>
           <View style={styles.categoryInfo}>
             <View style={[styles.colorDot, { backgroundColor: item.color }]} />
@@ -168,7 +168,7 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
           </Pressable>
         </View>
       ),
-      [deleteCategory],
+      [handleDeleteCategory],
     );
 
     const ListEmptyComponent = useCallback(
@@ -280,9 +280,9 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
           )}
 
           {/* Category List */}
-          <BottomSheetFlatList<Category>
+          <BottomSheetFlatList
             data={categories ?? []}
-            keyExtractor={(item: Category) => item.id}
+            keyExtractor={(item: { id: string }) => item.id}
             renderItem={renderCategoryItem}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={isLoading ? null : ListEmptyComponent}

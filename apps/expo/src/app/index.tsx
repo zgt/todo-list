@@ -4,8 +4,8 @@ import {
   Alert,
   Keyboard,
   Pressable,
-  StyleSheet,
   Text as RNText,
+  StyleSheet,
   View,
 } from "react-native";
 import Animated, {
