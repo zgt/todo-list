@@ -181,7 +181,7 @@ struct SmallWidgetView: View {
             Spacer()
         }
         .padding()
-        .containerBackground(.backgroundDeep, for: .widget)
+        .containerBackground(Color.backgroundDeep, for: .widget)
     }
 }
 
@@ -243,7 +243,7 @@ struct MediumWidgetView: View {
             }
         }
         .padding()
-        .containerBackground(.backgroundDeep, for: .widget)
+        .containerBackground(Color.backgroundDeep, for: .widget)
     }
 }
 
@@ -307,7 +307,7 @@ struct LargeWidgetView: View {
             }
         }
         .padding()
-        .containerBackground(.backgroundDeep, for: .widget)
+        .containerBackground(Color.backgroundDeep, for: .widget)
     }
 }
 
