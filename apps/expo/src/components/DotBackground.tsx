@@ -28,10 +28,7 @@ const source = Skia.RuntimeEffect.Make(`
 
     // Dot grid
     float2 gridUv = fract(uv * gridSize);
-    float dot = smoothstep(0.05, 0.0, sdfCircle(gridUv, 0.2));
-
-    // Vertical fade mask (stronger at top)
-    float mask = smoothstep(0.0, 1.0, 1.0 - uv.y);
+    float dot = smoothstep(0.02, 0.0, sdfCircle(gridUv, 0.07));
 
     // Ripple
     float ripple = 0.0;
@@ -47,8 +44,13 @@ const source = Skia.RuntimeEffect.Make(`
       ripple = sharpWave * decay * rippleIntensity * waveMask;
     }
 
-    float alpha = dot * mask * dotOpacity * (1.0 + ripple * 20.0);
-    return half4(0.29, 0.87, 0.5, alpha); // #4ade80
+    // Emerald green background with dark dots
+    float dotMask = dot * dotOpacity * (1.0 + ripple * 20.0);
+    // Background: #4ade80, Dots: #09090B
+    half3 bg = half3(0.063, 0.165, 0.165);
+    half3 dotColor = half3(0.094, 0.25, 0.19);
+    half3 color = mix(bg, dotColor, half(dotMask));
+    return half4(color, 1.0);
   }
 `)!;
 
@@ -72,7 +74,7 @@ export function DotBackground({ trigger }: DotBackgroundProps) {
     });
     // Fade out intensity
     rippleIntensity.value = withTiming(0, {
-      duration: 3000,
+      duration: 6000,
       easing: Easing.out(Easing.quad),
     });
   }, [trigger, rippleTime, rippleIntensity]);
@@ -83,7 +85,7 @@ export function DotBackground({ trigger }: DotBackgroundProps) {
     rippleCenter: [0.5, 0.5] as const,
     rippleIntensity: rippleIntensity.value,
     gridSize: 50,
-    dotOpacity: 0.15,
+    dotOpacity: 4,
   }));
 
   return (
