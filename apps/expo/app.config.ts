@@ -60,6 +60,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
   ],
   ios: {
+    usesAppleSignIn: true,
     bundleIdentifier: "com.zgtf.todolist",
     supportsTablet: true,
     icon: {

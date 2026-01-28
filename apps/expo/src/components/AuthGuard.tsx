@@ -1,7 +1,7 @@
 import { Text as RNText, View } from "react-native";
 
 import { GradientBackground } from "./GradientBackground";
-import { SignInButton } from "./SignInButton";
+import { SignInButtons } from "./SignInButton";
 
 export function AuthGuard() {
   return (
@@ -21,13 +21,13 @@ export function AuthGuard() {
             Welcome back!
           </RNText>
           <RNText className="text-center text-base leading-relaxed text-[#8FA8A8]">
-            Sign in with Discord to sync your tasks across all your devices and
-            never lose track of what matters.
+            Sign in to sync your tasks across all your devices and never lose
+            track of what matters.
           </RNText>
         </View>
 
-        {/* Sign-In Button */}
-        <SignInButton size="large" />
+        {/* Sign-In Buttons */}
+        <SignInButtons size="large" />
 
         {/* Subtle Footer */}
         <View className="absolute bottom-12">

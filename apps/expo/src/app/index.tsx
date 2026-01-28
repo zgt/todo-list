@@ -47,6 +47,7 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import { Platform } from "react-native";
 import CreateTask from "./_components/create-task";
 
 function Header({ onProfilePress }: { onProfilePress: () => void }) {
@@ -59,7 +60,7 @@ function Header({ onProfilePress }: { onProfilePress: () => void }) {
       {session ? (
         <ProfileButton user={session.user} onPress={onProfilePress} />
       ) : (
-        <SignInButton />
+        <SignInButton provider={Platform.OS === "ios" ? "apple" : "discord"} />
       )}
     </View>
   );
@@ -165,8 +166,11 @@ export default function Index() {
 
   // Filter tasks by selected category
   const filteredTasks = useMemo(() => {
-    if (selectedCategoryId === null) return tasks;
-    return tasks.filter((task) => task.categoryId === selectedCategoryId);
+    const base =
+      selectedCategoryId === null
+        ? tasks
+        : tasks.filter((task) => task.categoryId === selectedCategoryId);
+    return [...base].sort((a, b) => Number(a.completed) - Number(b.completed));
   }, [tasks, selectedCategoryId]);
 
   // Sync tasks to iOS widget whenever they change

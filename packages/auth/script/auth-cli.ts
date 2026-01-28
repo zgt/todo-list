@@ -24,5 +24,8 @@ export const auth = initAuth({
   secret: "secret",
   discordClientId: "1234567890",
   discordClientSecret: "1234567890",
+  appleClientId: "com.example.app",
+  appleClientSecret: "1234567890",
+  appleBundleId: "com.example.app",
   enableOAuthProxy: false, // Not needed for schema generation
 });

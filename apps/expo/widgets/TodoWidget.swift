@@ -80,11 +80,17 @@ struct TodoWidgetProvider: TimelineProvider {
         case .systemSmall:
             return 2
         case .systemMedium:
-            return 5
+            return 3
         case .systemLarge:
-            return 10
+            return 6
         case .systemExtraLarge:
             return 10
+        case .accessoryInline:
+            return 0  // Just shows count
+        case .accessoryCircular:
+            return 0  // Just shows progress
+        case .accessoryRectangular:
+            return 2  // Shows 2 task titles
         @unknown default:
             return 3
         }
@@ -135,6 +141,12 @@ struct TodoWidgetEntryView: View {
             MediumWidgetView(entry: entry)
         case .systemLarge:
             LargeWidgetView(entry: entry)
+        case .accessoryInline:
+            AccessoryInlineView(entry: entry)
+        case .accessoryCircular:
+            AccessoryCircularView(entry: entry)
+        case .accessoryRectangular:
+            AccessoryRectangularView(entry: entry)
         default:
             MediumWidgetView(entry: entry)
         }
@@ -306,6 +318,89 @@ struct LargeWidgetView: View {
     }
 }
 
+// MARK: - Lock Screen Widgets (iOS 16+)
+
+struct AccessoryInlineView: View {
+    let entry: TodoWidgetEntry
+
+    var body: some View {
+        if entry.totalCount > 0 {
+            Label {
+                Text("\(entry.completedCount)/\(entry.totalCount) tasks done")
+            } icon: {
+                Image(systemName: "checkmark.circle.fill")
+            }
+        } else {
+            Label("No tasks", systemImage: "checkmark.seal.fill")
+        }
+    }
+}
+
+struct AccessoryCircularView: View {
+    let entry: TodoWidgetEntry
+
+    var body: some View {
+        if entry.totalCount > 0 {
+            Gauge(value: Double(entry.completedCount), in: 0...Double(entry.totalCount)) {
+                Image(systemName: "checkmark.circle.fill")
+            } currentValueLabel: {
+                Text("\(entry.completedCount)")
+                    .font(.system(.body, design: .rounded, weight: .bold))
+            }
+            .gaugeStyle(.accessoryCircularCapacity)
+        } else {
+            ZStack {
+                AccessoryWidgetBackground()
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.title2)
+            }
+        }
+    }
+}
+
+struct AccessoryRectangularView: View {
+    let entry: TodoWidgetEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            // Header with count
+            HStack(spacing: 4) {
+                Text(entry.date, format: .dateTime.month(.abbreviated).day())
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                Spacer()
+                if entry.totalCount > 0 {
+                    Text("\(entry.completedCount)/\(entry.totalCount)")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // Task list or empty state
+            if entry.tasks.isEmpty {
+                Text("All caught up!")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(entry.tasks.prefix(2)) { task in
+                    HStack(spacing: 4) {
+                        Image(systemName: task.completed ? "checkmark.circle.fill" : "circle")
+                            .font(.caption2)
+                            .foregroundStyle(task.completed ? .secondary : .primary)
+                        Text(task.title)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .foregroundStyle(task.completed ? .secondary : .primary)
+                    }
+                }
+            }
+        }
+        .containerBackground(for: .widget) {
+            AccessoryWidgetBackground()
+        }
+    }
+}
+
 // MARK: - Task Row
 
 struct TaskRowView: View {
@@ -389,7 +484,14 @@ struct TodoWidget: Widget {
         }
         .configurationDisplayName("Todo List")
         .description("View your pending tasks at a glance")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            .systemLarge,
+            .accessoryInline,
+            .accessoryCircular,
+            .accessoryRectangular
+        ])
     }
 }
 
@@ -421,5 +523,43 @@ struct TodoWidget: Widget {
         ],
         totalCount: 8,
         completedCount: 3
+    )
+}
+
+// MARK: - Lock Screen Widget Previews
+
+#Preview(as: .accessoryInline) {
+    TodoWidget()
+} timeline: {
+    TodoWidgetEntry(
+        date: .now,
+        tasks: [],
+        totalCount: 5,
+        completedCount: 2
+    )
+}
+
+#Preview(as: .accessoryCircular) {
+    TodoWidget()
+} timeline: {
+    TodoWidgetEntry(
+        date: .now,
+        tasks: [],
+        totalCount: 8,
+        completedCount: 5
+    )
+}
+
+#Preview(as: .accessoryRectangular) {
+    TodoWidget()
+} timeline: {
+    TodoWidgetEntry(
+        date: .now,
+        tasks: [
+            TaskItem(id: "1", title: "Buy groceries", completed: false, categoryName: nil, categoryColor: nil, dueDate: nil),
+            TaskItem(id: "2", title: "Call dentist", completed: true, categoryName: nil, categoryColor: nil, dueDate: nil)
+        ],
+        totalCount: 5,
+        completedCount: 2
     )
 }

@@ -49,6 +49,9 @@ export const auth = initAuth({
   secret: env.AUTH_SECRET,
   discordClientId: env.AUTH_DISCORD_ID,
   discordClientSecret: env.AUTH_DISCORD_SECRET,
+  appleClientId: env.AUTH_APPLE_ID,
+  appleClientSecret: env.AUTH_APPLE_SECRET,
+  appleBundleId: env.AUTH_APPLE_BUNDLE_ID,
   extraPlugins: [nextCookies()],
   enableOAuthProxy: true, // Enable OAuth proxy for Expo OAuth support
 });

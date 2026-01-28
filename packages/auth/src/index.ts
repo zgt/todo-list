@@ -15,6 +15,9 @@ export function initAuth<
 
   discordClientId: string;
   discordClientSecret: string;
+  appleClientId?: string;
+  appleClientSecret?: string;
+  appleBundleId?: string;
   extraPlugins?: TExtraPlugins;
   /**
    * Enable OAuth proxy for Expo mobile app support.
@@ -54,6 +57,15 @@ export function initAuth<
         // Use baseUrl for local and production, it defaults to production on Vercel
         redirectURI: `${options.productionUrl}/api/auth/callback/discord`,
       },
+      ...(options.appleClientId &&
+        options.appleClientSecret && {
+          apple: {
+            clientId: options.appleClientId,
+            clientSecret: options.appleClientSecret,
+            appBundleIdentifier: options.appleBundleId,
+            redirectURI: `${options.productionUrl}/api/auth/callback/apple`,
+          },
+        }),
     },
     trustedOrigins: [
       "tokilist://",
@@ -62,6 +74,7 @@ export function initAuth<
       "exp://192.168.*.*:*/**", // Wildcard for local network development
       "https://*.exp.direct",
       "http://localhost:*",
+      "https://appleid.apple.com", // Required for Sign in with Apple
       options.productionUrl,
       options.baseUrl,
     ],
