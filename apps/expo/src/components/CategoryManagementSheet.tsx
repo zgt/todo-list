@@ -51,7 +51,8 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
     const bottomSheetRef = useRef<BottomSheetModal>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState("");
-    const [selectedColor, setSelectedColor] = useState<PresetColor>(DEFAULT_COLOR);
+    const [selectedColor, setSelectedColor] =
+      useState<PresetColor>(DEFAULT_COLOR);
 
     const { data: session } = authClient.useSession();
     const queryClient = useQueryClient();

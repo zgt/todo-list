@@ -34,6 +34,7 @@ catalogs:
 linkWorkspacePackages: true
 
 onlyBuiltDependencies:
+  - '@shopify/react-native-skia'
   - '@tailwindcss/oxide'
   - esbuild
 

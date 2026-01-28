@@ -99,7 +99,7 @@ export function SignInButton({
         provider: "apple",
         idToken: { token: credential.identityToken },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Sign-in error:", error);
       Alert.alert(
         "Sign-in failed",
@@ -121,8 +121,12 @@ export function SignInButton({
           callbackURL: "tokilist://",
         });
       }
-    } catch (error: any) {
-      if (error?.code === "ERR_REQUEST_CANCELED") {
+    } catch (error: unknown) {
+      const code =
+        error instanceof Error
+          ? (error as Error & { code?: string }).code
+          : undefined;
+      if (code === "ERR_REQUEST_CANCELED") {
         // User cancelled, no alert needed
       } else {
         console.error("Sign-in error:", error);

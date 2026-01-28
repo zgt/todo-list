@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
+  Platform,
   Pressable,
   Text as RNText,
   StyleSheet,
@@ -47,7 +48,6 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
-import { Platform } from "react-native";
 import CreateTask from "./_components/create-task";
 
 function Header({ onProfilePress }: { onProfilePress: () => void }) {
@@ -81,7 +81,10 @@ function RefreshButton({
       const startRotation = rotation.value % 360;
       rotation.value = startRotation;
       rotation.value = withRepeat(
-        withTiming(startRotation + 360, { duration: 1000, easing: Easing.linear }),
+        withTiming(startRotation + 360, {
+          duration: 1000,
+          easing: Easing.linear,
+        }),
         -1,
         false,
       );

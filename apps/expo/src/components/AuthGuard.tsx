@@ -1,13 +1,16 @@
-import { Text as RNText, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text as RNText, View } from "react-native";
 
 import { DotBackground } from "./DotBackground";
 import { GradientBackground } from "./GradientBackground";
 import { SignInButtons } from "./SignInButton";
 
 export function AuthGuard() {
+  const [dotTrigger, setDotTrigger] = useState(false);
+
   return (
     <GradientBackground>
-      <DotBackground />
+      <DotBackground trigger={dotTrigger} />
       <View className="flex-1 items-center justify-center px-8">
         {/* App Branding */}
         <View className="mb-8 items-center">
@@ -27,6 +30,14 @@ export function AuthGuard() {
             track of what matters.
           </RNText>
         </View>
+
+        {/* Ripple Trigger */}
+        <Pressable
+          onPress={() => setDotTrigger((prev) => !prev)}
+          className="mb-6 rounded-full border border-[#164B49] bg-[#102A2A] px-6 py-3"
+        >
+          <RNText className="text-sm font-medium text-[#50C878]">Ripple</RNText>
+        </Pressable>
 
         {/* Sign-In Buttons */}
         <View className="top-60">
