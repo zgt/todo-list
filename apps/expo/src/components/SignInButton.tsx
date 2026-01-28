@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   Text,
   View,
@@ -12,6 +13,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
+import * as AppleAuthentication from "expo-apple-authentication";
 
 import { authClient } from "~/utils/auth";
 
@@ -79,21 +81,56 @@ export function SignInButton({
     scale.value = withSpring(1);
   };
 
-  const handleSignIn = async () => {
-    if (isLoading) return;
+  const handleAppleNativeSignIn = async () => {
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+    console.log(credential);
 
-    setIsLoading(true);
+    if (!credential.identityToken) {
+      throw new Error("No identity token returned from Apple");
+    }
     try {
       await authClient.signIn.social({
-        provider,
-        callbackURL: "tokilist://",
+        provider: "apple",
+        idToken: { token: credential.identityToken },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign-in error:", error);
       Alert.alert(
         "Sign-in failed",
         `Could not connect to ${config.label}. Please try again.`,
       );
+    }
+  };
+
+  const handleSignIn = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      if (provider === "apple" && Platform.OS === "ios") {
+        await handleAppleNativeSignIn();
+      } else {
+        await authClient.signIn.social({
+          provider,
+          callbackURL: "tokilist://",
+        });
+      }
+    } catch (error: any) {
+      if (error?.code === "ERR_REQUEST_CANCELED") {
+        // User cancelled, no alert needed
+      } else {
+        console.error("Sign-in error:", error);
+        Alert.alert(
+          "Sign-in failed",
+          `Could not connect to ${config.label}. Please try again.`,
+        );
+      }
+    } finally {
       setIsLoading(false);
     }
   };
@@ -152,7 +189,11 @@ export function SignInButton({
   );
 }
 
-export function SignInButtons({ size = "default" }: { size?: "default" | "large" }) {
+export function SignInButtons({
+  size = "default",
+}: {
+  size?: "default" | "large";
+}) {
   return (
     <View className="gap-3">
       <SignInButton provider="apple" size={size} showLabel />

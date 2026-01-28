@@ -38,6 +38,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-router",
     "expo-secure-store",
     "expo-web-browser",
+    "expo-apple-authentication",
     "expo-background-task",
     [
       "expo-splash-screen",
