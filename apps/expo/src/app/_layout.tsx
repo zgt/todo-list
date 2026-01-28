@@ -1,4 +1,4 @@
-import { Text, useColorScheme, View } from "react-native";
+import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -7,7 +7,6 @@ import { StatusBar } from "expo-status-bar";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthGuard } from "~/components/AuthGuard";
-import { db } from "~/db/client";
 //import { registerBackgroundSync } from "~/sync/background-sync";
 //import { syncManager } from "~/sync/manager";
 //import { networkMonitor } from "~/sync/network-monitor";
@@ -18,18 +17,12 @@ import "../styles.css";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
-
-import migrations from "../../drizzle/migrations";
-
-// Define the background sync task immediately
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { success: dbReady, error: dbError } = useMigrations(db, migrations);
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session } = authClient.useSession();
 
   // Removed manual init effect since useMigrations handles it
 
@@ -61,69 +54,6 @@ export default function RootLayout() {
   //     networkMonitor.stop();
   //   };
   // }, [dbReady, session]);
-
-  if (dbError) {
-    console.log(dbError);
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 20,
-        }}
-      >
-        <Text
-          style={{
-            color: "#FF0000",
-            fontSize: 16,
-            fontWeight: "bold",
-            marginBottom: 10,
-          }}
-        >
-          Database Error
-        </Text>
-        <Text
-          style={{
-            color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
-            textAlign: "center",
-          }}
-        >
-          {dbError.message}
-        </Text>
-      </View>
-    );
-  }
-
-  if (!dbReady) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text
-          style={{
-            color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
-            fontSize: 16,
-          }}
-        >
-          Initializing database...
-        </Text>
-      </View>
-    );
-  }
-
-  if (isPending) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text
-          style={{
-            color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
-            fontSize: 16,
-          }}
-        >
-          Checking authentication...
-        </Text>
-      </View>
-    );
-  }
 
   if (!session) {
     return <AuthGuard />;

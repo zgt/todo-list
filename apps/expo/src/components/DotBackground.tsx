@@ -6,30 +6,53 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 /* eslint-disable react-hooks/refs */
 // Animated.Value pattern requires ref access during render - this is the standard React Native Animated API usage
-export function DotBackground() {
+export function DotBackground({ trigger }: { trigger?: boolean }) {
   const animatedValue = useRef(new Animated.Value(0)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   const opacity = animatedValue.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.5, 0.3],
+    outputRange: [0, 1, 0],
   });
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
+    if (trigger === undefined) {
+      // Auto-play mode (original behavior)
+      animationRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animatedValue, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      animationRef.current.start();
+      return;
+    }
+
+    if (trigger) {
+      animatedValue.setValue(0);
+      animationRef.current = Animated.sequence([
         Animated.timing(animatedValue, {
           toValue: 1,
-          duration: 3000,
+          duration: 1500,
           useNativeDriver: true,
         }),
         Animated.timing(animatedValue, {
           toValue: 0,
-          duration: 3000,
+          duration: 1500,
           useNativeDriver: true,
         }),
-      ]),
-    ).start();
-  }, [animatedValue]);
+      ]);
+      animationRef.current.start();
+    }
+  }, [animatedValue, trigger]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -40,8 +63,8 @@ export function DotBackground() {
               id="dotPattern"
               x="0"
               y="0"
-              width="20"
-              height="20"
+              width="10"
+              height="10"
               patternUnits="userSpaceOnUse"
             >
               {/* Dot with emerald green color */}

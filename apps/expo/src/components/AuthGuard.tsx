@@ -1,16 +1,18 @@
 import { Text as RNText, View } from "react-native";
 
+import { DotBackground } from "./DotBackground";
 import { GradientBackground } from "./GradientBackground";
 import { SignInButtons } from "./SignInButton";
 
 export function AuthGuard() {
   return (
     <GradientBackground>
+      <DotBackground />
       <View className="flex-1 items-center justify-center px-8">
         {/* App Branding */}
         <View className="mb-8 items-center">
           <RNText className="mb-2 text-5xl font-bold text-[#DCE4E4]">
-            Todo <RNText className="text-[#50C878]">list</RNText>
+            Toki <RNText className="text-[#50C878]">list</RNText>
           </RNText>
           <View className="h-1 w-20 rounded-full bg-[#50C878]" />
         </View>
@@ -27,8 +29,9 @@ export function AuthGuard() {
         </View>
 
         {/* Sign-In Buttons */}
-        <SignInButtons size="large" />
-
+        <View className="top-60">
+          <SignInButtons size="large" />
+        </View>
         {/* Subtle Footer */}
         <View className="absolute bottom-12">
           <RNText className="text-center text-xs text-[#8FA8A8]/60">
