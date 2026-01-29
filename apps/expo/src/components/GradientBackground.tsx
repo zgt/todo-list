@@ -8,7 +8,7 @@ export function GradientBackground({
   rippleTrigger,
 }: {
   children: React.ReactNode;
-  rippleTrigger?: boolean;
+  rippleTrigger?: number;
 }) {
   return (
     <View style={styles.container}>

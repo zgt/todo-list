@@ -56,7 +56,7 @@ const source = Skia.RuntimeEffect.Make(`
 `)!;
 
 interface DotBackgroundProps {
-  trigger?: boolean;
+  trigger?: number;
 }
 
 export function DotBackground({ trigger }: DotBackgroundProps) {

@@ -121,7 +121,8 @@ export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [rippleTrigger, setRippleTrigger] = useState(false);
+  const [rippleTrigger, setRippleTrigger] = useState(0);
+  const triggerRipple = () => setRippleTrigger((prev) => prev + 1);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
@@ -135,12 +136,18 @@ export default function Index() {
   const {
     data: serverTasks,
     isLoading: isLoadingTasks,
+    isFetching,
     refetch,
   } = useQuery(
     trpc.task.all.queryOptions(undefined, {
       enabled: !!session,
     }),
   );
+
+  // Trigger ripple when any query fetch starts
+  useEffect(() => {
+    if (isFetching) triggerRipple();
+  }, [isFetching]);
 
   // Use useMemo with only serverTasks dependency to ensure optimistic updates work
   // while maintaining stable reference for other hooks
@@ -216,6 +223,7 @@ export default function Index() {
   const toggleMutation = useMutation(
     trpc.task.update.mutationOptions({
       onMutate: async (updatedTask) => {
+        triggerRipple();
         // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
@@ -275,6 +283,7 @@ export default function Index() {
   const updateMutation = useMutation(
     trpc.task.update.mutationOptions({
       onMutate: async (updatedTask) => {
+        triggerRipple();
         // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
@@ -342,6 +351,7 @@ export default function Index() {
   const deleteMutation = useMutation(
     trpc.task.delete.mutationOptions({
       onMutate: async (taskId) => {
+        triggerRipple();
         // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
@@ -389,6 +399,7 @@ export default function Index() {
   const createMutation = useMutation(
     trpc.task.create.mutationOptions({
       onMutate: async (newTask) => {
+        triggerRipple();
         console.log("🚀 onMutate called for create");
         // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
@@ -485,7 +496,7 @@ export default function Index() {
     setIsRefreshing(true);
     try {
       await refetch();
-      setRippleTrigger((prev) => !prev);
+      triggerRipple();
     } catch (error) {
       console.error("Manual refresh failed:", error);
     } finally {
