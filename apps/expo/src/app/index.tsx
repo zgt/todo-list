@@ -1,5 +1,5 @@
 import type { TRPCClientErrorLike } from "@trpc/client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -122,7 +122,14 @@ export default function Index() {
   const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [rippleTrigger, setRippleTrigger] = useState(0);
-  const triggerRipple = () => setRippleTrigger((prev) => prev + 1);
+  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRipple = useCallback(() => {
+    if (rippleDebounceRef.current) return;
+    setRippleTrigger((prev) => prev + 1);
+    rippleDebounceRef.current = setTimeout(() => {
+      rippleDebounceRef.current = null;
+    }, 500);
+  }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
@@ -147,7 +154,7 @@ export default function Index() {
   // Trigger ripple when any query fetch starts
   useEffect(() => {
     if (isFetching) triggerRipple();
-  }, [isFetching]);
+  }, [isFetching, triggerRipple]);
 
   // Use useMemo with only serverTasks dependency to ensure optimistic updates work
   // while maintaining stable reference for other hooks

@@ -85,22 +85,15 @@ export default function CreateTask({ onCreate, onSuccess }: CreateTaskProps) {
           />
         </View>
 
-        <View
-          className="items-center justify-end"
-          style={{
-            borderRadius: 9999,
-            borderWidth: 2,
-            borderColor: "#8FA8A8",
-          }}
-        >
+        <View className="items-center justify-center">
           <Pressable
             onPress={handleCreate}
-            className={`h-11 w-11 items-center justify-center rounded-full ${
+            className={`h-12 w-12 items-center justify-center rounded-full border-2 border-[#8FA8A8] ${
               title.trim() ? "bg-emerald-500" : "bg-zinc-800"
             }`}
             disabled={!title.trim()}
           >
-            <Send size={18} color={title.trim() ? "#fff" : "#fff"} />
+            <Send size={18} color="#fff" />
           </Pressable>
         </View>
       </View>

@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/refs -- This component intentionally reads/writes refs during render
+   to implement a deferred sort pattern: task order only updates on navigation or add/remove,
+   not on completion toggling, preventing cards from jumping away mid-interaction. */
 import { useCallback, useRef, useState } from "react";
 import { Dimensions, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
@@ -113,8 +116,9 @@ export function SwipeableCardStack({
     const prevIndexMap = new Map(prev.map((t, i) => [t.id, i]));
     const changed = new Set<string>();
     for (let i = 0; i < next.length; i++) {
-      if (prevIndexMap.get(next[i]!.id) !== i) {
-        changed.add(next[i]!.id);
+      const nextTask = next[i];
+      if (nextTask && prevIndexMap.get(nextTask.id) !== i) {
+        changed.add(nextTask.id);
       }
     }
     // Don't skip animation for the card we're navigating to

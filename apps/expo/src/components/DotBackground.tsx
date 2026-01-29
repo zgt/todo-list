@@ -65,6 +65,8 @@ export function DotBackground({ trigger }: DotBackgroundProps) {
 
   useEffect(() => {
     if (trigger === undefined) return;
+    // Skip if a ripple is already playing (intensity > 0.1 means still visible)
+    if (rippleIntensity.value > 0.1) return;
 
     // Reset and start ripple
     rippleTime.value = 0;
