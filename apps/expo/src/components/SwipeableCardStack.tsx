@@ -34,6 +34,7 @@ export function SwipeableCardStack({
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
+  const skipAnimationIds = useRef<Set<string>>(new Set());
 
   // Deferred sort: only re-sort on navigation or task list changes (add/remove/refresh),
   // not on completion toggling, so the card doesn't jump away instantly.
@@ -100,19 +101,44 @@ export function SwipeableCardStack({
     setEditingId(null);
   };
 
+  const resortWithTarget = (targetDirection: "next" | "prev") => {
+    const prev = sortedTasksRef.current;
+    // The task we want to land on after navigation
+    const targetIdx =
+      targetDirection === "next" ? currentIndex + 1 : currentIndex - 1;
+    const targetTaskId = prev[targetIdx]?.id;
+    const next = sortTasks(tasks);
+    sortedTasksRef.current = next;
+    // Track which tasks changed position
+    const prevIndexMap = new Map(prev.map((t, i) => [t.id, i]));
+    const changed = new Set<string>();
+    for (let i = 0; i < next.length; i++) {
+      if (prevIndexMap.get(next[i]!.id) !== i) {
+        changed.add(next[i]!.id);
+      }
+    }
+    // Don't skip animation for the card we're navigating to
+    if (targetTaskId) changed.delete(targetTaskId);
+    skipAnimationIds.current = changed;
+    // Find where the target task is in the new sorted order
+    if (targetTaskId) {
+      const newIdx = next.findIndex((t) => t.id === targetTaskId);
+      if (newIdx !== -1) return newIdx;
+    }
+    return targetIdx;
+  };
+
   const handleNext = () => {
     if (currentIndex < sortedTasks.length - 1) {
-      // Re-sort on navigation so completed tasks settle to the bottom
-      sortedTasksRef.current = sortTasks(tasks);
-      setCurrentIndex((prev) => prev + 1);
+      const newIndex = resortWithTarget("next");
+      setCurrentIndex(newIndex);
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      // Re-sort on navigation
-      sortedTasksRef.current = sortTasks(tasks);
-      setCurrentIndex((prev) => prev - 1);
+      const newIndex = resortWithTarget("prev");
+      setCurrentIndex(newIndex);
     }
   };
 
@@ -120,6 +146,9 @@ export function SwipeableCardStack({
   const startIndex = Math.max(0, currentIndex - 1);
   const displayTasks = sortedTasks.slice(startIndex, currentIndex + 4);
   const baseIndexOffset = currentIndex - startIndex; // Offset to calculate relative index
+  const currentSkipIds = skipAnimationIds.current;
+  // Reset after capturing
+  skipAnimationIds.current = new Set();
   return (
     <View
       style={{
@@ -137,6 +166,7 @@ export function SwipeableCardStack({
             index={relativeIndex}
             totalCards={displayTasks.length}
             isTopCard={relativeIndex === 0}
+            skipStackAnimation={currentSkipIds.has(task.id)}
             canGoNext={currentIndex < sortedTasks.length - 1}
             canGoPrevious={currentIndex > 0}
             swipeProgress={swipeProgress}

@@ -1,5 +1,5 @@
 import type { SharedValue } from "react-native-reanimated";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { Dimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -49,6 +49,7 @@ interface SwipeableCardProps {
   ) => void;
   onCancelEdit: () => void;
   isEditing: boolean;
+  skipStackAnimation: boolean;
   onNext: () => void;
   onPrevious: () => void;
 }
@@ -71,6 +72,7 @@ export function SwipeableCard({
   onSave,
   onCancelEdit,
   isEditing,
+  skipStackAnimation,
   onNext,
   onPrevious,
 }: SwipeableCardProps) {
@@ -125,20 +127,33 @@ export function SwipeableCard({
   }, [task.id, index, translateX, translateY, opacity, swipeProgress]);
 
   // Animate stacking properties when index changes
-  useEffect(() => {
-    stackTranslateY.value = withSpring(-Math.max(0, index) * 18, {
-      damping: 60,
-      stiffness: 380,
-    });
-    stackScale.value = withSpring(1 - Math.max(0, index) * 0.05, {
-      damping: 20,
-      stiffness: 180,
-    });
-    stackOpacity.value = withSpring(1 - Math.max(0, index) * 0.15, {
-      damping: 20,
-      stiffness: 180,
-    });
-  }, [index, stackTranslateY, stackScale, stackOpacity]);
+  // Skip animation when index change is caused by sort reorder (after completion)
+  // useLayoutEffect to avoid 1-frame delay before animation starts
+  useLayoutEffect(() => {
+    const targetY = -Math.max(0, index) * 18;
+    const targetScale = 1 - Math.max(0, index) * 0.05;
+    const targetOpacity = 1 - Math.max(0, index) * 0.15;
+
+    if (skipStackAnimation) {
+      console.log("skip");
+      stackTranslateY.value = targetY;
+      stackScale.value = targetScale;
+      stackOpacity.value = targetOpacity;
+    } else {
+      stackTranslateY.value = withSpring(targetY, {
+        damping: 60,
+        stiffness: 380,
+      });
+      stackScale.value = withSpring(targetScale, {
+        damping: 20,
+        stiffness: 180,
+      });
+      stackOpacity.value = withSpring(targetOpacity, {
+        damping: 20,
+        stiffness: 180,
+      });
+    }
+  }, [index, skipStackAnimation, stackTranslateY, stackScale, stackOpacity]);
 
   const panGesture = Gesture.Pan()
     // .enabled(!isEditing) // Enable gestures during edit for save/cancel actions
