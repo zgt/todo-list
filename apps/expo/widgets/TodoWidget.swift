@@ -80,9 +80,9 @@ struct TodoWidgetProvider: TimelineProvider {
         case .systemSmall:
             return 2
         case .systemMedium:
-            return 3
+            return 5
         case .systemLarge:
-            return 6
+            return 11
         case .systemExtraLarge:
             return 10
         case .accessoryInline:
@@ -162,7 +162,7 @@ struct SmallWidgetView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Header
             HStack {
-                Text(entry.date, format: .dateTime.weekday(.wide).month(.abbreviated).day())
+                Text(entry.date, format: .dateTime.month(.abbreviated).day())
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.textPrimary)
@@ -204,8 +204,8 @@ struct MediumWidgetView: View {
             // Left: Stats
             VStack(alignment: .leading, spacing: 8) {
                 Text(entry.date, format: .dateTime.month(.abbreviated).day())
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(.title2)
+                    .fontWeight(.bold)
                     .foregroundColor(.textPrimary)
 
                 Spacer()
@@ -362,7 +362,7 @@ struct AccessoryRectangularView: View {
     let entry: TodoWidgetEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 1) {
             // Header with count
             HStack(spacing: 4) {
                 Text(entry.date, format: .dateTime.month(.abbreviated).day())
@@ -382,7 +382,7 @@ struct AccessoryRectangularView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(entry.tasks.prefix(2)) { task in
+                ForEach(entry.tasks.prefix(3)) { task in
                     HStack(spacing: 4) {
                         Image(systemName: task.completed ? "checkmark.circle.fill" : "circle")
                             .font(.caption2)
