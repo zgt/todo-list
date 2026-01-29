@@ -121,7 +121,7 @@ export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [_refreshTrigger, setRefreshTrigger] = useState(0);
+  const [rippleTrigger, setRippleTrigger] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
@@ -485,7 +485,7 @@ export default function Index() {
     setIsRefreshing(true);
     try {
       await refetch();
-      setRefreshTrigger((prev) => prev + 1);
+      setRippleTrigger((prev) => !prev);
     } catch (error) {
       console.error("Manual refresh failed:", error);
     } finally {
@@ -527,7 +527,7 @@ export default function Index() {
   }
 
   return (
-    <GradientBackground>
+    <GradientBackground rippleTrigger={rippleTrigger}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 

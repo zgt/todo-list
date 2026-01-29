@@ -5,8 +5,10 @@ import { DotBackground } from "./DotBackground";
 
 export function GradientBackground({
   children,
+  rippleTrigger,
 }: {
   children: React.ReactNode;
+  rippleTrigger?: boolean;
 }) {
   return (
     <View style={styles.container}>
@@ -19,7 +21,7 @@ export function GradientBackground({
       />
 
       {/* Dot pattern overlay */}
-      <DotBackground />
+      <DotBackground trigger={rippleTrigger} />
 
       {/* Aurora effects */}
       <LinearGradient
