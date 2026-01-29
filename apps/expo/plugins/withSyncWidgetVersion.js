@@ -60,6 +60,28 @@ const withSyncWidgetVersion = (config) => {
       }
     }
 
+    // Set CURRENT_PROJECT_VERSION at the project level so all targets
+    // inherit it by default (fixes extension mismatch when target-level
+    // settings use $(CURRENT_PROJECT_VERSION) or are not explicitly set)
+    const pbxProject = project.pbxProjectSection();
+    for (const key of Object.keys(pbxProject)) {
+      const entry = pbxProject[key];
+      if (typeof entry === "object" && entry.buildConfigurationList) {
+        const configListId = entry.buildConfigurationList;
+        const configList =
+          project.pbxXCConfigurationList()[configListId];
+        if (configList?.buildConfigurations) {
+          for (const ref of configList.buildConfigurations) {
+            const buildConfig = configs[ref.value];
+            if (buildConfig?.buildSettings) {
+              buildConfig.buildSettings.CURRENT_PROJECT_VERSION =
+                `"${version}"`;
+            }
+          }
+        }
+      }
+    }
+
     return cfg;
   });
 };
