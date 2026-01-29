@@ -35,6 +35,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     reactCompiler: true,
   },
   plugins: [
+    "./plugins/withSyncWidgetVersion",
     "expo-router",
     "expo-secure-store",
     "expo-web-browser",
