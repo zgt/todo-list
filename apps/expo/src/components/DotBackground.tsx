@@ -25,20 +25,21 @@ const source = Skia.RuntimeEffect.Make(`
 
   half4 main(float2 fragCoord) {
     float2 uv = fragCoord / resolution;
+    float aspect = resolution.x / resolution.y;
 
     // Dot grid
-    float2 gridUv = fract(uv * gridSize);
+    float2 gridUv = fract(uv * float2(gridSize * aspect, gridSize));
     float dot = smoothstep(0.02, 0.0, sdfCircle(gridUv, 0.07));
 
     // Ripple
     float ripple = 0.0;
     if (rippleIntensity > 0.0) {
-      float dist = distance(uv, rippleCenter);
+      float dist = distance(uv * float2(aspect, 1.0), rippleCenter * float2(aspect, 1.0));
       float speed = 2.0;
       float frequency = 20.0;
       float baseWave = sin(dist * frequency - rippleTime * speed);
       float sharpWave = pow(baseWave * 0.5 + 0.5, 10.0);
-      float decay = exp(-dist * 2.0);
+      float decay = exp(-dist * 1.0);
       float wavefront = rippleTime * 0.15;
       float waveMask = 1.0 - smoothstep(wavefront - 0.1, wavefront, dist);
       ripple = sharpWave * decay * rippleIntensity * waveMask;

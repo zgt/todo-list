@@ -1,18 +1,15 @@
-import { useState } from "react";
-import { Pressable, Text as RNText, View } from "react-native";
+import { Text as RNText, View } from "react-native";
 
 import { DotBackground } from "./DotBackground";
 import { GradientBackground } from "./GradientBackground";
 import { SignInButtons } from "./SignInButton";
 
 export function AuthGuard() {
-  const [dotTrigger, setDotTrigger] = useState(false);
-
   return (
     <GradientBackground>
-      <DotBackground trigger={dotTrigger} />
+      <DotBackground />
       <View className="flex-1 items-center justify-center px-8">
-        {/* App Branding */}
+        {/* Branding */}
         <View className="mb-8 items-center">
           <RNText className="mb-2 text-5xl font-bold text-[#DCE4E4]">
             Toki <RNText className="text-[#50C878]">list</RNText>
@@ -20,8 +17,7 @@ export function AuthGuard() {
           <View className="h-1 w-20 rounded-full bg-[#50C878]" />
         </View>
 
-        {/* Compelling Message */}
-        <View className="mb-12 items-center">
+        <View className="mb-12 items-center rounded-full border border-[#164B49] bg-[#102A2A] px-6 py-3">
           <RNText className="mb-3 text-center text-2xl font-semibold text-[#DCE4E4]">
             Welcome back!
           </RNText>
@@ -31,22 +27,14 @@ export function AuthGuard() {
           </RNText>
         </View>
 
-        {/* Ripple Trigger */}
-        <Pressable
-          onPress={() => setDotTrigger((prev) => !prev)}
-          className="mb-6 rounded-full border border-[#164B49] bg-[#102A2A] px-6 py-3"
-        >
-          <RNText className="text-sm font-medium text-[#50C878]">Ripple</RNText>
-        </Pressable>
-
         {/* Sign-In Buttons */}
-        <View className="top-60">
+        <View className="top-70">
           <SignInButtons size="large" />
         </View>
         {/* Subtle Footer */}
         <View className="absolute bottom-12">
-          <RNText className="text-center text-xs text-[#8FA8A8]/60">
-            Your data is securely encrypted
+          <RNText className="text-center text-xs text-white">
+            Sign in with Apple or Discord
           </RNText>
         </View>
       </View>
