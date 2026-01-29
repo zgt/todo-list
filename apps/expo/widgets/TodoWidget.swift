@@ -90,7 +90,7 @@ struct TodoWidgetProvider: TimelineProvider {
         case .accessoryCircular:
             return 0  // Just shows progress
         case .accessoryRectangular:
-            return 2  // Shows 2 task titles
+            return 3  // Shows 2 task titles
         @unknown default:
             return 3
         }
