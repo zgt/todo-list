@@ -180,7 +180,7 @@ export default function Index() {
       selectedCategoryId === null
         ? tasks
         : tasks.filter((task) => task.categoryId === selectedCategoryId);
-    return [...base].sort((a, b) => Number(a.completed) - Number(b.completed));
+    return base;
   }, [tasks, selectedCategoryId]);
 
   // Sync tasks to iOS widget whenever they change

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Dimensions, View } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
@@ -35,7 +35,37 @@ export function SwipeableCardStack({
   const [editingId, setEditingId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
 
-  if (tasks.length === 0) {
+  // Deferred sort: only re-sort on navigation or task list changes (add/remove/refresh),
+  // not on completion toggling, so the card doesn't jump away instantly.
+  const sortTasks = useCallback(
+    (t: LocalTask[]) =>
+      [...t].sort((a, b) => Number(a.completed) - Number(b.completed)),
+    [],
+  );
+  const prevTaskIdsRef = useRef<string>("");
+  const sortedTasksRef = useRef<LocalTask[]>(sortTasks(tasks));
+
+  // Re-sort when tasks are added/removed (ids change) but NOT when completed status changes
+  const currentTaskIds = tasks
+    .map((t) => t.id)
+    .sort()
+    .join(",");
+  if (currentTaskIds !== prevTaskIdsRef.current) {
+    prevTaskIdsRef.current = currentTaskIds;
+    sortedTasksRef.current = sortTasks(tasks);
+  } else {
+    // Update task data (e.g. completed status) without re-sorting
+    const idOrder = new Map(sortedTasksRef.current.map((t, i) => [t.id, i]));
+    sortedTasksRef.current = [...tasks].sort((a, b) => {
+      const ai = idOrder.get(a.id) ?? tasks.indexOf(a);
+      const bi = idOrder.get(b.id) ?? tasks.indexOf(b);
+      return ai - bi;
+    });
+  }
+
+  const sortedTasks = sortedTasksRef.current;
+
+  if (sortedTasks.length === 0) {
     return null;
   }
 
@@ -71,20 +101,24 @@ export function SwipeableCardStack({
   };
 
   const handleNext = () => {
-    if (currentIndex < tasks.length - 1) {
+    if (currentIndex < sortedTasks.length - 1) {
+      // Re-sort on navigation so completed tasks settle to the bottom
+      sortedTasksRef.current = sortTasks(tasks);
       setCurrentIndex((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
+      // Re-sort on navigation
+      sortedTasksRef.current = sortTasks(tasks);
       setCurrentIndex((prev) => prev - 1);
     }
   };
 
   // Show previous card (if exists), current card, and next 2 cards for stacking effect
   const startIndex = Math.max(0, currentIndex - 1);
-  const displayTasks = tasks.slice(startIndex, currentIndex + 3);
+  const displayTasks = sortedTasks.slice(startIndex, currentIndex + 4);
   const baseIndexOffset = currentIndex - startIndex; // Offset to calculate relative index
   return (
     <View
@@ -103,7 +137,7 @@ export function SwipeableCardStack({
             index={relativeIndex}
             totalCards={displayTasks.length}
             isTopCard={relativeIndex === 0}
-            canGoNext={currentIndex < tasks.length - 1}
+            canGoNext={currentIndex < sortedTasks.length - 1}
             canGoPrevious={currentIndex > 0}
             swipeProgress={swipeProgress}
             deletePending={deletePendingId === task.id}

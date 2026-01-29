@@ -127,8 +127,8 @@ export function SwipeableCard({
   // Animate stacking properties when index changes
   useEffect(() => {
     stackTranslateY.value = withSpring(-Math.max(0, index) * 18, {
-      damping: 20,
-      stiffness: 180,
+      damping: 60,
+      stiffness: 380,
     });
     stackScale.value = withSpring(1 - Math.max(0, index) * 0.05, {
       damping: 20,
