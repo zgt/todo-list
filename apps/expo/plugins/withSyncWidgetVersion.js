@@ -19,8 +19,9 @@ const withSyncWidgetVersion = (config) => {
           '"com.zgtf.todolist"' &&
         entry.name === "Release"
       ) {
-        mainVersion =
-          entry.buildSettings.CURRENT_PROJECT_VERSION?.replace(/"/g, "") ?? "1";
+        mainVersion = String(
+          entry.buildSettings.CURRENT_PROJECT_VERSION ?? "1",
+        ).replace(/"/g, "");
         break;
       }
     }
