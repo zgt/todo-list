@@ -31,6 +31,9 @@ export function CategoryNode({
         if (e.key === "Enter") onMouseEnter(node.id);
       }}
     >
+      {/* Invisible hit area */}
+      <circle r={radius + 12} fill="transparent" />
+
       {/* Glow filter */}
       {isHovered && !node.isRoot && (
         <circle

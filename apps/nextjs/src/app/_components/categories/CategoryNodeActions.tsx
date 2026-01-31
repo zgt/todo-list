@@ -7,6 +7,8 @@ interface CategoryNodeActionsProps {
   y: number;
   onEdit: () => void;
   onAddChild: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }
 
 export function CategoryNodeActions({
@@ -14,9 +16,24 @@ export function CategoryNodeActions({
   y,
   onEdit,
   onAddChild,
+  onMouseEnter,
+  onMouseLeave,
 }: CategoryNodeActionsProps) {
   return (
-    <g transform={`translate(${x},${y})`}>
+    <g
+      transform={`translate(${x},${y})`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {/* Invisible bridge to maintain hover state while moving from node to buttons */}
+      <rect
+        x={-10}
+        y={-40}
+        width={65}
+        height={80}
+        fill="transparent"
+        style={{ pointerEvents: "all" }}
+      />
       <foreignObject x={20} y={-36} width={32} height={32}>
         <button
           onClick={onEdit}

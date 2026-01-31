@@ -64,6 +64,7 @@ export function CategoryTreeVisualization({
   }, []);
 
   const handleMouseLeave = useCallback(() => {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
     leaveTimer.current = setTimeout(() => setHoveredId(null), 300);
   }, []);
 
@@ -130,6 +131,8 @@ export function CategoryTreeVisualization({
               y={hoveredNode.y}
               onEdit={() => onEdit(hoveredNode.data!)}
               onAddChild={() => onAddChild(hoveredNode.data!)}
+              onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
+              onMouseLeave={handleMouseLeave}
             />
           )}
 
@@ -140,6 +143,8 @@ export function CategoryTreeVisualization({
               y={hoveredNode.y}
               onEdit={() => {}}
               onAddChild={() => onAddChild(null)}
+              onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
+              onMouseLeave={handleMouseLeave}
             />
           )}
         </g>
