@@ -6,6 +6,7 @@ import { and, arrayContains, asc, desc, eq, inArray, isNull, ne, sql } from "@ac
 import {
   Category,
   CreateCategorySchema,
+  Task,
   UpdateCategorySchema,
 } from "@acme/db/schema";
 
@@ -32,7 +33,12 @@ export const categoryRouter = {
       orderBy: [asc(Category.depth), asc(Category.sortOrder), desc(Category.createdAt)],
     });
 
-    return categories.map(serializeCategory);
+    const nameMap = new Map(categories.map((c) => [c.id, c.name]));
+
+    return categories.map((c) => ({
+      ...serializeCategory(c),
+      path: [...new Set(c.path)].map((id) => nameMap.get(id) ?? id),
+    }));
   }),
 
   // Get category tree (roots with nested children)
@@ -45,13 +51,22 @@ export const categoryRouter = {
       orderBy: [asc(Category.sortOrder), desc(Category.createdAt)],
     });
 
+    const nameMap = new Map(categories.map((c) => [c.id, c.name]));
+
     // Build tree in memory
     const map = new Map<string, CatNode>();
-    type CatNode = (typeof categories)[number] & { children: CatNode[] };
+    type CatNode = Omit<(typeof categories)[number], "path"> & {
+      path: string[];
+      children: CatNode[];
+    };
     const roots: CatNode[] = [];
 
     for (const cat of categories) {
-      map.set(cat.id, { ...cat, children: [] });
+      map.set(cat.id, {
+        ...cat,
+        path: [...new Set(cat.path)].map((id) => nameMap.get(id) ?? id),
+        children: [],
+      });
     }
 
     for (const cat of categories) {
@@ -86,16 +101,52 @@ export const categoryRouter = {
 
       if (!category) return null;
 
+      // To get names in path, we need to fetch all ancestors
+      if (category.path.length > 0) {
+        const ancestors = await ctx.db.query.Category.findMany({
+          where: and(
+            inArray(Category.id, category.path),
+            eq(Category.userId, ctx.session.user.id),
+          ),
+          columns: { id: true, name: true },
+        });
+        const nameMap = new Map(ancestors.map((a) => [a.id, a.name]));
+        return {
+          ...serializeCategory(category),
+          path: [...new Set(category.path)].map((id) => nameMap.get(id) ?? id),
+        };
+      }
+
       return serializeCategory(category);
     }),
 
   // Get breadcrumb trail for a category
   breadcrumbs: protectedProcedure
-    .input(z.object({ id: z.string().uuid() }))
+    .input(
+      z.object({
+        id: z.string().uuid().optional(),
+        taskId: z.string().uuid().optional(),
+      }),
+    )
     .query(async ({ ctx, input }) => {
+      let categoryId = input.id;
+
+      if (!categoryId && input.taskId) {
+        const task = await ctx.db.query.Task.findFirst({
+          where: and(
+            eq(Task.id, input.taskId),
+            eq(Task.userId, ctx.session.user.id),
+          ),
+          columns: { categoryId: true },
+        });
+        categoryId = task?.categoryId ?? undefined;
+      }
+
+      if (!categoryId) return [];
+
       const category = await ctx.db.query.Category.findFirst({
         where: and(
-          eq(Category.id, input.id),
+          eq(Category.id, categoryId),
           eq(Category.userId, ctx.session.user.id),
           isNull(Category.deletedAt),
         ),
@@ -104,9 +155,16 @@ export const categoryRouter = {
       if (!category) return [];
 
       // path contains ancestor IDs in order; fetch them all
-      const ancestorIds = category.path.filter((id) => id !== category.id);
+      const ancestorIds = category.path;
       if (ancestorIds.length === 0) {
-        return [{ id: category.id, name: category.name, color: category.color, icon: category.icon }];
+        return [
+          {
+            id: category.id,
+            name: category.name,
+            color: category.color,
+            icon: category.icon,
+          },
+        ];
       }
 
       const ancestors = await ctx.db.query.Category.findMany({
@@ -119,10 +177,17 @@ export const categoryRouter = {
 
       // Sort by their position in the path array
       const orderMap = new Map(category.path.map((id, i) => [id, i]));
-      const sorted = [...ancestors].sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+      const sorted = [...ancestors].sort(
+        (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
+      );
 
       // Append current category at the end
-      sorted.push({ id: category.id, name: category.name, color: category.color, icon: category.icon });
+      sorted.push({
+        id: category.id,
+        name: category.name,
+        color: category.color,
+        icon: category.icon,
+      });
 
       return sorted;
     }),

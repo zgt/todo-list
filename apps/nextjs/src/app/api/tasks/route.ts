@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { and, desc, eq, isNull } from "@acme/db";
+import { and, desc, eq, inArray, isNull } from "@acme/db";
 import { db } from "@acme/db/client";
-import { Task } from "@acme/db/schema";
+import { Category, Task } from "@acme/db/schema";
 
 export async function GET(request: Request) {
   const apiKey = request.headers.get("x-api-key");
@@ -27,5 +27,36 @@ export async function GET(request: Request) {
     with: { category: true },
   });
 
-  return NextResponse.json(tasks);
+  // Collect all unique category IDs and ancestor IDs needed
+  const neededCategoryIds = new Set<string>();
+  tasks.forEach((task) => {
+    if (task.category) {
+      neededCategoryIds.add(task.category.id);
+      task.category.path.forEach((id) => neededCategoryIds.add(id));
+    }
+  });
+
+  let categoryNameMap = new Map<string, string>();
+  if (neededCategoryIds.size > 0) {
+    const categories = await db.query.Category.findMany({
+      where: inArray(Category.id, Array.from(neededCategoryIds)),
+      columns: { id: true, name: true },
+    });
+    categoryNameMap = new Map(categories.map((c) => [c.id, c.name]));
+  }
+
+  const transformedTasks = tasks.map((task) => {
+    if (!task.category) return task;
+    return {
+      ...task,
+      category: {
+        ...task.category,
+        path: [...new Set(task.category.path)].map(
+          (id) => categoryNameMap.get(id) ?? id,
+        ),
+      },
+    };
+  });
+
+  return NextResponse.json(transformedTasks);
 }
