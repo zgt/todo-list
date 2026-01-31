@@ -7,7 +7,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
 import { CreateCategorySchema } from "@acme/db/schema";
@@ -19,9 +19,14 @@ import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
 
+type CategoryTreeNode = RouterOutputs["category"]["tree"][number];
+
 export function CategoryForm() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+
+  const categoriesQuery = useSuspenseQuery(trpc.category.all.queryOptions());
+  const categories = categoriesQuery.data;
 
   const createCategory = useMutation(
     trpc.category.create.mutationOptions({
@@ -43,13 +48,17 @@ export function CategoryForm() {
   const form = useForm({
     defaultValues: {
       name: "",
-      color: "#50C878", // Default emerald green from design system
+      color: "#50C878",
+      parentId: "",
     },
     validators: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
       onSubmit: CreateCategorySchema as any,
     },
-    onSubmit: (data) => createCategory.mutate(data.value),
+    onSubmit: (data) => {
+      const { parentId, ...rest } = data.value;
+      createCategory.mutate({ ...rest, parentId: parentId || undefined });
+    },
   });
 
   return (
@@ -119,6 +128,33 @@ export function CategoryForm() {
         }}
       />
 
+      <form.Field
+        name="parentId"
+        children={(field) => (
+          <Field>
+            <FieldContent>
+              <FieldLabel htmlFor={field.name}>Parent Category</FieldLabel>
+            </FieldContent>
+            <select
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-white/10 bg-[#102A2A] px-3 py-1 text-sm text-[#DCE4E4] shadow-sm transition-colors focus-visible:border-[#21716C] focus-visible:outline-none"
+            >
+              <option value="">None (root category)</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {"\u00A0".repeat(cat.depth * 4)}
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+      />
+
       <Button
         type="submit"
         className="w-full"
@@ -132,10 +168,10 @@ export function CategoryForm() {
 
 export function CategoryList() {
   const trpc = useTRPC();
-  const categoriesQuery = useSuspenseQuery(trpc.category.all.queryOptions());
-  const categories = categoriesQuery.data;
+  const treeQuery = useSuspenseQuery(trpc.category.tree.queryOptions());
+  const tree = treeQuery.data;
 
-  if (categories.length === 0) {
+  if (tree.length === 0) {
     return (
       <div className="flex h-64 flex-col items-center justify-center text-center">
         <div className="mb-4 text-6xl">🏷️</div>
@@ -150,17 +186,50 @@ export function CategoryList() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2 lg:grid-cols-3">
-      {categories.map((category) => (
-        <CategoryCard key={category.id} category={category} />
+    <div className="flex flex-col gap-2 pt-2">
+      {tree.map((node) => (
+        <TreeNode key={node.id} node={node} depth={0} />
       ))}
     </div>
   );
 }
 
-type Category = RouterOutputs["category"]["all"][number];
+function TreeNode({ node, depth }: { node: CategoryTreeNode; depth: number }) {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = node.children.length > 0;
 
-function CategoryCard({ category }: { category: Category }) {
+  return (
+    <div>
+      <div style={{ marginLeft: depth * 24 }}>
+        <CategoryCard
+          category={node}
+          hasChildren={hasChildren}
+          expanded={expanded}
+          onToggle={() => setExpanded(!expanded)}
+        />
+      </div>
+      {hasChildren && expanded && (
+        <div className="flex flex-col gap-2">
+          {node.children.map((child) => (
+            <TreeNode key={child.id} node={child} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CategoryCard({
+  category,
+  hasChildren,
+  expanded,
+  onToggle,
+}: {
+  category: CategoryTreeNode;
+  hasChildren: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -189,33 +258,43 @@ function CategoryCard({ category }: { category: Category }) {
 
   return (
     <div
-      className="glass-card group rounded-2xl border border-white/10 p-6 transition-all duration-300 hover:border-white/20"
+      className="glass-card group rounded-2xl border border-white/10 p-4 transition-all duration-300 hover:border-white/20"
       style={{
         borderColor: `${category.color}20`,
       }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex items-center gap-3">
-            <div
-              className="h-4 w-4 flex-shrink-0 rounded-full"
-              style={{ backgroundColor: category.color }}
-            />
-            <h3 className="truncate text-lg font-semibold text-white">
-              {category.name}
-            </h3>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <span
-              className="rounded border px-2 py-1 font-mono text-xs"
-              style={{
-                borderColor: `${category.color}40`,
-                color: category.color,
-              }}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {hasChildren ? (
+            <button
+              onClick={onToggle}
+              className="text-muted-foreground hover:text-white flex-shrink-0 transition-colors"
             >
-              {category.color}
-            </span>
-          </div>
+              {expanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+          ) : (
+            <div className="w-4 flex-shrink-0" />
+          )}
+          <div
+            className="h-4 w-4 flex-shrink-0 rounded-full"
+            style={{ backgroundColor: category.color }}
+          />
+          <h3 className="truncate text-lg font-semibold text-white">
+            {category.name}
+          </h3>
+          <span
+            className="rounded border px-2 py-0.5 font-mono text-xs"
+            style={{
+              borderColor: `${category.color}40`,
+              color: category.color,
+            }}
+          >
+            {category.color}
+          </span>
         </div>
 
         <button
@@ -238,18 +317,15 @@ function CategoryCard({ category }: { category: Category }) {
 
 export function CategoryListSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="flex flex-col gap-2">
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="glass-card animate-pulse rounded-2xl border border-white/10 p-6"
+          className="glass-card animate-pulse rounded-2xl border border-white/10 p-4"
         >
-          <div className="flex items-start gap-3">
+          <div className="flex items-center gap-3">
             <div className="h-4 w-4 rounded-full bg-white/10" />
-            <div className="flex-1">
-              <div className="mb-2 h-6 w-3/4 rounded bg-white/10" />
-              <div className="h-4 w-1/2 rounded bg-white/10" />
-            </div>
+            <div className="h-6 w-3/4 rounded bg-white/10" />
           </div>
         </div>
       ))}

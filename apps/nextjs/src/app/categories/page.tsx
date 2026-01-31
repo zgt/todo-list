@@ -16,6 +16,7 @@ export default async function CategoriesPage() {
 
   if (session?.user) {
     void prefetch(trpc.category.all.queryOptions());
+    void prefetch(trpc.category.tree.queryOptions());
   }
 
   return (
