@@ -1,5 +1,5 @@
-import { relations } from "drizzle-orm";
-import { index, pgTable } from "drizzle-orm/pg-core";
+import { relations, sql } from "drizzle-orm";
+import { check, index, pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -36,10 +36,20 @@ export const Category = pgTable(
       .text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    parentId: t
+      .uuid("parent_id")
+      .references((): any => Category.id, { onDelete: "cascade" }),
     name: t.varchar({ length: 100 }).notNull(),
     color: t.varchar({ length: 7 }).notNull(), // Hex color code
     icon: t.varchar({ length: 50 }),
     sortOrder: t.integer("sort_order").notNull().default(0),
+    path: t
+      .uuid("path")
+      .array()
+      .notNull()
+      .default(sql`ARRAY[]::uuid[]`),
+    depth: t.integer().notNull().default(0),
+    isLeaf: t.boolean("is_leaf").notNull().default(true),
     createdAt: t
       .timestamp("created_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
@@ -53,6 +63,13 @@ export const Category = pgTable(
   (table) => [
     index("category_user_id_idx").on(table.userId),
     index("category_user_id_sort_order_idx").on(table.userId, table.sortOrder),
+    index("category_parent_id_idx").on(table.parentId),
+    index("category_user_id_path_idx").on(table.userId, table.path),
+    index("category_user_id_depth_idx").on(table.userId, table.depth),
+    check(
+      "category_no_self_reference",
+      sql`${table.parentId} IS NULL OR ${table.parentId} != ${table.id}`,
+    ),
   ],
 );
 
@@ -148,12 +165,16 @@ export const CreateCategorySchema = createInsertSchema(Category, {
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
   icon: z.string().max(50).optional(),
   sortOrder: z.number().int().optional(),
+  parentId: z.string().uuid().optional(),
 }).omit({
   id: true,
   userId: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,
+  path: true,
+  depth: true,
+  isLeaf: true,
 });
 
 export const UpdateCategorySchema = z.object({
@@ -165,9 +186,18 @@ export const UpdateCategorySchema = z.object({
     .optional(),
   icon: z.string().max(50).optional(),
   sortOrder: z.number().int().optional(),
+  parentId: z.string().uuid().nullable().optional(),
 });
 
-export const categoryRelations = relations(Category, ({ many }) => ({
+export const categoryRelations = relations(Category, ({ one, many }) => ({
+  parent: one(Category, {
+    fields: [Category.parentId],
+    references: [Category.id],
+    relationName: "categoryParentChild",
+  }),
+  children: many(Category, {
+    relationName: "categoryParentChild",
+  }),
   tasks: many(Task),
 }));
 
