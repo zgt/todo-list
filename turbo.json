@@ -54,7 +54,8 @@
     "AUTH_APPLE_SECRET",
     "AUTH_APPLE_BUNDLE_ID",
     "AUTH_SECRET",
-    "PORT"
+    "PORT",
+    "OBSIDIAN_SYNC_API_KEY"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
