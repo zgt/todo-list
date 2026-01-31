@@ -22,7 +22,8 @@
     "./sheet": "./src/sheet.tsx",
     "./skeleton": "./src/skeleton.tsx",
     "./tooltip": "./src/tooltip.tsx",
-    "./multiple-select": "./src/multiple-select.tsx"
+    "./multiple-select": "./src/multiple-select.tsx",
+    "./dialog": "./src/dialog.tsx"
   },
   "license": "MIT",
   "scripts": {

@@ -5,17 +5,13 @@ import { SidebarInset } from "@acme/ui/sidebar";
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { AppSidebar } from "../_components/sidebar-nav";
-import {
-  CategoryForm,
-  CategoryList,
-  CategoryListSkeleton,
-} from "./category-components";
+import { CategoryTree } from "../_components/categories/CategoryTree";
+import { CategoryListSkeleton } from "./category-components";
 
 export default async function CategoriesPage() {
   const session = await getSession();
 
   if (session?.user) {
-    void prefetch(trpc.category.all.queryOptions());
     void prefetch(trpc.category.tree.queryOptions());
   }
 
@@ -42,23 +38,10 @@ export default async function CategoriesPage() {
                 </div>
 
                 {session?.user ? (
-                  <div className="flex flex-1 gap-8">
-                    {/* Left side - Create form */}
-                    <div className="w-96 flex-shrink-0 pt-2">
-                      <div className="glass-card rounded-2xl border border-white/10 p-6">
-                        <h2 className="mb-4 text-xl font-semibold text-white">
-                          Create Category
-                        </h2>
-                        <CategoryForm />
-                      </div>
-                    </div>
-
-                    {/* Right side - Category list */}
-                    <div className="custom-scrollbar flex-1 overflow-y-auto px-2 pr-4 pb-2">
-                      <Suspense fallback={<CategoryListSkeleton />}>
-                        <CategoryList />
-                      </Suspense>
-                    </div>
+                  <div className="flex-1">
+                    <Suspense fallback={<CategoryListSkeleton />}>
+                      <CategoryTree />
+                    </Suspense>
                   </div>
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center p-8 text-center">
