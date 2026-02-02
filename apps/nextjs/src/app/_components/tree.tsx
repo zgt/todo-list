@@ -28,7 +28,13 @@ interface TreeProps extends React.HTMLAttributes<HTMLDivElement> {
   tree?: any
 }
 
-function Tree({ indent = 20, tree, className, ...props }: TreeProps) {
+function Tree({
+  indent = 20,
+  tree,
+  className,
+  children,
+  ...props
+}: TreeProps) {
   const containerProps =
     tree && typeof tree.getContainerProps === "function"
       ? tree.getContainerProps()
@@ -51,7 +57,9 @@ function Tree({ indent = 20, tree, className, ...props }: TreeProps) {
         style={mergedStyle}
         className={cn("flex flex-col", className)}
         {...otherProps}
-      />
+      >
+        {children}
+      </div>
     </TreeContext.Provider>
   )
 }
@@ -97,27 +105,37 @@ function TreeItem<T = any>({
         )}
         data-focus={
           typeof item.isFocused === "function"
-            ? item.isFocused() || false
+            ? item.isFocused()
+              ? "true"
+              : "false"
             : undefined
         }
         data-folder={
           typeof item.isFolder === "function"
-            ? item.isFolder() || false
+            ? item.isFolder()
+              ? "true"
+              : "false"
             : undefined
         }
         data-selected={
           typeof item.isSelected === "function"
-            ? item.isSelected() || false
+            ? item.isSelected()
+              ? "true"
+              : "false"
             : undefined
         }
         data-drag-target={
           typeof item.isDragTarget === "function"
-            ? item.isDragTarget() || false
+            ? item.isDragTarget()
+              ? "true"
+              : "false"
             : undefined
         }
         data-search-match={
           typeof item.isMatchingSearch === "function"
-            ? item.isMatchingSearch() || false
+            ? item.isMatchingSearch()
+              ? "true"
+              : "false"
             : undefined
         }
         aria-expanded={item.isExpanded()}
