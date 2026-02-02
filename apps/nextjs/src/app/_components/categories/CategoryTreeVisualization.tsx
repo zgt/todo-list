@@ -14,12 +14,14 @@ interface CategoryTreeVisualizationProps {
   tree: CategoryTreeNode[];
   onEdit: (node: CategoryTreeNode) => void;
   onAddChild: (parentNode: CategoryTreeNode | null) => void;
+  onDelete?: (node: CategoryTreeNode) => void;
 }
 
 export function CategoryTreeVisualization({
   tree,
   onEdit,
   onAddChild,
+  onDelete,
 }: CategoryTreeVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gRef = useRef<SVGGElement>(null);
@@ -129,8 +131,10 @@ export function CategoryTreeVisualization({
             <CategoryNodeActions
               x={hoveredNode.x}
               y={hoveredNode.y}
+              nodeRadius={14}
               onEdit={() => onEdit(hoveredNode.data!)}
               onAddChild={() => onAddChild(hoveredNode.data!)}
+              onDelete={onDelete ? () => onDelete(hoveredNode.data!) : undefined}
               onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
               onMouseLeave={handleMouseLeave}
             />
@@ -141,6 +145,7 @@ export function CategoryTreeVisualization({
             <CategoryNodeActions
               x={hoveredNode.x}
               y={hoveredNode.y}
+              nodeRadius={24}
               onEdit={() => {}}
               onAddChild={() => onAddChild(null)}
               onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
