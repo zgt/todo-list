@@ -14,6 +14,7 @@ export default async function HomePage() {
 
   if (session?.user) {
     void prefetch(trpc.task.all.queryOptions());
+    void prefetch(trpc.category.all.queryOptions());
   }
 
   return (

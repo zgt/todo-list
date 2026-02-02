@@ -146,14 +146,14 @@ export function TaskList() {
   const { data: tasks } = useSuspenseQuery(trpc.task.all.queryOptions());
 
   // Get selected category IDs from filter context
-  const { selectedCategoryIds } = useCategoryFilter();
+  const { effectiveCategoryIds } = useCategoryFilter();
 
-  // Filter tasks based on selected categories
+  // Filter tasks based on selected categories (includes descendants)
   const filteredTasks =
-    selectedCategoryIds.length > 0
+    effectiveCategoryIds.length > 0
       ? tasks.filter(
           (task) =>
-            task.categoryId && selectedCategoryIds.includes(task.categoryId),
+            task.categoryId && effectiveCategoryIds.includes(task.categoryId),
         )
       : tasks;
 

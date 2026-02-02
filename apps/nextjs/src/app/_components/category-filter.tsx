@@ -1,10 +1,6 @@
-import { useEffect, useMemo } from "react";
-import {
-  hotkeysCoreFeature,
-  selectionFeature,
-  syncDataLoaderFeature,
-} from "@headless-tree/core";
-import { useTree } from "@headless-tree/react";
+"use client";
+
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, Filter } from "lucide-react";
 
@@ -15,7 +11,122 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
-import { Tree, TreeItem } from "./tree";
+
+interface CategoryNode {
+  id: string;
+  name: string;
+  color: string;
+  icon: string | null;
+  sortOrder: number;
+  children: CategoryNode[];
+}
+
+function buildTree(
+  categories: {
+    id: string;
+    name: string;
+    color: string;
+    icon: string | null;
+    parentId: string | null;
+    sortOrder: number;
+  }[],
+): CategoryNode[] {
+  const map = new Map<string, CategoryNode>();
+  const roots: CategoryNode[] = [];
+
+  for (const cat of categories) {
+    map.set(cat.id, { ...cat, children: [] });
+  }
+
+  for (const cat of categories) {
+    const node = map.get(cat.id)!;
+    if (cat.parentId && map.has(cat.parentId)) {
+      map.get(cat.parentId)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  const sortFn = (a: CategoryNode, b: CategoryNode) =>
+    a.sortOrder - b.sortOrder;
+  roots.sort(sortFn);
+  for (const node of map.values()) {
+    node.children.sort(sortFn);
+  }
+
+  return roots;
+}
+
+function CategoryTreeItem({
+  node,
+  depth,
+  selectedIds,
+  onToggle,
+}: {
+  node: CategoryNode;
+  depth: number;
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = node.children.length > 0;
+  const isSelected = selectedIds.includes(node.id);
+
+  return (
+    <>
+      <div
+        className="flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+        style={{ paddingLeft: `${8 + depth * 20}px` }}
+        onClick={() => onToggle(node.id)}
+      >
+        {/* Expansion chevron — only for parents */}
+        {hasChildren ? (
+          <div
+            className="hover:bg-muted/50 mr-1 flex size-4 items-center justify-center rounded-sm transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(!expanded);
+            }}
+          >
+            <ChevronDown
+              className={cn(
+                "size-3 transition-transform",
+                !expanded && "-rotate-90",
+              )}
+            />
+          </div>
+        ) : (
+          <div className="mr-1 size-4" />
+        )}
+
+        {/* Color dot */}
+        <div
+          className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
+          style={{ backgroundColor: node.color }}
+        />
+
+        {/* Label */}
+        <span className="flex-1 truncate">{node.name}</span>
+
+        {/* Check */}
+        {isSelected && <Check className="text-primary ml-2 size-4" />}
+      </div>
+
+      {/* Children */}
+      {hasChildren &&
+        expanded &&
+        node.children.map((child) => (
+          <CategoryTreeItem
+            key={child.id}
+            node={child}
+            depth={depth + 1}
+            selectedIds={selectedIds}
+            onToggle={onToggle}
+          />
+        ))}
+    </>
+  );
+}
 
 export function CategoryFilter() {
   const trpc = useTRPC();
@@ -26,95 +137,20 @@ export function CategoryFilter() {
   });
   const { selectedCategoryIds, setSelectedCategoryIds } = useCategoryFilter();
 
-  console.log("CategoryFilter: categories fetched:", categories?.length);
-
-  const { itemMap, rootChildren } = useMemo(() => {
-    if (!categories) return { itemMap: {}, rootChildren: [] };
-
-    const map: Record<string, any> = {};
-    const roots: string[] = [];
-
-    // First pass: create items
-    categories.forEach((cat) => {
-      map[cat.id] = { ...cat, children: [] };
-    });
-
-    // Second pass: link parent/children
-    categories.forEach((cat) => {
-      if (cat.parentId && map[cat.parentId]) {
-        map[cat.parentId].children.push(cat.id);
-      } else {
-        roots.push(cat.id);
-      }
-    });
-
-    // Sort function (by sortOrder)
-    const sortFn = (aId: string, bId: string) =>
-      (map[aId]?.sortOrder ?? 0) - (map[bId]?.sortOrder ?? 0);
-
-    roots.sort(sortFn);
-    Object.values(map).forEach((item: any) => {
-      item.children.sort(sortFn);
-    });
-
-    console.log("CategoryFilter: map built, roots:", roots);
-    return { itemMap: map, rootChildren: roots };
+  const tree = useMemo(() => {
+    if (!categories) return [];
+    return buildTree(categories);
   }, [categories]);
 
-  const tree = useTree<any>({
-    rootItemId: "root",
-    features: [syncDataLoaderFeature, selectionFeature, hotkeysCoreFeature],
-    dataLoader: {
-      getItem: (itemId: string) => {
-        console.log("CategoryFilter: getItem called for:", itemId);
-        if (itemId === "root")
-          return {
-            id: "root",
-            children: rootChildren,
-            isFolder: true,
-            name: "Root",
-          };
-        return itemMap[itemId];
-      },
-      getChildren: (itemId: string) => {
-        console.log("CategoryFilter: getChildren called for:", itemId);
-        if (itemId === "root") return rootChildren;
-        return itemMap[itemId]?.children || [];
-      },
-    },
-    getItemName: (item: any) => item.name,
-    isItemFolder: (item: any) =>
-      item.isFolder ||
-      (item.children && item.children.length > 0) ||
-      item.id === "root",
-    initialState: {
-      selectedItems: selectedCategoryIds,
-      expandedItems: ["root"],
-    },
-    onSelectChange: (items: string[]) => {
-      setSelectedCategoryIds(items);
-    },
-  });
+  const toggleCategory = (id: string) => {
+    setSelectedCategoryIds(
+      selectedCategoryIds.includes(id)
+        ? selectedCategoryIds.filter((cid) => cid !== id)
+        : [...selectedCategoryIds, id],
+    );
+  };
 
-  // Rebuild the tree whenever categories data changes to ensure the dataLoader's
-  // new results (itemMap, rootChildren) are picked up by the tree instance.
-  useEffect(() => {
-    if (categories && categories.length > 0) {
-      console.log(
-        "CategoryFilter: Data arrived, rootChildren size:",
-        rootChildren.length,
-      );
-      tree.rebuildTree();
-      console.log(
-        "CategoryFilter: After rebuild, items count:",
-        tree.getItems().length,
-      );
-    }
-  }, [categories, tree, rootChildren.length]);
-
-  if (!categories || categories.length === 0) {
-    return null;
-  }
+  if (!categories || categories.length === 0) return null;
 
   return (
     <Popover>
@@ -122,7 +158,7 @@ export function CategoryFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1 rounded-full border-dashed"
+          className="h-8 gap-1 rounded-full border hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
         >
           <Filter className="mr-2 size-4" />
           Category
@@ -134,55 +170,17 @@ export function CategoryFilter() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-2" align="start">
-        {console.log(
-          "CategoryFilter: Rendering items, count:",
-          tree.getItems().length,
-        )}
-        <Tree tree={tree} className="space-y-0.5">
-          {tree.getItems().map((item) => (
-            <TreeItem key={item.getId()} item={item} asChild>
-              <div
-                className="hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center rounded-md px-2 py-1 text-sm"
-                onClick={() => item.toggleSelect()}
-              >
-                {/* Expansion chevron */}
-                <div
-                  className={cn(
-                    "hover:bg-muted/50 mr-1 flex size-4 items-center justify-center rounded-sm transition-colors",
-                    !item.isFolder() && "pointer-events-none opacity-0",
-                  )}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    item.isExpanded() ? item.collapse() : item.expand();
-                  }}
-                >
-                  <ChevronDown
-                    className={cn(
-                      "size-3 transition-transform",
-                      !item.isExpanded() && "-rotate-90",
-                    )}
-                  />
-                </div>
-
-                {/* Color indicator */}
-                <div
-                  className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
-                  style={{
-                    backgroundColor: itemMap[item.getId()]?.color || "gray",
-                  }}
-                />
-
-                {/* Name */}
-                <span className="flex-1 truncate">{item.getItemName()}</span>
-
-                {/* Selection check */}
-                {selectedCategoryIds.includes(item.getId()) && (
-                  <Check className="text-primary ml-2 size-4" />
-                )}
-              </div>
-            </TreeItem>
+        <div className="flex flex-col gap-0.5">
+          {tree.map((node) => (
+            <CategoryTreeItem
+              key={node.id}
+              node={node}
+              depth={0}
+              selectedIds={selectedCategoryIds}
+              onToggle={toggleCategory}
+            />
           ))}
-        </Tree>
+        </div>
       </PopoverContent>
     </Popover>
   );
