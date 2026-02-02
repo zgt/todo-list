@@ -26,13 +26,7 @@ import {
 } from "@acme/ui/field";
 import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@acme/ui/select";
+import { CategoryTreePicker } from "./category-tree-picker";
 import { toast } from "@acme/ui/toast";
 
 import { useSession } from "~/auth/client";
@@ -517,56 +511,12 @@ export function TaskCard(props: {
           )}
         >
           {isEditing ? (
-            <Select
-              value={editedCategoryId ?? "__no_category__"}
-              onValueChange={(value) =>
-                setEditedCategoryId(
-                  value === "__no_category__" ? undefined : value,
-                )
-              }
-            >
-              <SelectTrigger
-                className={cn(
-                  "h-auto rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
-                  "transition-all hover:border-[#21716C]",
-                  "focus:ring-2 focus:ring-[#21716C]/20",
-                  editedCategory
-                    ? "border-opacity-80"
-                    : "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4]",
-                )}
-                style={
-                  editedCategory
-                    ? {
-                        backgroundColor: `${editedCategory.color}60`,
-                        borderColor: `${editedCategory.color}80`,
-                        color: editedCategory.color,
-                      }
-                    : undefined
-                }
-                disabled={updateTask.isPending}
-              >
-                <SelectValue placeholder="Set category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__no_category__">
-                  <div className="flex items-center gap-2 text-[#8FA8A8]">
-                    <X className="h-3 w-3" />
-                    No category
-                  </div>
-                </SelectItem>
-                {categories?.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      {cat.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <CategoryTreePicker
+              categories={categories ?? []}
+              value={editedCategoryId}
+              onChange={setEditedCategoryId}
+              disabled={updateTask.isPending}
+            />
           ) : editedCategory ? (
             <div
               className="rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md"
