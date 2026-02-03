@@ -214,7 +214,7 @@ export function CategoryTree() {
               variant="destructive"
               className="flex-1"
               disabled={deleteCategory.isPending}
-              onClick={() => deleteTarget && deleteCategory.mutate({ id: deleteTarget.id })}
+              onClick={() => deleteTarget && deleteCategory.mutate(deleteTarget.id)}
             >
               {deleteCategory.isPending ? "Deleting..." : "Delete"}
             </Button>
