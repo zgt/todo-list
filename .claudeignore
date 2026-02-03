@@ -7,6 +7,8 @@ build/
 .next/
 .expo/
 .turbo/
+apps/expo/ios
+apps/expo/android
 
 # Dependencies
 node_modules/

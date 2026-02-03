@@ -1,19 +1,44 @@
-import type { BottomSheetBackdropProps, BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useCallback, useMemo, useRef } from "react";
-import { Pressable, Text, View } from "react-native";
+import type {
+  BottomSheetBackdropProps,
+  BottomSheetModal,
+} from "@gorhom/bottom-sheet";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import {
   BottomSheetBackdrop,
-  BottomSheetModal as BSModal,
   BottomSheetScrollView,
+  BottomSheetView,
+  BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
-import { useQuery } from "@tanstack/react-query";
-import { Filter } from "lucide-react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CopyPlus, Filter, X } from "lucide-react-native";
 
+import type { CategoryNode } from "./category-tree-item";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { useCategoryFilter } from "./category-filter-context";
-import type { CategoryNode } from "./category-tree-item";
 import { CategoryTreeItem } from "./category-tree-item";
+
+const PRESET_COLORS = [
+  "#50C878", // Emerald green (primary)
+  "#3B82F6", // Blue
+  "#8B5CF6", // Purple
+  "#F59E0B", // Amber
+  "#EF4444", // Red
+  "#EC4899", // Pink
+  "#06B6D4", // Cyan
+  "#84CC16", // Lime
+] as const;
+
+type PresetColor = (typeof PRESET_COLORS)[number];
+const DEFAULT_COLOR: PresetColor = PRESET_COLORS[0];
 
 function buildTree(
   categories: {
@@ -59,9 +84,16 @@ function buildTree(
 
 export function CategoryFilter() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["50%", "75%"], []);
+  const snapPoints = useMemo(() => ["50%", "90%"], []);
+
+  const [isCreating, setIsCreating] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [selectedColor, setSelectedColor] =
+    useState<PresetColor>(DEFAULT_COLOR);
 
   const { data: session } = authClient.useSession();
+  const queryClient = useQueryClient();
+
   const { data: categories } = useQuery(
     trpc.category.all.queryOptions(undefined, {
       enabled: !!session,
@@ -73,6 +105,39 @@ export function CategoryFilter() {
     if (!categories) return [];
     return buildTree(categories);
   }, [categories]);
+
+  const createCategory = useMutation(
+    trpc.category.create.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.category.all.queryFilter());
+        resetCreateForm();
+      },
+      onError: (err) => {
+        Alert.alert(
+          "Error",
+          err.message || "Failed to create category. Please try again.",
+        );
+      },
+    }),
+  );
+
+  const resetCreateForm = () => {
+    setIsCreating(false);
+    setNewCategoryName("");
+    setSelectedColor(DEFAULT_COLOR);
+  };
+
+  const handleCreateCategory = () => {
+    const trimmedName = newCategoryName.trim();
+    if (!trimmedName) {
+      Alert.alert("Error", "Please enter a category name");
+      return;
+    }
+    createCategory.mutate({
+      name: trimmedName,
+      color: selectedColor,
+    });
+  };
 
   const toggleCategory = useCallback(
     (id: string) => {
@@ -108,21 +173,16 @@ export function CategoryFilter() {
       {/* Trigger Button */}
       <Pressable
         onPress={handleOpenSheet}
-        className={`h-11 flex-row items-center gap-1 rounded-full border-2 px-4 ${
-          selectedCategoryIds.length > 0
-            ? "border-emerald-400 bg-[#102A2A]"
-            : "border-[#164B49] bg-transparent"
-        }`}
+        style={[
+          styles.triggerButton,
+          selectedCategoryIds.length > 0 && styles.triggerButtonActive,
+        ]}
       >
         <Filter size={16} color="#8FA8A8" />
-        <Text className="ml-1 text-sm font-medium text-[#DCE4E4]">
-          Category
-        </Text>
+        <Text style={styles.triggerText}>Category</Text>
         {selectedCategoryIds.length > 0 && (
-          <View className="ml-1 h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-            <Text className="text-[10px] font-bold text-[#0A1A1A]">
-              {selectedCategoryIds.length}
-            </Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{selectedCategoryIds.length}</Text>
           </View>
         )}
       </Pressable>
@@ -134,40 +194,259 @@ export function CategoryFilter() {
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
-        backgroundStyle={{
-          backgroundColor: "#102A2A",
-        }}
-        handleIndicatorStyle={{
-          backgroundColor: "#8FA8A8",
-        }}
+        backgroundStyle={styles.sheetBackground}
+        handleIndicatorStyle={styles.handleIndicator}
       >
-        <View className="px-4 pb-2">
-          <Text className="text-lg font-semibold text-[#DCE4E4]">
-            Filter by Category
-          </Text>
-          {selectedCategoryIds.length > 0 && (
+        <BottomSheetView style={styles.contentContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>Filter by Category</Text>
+              {selectedCategoryIds.length > 0 && (
+                <Pressable onPress={() => setSelectedCategoryIds([])}>
+                  <Text style={styles.clearText}>Clear all</Text>
+                </Pressable>
+              )}
+            </View>
             <Pressable
-              onPress={() => setSelectedCategoryIds([])}
-              className="mt-2"
+              onPress={() => setIsCreating(true)}
+              style={styles.addButton}
+              accessibilityLabel="Add new category"
+              accessibilityRole="button"
             >
-              <Text className="text-sm text-emerald-400">Clear all</Text>
+              <CopyPlus size={22} color="#50C878" />
             </Pressable>
-          )}
-        </View>
-        <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
-          <View className="gap-0.5">
-            {tree.map((node) => (
-              <CategoryTreeItem
-                key={node.id}
-                node={node}
-                depth={0}
-                selectedIds={selectedCategoryIds}
-                onToggle={toggleCategory}
-              />
-            ))}
           </View>
+
+          {/* Create Category Form */}
+          {isCreating && (
+            <View style={styles.createForm}>
+              <View style={styles.createFormHeader}>
+                <Text style={styles.createFormTitle}>New Category</Text>
+                <Pressable
+                  onPress={resetCreateForm}
+                  style={styles.closeButton}
+                  accessibilityLabel="Cancel"
+                  accessibilityRole="button"
+                >
+                  <X size={18} color="#8FA8A8" />
+                </Pressable>
+              </View>
+
+              <TextInput
+                style={styles.input}
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+                placeholder="Category name"
+                placeholderTextColor="#52525B"
+                selectionColor="#50C878"
+                maxLength={100}
+                autoFocus
+              />
+
+              <View style={styles.colorPicker}>
+                {PRESET_COLORS.map((color) => (
+                  <Pressable
+                    key={color}
+                    onPress={() => setSelectedColor(color)}
+                    style={[
+                      styles.colorOption,
+                      selectedColor === color && {
+                        borderColor: color,
+                        borderWidth: 2,
+                      },
+                    ]}
+                    accessibilityLabel={`Select color ${color}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectedColor === color }}
+                  >
+                    <View
+                      style={[styles.colorSwatch, { backgroundColor: color }]}
+                    />
+                  </Pressable>
+                ))}
+              </View>
+
+              <Pressable
+                onPress={handleCreateCategory}
+                disabled={createCategory.isPending || !newCategoryName.trim()}
+                style={[
+                  styles.createButton,
+                  (!newCategoryName.trim() || createCategory.isPending) &&
+                    styles.createButtonDisabled,
+                ]}
+                accessibilityLabel="Create category"
+                accessibilityRole="button"
+              >
+                <Text
+                  style={[
+                    styles.createButtonText,
+                    (!newCategoryName.trim() || createCategory.isPending) &&
+                      styles.createButtonTextDisabled,
+                  ]}
+                >
+                  {createCategory.isPending ? "Creating..." : "Create"}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </BottomSheetView>
+
+        {/* Category Tree */}
+        <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
+          {tree.map((node) => (
+            <CategoryTreeItem
+              key={node.id}
+              node={node}
+              depth={0}
+              selectedIds={selectedCategoryIds}
+              onToggle={toggleCategory}
+            />
+          ))}
         </BottomSheetScrollView>
       </BSModal>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  triggerButton: {
+    height: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 9999,
+    borderWidth: 2,
+    borderColor: "#164B49",
+    paddingHorizontal: 16,
+    backgroundColor: "transparent",
+  },
+  triggerButtonActive: {
+    borderColor: "#50C878",
+    backgroundColor: "#102A2A",
+  },
+  triggerText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#DCE4E4",
+  },
+  badge: {
+    marginLeft: 4,
+    height: 20,
+    width: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    backgroundColor: "#50C878",
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#0A1A1A",
+  },
+  sheetBackground: {
+    backgroundColor: "#102A2A",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  handleIndicator: {
+    backgroundColor: "#8FA8A8",
+    width: 40,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#164B49",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#DCE4E4",
+  },
+  clearText: {
+    fontSize: 14,
+    color: "#50C878",
+    marginTop: 4,
+  },
+  addButton: {
+    padding: 8,
+    borderRadius: 8,
+  },
+  createForm: {
+    backgroundColor: "#0A1A1A",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#164B49",
+  },
+  createFormHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  createFormTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#DCE4E4",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  input: {
+    backgroundColor: "#102A2A",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: "#DCE4E4",
+    borderWidth: 1,
+    borderColor: "#164B49",
+    marginBottom: 12,
+  },
+  colorPicker: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 16,
+  },
+  colorOption: {
+    padding: 3,
+    borderRadius: 9999,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  colorSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: 9999,
+  },
+  createButton: {
+    backgroundColor: "#50C878",
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  createButtonDisabled: {
+    backgroundColor: "#27272A",
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0A1A1A",
+  },
+  createButtonTextDisabled: {
+    color: "#52525B",
+  },
+  scrollContent: {
+    paddingHorizontal: 12,
+    paddingTop: 64,
+    paddingBottom: 24,
+  },
+});

@@ -1,10 +1,6 @@
 import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
-import { Check, ChevronDown } from "lucide-react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Check, ChevronRight } from "lucide-react-native";
 
 export interface CategoryNode {
   id: string;
@@ -32,20 +28,16 @@ export function CategoryTreeItem({
   const hasChildren = node.children.length > 0;
   const isSelected = selectedIds.includes(node.id);
 
-  const chevronStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        rotate: withTiming(expanded ? "0deg" : "-90deg", { duration: 200 }),
-      },
-    ],
-  }));
-
   return (
-    <>
+    <View>
       <Pressable
         onPress={() => onToggle(node.id)}
-        className="flex-row items-center rounded-lg border border-transparent py-2 active:border-emerald-400 active:bg-[#102A2A]"
-        style={{ paddingLeft: 8 + depth * 20 }}
+        style={({ pressed }) => [
+          styles.row,
+          { paddingLeft: 12 + depth * 20 },
+          isSelected && styles.rowSelected,
+          pressed && styles.rowPressed,
+        ]}
       >
         {/* Expansion chevron — only for parents */}
         {hasChildren ? (
@@ -54,30 +46,31 @@ export function CategoryTreeItem({
               e.stopPropagation();
               setExpanded(!expanded);
             }}
-            className="mr-1 h-5 w-5 items-center justify-center rounded-sm"
+            style={styles.chevronContainer}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Animated.View style={chevronStyle}>
-              <ChevronDown size={14} color="#8FA8A8" />
-            </Animated.View>
+            <ChevronRight
+              size={14}
+              color="#8FA8A8"
+              style={{
+                transform: [{ rotate: expanded ? "90deg" : "0deg" }],
+              }}
+            />
           </Pressable>
         ) : (
-          <View className="mr-1 h-5 w-5" />
+          <View style={styles.chevronPlaceholder} />
         )}
 
         {/* Color dot */}
-        <View
-          className="mr-2 h-2.5 w-2.5 rounded-full"
-          style={{ backgroundColor: node.color }}
-        />
+        <View style={[styles.colorDot, { backgroundColor: node.color }]} />
 
         {/* Label */}
-        <Text className="flex-1 text-sm text-[#DCE4E4]" numberOfLines={1}>
+        <Text style={styles.label} numberOfLines={1}>
           {node.name}
         </Text>
 
         {/* Check */}
-        {isSelected && <Check size={16} color="#50C878" className="ml-2" />}
+        {isSelected && <Check size={16} color="#50C878" />}
       </Pressable>
 
       {/* Children */}
@@ -92,6 +85,52 @@ export function CategoryTreeItem({
             onToggle={onToggle}
           />
         ))}
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingRight: 12,
+    marginVertical: 2,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "transparent",
+    backgroundColor: "transparent",
+  },
+  rowSelected: {
+    backgroundColor: "rgba(80, 200, 120, 0.1)",
+    borderColor: "#50C878",
+  },
+  rowPressed: {
+    backgroundColor: "#102A2A",
+    borderColor: "#50C878",
+  },
+  chevronContainer: {
+    width: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 4,
+  },
+  chevronPlaceholder: {
+    width: 20,
+    height: 20,
+    marginRight: 4,
+  },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  label: {
+    flex: 1,
+    fontSize: 15,
+    color: "#DCE4E4",
+  },
+});

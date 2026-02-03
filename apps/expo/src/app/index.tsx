@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   Text as RNText,
-  StyleSheet,
   View,
 } from "react-native";
 import Animated, {
@@ -31,12 +30,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // SQLite imports preserved for future offline work
 //import { desc, eq, isNull, sql } from "drizzle-orm";
 //import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { CopySlash, RefreshCw } from "lucide-react-native";
+import { RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
-import type { CategoryManagementSheetRef } from "~/components/CategoryManagementSheet";
-import { CategoryManagementSheet } from "~/components/CategoryManagementSheet";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
@@ -132,7 +129,6 @@ export default function Index() {
     }, 500);
   }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const categorySheetRef = useRef<CategoryManagementSheetRef>(null);
   const { effectiveCategoryIds } = useCategoryFilter();
   const sheetBottom = useSharedValue(0);
 
@@ -571,16 +567,8 @@ export default function Index() {
 
         {/* Bottom button bar */}
         <View className="flex-row items-center gap-4 px-4 pt-4 pb-4">
-          <View className="ml-2 flex-row items-center gap-2">
+          <View className="ml-2">
             <CategoryFilter />
-            <Pressable
-              onPress={() => categorySheetRef.current?.present()}
-              style={styles.categoriesButton}
-              accessibilityLabel="Manage categories"
-              accessibilityRole="button"
-            >
-              <CopySlash size={20} color="#8FA8A8" />
-            </Pressable>
           </View>
           <View className="flex-1" />
           <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
@@ -652,22 +640,6 @@ export default function Index() {
         onClose={() => setShowProfileMenu(false)}
         user={session.user}
       />
-
-      {/* Category Management Sheet */}
-      <CategoryManagementSheet ref={categorySheetRef} />
     </GradientBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  categoriesButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 9999,
-    borderWidth: 2,
-    borderColor: "#164B49",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-});
