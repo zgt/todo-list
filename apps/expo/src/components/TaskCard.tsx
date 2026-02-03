@@ -14,6 +14,7 @@ import { DatePickerPill } from "./DatePickerPill";
 
 interface TaskCardProps {
   task: LocalTask & { category?: { name: string; color: string } | null };
+  variant?: "card" | "compact";
   onToggle: () => void;
   onDelete: () => void;
   deletePending: boolean;
@@ -38,6 +39,7 @@ interface TaskCardProps {
 
 export function TaskCard({
   task,
+  variant = "card",
   onToggle,
   onDelete,
   deletePending,
@@ -64,6 +66,135 @@ export function TaskCard({
       });
     }
   };
+
+  // Compact variant - horizontal row layout (80px height)
+  if (variant === "compact") {
+    return (
+      <View
+        style={[
+          styles.compactContainer,
+          task.completed ? styles.cardCompleted : styles.cardDefault,
+          deletePending && styles.cardDeletePending,
+          isEditing && styles.cardEditing,
+        ]}
+      >
+        <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} />
+
+        <View className="flex-1 flex-row items-center gap-3 px-4">
+          {/* Left: Checkbox */}
+          <Pressable onPress={isEditing ? handleSave : onToggle}>
+            <View
+              className={`h-7 w-7 items-center justify-center rounded-full border-2 ${
+                isEditing
+                  ? "bg-primary border-primary"
+                  : task.completed
+                    ? "bg-primary border-primary"
+                    : "border-white/30"
+              }`}
+            >
+              {isEditing ? (
+                <Save size={14} color="#0A1A1A" strokeWidth={3} />
+              ) : (
+                task.completed && (
+                  <Check size={16} color="#0A1A1A" strokeWidth={3} />
+                )
+              )}
+            </View>
+          </Pressable>
+
+          {/* Middle: Title and Description */}
+          <View className="flex-1 justify-center">
+            {isEditing ? (
+              <View className="gap-1">
+                <TextInput
+                  value={title}
+                  onChangeText={onChangeTitle}
+                  className="border-b border-white/30 bg-transparent py-1 text-base font-semibold text-white"
+                  placeholder="Task Title"
+                  autoFocus
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                />
+                <TextInput
+                  value={description}
+                  onChangeText={onChangeDescription}
+                  className="bg-transparent py-1 text-sm text-white/70"
+                  placeholder="Description"
+                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                />
+              </View>
+            ) : (
+              <>
+                <RNText
+                  className={`text-base font-semibold ${
+                    task.completed ? "text-white/70 line-through" : "text-white"
+                  }`}
+                  numberOfLines={1}
+                >
+                  {task.title}
+                </RNText>
+                {task.description && (
+                  <RNText
+                    className="text-sm text-white/50"
+                    numberOfLines={1}
+                  >
+                    {task.description}
+                  </RNText>
+                )}
+              </>
+            )}
+          </View>
+
+          {/* Right: Category and Due Date Pills */}
+          {isEditing ? (
+            <View className="flex-row items-center gap-1">
+              <CategoryWheelPicker
+                selectedCategoryId={categoryId}
+                onCategoryChange={onChangeCategoryId}
+              />
+              <DatePickerPill
+                selectedDate={dueDate}
+                onDateChange={onChangeDueDate}
+              />
+            </View>
+          ) : (
+            <View className="flex-row items-center gap-1">
+              {task.dueDate && (
+                <View style={styles.compactPillDate}>
+                  <RNText className="text-xs" style={styles.dateText}>
+                    {new Intl.DateTimeFormat("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    }).format(task.dueDate)}
+                  </RNText>
+                </View>
+              )}
+              {task.category && (
+                <View
+                  style={[
+                    styles.compactPill,
+                    {
+                      backgroundColor: `${task.category.color}20`,
+                      borderColor: task.category.color,
+                    },
+                  ]}
+                >
+                  <RNText
+                    style={{ color: "#8FA8A8" }}
+                    className="text-xs"
+                    numberOfLines={1}
+                  >
+                    {task.category.name}
+                  </RNText>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }
+
+  // Card variant - full card layout (original)
   return (
     <View
       style={[
@@ -221,6 +352,16 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 4,
   },
+  compactContainer: {
+    height: 80,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   cardDefault: {
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
@@ -258,6 +399,21 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 9999,
     borderWidth: 2,
+    backgroundColor: "rgba(143, 168, 168, 0.15)",
+    borderColor: "rgba(143, 168, 168, 0.4)",
+  },
+  compactPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    maxWidth: 80,
+  },
+  compactPillDate: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 9999,
+    borderWidth: 1.5,
     backgroundColor: "rgba(143, 168, 168, 0.15)",
     borderColor: "rgba(143, 168, 168, 0.4)",
   },

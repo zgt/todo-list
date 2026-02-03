@@ -30,7 +30,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // SQLite imports preserved for future offline work
 //import { desc, eq, isNull, sql } from "drizzle-orm";
 //import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { RefreshCw } from "lucide-react-native";
+import { Layers, List, RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
@@ -44,6 +44,7 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import { TaskListView } from "../components/TaskListView";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
 import CreateTask from "./_components/create-task";
@@ -115,10 +116,37 @@ function RefreshButton({
   );
 }
 
+function ViewToggleButton({
+  viewMode,
+  onToggle,
+}: {
+  viewMode: "stack" | "list";
+  onToggle: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onToggle}
+      accessibilityRole="button"
+      accessibilityLabel={
+        viewMode === "stack" ? "Switch to list view" : "Switch to card view"
+      }
+    >
+      <Animated.View className="border-border bg-surface h-12 w-12 items-center justify-center rounded-full border-2">
+        {viewMode === "stack" ? (
+          <List size={24} color="#DCE4E4" />
+        ) : (
+          <Layers size={24} color="#DCE4E4" />
+        )}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [viewMode, setViewMode] = useState<"stack" | "list">("stack");
   const [rippleTrigger, setRippleTrigger] = useState(0);
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRipple = useCallback(() => {
@@ -546,15 +574,24 @@ export default function Index() {
 
         <Header onProfilePress={() => setShowProfileMenu(true)} />
 
-        <View className="px-4" style={{ minHeight: 600 }}>
+        <View className="flex-1 px-4" style={{ minHeight: 600 }}>
           {filteredTasks.length > 0 ? (
-            <SwipeableCardStack
-              tasks={filteredTasks}
-              onToggle={handleToggle}
-              onComplete={(id) => handleToggle(id, true)}
-              onDelete={handleDelete}
-              onUpdate={handleUpdate}
-            />
+            viewMode === "stack" ? (
+              <SwipeableCardStack
+                tasks={filteredTasks}
+                onToggle={handleToggle}
+                onComplete={(id) => handleToggle(id, true)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+              />
+            ) : (
+              <TaskListView
+                tasks={filteredTasks}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+              />
+            )
           ) : (
             <View className="mt-10 items-center">
               <RNText className="text-muted-foreground text-center italic">
@@ -572,6 +609,10 @@ export default function Index() {
             <CategoryFilter />
           </View>
           <View className="flex-1" />
+          <ViewToggleButton
+            viewMode={viewMode}
+            onToggle={() => setViewMode((v) => (v === "stack" ? "list" : "stack"))}
+          />
           <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
           <FAB onPress={() => setIsCreating(!isCreating)} />
         </View>
