@@ -18,7 +18,12 @@ import {
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CopyPlus, Filter, X } from "lucide-react-native";
+import { ChevronDown, ChevronUp, CopyPlus, Filter, X } from "lucide-react-native";
+import ColorPicker, {
+  HueSlider,
+  Panel1,
+  Preview,
+} from "reanimated-color-picker";
 
 import type { CategoryNode } from "./category-tree-item";
 import { trpc } from "~/utils/api";
@@ -26,19 +31,7 @@ import { authClient } from "~/utils/auth";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreeItem } from "./category-tree-item";
 
-const PRESET_COLORS = [
-  "#50C878", // Emerald green (primary)
-  "#3B82F6", // Blue
-  "#8B5CF6", // Purple
-  "#F59E0B", // Amber
-  "#EF4444", // Red
-  "#EC4899", // Pink
-  "#06B6D4", // Cyan
-  "#84CC16", // Lime
-] as const;
-
-type PresetColor = (typeof PRESET_COLORS)[number];
-const DEFAULT_COLOR: PresetColor = PRESET_COLORS[0];
+const DEFAULT_COLOR = "#50C878";
 
 function buildTree(
   categories: {
@@ -88,8 +81,9 @@ export function CategoryFilter() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [selectedColor, setSelectedColor] =
-    useState<PresetColor>(DEFAULT_COLOR);
+  const [selectedColor, setSelectedColor] = useState(DEFAULT_COLOR);
+  const [parentId, setParentId] = useState<string | null>(null);
+  const [isParentSelectOpen, setIsParentSelectOpen] = useState(false);
 
   const { data: session } = authClient.useSession();
   const queryClient = useQueryClient();
@@ -112,6 +106,11 @@ export function CategoryFilter() {
     return buildTree(categories);
   }, [categories]);
 
+  const selectedParentName = useMemo(() => {
+    if (!parentId || !categories) return null;
+    return categories.find((c) => c.id === parentId)?.name;
+  }, [parentId, categories]);
+
   const createCategory = useMutation(
     trpc.category.create.mutationOptions({
       onSuccess: async () => {
@@ -131,6 +130,8 @@ export function CategoryFilter() {
     setIsCreating(false);
     setNewCategoryName("");
     setSelectedColor(DEFAULT_COLOR);
+    setParentId(null);
+    setIsParentSelectOpen(false);
   };
 
   const handleCreateCategory = () => {
@@ -142,6 +143,7 @@ export function CategoryFilter() {
     createCategory.mutate({
       name: trimmedName,
       color: selectedColor,
+      parentId: parentId ?? undefined,
     });
   };
 
@@ -155,6 +157,10 @@ export function CategoryFilter() {
     },
     [selectedCategoryIds, setSelectedCategoryIds],
   );
+
+  const toggleParentSelection = useCallback((id: string) => {
+    setParentId((prev) => (prev === id ? null : id));
+  }, []);
 
   const handleOpenSheet = useCallback(() => {
     bottomSheetRef.current?.present();
@@ -171,6 +177,10 @@ export function CategoryFilter() {
     ),
     [],
   );
+
+  const onSelectColor = ({ hex }: { hex: string }) => {
+    setSelectedColor(hex);
+  };
 
   if (!categories || categories.length === 0) return null;
 
@@ -225,8 +235,11 @@ export function CategoryFilter() {
           </View>
 
           {/* Create Category Form */}
-          {isCreating && (
-            <View style={styles.createForm}>
+          {isCreating ? (
+            <BottomSheetScrollView
+              style={styles.createForm}
+              contentContainerStyle={styles.createFormContent}
+            >
               <View style={styles.createFormHeader}>
                 <Text style={styles.createFormTitle}>New Category</Text>
                 <Pressable
@@ -250,27 +263,49 @@ export function CategoryFilter() {
                 autoFocus
               />
 
-              <View style={styles.colorPicker}>
-                {PRESET_COLORS.map((color) => (
-                  <Pressable
-                    key={color}
-                    onPress={() => setSelectedColor(color)}
-                    style={[
-                      styles.colorOption,
-                      selectedColor === color && {
-                        borderColor: color,
-                        borderWidth: 2,
-                      },
-                    ]}
-                    accessibilityLabel={`Select color ${color}`}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: selectedColor === color }}
-                  >
-                    <View
-                      style={[styles.colorSwatch, { backgroundColor: color }]}
-                    />
-                  </Pressable>
-                ))}
+              {/* Parent Category Selector */}
+              <View style={styles.parentSelectorContainer}>
+                <Pressable
+                  style={styles.parentSelectorButton}
+                  onPress={() => setIsParentSelectOpen(!isParentSelectOpen)}
+                >
+                  <Text style={styles.parentSelectorLabel}>
+                    {selectedParentName
+                      ? `Parent: ${selectedParentName}`
+                      : "Select Parent Category (Optional)"}
+                  </Text>
+                  {isParentSelectOpen ? (
+                    <ChevronUp size={16} color="#8FA8A8" />
+                  ) : (
+                    <ChevronDown size={16} color="#8FA8A8" />
+                  )}
+                </Pressable>
+
+                {isParentSelectOpen && (
+                  <View style={styles.parentList}>
+                    {tree.map((node) => (
+                      <CategoryTreeItem
+                        key={node.id}
+                        node={node}
+                        depth={0}
+                        selectedIds={parentId ? [parentId] : []}
+                        onToggle={toggleParentSelection}
+                      />
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.colorPickerContainer}>
+                <ColorPicker
+                  style={styles.colorPicker}
+                  value={selectedColor}
+                  onComplete={onSelectColor}
+                >
+                  <Preview hideInitialColor style={styles.colorPreview} />
+                  <Panel1 style={styles.colorPanel} />
+                  <HueSlider style={styles.hueSlider} />
+                </ColorPicker>
               </View>
 
               <Pressable
@@ -294,21 +329,21 @@ export function CategoryFilter() {
                   {createCategory.isPending ? "Creating..." : "Create"}
                 </Text>
               </Pressable>
-            </View>
+            </BottomSheetScrollView>
+          ) : (
+            /* Category Tree (Filter Mode) */
+            <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
+              {tree.map((node) => (
+                <CategoryTreeItem
+                  key={node.id}
+                  node={node}
+                  depth={0}
+                  selectedIds={selectedCategoryIds}
+                  onToggle={toggleCategory}
+                />
+              ))}
+            </BottomSheetScrollView>
           )}
-
-          {/* Category Tree */}
-          <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
-            {tree.map((node) => (
-              <CategoryTreeItem
-                key={node.id}
-                node={node}
-                depth={0}
-                selectedIds={selectedCategoryIds}
-                onToggle={toggleCategory}
-              />
-            ))}
-          </BottomSheetScrollView>
         </BottomSheetView>
       </BSModal>
     </>
@@ -360,6 +395,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   contentContainer: {
+    flex: 1,
     paddingHorizontal: 16,
   },
   header: {
@@ -385,12 +421,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   createForm: {
+    flex: 1,
     backgroundColor: "#0A1A1A",
     borderRadius: 12,
-    padding: 16,
     marginTop: 12,
     borderWidth: 1,
     borderColor: "#164B49",
+  },
+  createFormContent: {
+    padding: 16,
+    paddingBottom: 40,
   },
   createFormHeader: {
     flexDirection: "row",
@@ -416,22 +456,48 @@ const styles = StyleSheet.create({
     borderColor: "#164B49",
     marginBottom: 12,
   },
-  colorPicker: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
+  parentSelectorContainer: {
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#164B49",
+    borderRadius: 8,
+    backgroundColor: "#102A2A",
+    overflow: "hidden",
   },
-  colorOption: {
-    padding: 3,
-    borderRadius: 9999,
-    borderWidth: 2,
-    borderColor: "transparent",
+  parentSelectorButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 12,
   },
-  colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 9999,
+  parentSelectorLabel: {
+    color: "#DCE4E4",
+    fontSize: 14,
+  },
+  parentList: {
+    maxHeight: 200,
+    borderTopWidth: 1,
+    borderTopColor: "#164B49",
+    padding: 8,
+  },
+  colorPickerContainer: {
+    marginBottom: 24,
+  },
+  colorPicker: {
+    gap: 12,
+  },
+  colorPreview: {
+    height: 40,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  colorPanel: {
+    height: 150,
+    borderRadius: 8,
+  },
+  hueSlider: {
+    height: 24,
+    borderRadius: 8,
   },
   createButton: {
     backgroundColor: "#50C878",
