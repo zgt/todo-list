@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { runOnJS } from "react-native-reanimated";
 import {
   BottomSheetBackdrop,
   BottomSheetScrollView,
@@ -179,7 +180,17 @@ export function CategoryFilter() {
   );
 
   const onSelectColor = ({ hex }: { hex: string }) => {
-    setSelectedColor(hex);
+    console.log("🎨 Color selected:", hex);
+    try {
+      setSelectedColor(hex);
+    } catch (error) {
+      console.error("❌ Error setting color:", error);
+    }
+  };
+
+  const handleColorSelect = (res: { hex: string }) => {
+    "worklet";
+    runOnJS(onSelectColor)(res);
   };
 
   if (!categories || categories.length === 0) return null;
@@ -300,7 +311,7 @@ export function CategoryFilter() {
                 <ColorPicker
                   style={styles.colorPicker}
                   value={selectedColor}
-                  onComplete={onSelectColor}
+                  onComplete={handleColorSelect}
                 >
                   <Preview hideInitialColor style={styles.colorPreview} />
                   <Panel1 style={styles.colorPanel} />
