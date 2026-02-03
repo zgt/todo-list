@@ -28,6 +28,7 @@ interface SwipeableCardProps {
   task: LocalTask;
   index: number;
   totalCards: number;
+  isCompact: boolean;
   isTopCard: boolean;
   canGoNext: boolean;
   canGoPrevious: boolean;
@@ -58,6 +59,7 @@ export function SwipeableCard({
   task,
   index,
   totalCards,
+  isCompact,
   isTopCard,
   canGoNext,
   canGoPrevious,
@@ -399,6 +401,7 @@ export function SwipeableCard({
       >
         <TaskCard
           task={task}
+          isCompact={isCompact}
           onToggle={onToggle}
           onDelete={onDelete}
           deletePending={deletePending}

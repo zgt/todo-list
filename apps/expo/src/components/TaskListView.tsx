@@ -86,7 +86,7 @@ export function TaskListView({
           isEditing={isEditing}
         >
           <TaskCard
-            variant="compact"
+            isCompact={true}
             task={task}
             onToggle={() => onToggle(task.id, !task.completed)}
             onDelete={() => onDelete(task.id)}

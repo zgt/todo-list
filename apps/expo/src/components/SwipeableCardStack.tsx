@@ -15,6 +15,7 @@ interface SwipeableCardStackProps {
   onToggle: (id: string, completed: boolean) => void;
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
+  isCompact: boolean;
   onUpdate: (
     id: string,
     updates: Partial<{
@@ -32,6 +33,7 @@ export function SwipeableCardStack({
   onComplete,
   onDelete,
   onUpdate,
+  isCompact,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
@@ -167,6 +169,7 @@ export function SwipeableCardStack({
           <SwipeableCard
             key={task.id}
             task={task}
+            isCompact={isCompact}
             index={relativeIndex}
             totalCards={displayTasks.length}
             isTopCard={relativeIndex === 0}

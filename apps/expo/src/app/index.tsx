@@ -44,7 +44,6 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
-import { TaskListView } from "../components/TaskListView";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
 import CreateTask from "./_components/create-task";
@@ -578,6 +577,7 @@ export default function Index() {
           {filteredTasks.length > 0 ? (
             viewMode === "stack" ? (
               <SwipeableCardStack
+                isCompact={true}
                 tasks={filteredTasks}
                 onToggle={handleToggle}
                 onComplete={(id) => handleToggle(id, true)}
@@ -585,9 +585,11 @@ export default function Index() {
                 onUpdate={handleUpdate}
               />
             ) : (
-              <TaskListView
+              <SwipeableCardStack
                 tasks={filteredTasks}
+                isCompact={true}
                 onToggle={handleToggle}
+                onComplete={(id) => handleToggle(id, true)}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
               />
@@ -611,7 +613,9 @@ export default function Index() {
           <View className="flex-1" />
           <ViewToggleButton
             viewMode={viewMode}
-            onToggle={() => setViewMode((v) => (v === "stack" ? "list" : "stack"))}
+            onToggle={() =>
+              setViewMode((v) => (v === "stack" ? "list" : "stack"))
+            }
           />
           <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
           <FAB onPress={() => setIsCreating(!isCreating)} />
