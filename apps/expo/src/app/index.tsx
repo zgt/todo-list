@@ -37,8 +37,9 @@ import type { AppRouter, RouterOutputs } from "@acme/api";
 
 import type { CategoryManagementSheetRef } from "~/components/CategoryManagementSheet";
 import { CategoryManagementSheet } from "~/components/CategoryManagementSheet";
-import { CategoryWheelPicker } from "~/components/CategoryWheelPicker";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
+import { CategoryFilter } from "./_components/category-filter";
+import { useCategoryFilter } from "./_components/category-filter-context";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
@@ -131,10 +132,8 @@ export default function Index() {
     }, 500);
   }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
-  );
   const categorySheetRef = useRef<CategoryManagementSheetRef>(null);
+  const { effectiveCategoryIds } = useCategoryFilter();
   const sheetBottom = useSharedValue(0);
 
   const queryClient = useQueryClient();
@@ -181,14 +180,13 @@ export default function Index() {
     }));
   }, [serverTasks]); // Only depend on serverTasks, not refreshTrigger
 
-  // Filter tasks by selected category
+  // Filter tasks by selected categories (including descendants)
   const filteredTasks = useMemo(() => {
-    const base =
-      selectedCategoryId === null
-        ? tasks
-        : tasks.filter((task) => task.categoryId === selectedCategoryId);
-    return base;
-  }, [tasks, selectedCategoryId]);
+    if (effectiveCategoryIds.length === 0) return tasks;
+    return tasks.filter(
+      (task) => task.categoryId && effectiveCategoryIds.includes(task.categoryId),
+    );
+  }, [tasks, effectiveCategoryIds]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
@@ -573,11 +571,8 @@ export default function Index() {
 
         {/* Bottom button bar */}
         <View className="flex-row items-center gap-4 px-4 pt-4 pb-4">
-          <View className="ml-5 flex-row items-center gap-2">
-            <CategoryWheelPicker
-              selectedCategoryId={selectedCategoryId}
-              onCategoryChange={setSelectedCategoryId}
-            />
+          <View className="ml-2 flex-row items-center gap-2">
+            <CategoryFilter />
             <Pressable
               onPress={() => categorySheetRef.current?.present()}
               style={styles.categoriesButton}

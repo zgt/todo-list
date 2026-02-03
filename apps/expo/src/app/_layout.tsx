@@ -12,6 +12,8 @@ import { AuthGuard } from "~/components/AuthGuard";
 //import { networkMonitor } from "~/sync/network-monitor";
 import { queryClient } from "~/utils/api";
 import { authClient } from "~/utils/auth";
+import { DotBackground } from "~/components/DotBackground";
+import { CategoryFilterProvider } from "./_components/category-filter-context";
 
 import "../styles.css";
 
@@ -22,7 +24,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 // It wraps your pages with the providers they need
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
 
   // Removed manual init effect since useMigrations handles it
 
@@ -54,6 +56,11 @@ export default function RootLayout() {
   //     networkMonitor.stop();
   //   };
   // }, [dbReady, session]);
+  //
+
+  if (isPending) {
+    return <DotBackground trigger={1} />;
+  }
 
   if (!session) {
     return <AuthGuard />;
@@ -63,23 +70,25 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
-            {/*
-              The Stack component displays the current page.
-              It also allows you to configure your screens
-            */}
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                headerStyle: {
-                  backgroundColor: "#1c4d2c",
-                },
-                contentStyle: {
-                  backgroundColor:
-                    colorScheme == "dark" ? "#09090B" : "#FFFFFF",
-                },
-              }}
-            />
-            <StatusBar />
+            <CategoryFilterProvider>
+              {/*
+                The Stack component displays the current page.
+                It also allows you to configure your screens
+              */}
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  headerStyle: {
+                    backgroundColor: "#1c4d2c",
+                  },
+                  contentStyle: {
+                    backgroundColor:
+                      colorScheme == "dark" ? "#09090B" : "#FFFFFF",
+                  },
+                }}
+              />
+              <StatusBar />
+            </CategoryFilterProvider>
           </BottomSheetModalProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

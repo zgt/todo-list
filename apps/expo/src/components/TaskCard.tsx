@@ -74,7 +74,7 @@ export function TaskCard({
       ]}
       className="mb-3 overflow-hidden rounded-2xl"
     >
-      <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} />
 
       <View className="h-full flex-col justify-between p-6">
         {/* Top Row: Category and Checkbox */}
@@ -224,26 +224,26 @@ const styles = StyleSheet.create({
   cardDefault: {
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
-    backgroundColor: "rgba(255, 255, 255, 0.02)",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
   },
   cardCompleted: {
     borderWidth: 1,
     borderColor: "rgba(74, 222, 128, 0.5)",
-    backgroundColor: "rgba(74, 222, 128, 0.02)",
+    backgroundColor: "rgba(74, 222, 128, 0.05)",
     shadowColor: "#4ade80",
     shadowOpacity: 0.1,
   },
   cardDeletePending: {
     borderWidth: 2,
     borderColor: "rgba(239, 68, 68, 0.6)", // Red-500
-    backgroundColor: "rgba(239, 68, 68, 0.05)",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
     shadowColor: "#ef4444",
     shadowOpacity: 0.2,
   },
   cardEditing: {
     borderWidth: 2,
     borderColor: "rgba(249, 115, 22, 0.6)", // Orange-500
-    backgroundColor: "rgba(249, 115, 22, 0.05)",
+    backgroundColor: "rgba(249, 115, 22, 0.1)",
     shadowColor: "#f97316",
     shadowOpacity: 0.2,
   },
