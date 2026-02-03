@@ -39,6 +39,12 @@ build
 # claude code
 .claude/
 
+.gemini/
+
+crashlogs/
+
+GEMINI.md
+
 # temporary files
 **/.temp/
 .temp/

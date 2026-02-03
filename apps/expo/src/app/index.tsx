@@ -35,8 +35,6 @@ import { RefreshCw } from "lucide-react-native";
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
 import { useWidgetSync } from "~/hooks/useWidgetSync";
-import { CategoryFilter } from "./_components/category-filter";
-import { useCategoryFilter } from "./_components/category-filter-context";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
@@ -46,6 +44,8 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import { CategoryFilter } from "./_components/category-filter";
+import { useCategoryFilter } from "./_components/category-filter-context";
 import CreateTask from "./_components/create-task";
 
 function Header({ onProfilePress }: { onProfilePress: () => void }) {
@@ -180,7 +180,8 @@ export default function Index() {
   const filteredTasks = useMemo(() => {
     if (effectiveCategoryIds.length === 0) return tasks;
     return tasks.filter(
-      (task) => task.categoryId && effectiveCategoryIds.includes(task.categoryId),
+      (task) =>
+        task.categoryId && effectiveCategoryIds.includes(task.categoryId),
     );
   }, [tasks, effectiveCategoryIds]);
 

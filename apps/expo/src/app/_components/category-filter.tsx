@@ -2,7 +2,7 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -93,6 +93,12 @@ export function CategoryFilter() {
 
   const { data: session } = authClient.useSession();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (isCreating) {
+      bottomSheetRef.current?.snapToPosition("90%");
+    }
+  }, [isCreating]);
 
   const { data: categories } = useQuery(
     trpc.category.all.queryOptions(undefined, {
@@ -290,20 +296,20 @@ export function CategoryFilter() {
               </Pressable>
             </View>
           )}
-        </BottomSheetView>
 
-        {/* Category Tree */}
-        <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
-          {tree.map((node) => (
-            <CategoryTreeItem
-              key={node.id}
-              node={node}
-              depth={0}
-              selectedIds={selectedCategoryIds}
-              onToggle={toggleCategory}
-            />
-          ))}
-        </BottomSheetScrollView>
+          {/* Category Tree */}
+          <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
+            {tree.map((node) => (
+              <CategoryTreeItem
+                key={node.id}
+                node={node}
+                depth={0}
+                selectedIds={selectedCategoryIds}
+                onToggle={toggleCategory}
+              />
+            ))}
+          </BottomSheetScrollView>
+        </BottomSheetView>
       </BSModal>
     </>
   );
@@ -445,8 +451,7 @@ const styles = StyleSheet.create({
     color: "#52525B",
   },
   scrollContent: {
-    paddingHorizontal: 12,
-    paddingTop: 64,
+    paddingTop: 4,
     paddingBottom: 24,
   },
 });
