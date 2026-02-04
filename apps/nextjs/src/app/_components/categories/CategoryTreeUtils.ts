@@ -113,11 +113,5 @@ function mapToHierarchy(node: CategoryTreeNode): HierarchyInput {
 }
 
 export function radialLinkPath(link: TreeLayoutLink): string {
-  const dx = link.target.x - link.source.x;
-  const dy = link.target.y - link.source.y;
-  // Curved path using quadratic bezier
-  const mx = (link.source.x + link.target.x) / 2;
-  const my = (link.source.y + link.target.y) / 2;
-
-  return `M${link.source.x},${link.source.y} Q${mx + dy * 0.2},${my - dx * 0.2} ${link.target.x},${link.target.y}`;
+  return `M${link.source.x},${link.source.y} L${link.target.x},${link.target.y}`;
 }

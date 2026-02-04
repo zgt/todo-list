@@ -35,8 +35,8 @@ export function TaskHeader() {
     <header className="flex items-center justify-between gap-4 pr-6">
       {/* Left side - Mobile trigger and Category Filter */}
       <div className="flex items-center gap-4">
-        {/* Mobile sidebar trigger - hidden on desktop */}
-        <SidebarTrigger className="md:hidden" />
+        {/* Sidebar trigger */}
+        <SidebarTrigger />
 
         {/* Category Filter */}
         <CategoryFilter />
@@ -45,7 +45,7 @@ export function TaskHeader() {
       {/* Right side controls */}
       <div className="flex items-center gap-3">
         {/* Search input */}
-        <div className="relative hidden md:block">
+        <div className="relative hidden lg:block">
           <div className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
             <Search className="h-5 w-5" />
           </div>

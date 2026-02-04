@@ -3,10 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { cn } from "@acme/ui";
 import { SidebarProvider } from "@acme/ui/sidebar";
-import { ThemeProvider, ThemeToggle } from "@acme/ui/theme";
+import { ThemeProvider } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
-import { RippleButton } from "~/components/ripple-button";
 import { DotScreenShader } from "~/components/ui/dot-shader-background";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -26,11 +25,6 @@ export const metadata: Metadata = {
     description: "Simple monorepo with shared backend for web & mobile apps",
     url: "https://calayo.net",
     siteName: "Tokilist",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@jullerino",
-    creator: "@jullerino",
   },
 };
 
@@ -65,12 +59,10 @@ export default function RootLayout(props: { children: React.ReactNode }) {
             <div className="fixed inset-0 -z-10">
               <DotScreenShader />
             </div>
-            <SidebarProvider>{props.children}</SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
+              {props.children}
+            </SidebarProvider>
           </TRPCReactProvider>
-          <div className="absolute right-4 bottom-4 flex gap-2">
-            <RippleButton />
-            <ThemeToggle />
-          </div>
           <Toaster />
         </ThemeProvider>
       </body>

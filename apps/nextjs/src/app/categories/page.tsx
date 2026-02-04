@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { SidebarInset } from "@acme/ui/sidebar";
+import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
@@ -22,7 +22,7 @@ export default async function CategoriesPage() {
 
         <SidebarInset className="flex h-screen flex-1 flex-col bg-transparent">
           <main className="flex-1 px-6 pt-6 pb-6">
-            <div className="glass-panel relative flex h-full w-full flex-col rounded-3xl p-8">
+            <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-3xl p-8">
               {/* Aurora effect inside panel */}
               <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
                 <div className="bg-primary/10 absolute top-[-50%] left-[-20%] h-[80%] w-[80%] rounded-full mix-blend-screen blur-[100px]"></div>
@@ -31,10 +31,9 @@ export default async function CategoriesPage() {
 
               <div className="relative z-10 flex h-full flex-col">
                 {/* Header */}
-                <div className="mb-4">
-                  <h1 className="mb-2 pl-4 text-3xl font-bold text-white">
-                    Categories
-                  </h1>
+                <div className="mb-4 flex items-center gap-4">
+                  <SidebarTrigger />
+                  <h1 className="text-3xl font-bold text-white">Categories</h1>
                 </div>
 
                 {session?.user ? (

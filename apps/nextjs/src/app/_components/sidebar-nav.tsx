@@ -40,8 +40,9 @@ export function AppSidebar({
 
   return (
     <Sidebar
-      collapsible="none"
-      className="mt-6 ml-6 hidden h-[calc(100vh-3rem)] w-64 border-none bg-transparent md:flex"
+      collapsible="offcanvas"
+      variant="floating"
+      className="border-none bg-transparent"
     >
       <SidebarContent className="bg-transparent p-0">
         <div className="glass-panel flex h-full flex-col rounded-3xl p-4">
