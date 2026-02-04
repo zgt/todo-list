@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { SidebarInset } from "@acme/ui/sidebar";
+import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
@@ -31,10 +31,9 @@ export default async function CategoriesPage() {
 
               <div className="relative z-10 flex h-full flex-col">
                 {/* Header */}
-                <div className="mb-4">
-                  <h1 className="mb-2 pl-4 text-3xl font-bold text-white">
-                    Categories
-                  </h1>
+                <div className="mb-4 flex items-center gap-4">
+                  <SidebarTrigger />
+                  <h1 className="text-3xl font-bold text-white">Categories</h1>
                 </div>
 
                 {session?.user ? (

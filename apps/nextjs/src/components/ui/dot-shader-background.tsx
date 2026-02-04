@@ -4,7 +4,7 @@ import type { ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { shaderMaterial, useTrailTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useIsMutating } from "@tanstack/react-query";
+import { useIsFetching, useIsMutating } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import * as THREE from "three";
 
@@ -160,6 +160,7 @@ function Scene() {
 
   const themeColors = getThemeColors();
   const isMutating = useIsMutating();
+  const isFetching = useIsFetching();
 
   const [trail, onMove] = useTrailTexture({
     size: 512,
@@ -211,6 +212,7 @@ function Scene() {
 
   const manualRippleTimeRemaining = useRef(0);
   const prevIsMutating = useRef(0);
+  const prevIsFetching = useRef(0);
 
   useFrame((state, delta) => {
     // eslint-disable-next-line react-hooks/immutability
@@ -232,6 +234,16 @@ function Scene() {
       }
     }
     prevIsMutating.current = isMutating;
+
+    if (isFetching > 0) {
+      isActive = true;
+
+      // Reset on rising edge of fetching
+      if (prevIsFetching.current === 0) {
+        dotMaterial.uniforms.rippleTime.value = 0;
+      }
+    }
+    prevIsFetching.current = isFetching;
 
     // Intensity Ramping Logic
     const targetIntensity = isActive ? 1.0 : 0.0;

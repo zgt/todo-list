@@ -74,9 +74,9 @@ export function NewTaskModal() {
       <PopoverTrigger asChild>
         <Button
           size="lg"
-          className="bg-primary shadow-glow hover:shadow-glowHover gap-2 rounded-full px-6"
+          className="bg-primary shadow-glow hover:shadow-glowHover gap-2 rounded-full px-4 lg:px-6"
         >
-          <span className="font-semibold">New Task</span>
+          <span className="hidden font-semibold lg:inline">New Task</span>
           <PlusIcon className="h-5 w-5" />
         </Button>
       </PopoverTrigger>
