@@ -132,9 +132,19 @@ export function SwipeableCard({
   // Skip animation when index change is caused by sort reorder (after completion)
   // useLayoutEffect to avoid 1-frame delay before animation starts
   useLayoutEffect(() => {
-    const targetY = -Math.max(0, index) * 18;
-    const targetScale = 1 - Math.max(0, index) * 0.05;
-    const targetOpacity = 1 - Math.max(0, index) * 0.15;
+    let targetY: number;
+    let targetScale: number;
+    let targetOpacity: number;
+
+    if (isCompact) {
+      targetY = index * (80 + 12); // Height + Gap
+      targetScale = 1;
+      targetOpacity = 1;
+    } else {
+      targetY = -Math.max(0, index) * 18;
+      targetScale = 1 - Math.max(0, index) * 0.05;
+      targetOpacity = 1 - Math.max(0, index) * 0.15;
+    }
 
     if (skipStackAnimation) {
       console.log("skip");
@@ -155,7 +165,14 @@ export function SwipeableCard({
         stiffness: 180,
       });
     }
-  }, [index, skipStackAnimation, stackTranslateY, stackScale, stackOpacity]);
+  }, [
+    index,
+    skipStackAnimation,
+    stackTranslateY,
+    stackScale,
+    stackOpacity,
+    isCompact,
+  ]);
 
   const panGesture = Gesture.Pan()
     // .enabled(!isEditing) // Enable gestures during edit for save/cancel actions
@@ -168,13 +185,13 @@ export function SwipeableCard({
       }
     })
     .onUpdate((event) => {
-      if (index === -1) {
-        // Previous card - don't handle gestures directly
+      if (index === -1 && !isCompact) {
+        // Previous card - don't handle gestures directly in stack mode
         return;
       }
 
       // Update swipe progress for right swipes (to animate previous card)
-      if (event.translationX > 0 && canGoPrevious) {
+      if (event.translationX > 0 && canGoPrevious && !isCompact) {
         // Map translation to progress: 0 at start, 1 at full swipe
         swipeProgress.value = Math.min(event.translationX / SCREEN_WIDTH, 1);
         // Don't move the top card during right swipe, only the previous card slides in
@@ -211,8 +228,8 @@ export function SwipeableCard({
       }
     })
     .onEnd((event) => {
-      // Only the top card should respond to gestures
-      if (!isTopCard) {
+      // Only the top card should respond to gestures in stack mode
+      if (!isTopCard && !isCompact) {
         translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
         direction.value = null;
@@ -278,7 +295,16 @@ export function SwipeableCard({
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         }
       } else {
-        // Horizontal swipe
+        // Horizontal swipe - Disable in compact mode for navigation
+        if (isCompact) {
+             // In compact mode, we might want to allow horizontal swipe for other actions,
+             // but strictly for navigation (Next/Prev) it should be disabled or changed.
+             // For now, let's just reset.
+             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+             return;
+        }
+
         if (
           event.translationX < -SWIPE_THRESHOLD ||
           (event.translationX < 0 && velocityX > SWIPE_VELOCITY)
@@ -337,7 +363,7 @@ export function SwipeableCard({
     });
 
   const cardStyle = useAnimatedStyle(() => {
-    if (index === -1) {
+    if (index === -1 && !isCompact) {
       // Previous card - interpolate position based on swipe progress
       const translateXValue = interpolate(
         swipeProgress.value,
@@ -369,11 +395,16 @@ export function SwipeableCard({
         ],
         opacity: opacityValue,
         zIndex: totalCards - index,
+        width: SCREEN_WIDTH * 0.85,
+        height: SCREEN_HEIGHT * 0.6,
       };
     }
 
-    // Current and stacked cards
-    const rotation = (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
+    // Current and stacked cards (or all cards in Compact mode)
+    const rotation = isCompact ? 0 : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
+
+    const targetWidth = isCompact ? SCREEN_WIDTH * 0.95 : SCREEN_WIDTH * 0.85;
+    const targetHeight = isCompact ? 80 : SCREEN_HEIGHT * 0.6;
 
     return {
       transform: [
@@ -384,6 +415,8 @@ export function SwipeableCard({
       ],
       opacity: stackOpacity.value * opacity.value,
       zIndex: totalCards - index,
+      width: withSpring(targetWidth),
+      height: withSpring(targetHeight),
     };
   });
 
@@ -394,8 +427,6 @@ export function SwipeableCard({
           cardStyle,
           {
             position: "absolute",
-            width: SCREEN_WIDTH * 0.85,
-            height: SCREEN_HEIGHT * 0.6,
           },
         ]}
       >

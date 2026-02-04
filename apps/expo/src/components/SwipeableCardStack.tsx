@@ -1,9 +1,15 @@
 /* eslint-disable react-hooks/refs -- This component intentionally reads/writes refs during render
    to implement a deferred sort pattern: task order only updates on navigation or add/remove,
    not on completion toggling, preventing cards from jumping away mid-interaction. */
-import { useCallback, useRef, useState } from "react";
-import { Dimensions, View } from "react-native";
-import { useSharedValue } from "react-native-reanimated";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import type { ComponentRef } from "react";
+import { Dimensions } from "react-native";
+import Animated, { useSharedValue } from "react-native-reanimated";
 
 import type { LocalTask } from "~/db/client";
 import { SwipeableCard } from "./SwipeableCard";
@@ -40,6 +46,17 @@ export function SwipeableCardStack({
   const [editingId, setEditingId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
   const skipAnimationIds = useRef<Set<string>>(new Set());
+  const scrollViewRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
+
+  // Scroll to current card when switching to compact mode
+  useEffect(() => {
+    if (isCompact && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        y: currentIndex * 92,
+        animated: true,
+      });
+    }
+  }, [isCompact, currentIndex]);
 
   // Deferred sort: only re-sort on navigation or task list changes (add/remove/refresh),
   // not on completion toggling, so the card doesn't jump away instantly.
@@ -150,17 +167,28 @@ export function SwipeableCardStack({
 
   // Show previous card (if exists), current card, and next 2 cards for stacking effect
   const startIndex = Math.max(0, currentIndex - 1);
-  const displayTasks = sortedTasks.slice(startIndex, currentIndex + 4);
-  const baseIndexOffset = currentIndex - startIndex; // Offset to calculate relative index
+  const displayTasks = isCompact
+    ? sortedTasks
+    : sortedTasks.slice(startIndex, currentIndex + 4);
+  const baseIndexOffset = isCompact ? 0 : currentIndex - startIndex; // Offset to calculate relative index
   const currentSkipIds = skipAnimationIds.current;
   // Reset after capturing
   skipAnimationIds.current = new Set();
   return (
-    <View
-      style={{
+    <Animated.ScrollView
+      ref={scrollViewRef}
+      scrollEnabled={isCompact}
+      contentContainerStyle={{
         alignItems: "center",
-        justifyContent: "center",
-        minHeight: SCREEN_HEIGHT * 0.7,
+        justifyContent: isCompact ? "flex-start" : "center",
+        minHeight: isCompact
+          ? displayTasks.length * 92 + 200
+          : SCREEN_HEIGHT * 0.7,
+        paddingTop: isCompact ? 60 : 0, // Add top padding for list
+      }}
+      style={{
+        flex: 1,
+        width: "100%",
       }}
     >
       {displayTasks.map((task, mapIndex) => {
@@ -199,6 +227,6 @@ export function SwipeableCardStack({
           />
         );
       })}
-    </View>
+    </Animated.ScrollView>
   );
 }
