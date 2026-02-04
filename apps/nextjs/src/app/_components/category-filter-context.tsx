@@ -45,8 +45,8 @@ export function CategoryFilterProvider({ children }: { children: ReactNode }) {
     const result = new Set<string>();
     const queue = [...selectedCategoryIds];
     while (queue.length > 0) {
-      const id = queue.pop()!;
-      if (result.has(id)) continue;
+      const id = queue.pop();
+      if (!id || result.has(id)) continue;
       result.add(id);
       const kids = childrenMap.get(id);
       if (kids) queue.push(...kids);
@@ -57,7 +57,11 @@ export function CategoryFilterProvider({ children }: { children: ReactNode }) {
 
   return (
     <CategoryFilterContext.Provider
-      value={{ selectedCategoryIds, setSelectedCategoryIds, effectiveCategoryIds }}
+      value={{
+        selectedCategoryIds,
+        setSelectedCategoryIds,
+        effectiveCategoryIds,
+      }}
     >
       {children}
     </CategoryFilterContext.Provider>

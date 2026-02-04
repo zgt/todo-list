@@ -2,8 +2,8 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
@@ -21,7 +21,13 @@ import {
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, CopyPlus, Filter, X } from "lucide-react-native";
+import {
+  ChevronDown,
+  ChevronUp,
+  CopyPlus,
+  Filter,
+  X,
+} from "lucide-react-native";
 import ColorPicker, {
   HueSlider,
   Panel1,
@@ -133,32 +139,34 @@ export function CategoryFilter({
     return categories.find((c) => c.id === parentId)?.name;
   }, [parentId, categories]);
 
-  const createCategory = useMutation(
-    trpc.category.create.mutationOptions({
-      onSuccess: async (newCategory) => {
-        await queryClient.invalidateQueries(trpc.category.all.queryFilter());
-        resetCreateForm();
-        if (mode === "select" && onCategoryChange) {
-          onCategoryChange(newCategory.id);
-          bottomSheetRef.current?.dismiss();
-        }
-      },
-      onError: (err) => {
-        Alert.alert(
-          "Error",
-          err.message || "Failed to create category. Please try again.",
-        );
-      },
-    }),
-  );
-
-  const resetCreateForm = () => {
+  const resetCreateForm = useCallback(() => {
     setIsCreating(false);
     setNewCategoryName("");
     setSelectedColor(DEFAULT_COLOR);
     setParentId(null);
     setIsParentSelectOpen(false);
-  };
+  }, []);
+
+  const createCategory = useMutation(trpc.category.create.mutationOptions());
+
+  const handleMutationSuccess = useCallback(
+    (newCategory: { id: string }) => {
+      void queryClient.invalidateQueries(trpc.category.all.queryFilter());
+      resetCreateForm();
+      if (mode === "select" && onCategoryChange) {
+        onCategoryChange(newCategory.id);
+        bottomSheetRef.current?.dismiss();
+      }
+    },
+    [queryClient, mode, onCategoryChange, resetCreateForm],
+  );
+
+  const handleMutationError = useCallback((err: { message?: string }) => {
+    Alert.alert(
+      "Error",
+      err.message ?? "Failed to create category. Please try again.",
+    );
+  }, []);
 
   const handleCreateCategory = () => {
     const trimmedName = newCategoryName.trim();
@@ -166,11 +174,17 @@ export function CategoryFilter({
       Alert.alert("Error", "Please enter a category name");
       return;
     }
-    createCategory.mutate({
-      name: trimmedName,
-      color: selectedColor,
-      parentId: parentId ?? undefined,
-    });
+    createCategory.mutate(
+      {
+        name: trimmedName,
+        color: selectedColor,
+        parentId: parentId ?? undefined,
+      },
+      {
+        onSuccess: handleMutationSuccess,
+        onError: handleMutationError,
+      },
+    );
   };
 
   const toggleCategory = useCallback(

@@ -39,9 +39,10 @@ function buildTree(
   }
 
   for (const cat of categories) {
-    const node = map.get(cat.id)!;
+    const node = map.get(cat.id);
+    if (!node) continue;
     if (cat.parentId && map.has(cat.parentId)) {
-      map.get(cat.parentId)!.children.push(node);
+      map.get(cat.parentId)?.children.push(node);
     } else {
       roots.push(node);
     }

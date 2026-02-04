@@ -98,18 +98,18 @@ export function CategoryNodeActions({
             style={{ overflow: "visible" }}
           >
             <div className="flex h-full w-full items-center justify-center">
-            <button
-              onClick={action.onClick}
-              className={
-                isDanger
-                  ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-500/40 bg-[#0A1A1A] text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/50 hover:text-red-300"
-                  : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/40 bg-[#0A1A1A] text-emerald-400 transition-colors hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
-              }
-              title={action.label}
-              aria-label={action.label}
-            >
-              <action.icon className="h-3 w-3" />
-            </button>
+              <button
+                onClick={action.onClick}
+                className={
+                  isDanger
+                    ? "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-500/40 bg-[#0A1A1A] text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/50 hover:text-red-300"
+                    : "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/40 bg-[#0A1A1A] text-emerald-400 transition-colors hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+                }
+                title={action.label}
+                aria-label={action.label}
+              >
+                <action.icon className="h-3 w-3" />
+              </button>
             </div>
           </foreignObject>
         );

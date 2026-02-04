@@ -26,12 +26,12 @@ import {
 } from "@acme/ui/field";
 import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
-import { CategoryTreePicker } from "./category-tree-picker";
 import { toast } from "@acme/ui/toast";
 
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
+import { CategoryTreePicker } from "./category-tree-picker";
 
 // Validation schema for inline task editing
 const EditTaskSchema = z.object({

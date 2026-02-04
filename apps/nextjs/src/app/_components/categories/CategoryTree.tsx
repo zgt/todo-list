@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Check, ChevronDown, X } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
@@ -14,8 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@acme/ui/dialog";
-import { Input } from "@acme/ui/input";
 import { Field, FieldContent, FieldLabel } from "@acme/ui/field";
+import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { toast } from "@acme/ui/toast";
 
@@ -33,16 +37,22 @@ export function CategoryTree() {
   const tree = treeQuery.data;
 
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
-  const [selectedNode, setSelectedNode] = useState<CategoryTreeNode | null>(null);
+  const [selectedNode, setSelectedNode] = useState<CategoryTreeNode | null>(
+    null,
+  );
   const [parentNode, setParentNode] = useState<CategoryTreeNode | null>(null);
 
   // Form state
   const [name, setName] = useState("");
   const [color, setColor] = useState("#50C878");
-  const [newParentId, setNewParentId] = useState<string | null | undefined>(undefined);
+  const [newParentId, setNewParentId] = useState<string | null | undefined>(
+    undefined,
+  );
 
   // Delete confirmation state
-  const [deleteTarget, setDeleteTarget] = useState<CategoryTreeNode | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CategoryTreeNode | null>(
+    null,
+  );
 
   const updateCategory = useMutation(
     trpc.category.update.mutationOptions({
@@ -103,7 +113,12 @@ export function CategoryTree() {
     if (!name.trim()) return;
 
     if (dialogMode === "edit" && selectedNode) {
-      const payload: { id: string; name: string; color: string; parentId?: string | null } = {
+      const payload: {
+        id: string;
+        name: string;
+        color: string;
+        parentId?: string | null;
+      } = {
         id: selectedNode.id,
         name,
         color,
@@ -135,7 +150,10 @@ export function CategoryTree() {
         </p>
         <Button onClick={() => openAdd(null)}>Create Category</Button>
 
-        <Dialog open={dialogMode !== null} onOpenChange={(open) => !open && closeDialog()}>
+        <Dialog
+          open={dialogMode !== null}
+          onOpenChange={(open) => !open && closeDialog()}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create Category</DialogTitle>
@@ -166,7 +184,10 @@ export function CategoryTree() {
       />
 
       {/* Edit / Add dialog */}
-      <Dialog open={dialogMode !== null} onOpenChange={(open) => !open && closeDialog()}>
+      <Dialog
+        open={dialogMode !== null}
+        onOpenChange={(open) => !open && closeDialog()}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -198,7 +219,10 @@ export function CategoryTree() {
       </Dialog>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Category</DialogTitle>
@@ -214,7 +238,9 @@ export function CategoryTree() {
               variant="destructive"
               className="flex-1"
               disabled={deleteCategory.isPending}
-              onClick={() => deleteTarget && deleteCategory.mutate(deleteTarget.id)}
+              onClick={() =>
+                deleteTarget && deleteCategory.mutate(deleteTarget.id)
+              }
             >
               {deleteCategory.isPending ? "Deleting..." : "Delete"}
             </Button>
@@ -253,7 +279,10 @@ function buildTreeExcluding(
       id: node.id,
       name: node.name,
       color: node.color,
-      children: buildTreeExcluding(node.children, excludeId),
+      children: buildTreeExcluding(
+        node.children as CategoryTreeNode[],
+        excludeId,
+      ),
     });
   }
   return result;
@@ -391,7 +420,9 @@ function ParentPicker({
             <div className="mr-1 size-4" />
             <X className="mr-2 size-2.5 text-[#8FA8A8]" />
             <span className="flex-1 truncate text-[#8FA8A8]">None (root)</span>
-            {displayValue === null && <Check className="text-primary ml-2 size-4" />}
+            {displayValue === null && (
+              <Check className="text-primary ml-2 size-4" />
+            )}
           </div>
 
           {filteredTree.map((node) => (
@@ -444,9 +475,8 @@ function CategoryDialogForm({
   const isEdit = mode === "edit" && selectedNode;
 
   // Resolve the displayed parent value
-  const parentValue = newParentId === undefined
-    ? (selectedNode?.parentId ?? null)
-    : newParentId;
+  const parentValue =
+    newParentId === undefined ? (selectedNode?.parentId ?? null) : newParentId;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -499,7 +529,11 @@ function CategoryDialogForm({
         </Field>
       )}
 
-      <Button type="submit" className="w-full" disabled={isPending || !name.trim()}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isPending || !name.trim()}
+      >
         {isPending ? "Saving..." : submitLabel}
       </Button>
     </form>

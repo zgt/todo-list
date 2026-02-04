@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { zoomIdentity } from "d3-zoom";
-import { zoom as d3Zoom } from "d3-zoom";
 import { select } from "d3-selection";
+import { zoom as d3Zoom, zoomIdentity } from "d3-zoom";
 
-import type { CategoryTreeNode, TreeLayoutNode } from "./CategoryTreeUtils";
-import { calculateRadialLayout, radialLinkPath } from "./CategoryTreeUtils";
+import type { CategoryTreeNode } from "./CategoryTreeUtils";
 import { CategoryNode } from "./CategoryNode";
 import { CategoryNodeActions } from "./CategoryNodeActions";
+import { calculateRadialLayout, radialLinkPath } from "./CategoryTreeUtils";
 
 interface CategoryTreeVisualizationProps {
   tree: CategoryTreeNode[];
@@ -38,20 +37,25 @@ export function CategoryTreeVisualization({
     const svg = select(svgRef.current);
     const zoomBehavior = d3Zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.3, 3])
-      .on("zoom", (event) => {
-        setTransform({
-          x: event.transform.x,
-          y: event.transform.y,
-          k: event.transform.k,
-        });
-      });
+      .on(
+        "zoom",
+        (event: { transform: { x: number; y: number; k: number } }) => {
+          setTransform({
+            x: event.transform.x,
+            y: event.transform.y,
+            k: event.transform.k,
+          });
+        },
+      );
 
-    svg.call(zoomBehavior);
+    svg.call(zoomBehavior as Parameters<typeof svg.call>[0]);
 
     // Center the view
     const rect = svgRef.current.getBoundingClientRect();
+    // d3-zoom API requires passing the transform method like this
     svg.call(
-      zoomBehavior.transform,
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      zoomBehavior.transform as Parameters<typeof svg.call>[0],
       zoomIdentity.translate(rect.width / 2, rect.height / 2),
     );
 
@@ -74,23 +78,26 @@ export function CategoryTreeVisualization({
     if (!svgRef.current) return;
     const svg = select(svgRef.current);
     const rect = svgRef.current.getBoundingClientRect();
-    const zoomBehavior = d3Zoom<SVGSVGElement, unknown>().on("zoom", (event) => {
-      setTransform({
-        x: event.transform.x,
-        y: event.transform.y,
-        k: event.transform.k,
-      });
-    });
-    svg.call(zoomBehavior);
+    const zoomBehavior = d3Zoom<SVGSVGElement, unknown>().on(
+      "zoom",
+      (event: { transform: { x: number; y: number; k: number } }) => {
+        setTransform({
+          x: event.transform.x,
+          y: event.transform.y,
+          k: event.transform.k,
+        });
+      },
+    );
+    svg.call(zoomBehavior as Parameters<typeof svg.call>[0]);
+    // d3-zoom API requires passing the transform method like this
     svg.call(
-      zoomBehavior.transform,
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      zoomBehavior.transform as Parameters<typeof svg.call>[0],
       zoomIdentity.translate(rect.width / 2, rect.height / 2),
     );
   }, []);
 
-  const hoveredNode = hoveredId
-    ? nodes.find((n) => n.id === hoveredId)
-    : null;
+  const hoveredNode = hoveredId ? nodes.find((n) => n.id === hoveredId) : null;
 
   return (
     <div className="relative h-full w-full">
@@ -127,18 +134,22 @@ export function CategoryTreeVisualization({
           ))}
 
           {/* Hover actions */}
-          {hoveredNode && !hoveredNode.isRoot && hoveredNode.data && (
-            <CategoryNodeActions
-              x={hoveredNode.x}
-              y={hoveredNode.y}
-              nodeRadius={14}
-              onEdit={() => onEdit(hoveredNode.data!)}
-              onAddChild={() => onAddChild(hoveredNode.data!)}
-              onDelete={onDelete ? () => onDelete(hoveredNode.data!) : undefined}
-              onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
-              onMouseLeave={handleMouseLeave}
-            />
-          )}
+          {(() => {
+            const nodeData = hoveredNode?.data;
+            if (!hoveredNode || hoveredNode.isRoot || !nodeData) return null;
+            return (
+              <CategoryNodeActions
+                x={hoveredNode.x}
+                y={hoveredNode.y}
+                nodeRadius={14}
+                onEdit={() => onEdit(nodeData)}
+                onAddChild={() => onAddChild(nodeData)}
+                onDelete={onDelete ? () => onDelete(nodeData) : undefined}
+                onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
+                onMouseLeave={handleMouseLeave}
+              />
+            );
+          })()}
 
           {/* Root add action */}
           {hoveredNode?.isRoot && (
@@ -146,7 +157,7 @@ export function CategoryTreeVisualization({
               x={hoveredNode.x}
               y={hoveredNode.y}
               nodeRadius={24}
-              onEdit={() => {}}
+              onEdit={() => undefined}
               onAddChild={() => onAddChild(null)}
               onMouseEnter={() => handleMouseEnter(hoveredNode.id)}
               onMouseLeave={handleMouseLeave}

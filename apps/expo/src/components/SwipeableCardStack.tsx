@@ -1,13 +1,8 @@
 /* eslint-disable react-hooks/refs -- This component intentionally reads/writes refs during render
    to implement a deferred sort pattern: task order only updates on navigation or add/remove,
    not on completion toggling, preventing cards from jumping away mid-interaction. */
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
 import type { ComponentRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
@@ -59,7 +54,7 @@ export function SwipeableCardStack({
       // If we're not compact, we might want to ensure the card is visible/focused,
       // but if it's prepended, it should be at index 0 which is default.
       if (!isCompact) {
-         setCurrentIndex(0);
+        setCurrentIndex(0);
       }
     }
   }, [autoEditId, isCompact]);

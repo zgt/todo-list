@@ -206,7 +206,7 @@ export function SwipeableCard({
       if (isCompact) {
         // Compact mode: Lock vertical movement
         translateY.value = 0;
-        
+
         // Determine horizontal direction only
         if (event.translationX < -SWIPE_THRESHOLD / 2) {
           direction.value = "left";
@@ -349,16 +349,7 @@ export function SwipeableCard({
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         }
       } else {
-        // Horizontal swipe - Disable in compact mode for navigation
-        if (isCompact) {
-             // In compact mode, we might want to allow horizontal swipe for other actions,
-             // but strictly for navigation (Next/Prev) it should be disabled or changed.
-             // For now, let's just reset.
-             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-             return;
-        }
-
+        // Horizontal swipe - only available in non-compact mode (compact mode returns early above)
         if (
           event.translationX < -SWIPE_THRESHOLD ||
           (event.translationX < 0 && velocityX > SWIPE_VELOCITY)
@@ -455,7 +446,9 @@ export function SwipeableCard({
     }
 
     // Current and stacked cards (or all cards in Compact mode)
-    const rotation = isCompact ? 0 : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
+    const rotation = isCompact
+      ? 0
+      : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
 
     const targetWidth = isCompact ? SCREEN_WIDTH * 0.95 : SCREEN_WIDTH * 0.85;
     const targetHeight = isCompact ? 80 : SCREEN_HEIGHT * 0.6;

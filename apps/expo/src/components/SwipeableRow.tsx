@@ -139,7 +139,9 @@ export function SwipeableRow({
   return (
     <View style={styles.container}>
       {/* Edit button (left side, revealed on right swipe) */}
-      <Animated.View style={[styles.buttonContainer, styles.editButton, editButtonStyle]}>
+      <Animated.View
+        style={[styles.buttonContainer, styles.editButton, editButtonStyle]}
+      >
         <Pressable
           style={styles.buttonPressable}
           onPress={() => runOnJS(handleEdit)()}

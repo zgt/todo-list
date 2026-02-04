@@ -38,6 +38,8 @@ export const Category = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     parentId: t
       .uuid("parent_id")
+      // Self-reference requires explicit type assertion
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .references((): any => Category.id, { onDelete: "cascade" }),
     name: t.varchar({ length: 100 }).notNull(),
     color: t.varchar({ length: 7 }).notNull(), // Hex color code

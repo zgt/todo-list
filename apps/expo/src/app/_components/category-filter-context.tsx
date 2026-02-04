@@ -55,7 +55,11 @@ export function CategoryFilterProvider({ children }: { children: ReactNode }) {
 
   return (
     <CategoryFilterContext.Provider
-      value={{ selectedCategoryIds, setSelectedCategoryIds, effectiveCategoryIds }}
+      value={{
+        selectedCategoryIds,
+        setSelectedCategoryIds,
+        effectiveCategoryIds,
+      }}
     >
       {children}
     </CategoryFilterContext.Provider>

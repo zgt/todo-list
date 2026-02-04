@@ -4,8 +4,8 @@ import { SidebarInset } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
-import { AppSidebar } from "../_components/sidebar-nav";
 import { CategoryTree } from "../_components/categories/CategoryTree";
+import { AppSidebar } from "../_components/sidebar-nav";
 import { CategoryListSkeleton } from "./category-components";
 
 export default async function CategoriesPage() {

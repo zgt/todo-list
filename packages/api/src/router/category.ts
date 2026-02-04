@@ -2,7 +2,17 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, arrayContains, asc, desc, eq, inArray, isNull, ne, sql } from "@acme/db";
+import {
+  and,
+  arrayContains,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  sql,
+} from "@acme/db";
 import {
   Category,
   CreateCategorySchema,
@@ -13,7 +23,9 @@ import {
 import { protectedProcedure } from "../trpc";
 
 /** Ensure dates are proper Date objects for SuperJSON serialization */
-function serializeCategory<T extends { createdAt: Date; updatedAt: Date | null; deletedAt: Date | null }>(category: T) {
+function serializeCategory<
+  T extends { createdAt: Date; updatedAt: Date | null; deletedAt: Date | null },
+>(category: T) {
   return {
     ...category,
     createdAt: new Date(category.createdAt),
@@ -30,7 +42,11 @@ export const categoryRouter = {
         eq(Category.userId, ctx.session.user.id),
         isNull(Category.deletedAt),
       ),
-      orderBy: [asc(Category.depth), asc(Category.sortOrder), desc(Category.createdAt)],
+      orderBy: [
+        asc(Category.depth),
+        asc(Category.sortOrder),
+        desc(Category.createdAt),
+      ],
     });
 
     const nameMap = new Map(categories.map((c) => [c.id, c.name]));
@@ -70,7 +86,8 @@ export const categoryRouter = {
     }
 
     for (const cat of categories) {
-      const node = map.get(cat.id)!;
+      const node = map.get(cat.id);
+      if (!node) continue;
       if (cat.parentId) {
         const parent = map.get(cat.parentId);
         if (parent) {
@@ -265,7 +282,10 @@ export const categoryRouter = {
       });
 
       if (!current) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Category not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Category not found",
+        });
       }
 
       // Handle reparenting if parentId is being changed
@@ -291,7 +311,10 @@ export const categoryRouter = {
           });
 
           if (!newParent) {
-            throw new TRPCError({ code: "NOT_FOUND", message: "Parent category not found" });
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Parent category not found",
+            });
           }
 
           // Prevent circular reference: new parent must not be a descendant of this category
@@ -356,7 +379,10 @@ export const categoryRouter = {
               ),
             );
 
-          if (oldParentChildCount[0] && Number(oldParentChildCount[0].count) === 0) {
+          if (
+            oldParentChildCount[0] &&
+            Number(oldParentChildCount[0].count) === 0
+          ) {
             await ctx.db
               .update(Category)
               .set({ isLeaf: true })
@@ -371,7 +397,10 @@ export const categoryRouter = {
             .update(Category)
             .set(updateData)
             .where(
-              and(eq(Category.id, id), eq(Category.userId, ctx.session.user.id)),
+              and(
+                eq(Category.id, id),
+                eq(Category.userId, ctx.session.user.id),
+              ),
             );
         }
       }
@@ -381,7 +410,10 @@ export const categoryRouter = {
       });
 
       if (!updated) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch updated category" });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch updated category",
+        });
       }
 
       return serializeCategory(updated);
@@ -400,7 +432,10 @@ export const categoryRouter = {
       });
 
       if (!category) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Category not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Category not found",
+        });
       }
 
       const now = new Date();

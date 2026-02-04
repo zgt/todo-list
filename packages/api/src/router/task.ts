@@ -10,7 +10,11 @@ export const taskRouter = {
   // Get all non-deleted tasks for current user
   all: protectedProcedure.query(async ({ ctx }) => {
     const tasks = await ctx.db.query.Task.findMany({
-      where: and(eq(Task.userId, ctx.session.user.id), isNull(Task.deletedAt), isNull(Task.archivedAt)),
+      where: and(
+        eq(Task.userId, ctx.session.user.id),
+        isNull(Task.deletedAt),
+        isNull(Task.archivedAt),
+      ),
       orderBy: [desc(Task.createdAt)],
       limit: 100,
       with: { category: true },

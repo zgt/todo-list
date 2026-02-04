@@ -1,7 +1,4 @@
-const {
-  withXcodeProject,
-  withDangerousMod,
-} = require("expo/config-plugins");
+const { withXcodeProject, withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
@@ -96,8 +93,7 @@ function syncBuildSettings(config) {
       const entry = configs[key];
       if (
         typeof entry === "object" &&
-        entry.buildSettings?.PRODUCT_BUNDLE_IDENTIFIER ===
-          '"com.zgtf.todolist"'
+        entry.buildSettings?.PRODUCT_BUNDLE_IDENTIFIER === '"com.zgtf.todolist"'
       ) {
         entry.buildSettings.CURRENT_PROJECT_VERSION = `"${version}"`;
       }
@@ -109,14 +105,12 @@ function syncBuildSettings(config) {
       const entry = pbxProject[key];
       if (typeof entry === "object" && entry.buildConfigurationList) {
         const configListId = entry.buildConfigurationList;
-        const configList =
-          project.pbxXCConfigurationList()[configListId];
+        const configList = project.pbxXCConfigurationList()[configListId];
         if (configList?.buildConfigurations) {
           for (const ref of configList.buildConfigurations) {
             const buildConfig = configs[ref.value];
             if (buildConfig?.buildSettings) {
-              buildConfig.buildSettings.CURRENT_PROJECT_VERSION =
-                `"${version}"`;
+              buildConfig.buildSettings.CURRENT_PROJECT_VERSION = `"${version}"`;
             }
           }
         }
@@ -141,15 +135,15 @@ function addBuildPhaseScript(config) {
       "PARENT_PLIST=${BUILT_PRODUCTS_DIR}/Tokilist.app/Info.plist",
       "WIDGET_PLIST=${BUILT_PRODUCTS_DIR}/Tokilist.app/PlugIns/TokilistWidgets.appex/Info.plist",
       "if [ -f ${PARENT_PLIST} ] && [ -f ${WIDGET_PLIST} ]; then",
-      "  PARENT_VERSION=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleVersion\" ${PARENT_PLIST})",
-      "  WIDGET_VERSION=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleVersion\" ${WIDGET_PLIST})",
-      "  echo \"[SyncWidgetVersion] Parent: $PARENT_VERSION Widget: $WIDGET_VERSION\"",
-      "  if [ \"$PARENT_VERSION\" != \"$WIDGET_VERSION\" ]; then",
-      "    /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $PARENT_VERSION\" ${WIDGET_PLIST}",
-      "    echo \"[SyncWidgetVersion] Updated widget to $PARENT_VERSION\"",
+      '  PARENT_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ${PARENT_PLIST})',
+      '  WIDGET_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" ${WIDGET_PLIST})',
+      '  echo "[SyncWidgetVersion] Parent: $PARENT_VERSION Widget: $WIDGET_VERSION"',
+      '  if [ "$PARENT_VERSION" != "$WIDGET_VERSION" ]; then',
+      '    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $PARENT_VERSION" ${WIDGET_PLIST}',
+      '    echo "[SyncWidgetVersion] Updated widget to $PARENT_VERSION"',
       "  fi",
       "else",
-      "  echo \"[SyncWidgetVersion] WARNING: plist files not found\"",
+      '  echo "[SyncWidgetVersion] WARNING: plist files not found"',
       "fi",
     ].join("\\n");
 

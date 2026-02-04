@@ -210,7 +210,7 @@ function TreeNode({ node, depth }: { node: CategoryTreeNode; depth: number }) {
       </div>
       {hasChildren && expanded && (
         <div className="flex flex-col gap-2">
-          {node.children.map((child) => (
+          {node.children.map((child: CategoryTreeNode) => (
             <TreeNode key={child.id} node={child} depth={depth + 1} />
           ))}
         </div>
@@ -268,7 +268,7 @@ function CategoryCard({
           {hasChildren ? (
             <button
               onClick={onToggle}
-              className="text-muted-foreground hover:text-white flex-shrink-0 transition-colors"
+              className="text-muted-foreground flex-shrink-0 transition-colors hover:text-white"
             >
               {expanded ? (
                 <ChevronDown className="h-4 w-4" />
