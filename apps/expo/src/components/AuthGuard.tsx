@@ -28,7 +28,7 @@ export function AuthGuard() {
         </View>
 
         {/* Sign-In Buttons */}
-        <View className="top-70">
+        <View className="absolute bottom-18">
           <SignInButtons size="large" />
         </View>
         {/* Subtle Footer */}

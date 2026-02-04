@@ -203,6 +203,21 @@ export function SwipeableCard({
         translateY.value = startY.value + event.translationY;
       }
 
+      if (isCompact) {
+        // Compact mode: Lock vertical movement
+        translateY.value = 0;
+        
+        // Determine horizontal direction only
+        if (event.translationX < -SWIPE_THRESHOLD / 2) {
+          direction.value = "left";
+        } else if (event.translationX > SWIPE_THRESHOLD / 2) {
+          direction.value = "right";
+        } else {
+          direction.value = null;
+        }
+        return;
+      }
+
       // Determine swipe direction based on dominant axis
       const absX = Math.abs(event.translationX);
       const absY = Math.abs(event.translationY);
@@ -240,6 +255,31 @@ export function SwipeableCard({
       const absY = Math.abs(event.translationY);
       const velocityX = Math.abs(event.velocityX);
       const velocityY = Math.abs(event.velocityY);
+
+      if (isCompact) {
+        if (
+          absX > SWIPE_THRESHOLD ||
+          (absX > 0 && velocityX > SWIPE_VELOCITY)
+        ) {
+          if (event.translationX > 0) {
+            // Right swipe -> Edit Mode
+            runOnJS(onEditStart)();
+          } else {
+            // Left swipe -> Delete
+            if (deletePending) {
+              runOnJS(onDelete)();
+            } else {
+              runOnJS(onDeletePending)();
+            }
+          }
+        }
+        
+        // Always reset position in compact mode
+        translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+        translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+        direction.value = null;
+        return;
+      }
 
       // Check if swipe threshold or velocity threshold is met
       if (absY > absX) {
