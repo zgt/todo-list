@@ -2,6 +2,14 @@
   "name": "@acme/expo",
   "private": true,
   "main": "index.ts",
+  "expo": {
+    "autolinking": {
+      "searchPaths": [
+        "../../node_modules",
+        "./node_modules"
+      ]
+    }
+  },
   "scripts": {
     "clean": "git clean -xdf .cache .expo .turbo android ios node_modules",
     "dev": "expo start",
@@ -44,7 +52,6 @@
     "expo-file-system": "~19.0.21",
     "expo-linear-gradient": "^15.0.8",
     "expo-linking": "~8.0.11",
-    "expo-modules-core": "~3.0.29",
     "expo-network": "^8.0.8",
     "expo-router": "~6.0.23",
     "expo-secure-store": "~15.0.8",
