@@ -3,8 +3,10 @@ import type {
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import {
   Alert,
+  Keyboard,
   Pressable,
   StyleSheet,
   Text,
@@ -76,7 +78,19 @@ function buildTree(
   return roots;
 }
 
-export function CategoryFilter() {
+export interface CategoryFilterProps {
+  mode?: "filter" | "select";
+  selectedCategoryId?: string | null;
+  onCategoryChange?: (categoryId: string | null) => void;
+  trigger?: ReactNode;
+}
+
+export function CategoryFilter({
+  mode = "filter",
+  selectedCategoryId,
+  onCategoryChange,
+  trigger,
+}: CategoryFilterProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => ["50%", "90%"], []);
 
@@ -102,6 +116,13 @@ export function CategoryFilter() {
   );
   const { selectedCategoryIds, setSelectedCategoryIds } = useCategoryFilter();
 
+  const effectiveSelectedIds = useMemo(() => {
+    if (mode === "select") {
+      return selectedCategoryId ? [selectedCategoryId] : [];
+    }
+    return selectedCategoryIds;
+  }, [mode, selectedCategoryId, selectedCategoryIds]);
+
   const tree = useMemo(() => {
     if (!categories) return [];
     return buildTree(categories);
@@ -114,9 +135,13 @@ export function CategoryFilter() {
 
   const createCategory = useMutation(
     trpc.category.create.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (newCategory) => {
         await queryClient.invalidateQueries(trpc.category.all.queryFilter());
         resetCreateForm();
+        if (mode === "select" && onCategoryChange) {
+          onCategoryChange(newCategory.id);
+          bottomSheetRef.current?.dismiss();
+        }
       },
       onError: (err) => {
         Alert.alert(
@@ -150,20 +175,35 @@ export function CategoryFilter() {
 
   const toggleCategory = useCallback(
     (id: string) => {
-      setSelectedCategoryIds(
-        selectedCategoryIds.includes(id)
-          ? selectedCategoryIds.filter((cid) => cid !== id)
-          : [...selectedCategoryIds, id],
-      );
+      if (mode === "select") {
+        onCategoryChange?.(id);
+        bottomSheetRef.current?.dismiss();
+      } else {
+        setSelectedCategoryIds(
+          selectedCategoryIds.includes(id)
+            ? selectedCategoryIds.filter((cid) => cid !== id)
+            : [...selectedCategoryIds, id],
+        );
+      }
     },
-    [selectedCategoryIds, setSelectedCategoryIds],
+    [mode, onCategoryChange, selectedCategoryIds, setSelectedCategoryIds],
   );
+
+  const handleClear = () => {
+    if (mode === "select") {
+      onCategoryChange?.(null);
+      bottomSheetRef.current?.dismiss();
+    } else {
+      setSelectedCategoryIds([]);
+    }
+  };
 
   const toggleParentSelection = useCallback((id: string) => {
     setParentId((prev) => (prev === id ? null : id));
   }, []);
 
   const handleOpenSheet = useCallback(() => {
+    Keyboard.dismiss();
     bottomSheetRef.current?.present();
   }, []);
 
@@ -198,21 +238,25 @@ export function CategoryFilter() {
   return (
     <>
       {/* Trigger Button */}
-      <Pressable
-        onPress={handleOpenSheet}
-        style={[
-          styles.triggerButton,
-          selectedCategoryIds.length > 0 && styles.triggerButtonActive,
-        ]}
-      >
-        <Filter size={16} color="#8FA8A8" />
-        <Text style={styles.triggerText}>Category</Text>
-        {selectedCategoryIds.length > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{selectedCategoryIds.length}</Text>
-          </View>
-        )}
-      </Pressable>
+      {trigger ? (
+        <Pressable onPress={handleOpenSheet}>{trigger}</Pressable>
+      ) : (
+        <Pressable
+          onPress={handleOpenSheet}
+          style={[
+            styles.triggerButton,
+            selectedCategoryIds.length > 0 && styles.triggerButtonActive,
+          ]}
+        >
+          <Filter size={16} color="#8FA8A8" />
+          <Text style={styles.triggerText}>Category</Text>
+          {selectedCategoryIds.length > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{selectedCategoryIds.length}</Text>
+            </View>
+          )}
+        </Pressable>
+      )}
 
       {/* Bottom Sheet */}
       <BSModal
@@ -228,10 +272,14 @@ export function CategoryFilter() {
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Filter by Category</Text>
-              {selectedCategoryIds.length > 0 && (
-                <Pressable onPress={() => setSelectedCategoryIds([])}>
-                  <Text style={styles.clearText}>Clear all</Text>
+              <Text style={styles.title}>
+                {mode === "select" ? "Select Category" : "Filter by Category"}
+              </Text>
+              {(mode === "filter" ? selectedCategoryIds.length > 0 : true) && (
+                <Pressable onPress={handleClear}>
+                  <Text style={styles.clearText}>
+                    {mode === "select" ? "None" : "Clear all"}
+                  </Text>
                 </Pressable>
               )}
             </View>
@@ -349,7 +397,7 @@ export function CategoryFilter() {
                   key={node.id}
                   node={node}
                   depth={0}
-                  selectedIds={selectedCategoryIds}
+                  selectedIds={effectiveSelectedIds}
                   onToggle={toggleCategory}
                 />
               ))}

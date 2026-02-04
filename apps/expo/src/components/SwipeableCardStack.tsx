@@ -197,6 +197,7 @@ export function SwipeableCardStack({
     <Animated.ScrollView
       ref={scrollViewRef}
       scrollEnabled={isCompact}
+      keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         alignItems: "center",
         justifyContent: isCompact ? "flex-start" : "center",
