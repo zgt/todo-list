@@ -27,11 +27,6 @@ export const metadata: Metadata = {
     url: "https://calayo.net",
     siteName: "Tokilist",
   },
-  twitter: {
-    card: "summary_large_image",
-    site: "@jullerino",
-    creator: "@jullerino",
-  },
 };
 
 export const viewport: Viewport = {
