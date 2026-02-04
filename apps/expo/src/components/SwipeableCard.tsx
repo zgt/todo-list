@@ -262,18 +262,32 @@ export function SwipeableCard({
           (absX > 0 && velocityX > SWIPE_VELOCITY)
         ) {
           if (event.translationX > 0) {
-            // Right swipe -> Edit Mode
-            runOnJS(onEditStart)();
-          } else {
-            // Left swipe -> Delete
+            // Right swipe
             if (deletePending) {
+              // Cancel delete mode
+              runOnJS(onCancelDelete)();
+            } else if (isEditing) {
+              // Save the edit
+              runOnJS(handleSwipeSave)();
+            } else {
+              // Start edit mode
+              runOnJS(onEditStart)();
+            }
+          } else {
+            // Left swipe
+            if (isEditing) {
+              // Cancel edit mode
+              runOnJS(onCancelEdit)();
+            } else if (deletePending) {
+              // Actually delete
               runOnJS(onDelete)();
             } else {
+              // Enter delete pending mode
               runOnJS(onDeletePending)();
             }
           }
         }
-        
+
         // Always reset position in compact mode
         translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
