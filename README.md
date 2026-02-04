@@ -50,6 +50,11 @@ packages
   │   └─ Typesafe db calls using Drizzle & Supabase
   └─ ui
       └─ Start of a UI package for the webapp using shadcn-ui
+scripts
+  └─ Utilities for syncing tasks to external tools (Obsidian)
+supabase
+  └─ functions
+      └─ Edge functions for automated tasks (archiving)
 tooling
   ├─ eslint
   │   └─ shared, fine-grained, eslint presets
@@ -62,6 +67,33 @@ tooling
 ```
 
 > In this template, we use `@acme` as a placeholder for package names. As a user, you might want to replace it with your own organization or project name. You can use find-and-replace to change all the instances of `@acme` to something like `@my-company` or `@project-name`.
+
+## Features
+
+### iOS Home Screen Widgets
+
+The Expo app includes a native iOS widget that displays your tasks directly on the home screen.
+- **Location:** `apps/expo/widgets`
+- **Tech:** Built with native SwiftUI, integrated into the Expo workflow.
+
+### Automatic Task Archiving
+
+A Supabase Edge Function is configured to automatically maintain database hygiene.
+- **Location:** `supabase/functions/archive-completed-tasks`
+- **Functionality:** Periodically archives tasks that have been completed for more than 24 hours to keep the active list clean.
+
+### Obsidian Sync
+
+A utility script is available to sync your tasks from Tokilist to your Obsidian vault.
+- **Location:** `scripts/sync-tasks-to-obsidian.ts`
+- **Usage:** `npx tsx scripts/sync-tasks-to-obsidian.ts`
+- **Requirements:**
+  - Obsidian Local REST API plugin installed and enabled in your Obsidian vault.
+  - Environment variables:
+    - `OBSIDIAN_SYNC_API_KEY`: API Key for Tokilist.
+    - `TOKILIST_USER_ID`: The user ID to fetch tasks for.
+    - `OBSIDIAN_REST_API_KEY`: Key from the Obsidian Local REST API plugin.
+    - `OBSIDIAN_REST_URL`: URL for Obsidian REST API (default: `https://127.0.0.1:27124`).
 
 ## Quick Start
 
