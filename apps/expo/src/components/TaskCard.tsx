@@ -48,7 +48,7 @@ const CARD_HEIGHT = 500;
 const COMPACT_HEIGHT = 80;
 
 const SPRING_CONFIG = {
-  damping: 20,
+  damping: 200,
   stiffness: 180,
 };
 

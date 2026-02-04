@@ -587,7 +587,7 @@ export default function Index() {
             ) : (
               <SwipeableCardStack
                 tasks={filteredTasks}
-                isCompact={true}
+                isCompact={false}
                 onToggle={handleToggle}
                 onComplete={(id) => handleToggle(id, true)}
                 onDelete={handleDelete}
