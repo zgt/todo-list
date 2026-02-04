@@ -31,6 +31,8 @@ interface SwipeableCardStackProps {
       dueDate: Date | null;
     }>,
   ) => void;
+  autoEditId?: string | null;
+  onCancelEdit?: (id: string) => void;
 }
 
 export function SwipeableCardStack({
@@ -40,6 +42,8 @@ export function SwipeableCardStack({
   onDelete,
   onUpdate,
   isCompact,
+  autoEditId,
+  onCancelEdit,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
@@ -47,6 +51,18 @@ export function SwipeableCardStack({
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
   const skipAnimationIds = useRef<Set<string>>(new Set());
   const scrollViewRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
+
+  // Auto-enter edit mode if requested
+  useEffect(() => {
+    if (autoEditId) {
+      setEditingId(autoEditId);
+      // If we're not compact, we might want to ensure the card is visible/focused,
+      // but if it's prepended, it should be at index 0 which is default.
+      if (!isCompact) {
+         setCurrentIndex(0);
+      }
+    }
+  }, [autoEditId, isCompact]);
 
   // Scroll to current card when switching to compact mode
   useEffect(() => {
@@ -120,6 +136,9 @@ export function SwipeableCardStack({
   };
 
   const handleCancelEdit = () => {
+    if (editingId && onCancelEdit) {
+      onCancelEdit(editingId);
+    }
     setEditingId(null);
   };
 

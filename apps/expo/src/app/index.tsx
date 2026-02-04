@@ -11,12 +11,9 @@ import {
 import Animated, {
   cancelAnimation,
   Easing,
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -46,7 +43,8 @@ import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
-import CreateTask from "./_components/create-task";
+
+const DUMMY_TASK_ID = "dummy-create-task";
 
 function Header({ onProfilePress }: { onProfilePress: () => void }) {
   const { data: session } = authClient.useSession();
@@ -157,7 +155,6 @@ export default function Index() {
   }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { effectiveCategoryIds } = useCategoryFilter();
-  const sheetBottom = useSharedValue(0);
 
   const queryClient = useQueryClient();
 
@@ -205,12 +202,41 @@ export default function Index() {
 
   // Filter tasks by selected categories (including descendants)
   const filteredTasks = useMemo(() => {
-    if (effectiveCategoryIds.length === 0) return tasks;
-    return tasks.filter(
-      (task) =>
-        task.categoryId && effectiveCategoryIds.includes(task.categoryId),
-    );
-  }, [tasks, effectiveCategoryIds]);
+    let result = tasks;
+    if (effectiveCategoryIds.length > 0) {
+      result = tasks.filter(
+        (task) =>
+          task.categoryId && effectiveCategoryIds.includes(task.categoryId),
+      );
+    }
+
+    if (isCreating && session) {
+      const dummyTask = {
+        id: DUMMY_TASK_ID,
+        title: "",
+        description: null,
+        completed: false,
+        completedAt: null,
+        dueDate: null,
+        archivedAt: null,
+        categoryId: null,
+        userId: session.user.id,
+        version: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        deletedAt: null,
+        lastSyncedAt: new Date(),
+        orderIndex: 0,
+        syncStatus: "synced" as const,
+        localVersion: 0,
+        serverVersion: 0,
+        category: null,
+      };
+      // Prepend
+      return [dummyTask, ...result];
+    }
+    return result;
+  }, [tasks, effectiveCategoryIds, isCreating, session]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
@@ -225,28 +251,6 @@ export default function Index() {
       isLoadingTasks,
     });
   }, [session, isPending, tasks, serverTasks, isLoadingTasks]);
-
-  // Track keyboard height and animate sheet position
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardWillShow", (e) => {
-      const height = e.endCoordinates.height;
-      sheetBottom.value = withSpring(height, {
-        damping: 90,
-        stiffness: 900,
-      });
-    });
-    const hideSubscription = Keyboard.addListener("keyboardWillHide", () => {
-      sheetBottom.value = withSpring(0, {
-        damping: 90,
-        stiffness: 900,
-      });
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [sheetBottom]);
 
   // tRPC mutation for toggling task completion with optimistic update
   const toggleMutation = useMutation(
@@ -373,6 +377,17 @@ export default function Index() {
       dueDate: Date | null;
     }>,
   ) => {
+    if (id === DUMMY_TASK_ID) {
+      if (!updates.title) return;
+      await handleCreate(
+        updates.title,
+        updates.description || "",
+        updates.categoryId || undefined,
+        updates.dueDate || undefined,
+      );
+      setIsCreating(false);
+      return;
+    }
     await updateMutation.mutateAsync({ id, ...updates });
   };
 
@@ -533,10 +548,13 @@ export default function Index() {
     }
   };
 
-  // Animated style for sheet position
-  const sheetAnimatedStyle = useAnimatedStyle(() => ({
-    bottom: sheetBottom.value,
-  }));
+  const handleCancelEdit = (id: string) => {
+    if (id === DUMMY_TASK_ID) {
+      setIsCreating(false);
+    }
+  };
+
+
 
   // Show loading state while session or tasks are loading
   if (isPending || isLoadingTasks) {
@@ -583,6 +601,8 @@ export default function Index() {
                 onComplete={(id) => handleToggle(id, true)}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
+                autoEditId={isCreating ? DUMMY_TASK_ID : undefined}
+                onCancelEdit={handleCancelEdit}
               />
             ) : (
               <SwipeableCardStack
@@ -592,6 +612,8 @@ export default function Index() {
                 onComplete={(id) => handleToggle(id, true)}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
+                autoEditId={isCreating ? DUMMY_TASK_ID : undefined}
+                onCancelEdit={handleCancelEdit}
               />
             )
           ) : (
@@ -621,64 +643,6 @@ export default function Index() {
           <FAB onPress={() => setIsCreating(!isCreating)} />
         </View>
       </SafeAreaView>
-
-      {/* Bottom Sheet Overlay for CreateTask */}
-      {isCreating && (
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-          }}
-          pointerEvents="box-none"
-        >
-          {/* Backdrop */}
-          <Pressable
-            onPress={() => setIsCreating(false)}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          >
-            <Animated.View
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(200)}
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.6)",
-              }}
-            />
-          </Pressable>
-
-          {/* Bottom Sheet */}
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(200)}
-            style={[
-              {
-                position: "absolute",
-                left: 0,
-                right: 0,
-              },
-              sheetAnimatedStyle,
-            ]}
-          >
-            <View className="w-full rounded-3xl border-t border-white/10 bg-zinc-900 p-5 shadow-2xl">
-              <CreateTask
-                onCreate={handleCreate}
-                onSuccess={() => setIsCreating(false)}
-              />
-              <View className="h-full w-full"></View>
-            </View>
-          </Animated.View>
-        </View>
-      )}
 
       {/* Profile Menu */}
       <ProfileMenu
