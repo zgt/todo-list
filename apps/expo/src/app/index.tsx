@@ -1,13 +1,6 @@
 import type { TRPCClientErrorLike } from "@trpc/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Alert,
-  Keyboard,
-  Platform,
-  Pressable,
-  Text as RNText,
-  View,
-} from "react-native";
+import { Alert, Platform, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
   cancelAnimation,
   Easing,
@@ -379,13 +372,14 @@ export default function Index() {
   ) => {
     if (id === DUMMY_TASK_ID) {
       if (!updates.title) return;
+      // Remove dummy BEFORE creating to avoid duplicate with optimistic task
+      setIsCreating(false);
       await handleCreate(
         updates.title,
-        updates.description || "",
-        updates.categoryId || undefined,
-        updates.dueDate || undefined,
+        updates.description ?? "",
+        updates.categoryId ?? undefined,
+        updates.dueDate ?? undefined,
       );
-      setIsCreating(false);
       return;
     }
     await updateMutation.mutateAsync({ id, ...updates });
@@ -475,7 +469,8 @@ export default function Index() {
             category: null, // Category details will be filled in after server response
           };
 
-          const newTasks = [...previousTasks, optimisticTask];
+          // Prepend so new task appears at top (where dummy was)
+          const newTasks = [optimisticTask, ...previousTasks];
           console.log(
             "✨ Setting optimistic task, new count:",
             newTasks.length,
@@ -553,8 +548,6 @@ export default function Index() {
       setIsCreating(false);
     }
   };
-
-
 
   // Show loading state while session or tasks are loading
   if (isPending || isLoadingTasks) {
