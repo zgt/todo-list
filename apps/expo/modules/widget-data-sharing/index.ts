@@ -1,4 +1,4 @@
-import { requireNativeModule } from "expo-modules-core";
+import { requireNativeModule } from "expo";
 
 // Define the module interface
 interface WidgetDataSharingModule {
