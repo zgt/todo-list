@@ -407,6 +407,12 @@ export function SwipeableCard({
       direction.value = null;
     });
 
+  // In compact mode, only activate the pan gesture for horizontal swipes
+  // so vertical drags fall through to the ScrollView for scrolling
+  if (isCompact) {
+    panGesture.activeOffsetX([-15, 15]).failOffsetY([-15, 15]);
+  }
+
   const cardStyle = useAnimatedStyle(() => {
     if (index === -1 && !isCompact) {
       // Previous card - interpolate position based on swipe progress
