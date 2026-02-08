@@ -171,7 +171,7 @@ export function CategoryFilter() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-2" align="start">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex max-h-[300px] flex-col gap-0.5 overflow-y-auto">
           {tree.map((node) => (
             <CategoryTreeItem
               key={node.id}

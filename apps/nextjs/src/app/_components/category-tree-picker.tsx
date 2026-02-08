@@ -183,7 +183,7 @@ export function CategoryTreePicker({
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-2" align="start">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex max-h-[300px] flex-col gap-0.5 overflow-y-auto">
           {/* No category option */}
           <div
             className="flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
