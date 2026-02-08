@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Check, ChevronDown, Filter } from "lucide-react";
+import { Check, ChevronDown, Filter, Plus } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -151,7 +152,7 @@ export function CategoryFilter() {
     );
   };
 
-  if (!categories || categories.length === 0) return null;
+  if (!categories) return null;
 
   return (
     <Popover>
@@ -172,15 +173,25 @@ export function CategoryFilter() {
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-2" align="start">
         <div className="flex max-h-[300px] flex-col gap-0.5 overflow-y-auto">
-          {tree.map((node) => (
-            <CategoryTreeItem
-              key={node.id}
-              node={node}
-              depth={0}
-              selectedIds={selectedCategoryIds}
-              onToggle={toggleCategory}
-            />
-          ))}
+          {tree.length === 0 ? (
+            <Link
+              href="/categories"
+              className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-[#8FA8A8] hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+            >
+              <Plus className="size-4" />
+              Create a category
+            </Link>
+          ) : (
+            tree.map((node) => (
+              <CategoryTreeItem
+                key={node.id}
+                node={node}
+                depth={0}
+                selectedIds={selectedCategoryIds}
+                onToggle={toggleCategory}
+              />
+            ))
+          )}
         </div>
       </PopoverContent>
     </Popover>

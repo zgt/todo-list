@@ -247,7 +247,7 @@ export function CategoryFilter({
     runOnJS(onSelectColor)(res);
   };
 
-  if (!categories || categories.length === 0) return null;
+  if (!categories) return null;
 
   return (
     <>
