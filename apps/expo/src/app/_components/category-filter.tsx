@@ -8,7 +8,6 @@ import {
   Alert,
   Keyboard,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -221,6 +220,12 @@ export function CategoryFilter({
     bottomSheetRef.current?.present();
   }, []);
 
+  const handleDismiss = useCallback(() => {
+    if (isCreating) {
+      resetCreateForm();
+    }
+  }, [isCreating, resetCreateForm]);
+
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -280,6 +285,7 @@ export function CategoryFilter({
         enablePanDownToClose
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
+        onDismiss={handleDismiss}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.sheetBackground}
         handleIndicatorStyle={styles.handleIndicator}
@@ -287,7 +293,7 @@ export function CategoryFilter({
         {/* Create Category Form */}
         {isCreating ? (
           <BottomSheetScrollView
-            style={[styles.contentContainer, styles.createForm]}
+            style={styles.contentContainer}
             contentContainerStyle={styles.createFormContent}
           >
             {/* Header */}
@@ -307,95 +313,100 @@ export function CategoryFilter({
               </Pressable>
             </View>
 
-            <View style={styles.createFormHeader}>
-              <Text style={styles.createFormTitle}>New Category</Text>
+            <View style={styles.createForm}>
+              <View style={styles.createFormHeader}>
+                <Text style={styles.createFormTitle}>New Category</Text>
+                <Pressable
+                  onPress={resetCreateForm}
+                  style={styles.closeButton}
+                  accessibilityLabel="Cancel"
+                  accessibilityRole="button"
+                >
+                  <X size={18} color="#8FA8A8" />
+                </Pressable>
+              </View>
+
+              <TextInput
+                style={styles.input}
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+                placeholder="Category name"
+                placeholderTextColor="#52525B"
+                selectionColor="#50C878"
+                maxLength={100}
+                autoFocus
+              />
+
+              {/* Parent Category Selector */}
+              <View style={styles.parentSelectorContainer}>
+                <Pressable
+                  style={styles.parentSelectorButton}
+                  onPress={() => setIsParentSelectOpen(!isParentSelectOpen)}
+                >
+                  <Text style={styles.parentSelectorLabel}>
+                    {selectedParentName
+                      ? `Parent: ${selectedParentName}`
+                      : "Select Parent Category (Optional)"}
+                  </Text>
+                  {isParentSelectOpen ? (
+                    <ChevronUp size={16} color="#8FA8A8" />
+                  ) : (
+                    <ChevronDown size={16} color="#8FA8A8" />
+                  )}
+                </Pressable>
+
+                {isParentSelectOpen && (
+                  <BottomSheetScrollView
+                    style={styles.parentList}
+                    nestedScrollEnabled
+                  >
+                    {tree.map((node) => (
+                      <CategoryTreeItem
+                        key={node.id}
+                        node={node}
+                        depth={0}
+                        selectedIds={parentId ? [parentId] : []}
+                        onToggle={toggleParentSelection}
+                      />
+                    ))}
+                  </BottomSheetScrollView>
+                )}
+              </View>
+
+              <View style={styles.colorPickerContainer}>
+                <ColorPicker
+                  style={styles.colorPicker}
+                  value={selectedColor}
+                  onComplete={handleColorSelect}
+                >
+                  <Preview hideInitialColor style={styles.colorPreview} />
+                  <Panel1 style={styles.colorPanel} />
+                  <HueSlider style={styles.hueSlider} />
+                </ColorPicker>
+              </View>
+
               <Pressable
-                onPress={resetCreateForm}
-                style={styles.closeButton}
-                accessibilityLabel="Cancel"
+                onPress={handleCreateCategory}
+                disabled={createCategory.isPending || !newCategoryName.trim()}
+                style={[
+                  styles.createButton,
+                  (!newCategoryName.trim() || createCategory.isPending) &&
+                    styles.createButtonDisabled,
+                ]}
+                accessibilityLabel="Create category"
                 accessibilityRole="button"
               >
-                <X size={18} color="#8FA8A8" />
-              </Pressable>
-            </View>
-
-            <TextInput
-              style={styles.input}
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
-              placeholder="Category name"
-              placeholderTextColor="#52525B"
-              selectionColor="#50C878"
-              maxLength={100}
-              autoFocus
-            />
-
-            {/* Parent Category Selector */}
-            <View style={styles.parentSelectorContainer}>
-              <Pressable
-                style={styles.parentSelectorButton}
-                onPress={() => setIsParentSelectOpen(!isParentSelectOpen)}
-              >
-                <Text style={styles.parentSelectorLabel}>
-                  {selectedParentName
-                    ? `Parent: ${selectedParentName}`
-                    : "Select Parent Category (Optional)"}
+                <Text
+                  style={[
+                    styles.createButtonText,
+                    (!newCategoryName.trim() || createCategory.isPending) &&
+                      styles.createButtonTextDisabled,
+                  ]}
+                >
+                  {createCategory.isPending ? "Creating..." : "Create"}
                 </Text>
-                {isParentSelectOpen ? (
-                  <ChevronUp size={16} color="#8FA8A8" />
-                ) : (
-                  <ChevronDown size={16} color="#8FA8A8" />
-                )}
               </Pressable>
-
-              {isParentSelectOpen && (
-                <ScrollView style={styles.parentList} nestedScrollEnabled>
-                  {tree.map((node) => (
-                    <CategoryTreeItem
-                      key={node.id}
-                      node={node}
-                      depth={0}
-                      selectedIds={parentId ? [parentId] : []}
-                      onToggle={toggleParentSelection}
-                    />
-                  ))}
-                </ScrollView>
-              )}
             </View>
-
-            <View style={styles.colorPickerContainer}>
-              <ColorPicker
-                style={styles.colorPicker}
-                value={selectedColor}
-                onComplete={handleColorSelect}
-              >
-                <Preview hideInitialColor style={styles.colorPreview} />
-                <Panel1 style={styles.colorPanel} />
-                <HueSlider style={styles.hueSlider} />
-              </ColorPicker>
-            </View>
-
-            <Pressable
-              onPress={handleCreateCategory}
-              disabled={createCategory.isPending || !newCategoryName.trim()}
-              style={[
-                styles.createButton,
-                (!newCategoryName.trim() || createCategory.isPending) &&
-                  styles.createButtonDisabled,
-              ]}
-              accessibilityLabel="Create category"
-              accessibilityRole="button"
-            >
-              <Text
-                style={[
-                  styles.createButtonText,
-                  (!newCategoryName.trim() || createCategory.isPending) &&
-                    styles.createButtonTextDisabled,
-                ]}
-              >
-                {createCategory.isPending ? "Creating..." : "Create"}
-              </Text>
-            </Pressable>
           </BottomSheetScrollView>
         ) : (
           /* Category Tree (Filter Mode) */
@@ -517,6 +528,9 @@ const styles = StyleSheet.create({
   },
   createForm: {
     backgroundColor: "#0A1A1A",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
   },
   createFormContent: {
     padding: 16,
