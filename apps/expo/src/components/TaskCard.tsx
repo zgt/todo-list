@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import {
+  Dimensions,
   Pressable,
   Text as RNText,
   StyleSheet,
@@ -12,12 +13,13 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { BlurView } from "expo-blur";
 import { Check, Save, Trash2 } from "lucide-react-native";
 
 import type { LocalTask } from "~/db/client";
 import { CategoryWheelPicker } from "./CategoryWheelPicker";
 import { DatePickerPill } from "./DatePickerPill";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface TaskCardProps {
   task: LocalTask & { category?: { name: string; color: string } | null };
@@ -44,7 +46,7 @@ interface TaskCardProps {
   onChangeDueDate: (date: Date | null) => void;
 }
 
-const CARD_HEIGHT = 500;
+const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
 const COMPACT_HEIGHT = 80;
 
 const SPRING_CONFIG = {
@@ -352,7 +354,7 @@ export function TaskCard({
     <Animated.View
       style={[styles.container, containerStyle, getBackgroundStyle()]}
     >
-      <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10, 26, 26, 0.7)" }]} />
       {isCompact ? renderCompactLayout() : renderCardLayout()}
     </Animated.View>
   );

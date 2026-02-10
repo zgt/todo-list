@@ -447,7 +447,7 @@ export function SwipeableCard({
         opacity: opacityValue,
         zIndex: totalCards - index,
         width: SCREEN_WIDTH * 0.85,
-        height: SCREEN_HEIGHT * 0.6,
+        height: SCREEN_HEIGHT * 0.65,
       };
     }
 
@@ -457,7 +457,7 @@ export function SwipeableCard({
       : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
 
     const targetWidth = isCompact ? SCREEN_WIDTH * 0.95 : SCREEN_WIDTH * 0.85;
-    const targetHeight = isCompact ? 80 : SCREEN_HEIGHT * 0.6;
+    const targetHeight = isCompact ? 80 : SCREEN_HEIGHT * 0.65;
 
     return {
       transform: [

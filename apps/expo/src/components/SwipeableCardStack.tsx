@@ -198,7 +198,7 @@ export function SwipeableCardStack({
         justifyContent: isCompact ? "flex-start" : "center",
         minHeight: isCompact
           ? displayTasks.length * 92 + 200
-          : SCREEN_HEIGHT * 0.7,
+          : SCREEN_HEIGHT * 0.75,
         paddingTop: isCompact ? 60 : 0, // Add top padding for list
       }}
       style={{

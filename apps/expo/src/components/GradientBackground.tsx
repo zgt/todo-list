@@ -1,5 +1,4 @@
 import { StyleSheet, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 
 import { DotBackground } from "./DotBackground";
 
@@ -12,30 +11,15 @@ export function GradientBackground({
 }) {
   return (
     <View style={styles.container}>
-      {/* Base gradient background */}
-      <LinearGradient
-        colors={["#0A1A1A", "#102A2A", "#0A1A1A"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {/* Base background */}
+      <View style={[StyleSheet.absoluteFill, styles.baseGradient]} />
 
       {/* Dot pattern overlay */}
       <DotBackground trigger={rippleTrigger} />
 
-      {/* Aurora effects */}
-      <LinearGradient
-        colors={["rgba(80, 200, 120, 0.15)", "transparent"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[StyleSheet.absoluteFill, { opacity: 0.6 }]}
-      />
-      <LinearGradient
-        colors={["transparent", "rgba(80, 200, 120, 0.1)"]}
-        start={{ x: 1, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[StyleSheet.absoluteFill, { opacity: 0.4 }]}
-      />
+      {/* Aurora effects (subtle overlays) */}
+      <View style={[StyleSheet.absoluteFill, styles.auroraTop]} />
+      <View style={[StyleSheet.absoluteFill, styles.auroraBottom]} />
 
       {children}
     </View>
@@ -46,5 +30,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0A1A1A",
+  },
+  baseGradient: {
+    backgroundColor: "#0E2222",
+  },
+  auroraTop: {
+    backgroundColor: "rgba(80, 200, 120, 0.06)",
+    opacity: 0.6,
+  },
+  auroraBottom: {
+    backgroundColor: "rgba(80, 200, 120, 0.04)",
+    opacity: 0.4,
   },
 });

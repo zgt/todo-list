@@ -1,5 +1,4 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { BlurView } from "expo-blur";
 
 interface CategoryPillProps {
   label: string;
@@ -17,7 +16,7 @@ export function CategoryPill({ label, active, onPress }: CategoryPillProps) {
         ]}
         className="overflow-hidden rounded-full"
       >
-        <BlurView intensity={15} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10, 26, 26, 0.7)" }]} />
         <View className="px-6 py-2">
           <Text
             className={`text-sm font-medium ${

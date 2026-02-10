@@ -1,6 +1,13 @@
 import type { TRPCClientErrorLike } from "@trpc/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Platform, Pressable, Text as RNText, View } from "react-native";
+import {
+  Alert,
+  Dimensions,
+  Platform,
+  Pressable,
+  Text as RNText,
+  View,
+} from "react-native";
 import Animated, {
   cancelAnimation,
   Easing,
@@ -584,7 +591,10 @@ export default function Index() {
 
         <Header onProfilePress={() => setShowProfileMenu(true)} />
 
-        <View className="flex-1 px-4" style={{ minHeight: 600 }}>
+        <View
+          className="flex-1 px-4"
+          style={{ minHeight: Dimensions.get("window").height * 0.75 }}
+        >
           {filteredTasks.length > 0 ? (
             viewMode === "stack" ? (
               <SwipeableCardStack
@@ -620,8 +630,14 @@ export default function Index() {
           )}
         </View>
 
-        {/* Bottom button bar */}
-        <View className="flex-row items-center gap-4 px-4 pt-4 pb-4">
+      </SafeAreaView>
+
+      {/* Bottom button bar - positioned absolutely to hug the bottom */}
+      <SafeAreaView
+        edges={["bottom"]}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+      >
+        <View className="flex-row items-center gap-4 px-4 pb-1">
           <View className="ml-2">
             <CategoryFilter />
           </View>
