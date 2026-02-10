@@ -8,7 +8,10 @@
       "node": "25.2.1",
       "pnpm": "10.27.0",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://calayo.net/"
+        "EXPO_PUBLIC_API_URL": "https://calayo.net/",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://b46ee82f149ebdfe930d0b4604f0c351@o4510854102843392.ingest.us.sentry.io/4510854116147200",
+        "SENTRY_ORG": "calayo-clothing",
+        "SENTRY_PROJECT": "react-native"
       },
       "ios": {
         "resourceClass": "m-medium"

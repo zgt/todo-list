@@ -36,6 +36,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     "./plugins/withSyncWidgetVersion",
+    [
+      "@sentry/react-native/expo",
+      {
+        organization: process.env.SENTRY_ORG ?? "calayo-clothing",
+        project: process.env.SENTRY_PROJECT ?? "react-native",
+      },
+    ],
     "expo-router",
     "expo-secure-store",
     "expo-web-browser",

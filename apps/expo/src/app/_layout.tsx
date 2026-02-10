@@ -2,15 +2,12 @@ import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-// Sync imports preserved for future offline work
-//import * as TaskManager from "expo-task-manager";
+import * as Sentry from "@sentry/react-native";
+import Constants from "expo-constants";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthGuard } from "~/components/AuthGuard";
 import { DotBackground } from "~/components/DotBackground";
-//import { registerBackgroundSync } from "~/sync/background-sync";
-//import { syncManager } from "~/sync/manager";
-//import { networkMonitor } from "~/sync/network-monitor";
 import { queryClient } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
@@ -20,49 +17,34 @@ import "../styles.css";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
-// This is the main layout of the app
-// It wraps your pages with the providers they need
-export default function RootLayout() {
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const SENTRY_DSN: string =
+  process.env.EXPO_PUBLIC_SENTRY_DSN ??
+  (Constants.expoConfig?.extra?.sentryDsn as string | undefined) ??
+  "";
+
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+    sendDefaultPii: false,
+    enableNativeFramesTracking: true,
+  });
+}
+
+function RootLayout() {
   const colorScheme = useColorScheme();
-  const { data: session, isPending } = authClient.useSession();
-
-  // Removed manual init effect since useMigrations handles it
-
-  // Sync system disabled - keeping imports and code for future offline work
-  // useEffect(() => {
-  //   if (!dbReady || !session) return;
-  //
-  //   // Start network monitor and set sync callback
-  //   networkMonitor.setSyncCallback(() => syncManager.fullSync());
-  //   networkMonitor.start();
-  //
-  //   // Trigger initial sync
-  //   console.log("Triggering initial sync...");
-  //   syncManager.fullSync().catch((error) => {
-  //     console.error("Initial sync failed:", error);
-  //   });
-  //
-  //   console.log(
-  //     "Is background-sync defined",
-  //     TaskManager.isTaskDefined("background-sync"),
-  //   );
-  //   // Register background sync
-  //   registerBackgroundSync().catch((error) => {
-  //     console.error("Failed to register background sync:", error);
-  //   });
-  //
-  //   // Cleanup on unmount
-  //   return () => {
-  //     networkMonitor.stop();
-  //   };
-  // }, [dbReady, session]);
-  //
+  const { data: session, isPending, error } = authClient.useSession();
 
   if (isPending) {
     return <DotBackground trigger={1} />;
   }
 
-  if (!session) {
+  if (error || !session) {
+    if (error) {
+      console.error("[Auth] Session error:", error);
+      Sentry.captureException(error, { tags: { component: "auth_session" } });
+    }
     return <AuthGuard />;
   }
   return (
@@ -95,3 +77,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default SENTRY_DSN ? Sentry.wrap(RootLayout) : RootLayout;
