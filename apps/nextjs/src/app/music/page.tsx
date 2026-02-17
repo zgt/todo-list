@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Clock, Plus, TicketCheck, Users } from "lucide-react";
 
 import { Badge } from "@acme/ui/badge";
@@ -27,7 +27,6 @@ function formatDeadline(date: Date): string {
 
 export default function MusicDashboard() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const [inviteCode, setInviteCode] = useState("");
 
@@ -35,21 +34,10 @@ export default function MusicDashboard() {
     trpc.musicLeague.getAllLeagues.queryOptions(),
   );
 
-  const joinLeague = useMutation(
-    trpc.musicLeague.joinLeague.mutationOptions({
-      onSuccess: (league) => {
-        void queryClient.invalidateQueries(
-          trpc.musicLeague.getAllLeagues.queryFilter(),
-        );
-        router.push(`/music/leagues/${league.id}`);
-      },
-    }),
-  );
-
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteCode.trim()) return;
-    joinLeague.mutate({ inviteCode: inviteCode.trim() });
+    router.push(`/music/join/${encodeURIComponent(inviteCode.trim())}`);
   };
 
   // Collect upcoming deadlines from active rounds
@@ -181,18 +169,12 @@ export default function MusicDashboard() {
                     Get an invite code from a league admin
                   </p>
                 </div>
-                {joinLeague.error && (
-                  <p className="text-destructive text-sm">
-                    {joinLeague.error.message}
-                  </p>
-                )}
                 <Button
                   type="submit"
                   variant="secondary"
                   className="self-start"
-                  disabled={joinLeague.isPending}
                 >
-                  {joinLeague.isPending ? "Joining..." : "Join League"}
+                  Join League
                 </Button>
               </form>
             </CardContent>

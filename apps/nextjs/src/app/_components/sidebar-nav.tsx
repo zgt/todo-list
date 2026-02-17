@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Music, Tag } from "lucide-react";
+import { Home, Music, Settings, Tag, User } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
@@ -117,15 +117,31 @@ export function AppSidebar({
                   align="start"
                   sideOffset={8}
                 >
-                  <form>
-                    <button
-                      type="submit"
-                      formAction={signOut}
-                      className="hover:text-foreground w-full rounded-lg px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+                  <div className="flex flex-col gap-1">
+                    <Link
+                      href="/music/profile"
+                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
                     >
-                      Sign out
-                    </button>
-                  </form>
+                      <User className="h-4 w-4" />
+                      Profile
+                    </Link>
+                    <Link
+                      href="/music/settings"
+                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                    <form>
+                      <button
+                        type="submit"
+                        formAction={signOut}
+                        className="hover:text-foreground w-full rounded-lg px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+                      >
+                        Sign out
+                      </button>
+                    </form>
+                  </div>
                 </PopoverContent>
               </Popover>
             ) : (

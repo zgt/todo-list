@@ -9,11 +9,17 @@ import {
   LeagueMember,
   Round,
   Submission,
+  user,
   Vote,
 } from "@acme/db/schema";
 
+import {
+  notifyResultsAvailable,
+  notifyRoundStarted,
+  notifyVotingOpen,
+} from "../../lib/email/notifications";
 import { searchTracks } from "../../lib/spotify";
-import { protectedProcedure } from "../../trpc";
+import { protectedProcedure, publicProcedure } from "../../trpc";
 
 // Helper for invite codes
 function generateInviteCode(): string {
@@ -22,6 +28,126 @@ function generateInviteCode(): string {
 
 export const musicLeagueRouter = {
   // --- LEAGUE PROCEDURES ---
+
+  getLeagueByInviteCode: publicProcedure
+    .input(z.object({ inviteCode: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const league = await ctx.db.query.League.findFirst({
+        where: eq(League.inviteCode, input.inviteCode),
+        with: { members: true },
+      });
+
+      if (!league) return null;
+
+      return {
+        id: league.id,
+        name: league.name,
+        description: league.description,
+        memberCount: league.members.length,
+        maxMembers: league.maxMembers,
+      };
+    }),
+
+  getUserProfile: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    // Get leagues joined count
+    const memberships = await ctx.db.query.LeagueMember.findMany({
+      where: eq(LeagueMember.userId, userId),
+    });
+
+    // Get all submissions by user with their votes
+    const submissions = await ctx.db.query.Submission.findMany({
+      where: eq(Submission.userId, userId),
+      with: {
+        votes: true,
+        round: true,
+      },
+    });
+
+    // Calculate total points
+    const totalPoints = submissions.reduce(
+      (sum, sub) => sum + sub.votes.reduce((vSum, v) => vSum + v.points, 0),
+      0,
+    );
+
+    // Count rounds participated (unique round IDs)
+    const roundIds = new Set(submissions.map((s) => s.roundId));
+
+    // Find rounds won - get all submissions for rounds user participated in
+    let roundsWon = 0;
+    for (const roundId of roundIds) {
+      const allRoundSubmissions = await ctx.db.query.Submission.findMany({
+        where: eq(Submission.roundId, roundId),
+        with: { votes: true },
+      });
+
+      const pointsByUser = new Map<string, number>();
+      for (const sub of allRoundSubmissions) {
+        const pts = sub.votes.reduce((s, v) => s + v.points, 0);
+        pointsByUser.set(sub.userId, (pointsByUser.get(sub.userId) ?? 0) + pts);
+      }
+
+      const maxPoints = Math.max(...pointsByUser.values(), 0);
+      if (maxPoints > 0 && (pointsByUser.get(userId) ?? 0) === maxPoints) {
+        roundsWon++;
+      }
+    }
+
+    // Find best submission
+    let bestSubmission = null;
+    let bestPoints = 0;
+    for (const sub of submissions) {
+      const pts = sub.votes.reduce((s, v) => s + v.points, 0);
+      if (pts > bestPoints) {
+        bestPoints = pts;
+        bestSubmission = {
+          trackName: sub.trackName,
+          artistName: sub.artistName,
+          albumArtUrl: sub.albumArtUrl,
+          points: pts,
+          roundTheme: sub.round.themeName,
+        };
+      }
+    }
+
+    // Get notification preferences from user
+    const dbUser = await ctx.db.query.user.findFirst({
+      where: eq(user.id, userId),
+    });
+
+    return {
+      leaguesJoined: memberships.length,
+      totalPoints,
+      roundsWon,
+      roundsParticipated: roundIds.size,
+      totalSubmissions: submissions.length,
+      bestSubmission,
+      notificationPreferences: dbUser?.notificationPreferences ?? {
+        roundStart: true,
+        submissionReminder: true,
+        votingOpen: true,
+        resultsAvailable: true,
+      },
+    };
+  }),
+
+  updateNotificationPreferences: protectedProcedure
+    .input(
+      z.object({
+        roundStart: z.boolean(),
+        submissionReminder: z.boolean(),
+        votingOpen: z.boolean(),
+        resultsAvailable: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(user)
+        .set({ notificationPreferences: input })
+        .where(eq(user.id, ctx.session.user.id));
+      return { success: true };
+    }),
 
   createLeague: protectedProcedure
     .input(
@@ -238,6 +364,11 @@ export const musicLeagueRouter = {
           status: "SUBMISSION",
         })
         .returning();
+
+      // Send round started notifications (fire and forget)
+      if (round?.id) {
+        void notifyRoundStarted(round.id);
+      }
 
       return round;
     }),
@@ -699,6 +830,13 @@ export const musicLeagueRouter = {
         .update(Round)
         .set({ status: nextStatus })
         .where(eq(Round.id, input.roundId));
+
+      // Send notifications based on phase transition (fire and forget)
+      if (nextStatus === "VOTING") {
+        void notifyVotingOpen(input.roundId);
+      } else if (nextStatus === "RESULTS") {
+        void notifyResultsAvailable(input.roundId);
+      }
 
       return { status: nextStatus };
     }),

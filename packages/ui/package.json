@@ -27,7 +27,8 @@
     "./badge": "./src/badge.tsx",
     "./textarea": "./src/textarea.tsx",
     "./avatar": "./src/avatar.tsx",
-    "./table": "./src/table.tsx"
+    "./table": "./src/table.tsx",
+    "./switch": "./src/switch.tsx"
   },
   "license": "MIT",
   "scripts": {
