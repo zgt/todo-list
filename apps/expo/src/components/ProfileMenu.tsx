@@ -6,7 +6,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { LogOut } from "lucide-react-native";
+import { Link } from "expo-router";
+import { LogOut, Music } from "lucide-react-native";
 
 import type { User } from "~/utils/auth";
 import { authClient } from "~/utils/auth";
@@ -95,7 +96,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
       >
         <View className="w-full rounded-t-3xl border-t border-[#164B49] bg-[#102A2A] p-6 shadow-2xl">
           {/* Profile Section */}
-          <View className="flex-row items-center gap-4">
+          <View className="flex-row items-center gap-4 mb-6">
             <View className="h-16 w-16 overflow-hidden rounded-full border-2 border-[#164B49]">
               {user.image ? (
                 <Image source={{ uri: user.image }} className="h-full w-full" />
@@ -116,6 +117,23 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                 <RNText className="text-sm text-[#8FA8A8]">{user.email}</RNText>
               )}
             </View>
+          </View>
+
+          {/* Menu Items */}
+          <View className="gap-2">
+            <Link href="/music" asChild>
+              <Pressable
+                onPress={onClose}
+                className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              >
+                <Music size={20} color="#50C878" />
+                <RNText className="text-base font-medium text-[#DCE4E4]">
+                  Music Leagues
+                </RNText>
+              </Pressable>
+            </Link>
+
+            <View className="h-px bg-[#164B49] my-2" />
 
             <Pressable
               onPress={handleSignOut}

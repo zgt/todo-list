@@ -1,10 +1,36 @@
 import { relations, sql } from "drizzle-orm";
-import { check, index, pgTable } from "drizzle-orm/pg-core";
+import { check, index, integer, pgEnum, pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 import { user } from "./auth-schema";
 
+// Existing Enums
+export const TaskPriority = z.enum(["high", "medium", "low"]);
+export type TaskPriority = z.infer<typeof TaskPriority>;
+
+// Music League Enums
+export const leagueStatusEnum = pgEnum("league_status", [
+  "ACTIVE",
+  "COMPLETED",
+  "ARCHIVED",
+]);
+
+export const memberRoleEnum = pgEnum("member_role", [
+  "OWNER",
+  "ADMIN",
+  "MEMBER",
+]);
+
+export const roundStatusEnum = pgEnum("round_status", [
+  "SUBMISSION",
+  "LISTENING",
+  "VOTING",
+  "RESULTS",
+  "COMPLETED",
+]);
+
+// Existing Tables
 export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
@@ -106,6 +132,7 @@ export const Task = pgTable(
       withTimezone: true,
       mode: "date",
     }),
+    priority: t.varchar({ length: 10 }).default("medium"),
     orderIndex: t.integer("order_index"),
     version: t.integer().notNull().default(1),
     deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
@@ -127,14 +154,221 @@ export const Task = pgTable(
     ),
     index("task_user_id_archived_at_idx").on(table.userId, table.archivedAt),
     index("task_category_id_idx").on(table.categoryId),
+    index("task_user_id_priority_completed_idx").on(
+      table.userId,
+      table.priority,
+      table.completed,
+    ),
+    check(
+      "task_priority_valid",
+      sql`${table.priority} IS NULL OR ${table.priority} IN ('high', 'medium', 'low')`,
+    ),
   ],
 );
 
+// Music League Tables
+
+export const League = pgTable(
+  "league",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: t.text().notNull(),
+    description: t.text(),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: t
+      .timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date())
+      .notNull(),
+    status: leagueStatusEnum("status").default("ACTIVE").notNull(),
+    inviteCode: t.text("invite_code").notNull().unique(),
+    
+    // Settings
+    songsPerRound: t.integer("songs_per_round").default(1).notNull(),
+    maxMembers: t.integer("max_members").default(20).notNull(),
+    allowDownvotes: t.boolean("allow_downvotes").default(false).notNull(),
+    downvotePointValue: t.integer("downvote_point_value").default(-1).notNull(),
+    upvotePointsPerRound: t.integer("upvote_points_per_round").default(10).notNull(),
+    isPublic: t.boolean("is_public").default(false).notNull(),
+    
+    // Relations
+    creatorId: t
+      .text("creator_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  }),
+  (table) => [
+    index("league_creator_id_idx").on(table.creatorId),
+    index("league_invite_code_idx").on(table.inviteCode),
+  ],
+);
+
+export const LeagueMember = pgTable(
+  "league_member",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    joinedAt: t
+      .timestamp("joined_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    role: memberRoleEnum("role").default("MEMBER").notNull(),
+    
+    leagueId: t
+      .text("league_id")
+      .notNull()
+      .references(() => League.id, { onDelete: "cascade" }),
+    userId: t
+      .text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  }),
+  (table) => [
+    index("league_member_user_id_idx").on(table.userId),
+    index("league_member_league_user_unique").on(table.leagueId, table.userId),
+  ],
+);
+
+export const Round = pgTable(
+  "round",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    roundNumber: t.integer("round_number").notNull(),
+    themeName: t.text("theme_name").notNull(),
+    themeDescription: t.text("theme_description"),
+    status: roundStatusEnum("status").default("SUBMISSION").notNull(),
+    submissionDeadline: t
+      .timestamp("submission_deadline", { withTimezone: true, mode: "date" })
+      .notNull(),
+    votingDeadline: t
+      .timestamp("voting_deadline", { withTimezone: true, mode: "date" })
+      .notNull(),
+    playlistUrl: t.text("playlist_url"),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: t
+      .timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date())
+      .notNull(),
+    
+    leagueId: t
+      .text("league_id")
+      .notNull()
+      .references(() => League.id, { onDelete: "cascade" }),
+  }),
+  (table) => [
+    index("round_league_id_idx").on(table.leagueId),
+  ],
+);
+
+export const Submission = pgTable(
+  "submission",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    spotifyTrackId: t.text("spotify_track_id").notNull(),
+    trackName: t.text("track_name").notNull(),
+    artistName: t.text("artist_name").notNull(),
+    albumName: t.text("album_name").notNull(),
+    albumArtUrl: t.text("album_art_url").notNull(),
+    previewUrl: t.text("preview_url"),
+    trackDurationMs: t.integer("track_duration_ms").notNull(),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    
+    roundId: t
+      .text("round_id")
+      .notNull()
+      .references(() => Round.id, { onDelete: "cascade" }),
+    userId: t
+      .text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  }),
+  (table) => [
+    index("submission_round_id_idx").on(table.roundId),
+    index("submission_user_id_idx").on(table.userId),
+    // unique constraint for round+user+track
+    index("submission_round_user_track_unique").on(table.roundId, table.userId, table.spotifyTrackId),
+  ],
+);
+
+export const Vote = pgTable(
+  "vote",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    points: t.integer("points").notNull(),
+    
+    roundId: t
+      .text("round_id")
+      .notNull()
+      .references(() => Round.id, { onDelete: "cascade" }),
+    
+    voterId: t
+      .text("voter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    submissionId: t
+      .text("submission_id")
+      .notNull()
+      .references(() => Submission.id, { onDelete: "cascade" }),
+  }),
+  (table) => [
+    index("vote_submission_id_idx").on(table.submissionId),
+    index("vote_voter_id_idx").on(table.voterId),
+    index("vote_round_voter_submission_unique").on(table.roundId, table.voterId, table.submissionId),
+  ],
+);
+
+export const Comment = pgTable(
+  "comment",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    text: t.text("text").notNull(),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    
+    submissionId: t
+      .text("submission_id")
+      .notNull()
+      .references(() => Submission.id, { onDelete: "cascade" }),
+    userId: t
+      .text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  }),
+  (table) => [
+    index("comment_submission_id_idx").on(table.submissionId),
+    index("comment_user_id_idx").on(table.userId),
+    index("comment_submission_user_unique").on(table.submissionId, table.userId),
+  ],
+);
+
+export const ThemeTemplate = pgTable(
+  "theme_template",
+  (t) => ({
+    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: t.text("name").notNull(),
+    description: t.text("description").notNull(),
+    category: t.text("category").notNull(),
+  })
+);
+
+// Existing Schemas
 export const CreateTaskSchema = createInsertSchema(Task, {
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).optional(),
   categoryId: z.string().uuid().optional(),
   dueDate: z.date().optional(),
+  priority: TaskPriority.optional().default("medium"),
 }).omit({
   id: true,
   userId: true,
@@ -155,6 +389,7 @@ export const UpdateTaskSchema = z.object({
   completed: z.boolean().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   dueDate: z.date().nullable().optional(),
+  priority: TaskPriority.nullable().optional(),
   orderIndex: z.number().int().optional(),
   createdAt: z.date().optional(),
   completedAt: z.date().nullable().optional(),
@@ -208,6 +443,84 @@ export const taskRelations = relations(Task, ({ one }) => ({
     fields: [Task.categoryId],
     references: [Category.id],
   }),
+}));
+
+// Music League Relations
+
+export const leagueRelations = relations(League, ({ one, many }) => ({
+  creator: one(user, {
+    fields: [League.creatorId],
+    references: [user.id],
+  }),
+  members: many(LeagueMember),
+  rounds: many(Round),
+}));
+
+export const leagueMemberRelations = relations(LeagueMember, ({ one }) => ({
+  league: one(League, {
+    fields: [LeagueMember.leagueId],
+    references: [League.id],
+  }),
+  user: one(user, {
+    fields: [LeagueMember.userId],
+    references: [user.id],
+  }),
+}));
+
+export const roundRelations = relations(Round, ({ one, many }) => ({
+  league: one(League, {
+    fields: [Round.leagueId],
+    references: [League.id],
+  }),
+  submissions: many(Submission),
+}));
+
+export const submissionRelations = relations(Submission, ({ one, many }) => ({
+  round: one(Round, {
+    fields: [Submission.roundId],
+    references: [Round.id],
+  }),
+  user: one(user, {
+    fields: [Submission.userId],
+    references: [user.id],
+  }),
+  votes: many(Vote),
+  comments: many(Comment),
+}));
+
+export const voteRelations = relations(Vote, ({ one }) => ({
+  round: one(Round, {
+    fields: [Vote.roundId],
+    references: [Round.id],
+  }),
+  voter: one(user, {
+    fields: [Vote.voterId],
+    references: [user.id],
+  }),
+  submission: one(Submission, {
+    fields: [Vote.submissionId],
+    references: [Submission.id],
+  }),
+}));
+
+export const commentRelations = relations(Comment, ({ one }) => ({
+  submission: one(Submission, {
+    fields: [Comment.submissionId],
+    references: [Submission.id],
+  }),
+  user: one(user, {
+    fields: [Comment.userId],
+    references: [user.id],
+  }),
+}));
+
+// Add relations to User for Music League
+export const userRelations = relations(user, ({ many }) => ({
+  leagues: many(League),
+  leagueMemberships: many(LeagueMember),
+  submissions: many(Submission),
+  votes: many(Vote),
+  comments: many(Comment),
 }));
 
 export * from "./auth-schema";
