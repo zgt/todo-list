@@ -1,8 +1,13 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, desc, eq, isNull } from "@acme/db";
-import { CreateTaskSchema, Task, UpdateTaskSchema } from "@acme/db/schema";
+import { and, asc, desc, eq, isNull, sql } from "@acme/db";
+import {
+  CreateTaskSchema,
+  Task,
+  TaskPriority,
+  UpdateTaskSchema,
+} from "@acme/db/schema";
 
 import { protectedProcedure } from "../trpc";
 
@@ -21,6 +26,129 @@ export const taskRouter = {
     });
 
     // Ensure dates are proper Date objects for SuperJSON serialization
+    return tasks.map((task) => ({
+      ...task,
+      createdAt: new Date(task.createdAt as string | number | Date),
+      updatedAt: task.updatedAt
+        ? new Date(task.updatedAt as string | number | Date)
+        : null,
+      dueDate: task.dueDate
+        ? new Date(task.dueDate as string | number | Date)
+        : null,
+      completedAt: task.completedAt
+        ? new Date(task.completedAt as string | number | Date)
+        : null,
+      archivedAt: task.archivedAt
+        ? new Date(task.archivedAt as string | number | Date)
+        : null,
+      deletedAt: task.deletedAt
+        ? new Date(task.deletedAt as string | number | Date)
+        : null,
+      lastSyncedAt: task.lastSyncedAt
+        ? new Date(task.lastSyncedAt as string | number | Date)
+        : null,
+    }));
+  }),
+
+  // Get tasks filtered by priority
+  byPriority: protectedProcedure
+    .input(
+      z.object({
+        priority: TaskPriority,
+        includeCompleted: z.boolean().optional().default(false),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const filters = [
+        eq(Task.userId, ctx.session.user.id),
+        eq(Task.priority, input.priority),
+        isNull(Task.deletedAt),
+        isNull(Task.archivedAt),
+      ];
+
+      if (!input.includeCompleted) {
+        filters.push(eq(Task.completed, false));
+      }
+
+      const tasks = await ctx.db.query.Task.findMany({
+        where: and(...filters),
+        orderBy: [asc(Task.dueDate), desc(Task.createdAt)],
+        with: { category: true },
+      });
+
+      return tasks.map((task) => ({
+        ...task,
+        createdAt: new Date(task.createdAt as string | number | Date),
+        updatedAt: task.updatedAt
+          ? new Date(task.updatedAt as string | number | Date)
+          : null,
+        dueDate: task.dueDate
+          ? new Date(task.dueDate as string | number | Date)
+          : null,
+        completedAt: task.completedAt
+          ? new Date(task.completedAt as string | number | Date)
+          : null,
+        archivedAt: task.archivedAt
+          ? new Date(task.archivedAt as string | number | Date)
+          : null,
+        deletedAt: task.deletedAt
+          ? new Date(task.deletedAt as string | number | Date)
+          : null,
+        lastSyncedAt: task.lastSyncedAt
+          ? new Date(task.lastSyncedAt as string | number | Date)
+          : null,
+      }));
+    }),
+
+  // Get task counts by priority
+  priorityStats: protectedProcedure.query(async ({ ctx }) => {
+    const stats = await ctx.db
+      .select({
+        priority: Task.priority,
+        count: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(Task)
+      .where(
+        and(
+          eq(Task.userId, ctx.session.user.id),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+          eq(Task.completed, false),
+        ),
+      )
+      .groupBy(Task.priority);
+
+    const result = {
+      high: 0,
+      medium: 0,
+      low: 0,
+      none: 0,
+    };
+
+    stats.forEach((stat) => {
+      if (stat.priority === "high") result.high = stat.count;
+      else if (stat.priority === "medium") result.medium = stat.count;
+      else if (stat.priority === "low") result.low = stat.count;
+      else result.none += stat.count;
+    });
+
+    return result;
+  }),
+
+  // Get high priority tasks (urgent)
+  highPriority: protectedProcedure.query(async ({ ctx }) => {
+    const tasks = await ctx.db.query.Task.findMany({
+      where: and(
+        eq(Task.userId, ctx.session.user.id),
+        eq(Task.priority, "high"),
+        eq(Task.completed, false),
+        isNull(Task.deletedAt),
+        isNull(Task.archivedAt),
+      ),
+      orderBy: [asc(Task.dueDate), desc(Task.createdAt)],
+      with: { category: true },
+    });
+
     return tasks.map((task) => ({
       ...task,
       createdAt: new Date(task.createdAt as string | number | Date),
