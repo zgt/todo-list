@@ -12,6 +12,7 @@ import { toast } from "@acme/ui/toast";
 import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { NewTaskModal } from "./new-task-modal";
+import { PriorityFilter } from "./priority-filter";
 
 export function TaskHeader() {
   const trpc = useTRPC();
@@ -40,6 +41,9 @@ export function TaskHeader() {
 
         {/* Category Filter */}
         <CategoryFilter />
+
+        {/* Priority Filter */}
+        <PriorityFilter />
       </div>
 
       {/* Right side controls */}

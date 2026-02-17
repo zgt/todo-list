@@ -7,9 +7,17 @@ import { Dimensions } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
 import type { LocalTask } from "~/db/client";
+import type { PriorityLevel } from "./priority-config";
 import { SwipeableCard } from "./SwipeableCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+const PRIORITY_WEIGHTS: Record<string, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+  none: 0,
+};
 
 interface SwipeableCardStackProps {
   tasks: LocalTask[];
@@ -24,6 +32,7 @@ interface SwipeableCardStackProps {
       description: string;
       categoryId: string | null;
       dueDate: Date | null;
+      priority: PriorityLevel;
     }>,
   ) => void;
   autoEditId?: string | null;
@@ -73,7 +82,18 @@ export function SwipeableCardStack({
   // not on completion toggling, so the card doesn't jump away instantly.
   const sortTasks = useCallback(
     (t: LocalTask[]) =>
-      [...t].sort((a, b) => Number(a.completed) - Number(b.completed)),
+      [...t].sort((a, b) => {
+        // First sort by completion status
+        const completedDiff = Number(a.completed) - Number(b.completed);
+        if (completedDiff !== 0) return completedDiff;
+
+        // Then by priority (descending)
+        const priorityA =
+          PRIORITY_WEIGHTS[(a.priority as string) ?? "none"] ?? 0;
+        const priorityB =
+          PRIORITY_WEIGHTS[(b.priority as string) ?? "none"] ?? 0;
+        return priorityB - priorityA;
+      }),
     [],
   );
   const prevTaskIdsRef = useRef<string>("");
@@ -124,6 +144,7 @@ export function SwipeableCardStack({
       description: string;
       categoryId: string | null;
       dueDate: Date | null;
+      priority: PriorityLevel;
     }>,
   ) => {
     onUpdate(taskId, updates);

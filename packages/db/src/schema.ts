@@ -5,7 +5,6 @@ import { z } from "zod/v4";
 
 import { user } from "./auth-schema";
 
-// Existing Enums
 export const TaskPriority = z.enum(["high", "medium", "low"]);
 export type TaskPriority = z.infer<typeof TaskPriority>;
 
@@ -30,7 +29,7 @@ export const roundStatusEnum = pgEnum("round_status", [
   "COMPLETED",
 ]);
 
-// Existing Tables
+
 export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
