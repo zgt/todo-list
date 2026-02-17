@@ -37,12 +37,16 @@ import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
+import { PriorityBadge } from "../components/PriorityBadge";
+import { PriorityStats } from "../components/PriorityStats";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import type { PriorityLevel } from "../components/priority-config";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
+import { PriorityFilter } from "./_components/priority-filter";
 
 const DUMMY_TASK_ID = "dummy-create-task";
 
@@ -155,6 +159,9 @@ export default function Index() {
   }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { effectiveCategoryIds } = useCategoryFilter();
+  const [selectedPriorities, setSelectedPriorities] = useState<PriorityLevel[]>(
+    [],
+  );
 
   const queryClient = useQueryClient();
 
@@ -197,6 +204,7 @@ export default function Index() {
       serverVersion: task.version,
       lastSyncedAt: new Date(),
       orderIndex: 0,
+      priority: task.priority as "high" | "medium" | "low" | null,
     }));
   }, [serverTasks]); // Only depend on serverTasks, not refreshTrigger
 
@@ -207,6 +215,12 @@ export default function Index() {
       result = tasks.filter(
         (task) =>
           task.categoryId && effectiveCategoryIds.includes(task.categoryId),
+      );
+    }
+
+    if (selectedPriorities.length > 0) {
+      result = result.filter((task) =>
+        selectedPriorities.includes(task.priority as PriorityLevel),
       );
     }
 
@@ -222,7 +236,7 @@ export default function Index() {
         categoryId: null,
         userId: session.user.id,
         version: 0,
-        priority: "medium",
+        priority: "medium" as PriorityLevel,
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -376,6 +390,7 @@ export default function Index() {
       description: string;
       categoryId: string | null;
       dueDate: Date | null;
+      priority: PriorityLevel;
     }>,
   ) => {
     if (id === DUMMY_TASK_ID) {
@@ -387,6 +402,7 @@ export default function Index() {
         updates.description ?? "",
         updates.categoryId ?? undefined,
         updates.dueDate ?? undefined,
+        updates.priority ?? "medium",
       );
       return;
     }
@@ -527,6 +543,7 @@ export default function Index() {
     description: string,
     categoryId: string | undefined,
     dueDate: Date | undefined,
+    priority: PriorityLevel,
   ) => {
     if (!session?.user) {
       throw new Error("User not authenticated");
@@ -537,6 +554,7 @@ export default function Index() {
       description: description.trim() || undefined,
       categoryId,
       dueDate,
+      priority: priority ?? "medium",
     });
   };
 
@@ -592,6 +610,8 @@ export default function Index() {
         <Stack.Screen options={{ headerShown: false }} />
 
         <Header onProfilePress={() => setShowProfileMenu(true)} />
+        
+        {tasks.length > 0 && <PriorityStats tasks={tasks as { priority: PriorityLevel }[]} />}
 
         <View
           className="flex-1 px-4"
@@ -640,8 +660,12 @@ export default function Index() {
         style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
       >
         <View className="flex-row items-center gap-4 px-4 pb-1">
-          <View className="ml-2">
+          <View className="ml-2 flex-row gap-2">
             <CategoryFilter />
+            <PriorityFilter
+              selectedPriorities={selectedPriorities}
+              onChange={setSelectedPriorities}
+            />
           </View>
           <View className="flex-1" />
           <ViewToggleButton

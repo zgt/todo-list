@@ -18,6 +18,9 @@ import { Check, Save, Trash2 } from "lucide-react-native";
 import type { LocalTask } from "~/db/client";
 import { CategoryWheelPicker } from "./CategoryWheelPicker";
 import { DatePickerPill } from "./DatePickerPill";
+import { PriorityBadge } from "./PriorityBadge";
+import { PrioritySelector } from "./PrioritySelector";
+import type { PriorityLevel } from "./priority-config";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -34,6 +37,7 @@ interface TaskCardProps {
       description: string;
       categoryId: string | null;
       dueDate: Date | null;
+      priority: PriorityLevel;
     }>,
   ) => void;
   title: string;
@@ -44,6 +48,8 @@ interface TaskCardProps {
   dueDate: Date | null;
   onChangeCategoryId: (categoryId: string | null) => void;
   onChangeDueDate: (date: Date | null) => void;
+  priority: PriorityLevel;
+  onChangePriority: (priority: PriorityLevel) => void;
 }
 
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
@@ -70,6 +76,8 @@ export function TaskCard({
   dueDate,
   onChangeCategoryId,
   onChangeDueDate,
+  priority,
+  onChangePriority,
 }: TaskCardProps) {
   const progress = useSharedValue(isCompact ? 1 : 0);
 
@@ -84,6 +92,7 @@ export function TaskCard({
         description: description.trim(),
         categoryId,
         dueDate,
+        priority,
       });
     }
   };
@@ -108,12 +117,50 @@ export function TaskCard({
     if (deletePending) return styles.cardDeletePending;
     if (isEditing) return styles.cardEditing;
     if (task.completed) return styles.cardCompleted;
+
+    // High priority accent
+    if (priority === "high") {
+      return {
+        ...styles.cardDefault,
+        borderLeftWidth: 4,
+        borderColor: "#EF4444",
+        backgroundColor: "rgba(239, 68, 68, 0.05)",
+      };
+    }
+
+    // Medium priority accent
+    if (priority === "medium") {
+      return {
+        ...styles.cardDefault,
+        borderLeftWidth: 4,
+        borderColor: "#50C878",
+      };
+    }
+
     return styles.cardDefault;
   };
 
   // Compact layout (row)
   const renderCompactLayout = () => (
     <View className="flex-1 flex-row items-center gap-3 px-4">
+      {/* Priority Strip */}
+      {priority && !task.completed && (
+        <View
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 4,
+            backgroundColor:
+              priority === "high"
+                ? "#EF4444"
+                : priority === "medium"
+                  ? "#50C878"
+                  : "#3B82F6",
+          }}
+        />
+      )}
       {/* Left: Checkbox */}
       <Pressable onPress={isEditing ? handleSave : onToggle}>
         <View
@@ -177,6 +224,13 @@ export function TaskCard({
       {/* Right: Category and Due Date Pills */}
       {isEditing ? (
         <View className="flex-row items-center gap-1">
+          <PrioritySelector
+            value={priority}
+            onChange={onChangePriority}
+            trigger={
+              <PriorityBadge priority={priority} size="sm" showLabel={false} />
+            }
+          />
           <CategoryWheelPicker
             selectedCategoryId={categoryId}
             onCategoryChange={onChangeCategoryId}
@@ -188,6 +242,16 @@ export function TaskCard({
         </View>
       ) : (
         <View className="flex-row items-center gap-1">
+          <PrioritySelector
+            value={priority}
+            onChange={(p) => {
+              onChangePriority(p);
+              onSave({ priority: p });
+            }}
+            trigger={
+              <PriorityBadge priority={priority} size="sm" showLabel={false} />
+            }
+          />
           {task.dueDate && (
             <View style={styles.compactPillDate}>
               <RNText className="text-xs" style={styles.dateText}>
@@ -229,6 +293,11 @@ export function TaskCard({
       <View className="w-full flex-row items-start justify-between">
         {isEditing ? (
           <View className="flex-row items-center gap-2">
+            <PrioritySelector
+              value={priority}
+              onChange={onChangePriority}
+              trigger={<PriorityBadge priority={priority} />}
+            />
             <CategoryWheelPicker
               selectedCategoryId={categoryId}
               onCategoryChange={onChangeCategoryId}
@@ -240,6 +309,14 @@ export function TaskCard({
           </View>
         ) : (
           <View className="flex-row items-center gap-2">
+            <PrioritySelector
+              value={priority}
+              onChange={(p) => {
+                onChangePriority(p);
+                onSave({ priority: p });
+              }}
+              trigger={<PriorityBadge priority={priority} />}
+            />
             {task.category && (
               <View
                 style={[

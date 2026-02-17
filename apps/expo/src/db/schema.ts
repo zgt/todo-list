@@ -8,6 +8,7 @@ export const localTask = sqliteTable("local_task", {
   title: text("title").notNull(),
   description: text("description"),
   categoryId: text("category_id"), // FK to category
+  priority: text("priority", { enum: ["low", "medium", "high"] }),
   dueDate: integer("due_date", { mode: "timestamp" }),
   orderIndex: integer("order_index"),
   completed: integer("completed", { mode: "boolean" }).notNull().default(false),
