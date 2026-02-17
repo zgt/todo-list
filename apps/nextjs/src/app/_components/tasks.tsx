@@ -29,9 +29,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { toast } from "@acme/ui/toast";
 
 import { useSession } from "~/auth/client";
+import type { TaskPriority } from "@acme/db/schema";
+
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreePicker } from "./category-tree-picker";
+import { PriorityBadge, PrioritySelectorPill } from "./priority";
+import { usePriorityFilter } from "./priority-filter-context";
 
 // Validation schema for inline task editing
 const EditTaskSchema = z.object({
@@ -141,15 +145,25 @@ export function TaskList() {
 
   // Get selected category IDs from filter context
   const { effectiveCategoryIds } = useCategoryFilter();
+  const { selectedPriorities } = usePriorityFilter();
 
-  // Filter tasks based on selected categories (includes descendants)
-  const filteredTasks =
-    effectiveCategoryIds.length > 0
-      ? tasks.filter(
-          (task) =>
-            task.categoryId && effectiveCategoryIds.includes(task.categoryId),
-        )
-      : tasks;
+  // Filter tasks based on selected categories and priorities
+  const filteredTasks = tasks.filter((task) => {
+    if (
+      effectiveCategoryIds.length > 0 &&
+      (!task.categoryId || !effectiveCategoryIds.includes(task.categoryId))
+    ) {
+      return false;
+    }
+    if (
+      selectedPriorities.length > 0 &&
+      (!task.priority ||
+        !selectedPriorities.includes(task.priority as TaskPriority))
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   if (tasks.length === 0) {
     return (
@@ -203,6 +217,9 @@ export function TaskCard(props: {
   );
   const [editedCategoryId, setEditedCategoryId] = useState<string | undefined>(
     props.task.categoryId ?? undefined,
+  );
+  const [editedPriority, setEditedPriority] = useState<TaskPriority>(
+    (props.task.priority as TaskPriority) ?? "medium",
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -263,6 +280,7 @@ export function TaskCard(props: {
     setEditedDescription(props.task.description ?? "");
     setEditedDueDate(props.task.dueDate ?? undefined);
     setEditedCategoryId(props.task.categoryId ?? undefined);
+    setEditedPriority((props.task.priority as TaskPriority) ?? "medium");
     setIsEditing(true);
     setTimeout(() => titleInputRef.current?.focus(), 0);
   };
@@ -287,6 +305,7 @@ export function TaskCard(props: {
         description: editedDescription || undefined,
         dueDate: editedDueDate ?? null,
         categoryId: editedCategoryId ?? null,
+        priority: editedPriority,
       });
       setIsEditing(false);
       toast.success("Task updated!");
@@ -300,6 +319,7 @@ export function TaskCard(props: {
     setEditedDescription(props.task.description ?? "");
     setEditedDueDate(props.task.dueDate ?? undefined);
     setEditedCategoryId(props.task.categoryId ?? undefined);
+    setEditedPriority((props.task.priority as TaskPriority) ?? "medium");
     setIsEditing(false);
   };
 
@@ -324,7 +344,8 @@ export function TaskCard(props: {
     editedTitle !== props.task.title ||
     editedDescription !== (props.task.description ?? "") ||
     editedDueDate?.getTime() !== props.task.dueDate?.getTime() ||
-    editedCategoryId !== props.task.categoryId;
+    editedCategoryId !== props.task.categoryId ||
+    editedPriority !== (props.task.priority ?? "medium");
 
   return (
     <div
@@ -433,6 +454,24 @@ export function TaskCard(props: {
               </button>
             ) : null}
           </>
+        )}
+      </div>
+
+      {/* Priority */}
+      <div
+        className={cn(
+          "z-10 transition-transform duration-300 ease-in-out",
+          !isEditing && "group-hover:-translate-x-32",
+        )}
+      >
+        {isEditing ? (
+          <PrioritySelectorPill
+            value={editedPriority}
+            onChange={setEditedPriority}
+            disabled={updateTask.isPending}
+          />
+        ) : (
+          <PriorityBadge priority={props.task.priority} variant="compact" />
         )}
       </div>
 

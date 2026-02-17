@@ -5,6 +5,7 @@ import { SidebarInset } from "@acme/ui/sidebar";
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
+import { PriorityFilterProvider } from "./_components/priority-filter-context";
 import { AppSidebar } from "./_components/sidebar-nav";
 import { TaskHeader } from "./_components/task-header";
 import { TaskCardSkeleton, TaskList } from "./_components/tasks";
@@ -38,6 +39,7 @@ export default async function HomePage() {
 
               <div className="relative z-10 flex h-full flex-col">
                 <CategoryFilterProvider>
+                <PriorityFilterProvider>
                   <TaskHeader />
 
                   <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
@@ -64,6 +66,7 @@ export default async function HomePage() {
                       </div>
                     )}
                   </div>
+                </PriorityFilterProvider>
                 </CategoryFilterProvider>
               </div>
             </div>

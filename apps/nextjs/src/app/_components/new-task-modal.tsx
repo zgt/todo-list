@@ -17,14 +17,20 @@ import {
 } from "@acme/ui/select";
 import { toast } from "@acme/ui/toast";
 
+import type { TaskPriority } from "@acme/db/schema";
+
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
+import { PrioritySelector } from "./priority";
 
 export function NewTaskModal() {
   const [date, setDate] = React.useState<Date>();
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [categoryId, setCategoryId] = React.useState<string | undefined>();
+  const [priority, setPriority] = React.useState<TaskPriority | undefined>(
+    "medium",
+  );
   const [open, setOpen] = React.useState(false);
 
   const trpc = useTRPC();
@@ -46,6 +52,7 @@ export function NewTaskModal() {
         setDescription("");
         setDate(undefined);
         setCategoryId(undefined);
+        setPriority("medium");
         toast.success("Task created successfully");
       },
       onError: (err: unknown) => {
@@ -66,6 +73,7 @@ export function NewTaskModal() {
       description,
       categoryId,
       dueDate: date,
+      priority,
     });
   };
 
@@ -115,6 +123,10 @@ export function NewTaskModal() {
                 ))}
               </SelectContent>
             </Select>
+            <PrioritySelector
+              value={priority}
+              onChange={setPriority}
+            />
             <DatePicker
               date={date}
               onDateChange={setDate}
