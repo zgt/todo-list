@@ -12,6 +12,7 @@ import {
   Vote,
 } from "@acme/db/schema";
 
+import { searchTracks } from "../../lib/spotify";
 import { protectedProcedure } from "../../trpc";
 
 // Helper for invite codes
@@ -167,6 +168,19 @@ export const musicLeagueRouter = {
       return { id: league.id };
     }),
 
+  // --- SPOTIFY SEARCH ---
+
+  searchSpotify: protectedProcedure
+    .input(
+      z.object({
+        query: z.string().min(1).max(200),
+        limit: z.number().int().min(1).max(20).default(10),
+      }),
+    )
+    .query(async ({ input }) => {
+      return searchTracks(input.query, input.limit);
+    }),
+
   // --- ROUND PROCEDURES ---
 
   createRound: protectedProcedure
@@ -317,9 +331,13 @@ export const musicLeagueRouter = {
         userRole,
         memberStatus,
         leagueName: round.league.name,
+        leagueId: round.league.id,
         upvotePointsPerRound: round.league.upvotePointsPerRound,
         allowDownvotes: round.league.allowDownvotes,
+        downvotePointValue: round.league.downvotePointValue,
         songsPerRound: round.league.songsPerRound,
+        memberCount: round.league.members.length,
+        submissionCount: round.submissions.length,
       };
     }),
 

@@ -187,7 +187,7 @@ export default function RoundDetail() {
   const activeDeadline =
     round?.status === "SUBMISSION"
       ? new Date(round.submissionDeadline)
-      : round?.status === "VOTING"
+      : round?.status === "LISTENING" || round?.status === "VOTING"
         ? new Date(round.votingDeadline)
         : null;
 
@@ -275,7 +275,9 @@ export default function RoundDetail() {
                 <span className="text-muted-foreground">
                   {round.status === "SUBMISSION"
                     ? "Submissions close"
-                    : "Voting closes"}{" "}
+                    : round.status === "LISTENING"
+                      ? "Voting opens"
+                      : "Voting closes"}{" "}
                   in
                 </span>
                 <span className="font-mono font-medium">{countdown}</span>
@@ -446,7 +448,8 @@ function PhaseContent({
               <div className="text-left">
                 <p className="text-sm font-medium">Submission Phase</p>
                 <p className="text-muted-foreground text-xs">
-                  Submit your song picks for this round
+                  {round.submissionCount} of {round.memberCount} members have
+                  submitted
                 </p>
               </div>
             </div>
@@ -536,8 +539,8 @@ function PhaseContent({
         }))}
         upvotePointsPerRound={round.upvotePointsPerRound}
         allowDownvotes={round.allowDownvotes}
-        downvotePointValue={-1}
-        memberCount={0}
+        downvotePointValue={round.downvotePointValue}
+        memberCount={round.memberCount}
       />
     );
   }

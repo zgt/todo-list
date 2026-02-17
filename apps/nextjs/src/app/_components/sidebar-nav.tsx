@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Tag } from "lucide-react";
+import { Home, Music, Tag } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
@@ -28,6 +28,11 @@ const navigation = [
     name: "Categories",
     href: "/categories",
     icon: Tag,
+  },
+  {
+    name: "Music Leagues",
+    href: "/music",
+    icon: Music,
   },
 ];
 

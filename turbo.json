@@ -55,7 +55,9 @@
     "AUTH_APPLE_BUNDLE_ID",
     "AUTH_SECRET",
     "PORT",
-    "OBSIDIAN_SYNC_API_KEY"
+    "OBSIDIAN_SYNC_API_KEY",
+    "SPOTIFY_CLIENT_ID",
+    "SPOTIFY_CLIENT_SECRET"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",

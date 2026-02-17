@@ -18,6 +18,8 @@ export const env = createEnv({
   server: {
     POSTGRES_URL: z.url(),
     OBSIDIAN_SYNC_API_KEY: z.string().optional(),
+    SPOTIFY_CLIENT_ID: z.string().optional(),
+    SPOTIFY_CLIENT_SECRET: z.string().optional(),
   },
 
   /**
