@@ -473,6 +473,7 @@ export default function Index() {
             deletedAt: null,
             lastSyncedAt: null,
             orderIndex: 0,
+            priority: newTask.priority ?? "medium",
             category: null, // Category details will be filled in after server response
           };
 
