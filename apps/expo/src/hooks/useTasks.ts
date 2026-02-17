@@ -140,6 +140,7 @@ export function useTasks(
       categoryId: null,
       dueDate: null,
       orderIndex: 0,
+      priority: null,
     };
 
     // Optimistic update

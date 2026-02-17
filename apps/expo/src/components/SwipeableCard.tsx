@@ -12,8 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-import type { SwipeDirection } from "./SwipeOverlay";
-import type { LocalTask } from "~/db/client";
+import type { PriorityLevel } from "./priority-config";
 import { SwipeOverlay } from "./SwipeOverlay";
 import { TaskCard } from "./TaskCard";
 
@@ -23,6 +22,8 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SWIPE_THRESHOLD = 100; // Distance to trigger action
 const SWIPE_VELOCITY = 500; // Velocity threshold
 const ROTATION_FACTOR = 15; // Max rotation in degrees
+
+type SwipeDirection = "left" | "right" | "up" | "down" | null;
 
 interface SwipeableCardProps {
   task: LocalTask;
@@ -46,6 +47,7 @@ interface SwipeableCardProps {
       description: string;
       categoryId: string | null;
       dueDate: Date | null;
+      priority: PriorityLevel;
     }>,
   ) => void;
   onCancelEdit: () => void;
@@ -88,6 +90,9 @@ export function SwipeableCard({
     task.categoryId ?? null,
   );
   const [dueDate, setDueDate] = useState<Date | null>(task.dueDate ?? null);
+  const [priority, setPriority] = useState<PriorityLevel>(
+    (task.priority as PriorityLevel) ?? null,
+  );
 
   // Reset local state when task changes or edit mode ends
   useEffect(() => {
@@ -96,8 +101,16 @@ export function SwipeableCard({
       setDescription(task.description ?? "");
       setCategoryId(task.categoryId ?? null);
       setDueDate(task.dueDate ?? null);
+      setPriority((task.priority as PriorityLevel) ?? null);
     }
-  }, [task.title, task.description, task.categoryId, task.dueDate, isEditing]);
+  }, [
+    task.title,
+    task.description,
+    task.categoryId,
+    task.dueDate,
+    task.priority,
+    isEditing,
+  ]);
 
   // Handler for saving from gesture - captures current state values
   const handleSwipeSave = useCallback(() => {
@@ -106,8 +119,9 @@ export function SwipeableCard({
       description: description.trim(),
       categoryId,
       dueDate,
+      priority,
     });
-  }, [onSave, title, description, categoryId, dueDate]);
+  }, [onSave, title, description, categoryId, dueDate, priority]);
 
   // Animated values for stacking effect
   const startX = useSharedValue(0);
@@ -499,6 +513,8 @@ export function SwipeableCard({
           dueDate={dueDate}
           onChangeCategoryId={setCategoryId}
           onChangeDueDate={setDueDate}
+          priority={priority}
+          onChangePriority={setPriority}
         />
         <SwipeOverlay
           direction={direction}

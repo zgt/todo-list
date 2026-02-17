@@ -37,12 +37,16 @@ import { authClient } from "~/utils/auth";
 //import { generateUUID } from "~/utils/uuid";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
+import { PriorityBadge } from "../components/PriorityBadge";
+import { PriorityStats } from "../components/PriorityStats";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import type { PriorityLevel } from "../components/priority-config";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
+import { PriorityFilter } from "./_components/priority-filter";
 
 const DUMMY_TASK_ID = "dummy-create-task";
 
@@ -155,6 +159,9 @@ export default function Index() {
   }, []);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { effectiveCategoryIds } = useCategoryFilter();
+  const [selectedPriorities, setSelectedPriorities] = useState<PriorityLevel[]>(
+    [],
+  );
 
   const queryClient = useQueryClient();
 
@@ -182,22 +189,47 @@ export default function Index() {
 
     // Server response already includes category relations
     // Map to include fields expected by SwipeableCardStack (LocalTask type)
-    return serverTasks.map((task: RouterOutputs["task"]["all"][number]) => ({
-      ...task,
-      updatedAt: task.updatedAt ?? task.createdAt, // Ensure updatedAt is never null
-      category: task.category
-        ? {
-            name: task.category.name,
-            color: task.category.color,
-          }
-        : null,
-      // Add sync-related fields for type compatibility (unused in server-only mode)
-      syncStatus: "synced" as const,
-      localVersion: task.version,
-      serverVersion: task.version,
-      lastSyncedAt: new Date(),
-      orderIndex: 0,
-    }));
+    const priorityOrder: Record<string, number> = {
+      high: 0,
+      medium: 1,
+      low: 2,
+    };
+
+    return [...serverTasks]
+      .sort((a, b) => {
+        // Primary sort: Completion status (incomplete first)
+        if (a.completed !== b.completed) {
+          return a.completed ? 1 : -1;
+        }
+
+        // Secondary sort: Priority
+        const priorityA = a.priority ?? "medium";
+        const priorityB = b.priority ?? "medium";
+        const priorityDiff =
+          (priorityOrder[priorityA] ?? 1) - (priorityOrder[priorityB] ?? 1);
+
+        if (priorityDiff !== 0) return priorityDiff;
+
+        // Tertiary sort: Creation date (newest first)
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      })
+      .map((task: RouterOutputs["task"]["all"][number]) => ({
+        ...task,
+        updatedAt: task.updatedAt ?? task.createdAt, // Ensure updatedAt is never null
+        category: task.category
+          ? {
+              name: task.category.name,
+              color: task.category.color,
+            }
+          : null,
+        // Add sync-related fields for type compatibility (unused in server-only mode)
+        syncStatus: "synced" as const,
+        localVersion: task.version,
+        serverVersion: task.version,
+        lastSyncedAt: new Date(),
+        orderIndex: 0,
+        priority: task.priority as "high" | "medium" | "low" | null,
+      }));
   }, [serverTasks]); // Only depend on serverTasks, not refreshTrigger
 
   // Filter tasks by selected categories (including descendants)
@@ -207,6 +239,12 @@ export default function Index() {
       result = tasks.filter(
         (task) =>
           task.categoryId && effectiveCategoryIds.includes(task.categoryId),
+      );
+    }
+
+    if (selectedPriorities.length > 0) {
+      result = result.filter((task) =>
+        selectedPriorities.includes(task.priority as PriorityLevel),
       );
     }
 
@@ -231,12 +269,13 @@ export default function Index() {
         localVersion: 0,
         serverVersion: 0,
         category: null,
+        priority: "medium" as PriorityLevel,
       };
       // Prepend
       return [dummyTask, ...result];
     }
     return result;
-  }, [tasks, effectiveCategoryIds, isCreating, session]);
+  }, [tasks, effectiveCategoryIds, isCreating, session, selectedPriorities]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
@@ -375,6 +414,7 @@ export default function Index() {
       description: string;
       categoryId: string | null;
       dueDate: Date | null;
+      priority: PriorityLevel;
     }>,
   ) => {
     if (id === DUMMY_TASK_ID) {
@@ -386,6 +426,7 @@ export default function Index() {
         updates.description ?? "",
         updates.categoryId ?? undefined,
         updates.dueDate ?? undefined,
+        updates.priority ?? "medium",
       );
       return;
     }
@@ -526,6 +567,7 @@ export default function Index() {
     description: string,
     categoryId: string | undefined,
     dueDate: Date | undefined,
+    priority: PriorityLevel,
   ) => {
     if (!session?.user) {
       throw new Error("User not authenticated");
@@ -536,6 +578,7 @@ export default function Index() {
       description: description.trim() || undefined,
       categoryId,
       dueDate,
+      priority: priority ?? "medium",
     });
   };
 
@@ -591,6 +634,8 @@ export default function Index() {
         <Stack.Screen options={{ headerShown: false }} />
 
         <Header onProfilePress={() => setShowProfileMenu(true)} />
+        
+        {tasks.length > 0 && <PriorityStats tasks={tasks as { priority: PriorityLevel }[]} />}
 
         <View
           className="flex-1 px-4"
@@ -639,8 +684,12 @@ export default function Index() {
         style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
       >
         <View className="flex-row items-center gap-4 px-4 pb-1">
-          <View className="ml-2">
+          <View className="ml-2 flex-row gap-2">
             <CategoryFilter />
+            <PriorityFilter
+              selectedPriorities={selectedPriorities}
+              onChange={setSelectedPriorities}
+            />
           </View>
           <View className="flex-1" />
           <ViewToggleButton
@@ -649,7 +698,6 @@ export default function Index() {
               setViewMode((v) => (v === "stack" ? "list" : "stack"))
             }
           />
-          <RefreshButton onPress={handleRefresh} isRefreshing={isRefreshing} />
           <FAB onPress={() => setIsCreating(!isCreating)} />
         </View>
       </SafeAreaView>
