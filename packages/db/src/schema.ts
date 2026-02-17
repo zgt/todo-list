@@ -5,6 +5,9 @@ import { z } from "zod/v4";
 
 import { user } from "./auth-schema";
 
+export const TaskPriority = z.enum(["high", "medium", "low"]);
+export type TaskPriority = z.infer<typeof TaskPriority>;
+
 export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
@@ -106,6 +109,7 @@ export const Task = pgTable(
       withTimezone: true,
       mode: "date",
     }),
+    priority: t.varchar({ length: 10 }).default("medium"),
     orderIndex: t.integer("order_index"),
     version: t.integer().notNull().default(1),
     deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
@@ -127,6 +131,15 @@ export const Task = pgTable(
     ),
     index("task_user_id_archived_at_idx").on(table.userId, table.archivedAt),
     index("task_category_id_idx").on(table.categoryId),
+    index("task_user_id_priority_completed_idx").on(
+      table.userId,
+      table.priority,
+      table.completed,
+    ),
+    check(
+      "task_priority_valid",
+      sql`${table.priority} IS NULL OR ${table.priority} IN ('high', 'medium', 'low')`,
+    ),
   ],
 );
 
@@ -135,6 +148,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   description: z.string().max(5000).optional(),
   categoryId: z.string().uuid().optional(),
   dueDate: z.date().optional(),
+  priority: TaskPriority.optional().default("medium"),
 }).omit({
   id: true,
   userId: true,
@@ -155,6 +169,7 @@ export const UpdateTaskSchema = z.object({
   completed: z.boolean().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   dueDate: z.date().nullable().optional(),
+  priority: TaskPriority.nullable().optional(),
   orderIndex: z.number().int().optional(),
   createdAt: z.date().optional(),
   completedAt: z.date().nullable().optional(),
