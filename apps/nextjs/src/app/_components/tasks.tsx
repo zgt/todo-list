@@ -32,6 +32,9 @@ import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreePicker } from "./category-tree-picker";
+import { usePriorityFilter } from "./priority/priority-filter-context";
+import { PriorityBadge } from "./priority/priority-badge";
+import { PrioritySelector } from "./priority/priority-selector";
 
 // Validation schema for inline task editing
 const EditTaskSchema = z.object({
@@ -137,7 +140,16 @@ export function CreateTaskForm() {
 
 export function TaskList() {
   const trpc = useTRPC();
-  const { data: tasks } = useSuspenseQuery(trpc.task.all.queryOptions());
+  const { priorityFilter } = usePriorityFilter();
+  
+  // Conditionally choose query options based on priority filter
+  // We use useSuspenseQuery which will handle the data fetching
+  // When filter changes, the query key changes automatically
+  const { data: tasks } = useSuspenseQuery(
+    priorityFilter
+      ? trpc.task.byPriority.queryOptions({ priority: priorityFilter })
+      : trpc.task.all.queryOptions()
+  );
 
   // Get selected category IDs from filter context
   const { effectiveCategoryIds } = useCategoryFilter();
@@ -152,6 +164,18 @@ export function TaskList() {
       : tasks;
 
   if (tasks.length === 0) {
+    if (priorityFilter) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+          <p className="text-xl font-semibold text-white">
+            No {priorityFilter} priority tasks
+          </p>
+          <p className="text-muted-foreground mt-2">
+            Try selecting a different priority or clear the filter
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="relative flex w-full flex-col gap-4">
         <TaskCardSkeleton pulse={false} />

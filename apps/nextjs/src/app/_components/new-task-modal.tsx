@@ -17,14 +17,17 @@ import {
 } from "@acme/ui/select";
 import { toast } from "@acme/ui/toast";
 
+import type { TaskPriority } from "@acme/db/schema";
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
+import { PrioritySelector } from "./priority/priority-selector";
 
 export function NewTaskModal() {
   const [date, setDate] = React.useState<Date>();
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [categoryId, setCategoryId] = React.useState<string | undefined>();
+  const [priority, setPriority] = React.useState<TaskPriority | null>("medium");
   const [open, setOpen] = React.useState(false);
 
   const trpc = useTRPC();
@@ -46,6 +49,7 @@ export function NewTaskModal() {
         setDescription("");
         setDate(undefined);
         setCategoryId(undefined);
+        setPriority("medium");
         toast.success("Task created successfully");
       },
       onError: (err: unknown) => {
@@ -66,6 +70,7 @@ export function NewTaskModal() {
       description,
       categoryId,
       dueDate: date,
+      priority: priority ?? "medium",
     });
   };
 
@@ -103,18 +108,25 @@ export function NewTaskModal() {
               onChange={(e) => setDescription(e.target.value)}
               className="bg-background/50 placeholder:text-muted-foreground flex min-h-[80px] w-full rounded-md border-0 px-3 py-2 text-sm focus-visible:ring-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="bg-background/50 w-full border-0 focus-visible:ring-1">
-                <SelectValue placeholder="Select a category (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger className="bg-background/50 w-full border-0 focus-visible:ring-1">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <PrioritySelector
+                value={priority}
+                onChange={setPriority}
+                className="bg-background/50 border-0 focus-visible:ring-1"
+              />
+            </div>
             <DatePicker
               date={date}
               onDateChange={setDate}
