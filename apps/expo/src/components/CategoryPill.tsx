@@ -16,7 +16,12 @@ export function CategoryPill({ label, active, onPress }: CategoryPillProps) {
         ]}
         className="overflow-hidden rounded-full"
       >
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10, 26, 26, 0.7)" }]} />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: "rgba(10, 26, 26, 0.7)" },
+          ]}
+        />
         <View className="px-6 py-2">
           <Text
             className={`text-sm font-medium ${

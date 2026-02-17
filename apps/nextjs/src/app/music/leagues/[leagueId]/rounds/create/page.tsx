@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { Card, CardContent } from "@acme/ui/card";
 import { Button } from "@acme/ui/button";
+import { Card, CardContent } from "@acme/ui/card";
 import { Input } from "@acme/ui/input";
 import { Label } from "@acme/ui/label";
 import { Textarea } from "@acme/ui/textarea";
@@ -42,30 +42,30 @@ export default function CreateRound() {
     }),
   );
 
-  useEffect(() => {
-    if (latestRound) {
-      const now = new Date();
-      const previousVotingEnd = new Date(latestRound.votingDeadline);
+  const [prevLatestRound, setPrevLatestRound] = useState(latestRound);
+  if (latestRound && latestRound !== prevLatestRound) {
+    setPrevLatestRound(latestRound);
+    const now = new Date();
+    const previousVotingEnd = new Date(latestRound.votingDeadline);
 
-      const baseDate = previousVotingEnd > now ? previousVotingEnd : now;
+    const baseDate = previousVotingEnd > now ? previousVotingEnd : now;
 
-      const newSubmission = new Date(baseDate);
-      newSubmission.setDate(newSubmission.getDate() + 3);
+    const newSubmission = new Date(baseDate);
+    newSubmission.setDate(newSubmission.getDate() + 3);
 
-      const newVoting = new Date(baseDate);
-      newVoting.setDate(newVoting.getDate() + 5);
+    const newVoting = new Date(baseDate);
+    newVoting.setDate(newVoting.getDate() + 5);
 
-      setSubmissionDeadline(toLocalDatetimeString(newSubmission));
-      setVotingDeadline(toLocalDatetimeString(newVoting));
-    }
-  }, [latestRound]);
+    setSubmissionDeadline(toLocalDatetimeString(newSubmission));
+    setVotingDeadline(toLocalDatetimeString(newVoting));
+  }
 
   const createRound = useMutation(
     trpc.musicLeague.createRound.mutationOptions({
       onSuccess: (round) => {
-        router.push(
-          `/music/leagues/${params.leagueId}/rounds/${round!.id}`,
-        );
+        if (round) {
+          router.push(`/music/leagues/${params.leagueId}/rounds/${round.id}`);
+        }
       },
     }),
   );

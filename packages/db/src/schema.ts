@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { check, index, integer, pgEnum, pgTable } from "drizzle-orm/pg-core";
+import { check, index, pgEnum, pgTable } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -171,7 +171,11 @@ export const Task = pgTable(
 export const League = pgTable(
   "league",
   (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     name: t.text().notNull(),
     description: t.text(),
     createdAt: t
@@ -185,15 +189,18 @@ export const League = pgTable(
       .notNull(),
     status: leagueStatusEnum("status").default("ACTIVE").notNull(),
     inviteCode: t.text("invite_code").notNull().unique(),
-    
+
     // Settings
     songsPerRound: t.integer("songs_per_round").default(1).notNull(),
     maxMembers: t.integer("max_members").default(20).notNull(),
     allowDownvotes: t.boolean("allow_downvotes").default(false).notNull(),
     downvotePointValue: t.integer("downvote_point_value").default(-1).notNull(),
-    upvotePointsPerRound: t.integer("upvote_points_per_round").default(10).notNull(),
+    upvotePointsPerRound: t
+      .integer("upvote_points_per_round")
+      .default(10)
+      .notNull(),
     isPublic: t.boolean("is_public").default(false).notNull(),
-    
+
     // Relations
     creatorId: t
       .text("creator_id")
@@ -209,13 +216,17 @@ export const League = pgTable(
 export const LeagueMember = pgTable(
   "league_member",
   (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     joinedAt: t
       .timestamp("joined_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
       .notNull(),
     role: memberRoleEnum("role").default("MEMBER").notNull(),
-    
+
     leagueId: t
       .text("league_id")
       .notNull()
@@ -234,7 +245,11 @@ export const LeagueMember = pgTable(
 export const Round = pgTable(
   "round",
   (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     roundNumber: t.integer("round_number").notNull(),
     themeName: t.text("theme_name").notNull(),
     themeDescription: t.text("theme_description"),
@@ -255,21 +270,23 @@ export const Round = pgTable(
       .$defaultFn(() => new Date())
       .$onUpdate(() => new Date())
       .notNull(),
-    
+
     leagueId: t
       .text("league_id")
       .notNull()
       .references(() => League.id, { onDelete: "cascade" }),
   }),
-  (table) => [
-    index("round_league_id_idx").on(table.leagueId),
-  ],
+  (table) => [index("round_league_id_idx").on(table.leagueId)],
 );
 
 export const Submission = pgTable(
   "submission",
   (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     spotifyTrackId: t.text("spotify_track_id").notNull(),
     trackName: t.text("track_name").notNull(),
     artistName: t.text("artist_name").notNull(),
@@ -281,7 +298,7 @@ export const Submission = pgTable(
       .timestamp("created_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
       .notNull(),
-    
+
     roundId: t
       .text("round_id")
       .notNull()
@@ -295,21 +312,29 @@ export const Submission = pgTable(
     index("submission_round_id_idx").on(table.roundId),
     index("submission_user_id_idx").on(table.userId),
     // unique constraint for round+user+track
-    index("submission_round_user_track_unique").on(table.roundId, table.userId, table.spotifyTrackId),
+    index("submission_round_user_track_unique").on(
+      table.roundId,
+      table.userId,
+      table.spotifyTrackId,
+    ),
   ],
 );
 
 export const Vote = pgTable(
   "vote",
   (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     points: t.integer("points").notNull(),
-    
+
     roundId: t
       .text("round_id")
       .notNull()
       .references(() => Round.id, { onDelete: "cascade" }),
-    
+
     voterId: t
       .text("voter_id")
       .notNull()
@@ -322,20 +347,28 @@ export const Vote = pgTable(
   (table) => [
     index("vote_submission_id_idx").on(table.submissionId),
     index("vote_voter_id_idx").on(table.voterId),
-    index("vote_round_voter_submission_unique").on(table.roundId, table.voterId, table.submissionId),
+    index("vote_round_voter_submission_unique").on(
+      table.roundId,
+      table.voterId,
+      table.submissionId,
+    ),
   ],
 );
 
 export const Comment = pgTable(
   "comment",
   (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     text: t.text("text").notNull(),
     createdAt: t
       .timestamp("created_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
       .notNull(),
-    
+
     submissionId: t
       .text("submission_id")
       .notNull()
@@ -348,19 +381,23 @@ export const Comment = pgTable(
   (table) => [
     index("comment_submission_id_idx").on(table.submissionId),
     index("comment_user_id_idx").on(table.userId),
-    index("comment_submission_user_unique").on(table.submissionId, table.userId),
+    index("comment_submission_user_unique").on(
+      table.submissionId,
+      table.userId,
+    ),
   ],
 );
 
-export const ThemeTemplate = pgTable(
-  "theme_template",
-  (t) => ({
-    id: t.text().notNull().primaryKey().$defaultFn(() => crypto.randomUUID()),
-    name: t.text("name").notNull(),
-    description: t.text("description").notNull(),
-    category: t.text("category").notNull(),
-  })
-);
+export const ThemeTemplate = pgTable("theme_template", (t) => ({
+  id: t
+    .text()
+    .notNull()
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  name: t.text("name").notNull(),
+  description: t.text("description").notNull(),
+  category: t.text("category").notNull(),
+}));
 
 // Existing Schemas
 export const CreateTaskSchema = createInsertSchema(Task, {

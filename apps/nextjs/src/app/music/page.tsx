@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, TicketCheck, Users, Clock, ArrowRight } from "lucide-react";
+import { ArrowRight, Clock, Plus, TicketCheck, Users } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
-import { Button } from "@acme/ui/button";
 import { Badge } from "@acme/ui/badge";
+import { Button } from "@acme/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
 import { Input } from "@acme/ui/input";
 import { Label } from "@acme/ui/label";
 import { Skeleton } from "@acme/ui/skeleton";
@@ -53,24 +53,27 @@ export default function MusicDashboard() {
   };
 
   // Collect upcoming deadlines from active rounds
+  const [now] = useState(() => Date.now());
   const deadlines =
     leagues
-      ?.filter((league) => league.currentRound)
-      .map((league) => {
-        const round = league.currentRound!;
-        return {
-          leagueId: league.id,
-          leagueName: league.name,
-          roundId: round.id,
-          themeName: round.themeName,
-          status: round.status,
-          deadline:
-            round.status === "SUBMISSION"
-              ? new Date(round.submissionDeadline)
-              : new Date(round.votingDeadline),
-        };
+      ?.flatMap((league) => {
+        const round = league.currentRound;
+        if (!round) return [];
+        return [
+          {
+            leagueId: league.id,
+            leagueName: league.name,
+            roundId: round.id,
+            themeName: round.themeName,
+            status: round.status,
+            deadline:
+              round.status === "SUBMISSION"
+                ? new Date(round.submissionDeadline)
+                : new Date(round.votingDeadline),
+          },
+        ];
       })
-      .filter((d) => d.deadline.getTime() > Date.now())
+      .filter((d) => d.deadline.getTime() > now)
       .sort((a, b) => a.deadline.getTime() - b.deadline.getTime())
       .slice(0, 5) ?? [];
 
@@ -105,10 +108,7 @@ export default function MusicDashboard() {
               {leagues.map((league) => {
                 const activeRound = league.currentRound;
                 return (
-                  <Link
-                    key={league.id}
-                    href={`/music/leagues/${league.id}`}
-                  >
+                  <Link key={league.id} href={`/music/leagues/${league.id}`}>
                     <Card className="hover:border-border/80 hover:bg-accent cursor-pointer transition-colors">
                       <CardContent>
                         <div className="flex items-center justify-between">

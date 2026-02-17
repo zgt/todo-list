@@ -96,7 +96,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
       >
         <View className="w-full rounded-t-3xl border-t border-[#164B49] bg-[#102A2A] p-6 shadow-2xl">
           {/* Profile Section */}
-          <View className="flex-row items-center gap-4 mb-6">
+          <View className="mb-6 flex-row items-center gap-4">
             <View className="h-16 w-16 overflow-hidden rounded-full border-2 border-[#164B49]">
               {user.image ? (
                 <Image source={{ uri: user.image }} className="h-full w-full" />
@@ -133,7 +133,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
               </Pressable>
             </Link>
 
-            <View className="h-px bg-[#164B49] my-2" />
+            <View className="my-2 h-px bg-[#164B49]" />
 
             <Pressable
               onPress={handleSignOut}

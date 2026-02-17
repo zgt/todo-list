@@ -3,7 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@acme/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
+import { Skeleton } from "@acme/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -12,8 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@acme/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@acme/ui/avatar";
-import { Skeleton } from "@acme/ui/skeleton";
 
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
@@ -61,7 +61,7 @@ export function LeagueStandings({ leagueId }: { leagueId: string }) {
     );
   }
 
-  const currentUserId = session?.user?.id;
+  const currentUserId = session?.user.id;
 
   return (
     <Card>
@@ -73,7 +73,7 @@ export function LeagueStandings({ leagueId }: { leagueId: string }) {
           <Table>
             <TableHeader>
               <TableRow className="text-muted-foreground border-border text-left">
-                <TableHead className="pb-2 pr-2 font-medium">#</TableHead>
+                <TableHead className="pr-2 pb-2 font-medium">#</TableHead>
                 <TableHead className="pb-2 font-medium">Player</TableHead>
                 <TableHead className="pb-2 text-right font-medium">
                   Points
@@ -110,11 +110,9 @@ export function LeagueStandings({ leagueId }: { leagueId: string }) {
                     <TableCell className="py-2.5">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage
-                            src={entry.user.image ?? undefined}
-                          />
+                          <AvatarImage src={entry.user.image ?? undefined} />
                           <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-                            {entry.user.name?.charAt(0).toUpperCase() ?? "?"}
+                            {entry.user.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className={isCurrentUser ? "font-semibold" : ""}>

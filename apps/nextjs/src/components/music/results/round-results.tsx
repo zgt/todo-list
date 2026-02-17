@@ -51,8 +51,8 @@ export function RoundResults({ roundId }: RoundResultsProps) {
       <Card>
         <CardContent>
           <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <Music2 className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <Music2 className="text-muted-foreground h-6 w-6" />
+            <p className="text-muted-foreground text-sm">
               Round data not available.
             </p>
           </div>
@@ -65,8 +65,7 @@ export function RoundResults({ roundId }: RoundResultsProps) {
     (a, b) => b.totalPoints - a.totalPoints,
   );
 
-  const topPoints =
-    sortedSubmissions.length > 0 ? sortedSubmissions[0]!.totalPoints : 0;
+  const topPoints = sortedSubmissions[0]?.totalPoints ?? 0;
 
   return (
     <Card>
@@ -79,8 +78,8 @@ export function RoundResults({ roundId }: RoundResultsProps) {
       <CardContent>
         {sortedSubmissions.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <Music2 className="h-6 w-6 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <Music2 className="text-muted-foreground h-6 w-6" />
+            <p className="text-muted-foreground text-sm">
               No submissions for this round.
             </p>
           </div>
@@ -109,14 +108,14 @@ export function RoundResults({ roundId }: RoundResultsProps) {
                         aria-label="Winner"
                       />
                     ) : (
-                      <span className="text-sm font-medium text-muted-foreground">
+                      <span className="text-muted-foreground text-sm font-medium">
                         {rank}
                       </span>
                     )}
                   </div>
 
                   {/* Album art */}
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
+                  <div className="bg-muted relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
                     {sub.albumArtUrl ? (
                       <Image
                         src={sub.albumArtUrl}
@@ -127,7 +126,7 @@ export function RoundResults({ roundId }: RoundResultsProps) {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <Music2 className="h-5 w-5 text-muted-foreground" />
+                        <Music2 className="text-muted-foreground h-5 w-5" />
                       </div>
                     )}
                   </div>
@@ -151,14 +150,12 @@ export function RoundResults({ roundId }: RoundResultsProps) {
                         </Badge>
                       )}
                     </div>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-xs">
                       {sub.artistName}
-                      {sub.albumName && (
-                        <span> &middot; {sub.albumName}</span>
-                      )}
+                      {sub.albumName && <span> &middot; {sub.albumName}</span>}
                     </p>
                     {"submitter" in sub && sub.submitter && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="text-muted-foreground mt-0.5 text-xs">
                         Submitted by{" "}
                         <span className="font-medium">
                           {sub.submitter.name}
@@ -172,7 +169,7 @@ export function RoundResults({ roundId }: RoundResultsProps) {
                     href={`https://open.spotify.com/track/${sub.spotifyTrackId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="text-muted-foreground hover:bg-accent hover:text-foreground shrink-0 rounded-md p-1.5 transition-colors"
                     aria-label={`Open ${sub.trackName} on Spotify`}
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -191,7 +188,7 @@ export function RoundResults({ roundId }: RoundResultsProps) {
                     >
                       {sub.totalPoints}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">pts</p>
+                    <p className="text-muted-foreground text-[10px]">pts</p>
                   </div>
                 </div>
               );

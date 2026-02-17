@@ -467,6 +467,7 @@ export default function Index() {
             archivedAt: null,
             categoryId: newTask.categoryId ?? null,
             userId: session.user.id,
+            priority: "medium",
             version: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -629,7 +630,6 @@ export default function Index() {
             </View>
           )}
         </View>
-
       </SafeAreaView>
 
       {/* Bottom button bar - positioned absolutely to hug the bottom */}

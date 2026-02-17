@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Clock } from "lucide-react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@acme/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
 import {
@@ -10,18 +11,18 @@ import {
   TooltipTrigger,
 } from "@acme/ui/tooltip";
 
-type MemberStatus = {
+interface MemberStatus {
   id: string;
   name: string;
   image: string | null;
   hasSubmitted: boolean;
   hasVoted: boolean;
-};
+}
 
-type RoundStatusBoardProps = {
+interface RoundStatusBoardProps {
   memberStatus: MemberStatus[];
   status: string;
-};
+}
 
 export function RoundStatusBoard({
   memberStatus,

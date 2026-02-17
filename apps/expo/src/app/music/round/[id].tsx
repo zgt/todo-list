@@ -1,17 +1,17 @@
-import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { ArrowLeft, Check, Clock } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Check, Clock } from "lucide-react-native";
 
-import { trpc } from "~/utils/api";
 import { GradientBackground } from "~/components/GradientBackground";
+import { trpc } from "~/utils/api";
 
 export default function RoundDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: round, isLoading } = useQuery(
     trpc.musicLeague.getRoundById.queryOptions(
-      { roundId: id! },
+      { roundId: id },
       { enabled: !!id },
     ),
   );
@@ -26,13 +26,11 @@ export default function RoundDetails() {
     );
   }
 
-  const { status, submissions, userRole } = round;
+  const { status, submissions } = round;
   const isSubmissionPhase = status === "SUBMISSION";
   const isResultsPhase = status === "RESULTS" || status === "COMPLETED";
 
-  const mySubmission = submissions.find(
-    (s: { isOwn: boolean }) => s.isOwn,
-  );
+  const mySubmission = submissions.find((s: { isOwn: boolean }) => s.isOwn);
 
   return (
     <GradientBackground>
@@ -50,7 +48,7 @@ export default function RoundDetails() {
             <Text className="text-center text-xl font-bold text-[#DCE4E4]">
               Round {round.roundNumber}
             </Text>
-            <Text className="text-center text-xs font-medium uppercase text-[#50C878]">
+            <Text className="text-center text-xs font-medium text-[#50C878] uppercase">
               {status}
             </Text>
           </View>
@@ -60,10 +58,10 @@ export default function RoundDetails() {
         <ScrollView className="flex-1 p-4">
           {/* Theme Card */}
           <View className="mb-6 rounded-xl border border-[#164B49] bg-[#102A2A] p-6 shadow-lg">
-            <Text className="mb-2 text-sm font-bold uppercase tracking-wide text-[#50C878]">
+            <Text className="mb-2 text-sm font-bold tracking-wide text-[#50C878] uppercase">
               Theme
             </Text>
-            <Text className="mb-4 text-3xl font-bold leading-tight text-[#DCE4E4]">
+            <Text className="mb-4 text-3xl leading-tight font-bold text-[#DCE4E4]">
               {round.themeName}
             </Text>
             {round.themeDescription && (
@@ -77,7 +75,7 @@ export default function RoundDetails() {
               <View className="flex-1">
                 <View className="mb-1 flex-row items-center gap-1">
                   <Clock size={12} color="#8FA8A8" />
-                  <Text className="text-xs font-medium uppercase text-[#8FA8A8]">
+                  <Text className="text-xs font-medium text-[#8FA8A8] uppercase">
                     Submit By
                   </Text>
                 </View>
@@ -88,7 +86,7 @@ export default function RoundDetails() {
               <View className="flex-1">
                 <View className="mb-1 flex-row items-center gap-1">
                   <Clock size={12} color="#8FA8A8" />
-                  <Text className="text-xs font-medium uppercase text-[#8FA8A8]">
+                  <Text className="text-xs font-medium text-[#8FA8A8] uppercase">
                     Vote By
                   </Text>
                 </View>
@@ -133,7 +131,7 @@ export default function RoundDetails() {
           </Text>
 
           {submissions.length === 0 ? (
-            <Text className="py-8 text-center italic text-[#8FA8A8]">
+            <Text className="py-8 text-center text-[#8FA8A8] italic">
               No submissions yet. Be the first!
             </Text>
           ) : (

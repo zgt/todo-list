@@ -72,7 +72,7 @@ export function SubmitSong({ roundId, songsPerRound }: SubmitSongProps) {
             </div>
             <div>
               <p className="font-medium">Song submitted</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Your submission has been recorded for this round.
               </p>
             </div>
@@ -150,13 +150,13 @@ export function SubmitSong({ roundId, songsPerRound }: SubmitSongProps) {
               required
               aria-required="true"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Find this in the Spotify share link after &quot;track/&quot;
             </p>
           </div>
 
           {createSubmission.error && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-destructive text-sm" role="alert">
               {createSubmission.error.message}
             </p>
           )}

@@ -354,7 +354,12 @@ export function TaskCard({
     <Animated.View
       style={[styles.container, containerStyle, getBackgroundStyle()]}
     >
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10, 26, 26, 0.7)" }]} />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: "rgba(10, 26, 26, 0.7)" },
+        ]}
+      />
       {isCompact ? renderCompactLayout() : renderCardLayout()}
     </Animated.View>
   );

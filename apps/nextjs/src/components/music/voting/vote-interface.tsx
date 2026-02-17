@@ -14,7 +14,7 @@ import {
 
 import { Badge } from "@acme/ui/badge";
 import { Button } from "@acme/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
+import { Card, CardContent } from "@acme/ui/card";
 
 import { useTRPC } from "~/trpc/react";
 
@@ -119,7 +119,7 @@ export function VoteInterface({
             </div>
             <div>
               <p className="font-medium">Votes submitted</p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm">
                 Your votes have been recorded. You can re-submit to change them
                 before voting closes.
               </p>
@@ -145,7 +145,7 @@ export function VoteInterface({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium">Points Remaining</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Allocate your {upvotePointsPerRound} points across submissions
                 {allowDownvotes && ` (downvotes: -${downvotePointValue})`}
               </p>
@@ -182,7 +182,7 @@ export function VoteInterface({
               <CardContent>
                 <div className="flex items-center gap-3">
                   {/* Album art */}
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
+                  <div className="bg-muted relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
                     {sub.albumArtUrl ? (
                       <Image
                         src={sub.albumArtUrl}
@@ -193,7 +193,7 @@ export function VoteInterface({
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <Music2 className="h-5 w-5 text-muted-foreground" />
+                        <Music2 className="text-muted-foreground h-5 w-5" />
                       </div>
                     )}
                   </div>
@@ -213,11 +213,9 @@ export function VoteInterface({
                         </Badge>
                       )}
                     </div>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="text-muted-foreground truncate text-xs">
                       {sub.artistName}
-                      {sub.albumName && (
-                        <span> &middot; {sub.albumName}</span>
-                      )}
+                      {sub.albumName && <span> &middot; {sub.albumName}</span>}
                     </p>
                   </div>
 
@@ -226,7 +224,7 @@ export function VoteInterface({
                     href={`https://open.spotify.com/track/${sub.spotifyTrackId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="text-muted-foreground hover:bg-accent hover:text-foreground shrink-0 rounded-md p-1.5 transition-colors"
                     aria-label={`Open ${sub.trackName} on Spotify`}
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -234,7 +232,7 @@ export function VoteInterface({
 
                   {/* Vote controls */}
                   {isOwnSubmission ? (
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground shrink-0 text-xs">
                       Can&apos;t vote
                     </span>
                   ) : (
@@ -287,7 +285,7 @@ export function VoteInterface({
       {/* Submit button */}
       <div className="sticky bottom-4">
         {submitVotes.error && (
-          <p className="mb-2 text-sm text-destructive" role="alert">
+          <p className="text-destructive mb-2 text-sm" role="alert">
             {submitVotes.error.message}
           </p>
         )}

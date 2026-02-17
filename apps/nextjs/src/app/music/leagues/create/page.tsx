@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 
-import { Card, CardContent } from "@acme/ui/card";
 import { Button } from "@acme/ui/button";
+import { Card, CardContent } from "@acme/ui/card";
+import { Checkbox } from "@acme/ui/checkbox";
 import { Input } from "@acme/ui/input";
 import { Label } from "@acme/ui/label";
-import { Checkbox } from "@acme/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,8 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@acme/ui/select";
-
 import { Textarea } from "@acme/ui/textarea";
+
 import { useTRPC } from "~/trpc/react";
 
 export default function CreateLeague() {

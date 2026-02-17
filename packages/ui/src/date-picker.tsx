@@ -70,7 +70,8 @@ export function DatePicker({
             range_end: "day-range-end",
             selected:
               "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-            today: "bg-primary text-accent-foreground opacity-50 aria-selected:opacity-100",
+            today:
+              "bg-primary text-accent-foreground opacity-50 aria-selected:opacity-100",
             outside:
               "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
             disabled: "text-muted-foreground opacity-50",

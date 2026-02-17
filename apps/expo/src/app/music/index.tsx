@@ -1,7 +1,6 @@
-import { Link, Stack } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import { Plus } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link, Stack } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { trpc } from "~/utils/api";
@@ -43,9 +42,13 @@ export default function MusicLeagueDashboard() {
             </Text>
           </View>
         ) : (
-          <View className="flex-1 p-4 gap-3">
+          <View className="flex-1 gap-3 p-4">
             {leagues.map((item) => (
-              <Link key={item.id} href={`/music/league/${item.id}` as never} asChild>
+              <Link
+                key={item.id}
+                href={`/music/league/${item.id}` as never}
+                asChild
+              >
                 <Pressable className="rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]">
                   <View className="flex-row items-center justify-between">
                     <Text className="text-xl font-semibold text-[#DCE4E4]">
@@ -60,7 +63,7 @@ export default function MusicLeagueDashboard() {
 
                   {item.currentRound ? (
                     <View className="mt-3 rounded-lg bg-[#0A1A1A] p-3">
-                      <Text className="mb-1 text-xs font-bold uppercase text-[#50C878]">
+                      <Text className="mb-1 text-xs font-bold text-[#50C878] uppercase">
                         Current Round
                       </Text>
                       <Text className="text-base font-medium text-[#DCE4E4]">
@@ -71,7 +74,7 @@ export default function MusicLeagueDashboard() {
                       </Text>
                     </View>
                   ) : (
-                    <Text className="mt-2 text-sm italic text-[#8FA8A8]">
+                    <Text className="mt-2 text-sm text-[#8FA8A8] italic">
                       No active rounds
                     </Text>
                   )}

@@ -1,7 +1,7 @@
-import * as SecureStore from "expo-secure-store";
-import * as Sentry from "@sentry/react-native";
-import { expoClient } from "@better-auth/expo/client";
 import Constants from "expo-constants";
+import * as SecureStore from "expo-secure-store";
+import { expoClient } from "@better-auth/expo/client";
+import * as Sentry from "@sentry/react-native";
 import { createAuthClient } from "better-auth/react";
 
 import { getBaseUrl } from "./base-url";

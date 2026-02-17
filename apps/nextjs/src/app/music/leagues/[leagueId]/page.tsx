@@ -1,39 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  Copy,
   Check,
-  Music2,
-  Settings,
-  Plus,
+  Copy,
   LogOut,
+  Music2,
+  Plus,
+  Settings,
   Trash2,
   Trophy,
   Users,
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
-import { Button } from "@acme/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@acme/ui/avatar";
 import { Badge } from "@acme/ui/badge";
-import { Input } from "@acme/ui/input";
-import { Label } from "@acme/ui/label";
+import { Button } from "@acme/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
+import { Checkbox } from "@acme/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@acme/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@acme/ui/avatar";
-import { Textarea } from "@acme/ui/textarea";
+import { Input } from "@acme/ui/input";
+import { Label } from "@acme/ui/label";
 import {
   Select,
   SelectContent,
@@ -41,12 +37,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@acme/ui/select";
-import { Checkbox } from "@acme/ui/checkbox";
 import { Separator } from "@acme/ui/separator";
+import { Textarea } from "@acme/ui/textarea";
 
 import { useSession } from "~/auth/client";
-import { useTRPC } from "~/trpc/react";
 import { LeagueStandings } from "~/components/music/results/league-standings";
+import { useTRPC } from "~/trpc/react";
 
 const roleLabels: Record<string, string> = {
   OWNER: "Owner",
@@ -63,7 +59,9 @@ function getRoundWinner(
 ): { userName: string; trackName: string } | null {
   if (submissions.length === 0) return null;
 
-  let winner = submissions[0]!;
+  const first = submissions[0];
+  if (!first) return null;
+  let winner = first;
   let maxPoints = winner.votes.reduce((sum, v) => sum + v.points, 0);
 
   for (const sub of submissions.slice(1)) {
@@ -88,9 +86,7 @@ export default function LeagueDetail() {
   const { data: session } = useSession();
 
   const { data: league, isLoading } = useQuery(
-    trpc.musicLeague.getLeagueById.queryOptions(
-      { id: params.leagueId },
-    ),
+    trpc.musicLeague.getLeagueById.queryOptions({ id: params.leagueId }),
   );
 
   const leaveLeague = useMutation(
@@ -198,7 +194,7 @@ export default function LeagueDetail() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-foreground text-sm font-medium">Invite Link</p>
-              <p className="text-muted-foreground mt-0.5 break-all text-sm">
+              <p className="text-muted-foreground mt-0.5 text-sm break-all">
                 {inviteUrl}
               </p>
             </div>
@@ -214,9 +210,7 @@ export default function LeagueDetail() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() =>
-                  regenerateCode.mutate({ leagueId: league.id })
-                }
+                onClick={() => regenerateCode.mutate({ leagueId: league.id })}
                 disabled={!isOwner || regenerateCode.isPending}
               >
                 Regenerate
@@ -238,9 +232,7 @@ export default function LeagueDetail() {
               <div className="flex items-center justify-between">
                 <CardTitle>Rounds</CardTitle>
                 {isOwner && (
-                  <Link
-                    href={`/music/leagues/${league.id}/rounds/create`}
-                  >
+                  <Link href={`/music/leagues/${league.id}/rounds/create`}>
                     <Button size="sm">
                       <Plus className="h-3.5 w-3.5" />
                       Create Round
@@ -301,9 +293,7 @@ export default function LeagueDetail() {
                     </p>
                   </div>
                   {isOwner && (
-                    <Link
-                      href={`/music/leagues/${league.id}/rounds/create`}
-                    >
+                    <Link href={`/music/leagues/${league.id}/rounds/create`}>
                       <Button size="sm">
                         <Plus className="h-3.5 w-3.5" />
                         Create First Round
@@ -329,7 +319,7 @@ export default function LeagueDetail() {
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={member.user.image ?? undefined} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                        {member.user.name?.charAt(0).toUpperCase() ?? "?"}
+                        {member.user.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
@@ -484,9 +474,7 @@ function SettingsModal({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="settings-points">
-                  Upvote Points per Round
-                </Label>
+                <Label htmlFor="settings-points">Upvote Points per Round</Label>
                 <Input
                   id="settings-points"
                   type="number"
@@ -525,11 +513,7 @@ function SettingsModal({
           <Separator />
 
           <div className="flex flex-col gap-2">
-            <Button
-              variant="secondary"
-              onClick={onLeave}
-              disabled={isLeaving}
-            >
+            <Button variant="secondary" onClick={onLeave} disabled={isLeaving}>
               <LogOut className="h-4 w-4" />
               {isLeaving ? "Leaving..." : "Leave League"}
             </Button>
@@ -551,10 +535,7 @@ function SettingsModal({
             Cancel
           </Button>
           {isOwner && (
-            <Button
-              onClick={handleSave}
-              disabled={updateSettings.isPending}
-            >
+            <Button onClick={handleSave} disabled={updateSettings.isPending}>
               {updateSettings.isPending ? "Saving..." : "Save Changes"}
             </Button>
           )}

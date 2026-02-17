@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -14,8 +14,8 @@ import {
   Music2,
 } from "lucide-react";
 
-import { Card, CardContent } from "@acme/ui/card";
 import { Button } from "@acme/ui/button";
+import { Card, CardContent } from "@acme/ui/card";
 import { Skeleton } from "@acme/ui/skeleton";
 
 import { useTRPC } from "~/trpc/react";

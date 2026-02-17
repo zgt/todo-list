@@ -35,10 +35,10 @@ export function TrackList({ tracks }: TrackListProps) {
       <Card>
         <CardContent>
           <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-              <Music2 className="h-5 w-5 text-muted-foreground" />
+            <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full">
+              <Music2 className="text-muted-foreground h-5 w-5" />
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               No tracks submitted yet.
             </p>
           </div>
@@ -54,12 +54,12 @@ export function TrackList({ tracks }: TrackListProps) {
           <CardContent>
             <div className="flex items-center gap-3">
               {/* Track number */}
-              <span className="w-5 shrink-0 text-center text-sm font-medium text-muted-foreground">
+              <span className="text-muted-foreground w-5 shrink-0 text-center text-sm font-medium">
                 {index + 1}
               </span>
 
               {/* Album art */}
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted">
+              <div className="bg-muted relative h-12 w-12 shrink-0 overflow-hidden rounded-md">
                 {track.albumArtUrl ? (
                   <Image
                     src={track.albumArtUrl}
@@ -70,7 +70,7 @@ export function TrackList({ tracks }: TrackListProps) {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
-                    <Music2 className="h-5 w-5 text-muted-foreground" />
+                    <Music2 className="text-muted-foreground h-5 w-5" />
                   </div>
                 )}
               </div>
@@ -87,17 +87,15 @@ export function TrackList({ tracks }: TrackListProps) {
                     </Badge>
                   )}
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="text-muted-foreground truncate text-xs">
                   {track.artistName}
-                  {track.albumName && (
-                    <span> &middot; {track.albumName}</span>
-                  )}
+                  {track.albumName && <span> &middot; {track.albumName}</span>}
                 </p>
               </div>
 
               {/* Duration */}
               {track.trackDurationMs > 0 && (
-                <span className="shrink-0 text-xs text-muted-foreground">
+                <span className="text-muted-foreground shrink-0 text-xs">
                   {formatDuration(track.trackDurationMs)}
                 </span>
               )}
@@ -107,7 +105,7 @@ export function TrackList({ tracks }: TrackListProps) {
                 href={`https://open.spotify.com/track/${track.spotifyTrackId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="text-muted-foreground hover:bg-accent hover:text-foreground shrink-0 rounded-md p-1.5 transition-colors"
                 aria-label={`Open ${track.trackName} on Spotify`}
               >
                 <ExternalLink className="h-4 w-4" />

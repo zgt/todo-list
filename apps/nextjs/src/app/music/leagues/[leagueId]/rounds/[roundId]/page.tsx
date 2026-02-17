@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Check,
@@ -17,30 +13,30 @@ import {
   ListMusic,
   Music2,
 } from "lucide-react";
-import { toast } from "@acme/ui/toast";
 
 import type { RouterOutputs } from "@acme/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
-import { Button } from "@acme/ui/button";
 import { Badge } from "@acme/ui/badge";
+import { Button } from "@acme/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@acme/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle as DialogTitleComp,
-  DialogFooter,
 } from "@acme/ui/dialog";
 import { Input } from "@acme/ui/input";
 import { Label } from "@acme/ui/label";
+import { toast } from "@acme/ui/toast";
 
-import { useTRPC } from "~/trpc/react";
-
-type RoundData = NonNullable<RouterOutputs["musicLeague"]["getRoundById"]>;
+import { RoundResults } from "~/components/music/results/round-results";
 import { SubmitSong } from "~/components/music/submission/submit-song";
 import { TrackList } from "~/components/music/submission/track-list";
 import { VoteInterface } from "~/components/music/voting/vote-interface";
-import { RoundResults } from "~/components/music/results/round-results";
+import { useTRPC } from "~/trpc/react";
 import { RoundStatusBoard } from "./_components/round-status-board";
+
+type RoundData = NonNullable<RouterOutputs["musicLeague"]["getRoundById"]>;
 
 const PHASES = ["SUBMISSION", "LISTENING", "VOTING", "RESULTS"] as const;
 const PHASE_LABELS: Record<string, string> = {
@@ -181,11 +177,12 @@ export default function RoundDetail() {
   );
 
   // Sync playlist URL input with server state
-  useEffect(() => {
-    if (round?.playlistUrl) {
-      setPlaylistUrlInput(round.playlistUrl);
-    }
-  }, [round?.playlistUrl]);
+  const playlistUrlFromServer = round?.playlistUrl;
+  const [prevPlaylistUrl, setPrevPlaylistUrl] = useState(playlistUrlFromServer);
+  if (playlistUrlFromServer && playlistUrlFromServer !== prevPlaylistUrl) {
+    setPrevPlaylistUrl(playlistUrlFromServer);
+    setPlaylistUrlInput(playlistUrlFromServer);
+  }
 
   const activeDeadline =
     round?.status === "SUBMISSION"
@@ -418,9 +415,7 @@ export default function RoundDetail() {
               Cancel
             </Button>
             <Button
-              onClick={() =>
-                advancePhase.mutate({ roundId: params.roundId })
-              }
+              onClick={() => advancePhase.mutate({ roundId: params.roundId })}
               disabled={advancePhase.isPending}
             >
               {advancePhase.isPending ? "Advancing..." : "Advance"}
@@ -516,7 +511,7 @@ function PhaseContent({
             albumArtUrl: s.albumArtUrl,
             spotifyTrackId: s.spotifyTrackId,
             previewUrl: s.previewUrl ?? null,
-            trackDurationMs: s.trackDurationMs ?? 0,
+            trackDurationMs: s.trackDurationMs,
             isOwn: s.isOwn,
           }))}
         />

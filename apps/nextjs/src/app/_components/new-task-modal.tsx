@@ -122,7 +122,10 @@ export function NewTaskModal() {
               className="w-full"
             />
           </div>
-          <Button type="submit" disabled={!title.trim() || createTask.isPending}>
+          <Button
+            type="submit"
+            disabled={!title.trim() || createTask.isPending}
+          >
             {createTask.isPending ? "Creating..." : "Create Task"}
           </Button>
         </form>

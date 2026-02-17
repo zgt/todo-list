@@ -413,12 +413,14 @@ export const musicLeagueRouter = {
 
       await ctx.db.transaction(async (tx) => {
         // Delete existing votes for this round by this user
-        await tx.delete(Vote).where(
-          and(
-            eq(Vote.roundId, input.roundId),
-            eq(Vote.voterId, ctx.session.user.id),
-          ),
-        );
+        await tx
+          .delete(Vote)
+          .where(
+            and(
+              eq(Vote.roundId, input.roundId),
+              eq(Vote.voterId, ctx.session.user.id),
+            ),
+          );
 
         // Delete existing comments on submissions in this round by this user
         const submissions = await tx.query.Submission.findMany({
@@ -428,12 +430,14 @@ export const musicLeagueRouter = {
         const subIds = submissions.map((s) => s.id);
 
         if (subIds.length > 0) {
-          await tx.delete(Comment).where(
-            and(
-              inArray(Comment.submissionId, subIds),
-              eq(Comment.userId, ctx.session.user.id),
-            ),
-          );
+          await tx
+            .delete(Comment)
+            .where(
+              and(
+                inArray(Comment.submissionId, subIds),
+                eq(Comment.userId, ctx.session.user.id),
+              ),
+            );
         }
 
         if (input.votes.length > 0) {
@@ -488,9 +492,7 @@ export const musicLeagueRouter = {
         });
       }
 
-      await ctx.db
-        .delete(LeagueMember)
-        .where(eq(LeagueMember.id, member.id));
+      await ctx.db.delete(LeagueMember).where(eq(LeagueMember.id, member.id));
 
       return { success: true };
     }),
@@ -505,7 +507,7 @@ export const musicLeagueRouter = {
         ),
       });
 
-      if (!member || member.role !== "OWNER") {
+      if (member?.role !== "OWNER") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only the league owner can delete the league",
@@ -563,7 +565,7 @@ export const musicLeagueRouter = {
         ),
       });
 
-      if (!member || member.role !== "OWNER") {
+      if (member?.role !== "OWNER") {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only the league owner can update settings",
@@ -591,10 +593,7 @@ export const musicLeagueRouter = {
         });
       }
 
-      await ctx.db
-        .update(League)
-        .set(setValues)
-        .where(eq(League.id, leagueId));
+      await ctx.db.update(League).set(setValues).where(eq(League.id, leagueId));
 
       return { success: true };
     }),
@@ -661,9 +660,7 @@ export const musicLeagueRouter = {
         "COMPLETED",
       ] as const;
 
-      const currentIndex = phaseOrder.indexOf(
-        round.status as (typeof phaseOrder)[number],
-      );
+      const currentIndex = phaseOrder.indexOf(round.status);
 
       if (currentIndex === -1 || currentIndex >= phaseOrder.length - 1) {
         throw new TRPCError({
@@ -672,7 +669,13 @@ export const musicLeagueRouter = {
         });
       }
 
-      const nextStatus = phaseOrder[currentIndex + 1]!;
+      const nextStatus = phaseOrder[currentIndex + 1];
+      if (!nextStatus) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to determine next round status",
+        });
+      }
 
       await ctx.db
         .update(Round)

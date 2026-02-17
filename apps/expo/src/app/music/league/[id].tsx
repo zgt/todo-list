@@ -1,19 +1,16 @@
-import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { ArrowLeft, Plus } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Link, Stack, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react-native";
 
-import { trpc } from "~/utils/api";
 import { GradientBackground } from "~/components/GradientBackground";
+import { trpc } from "~/utils/api";
 
 export default function LeagueDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: league, isLoading } = useQuery(
-    trpc.musicLeague.getLeagueById.queryOptions(
-      { id: id! },
-      { enabled: !!id },
-    ),
+    trpc.musicLeague.getLeagueById.queryOptions({ id: id }, { enabled: !!id }),
   );
 
   if (isLoading || !league) {
@@ -25,15 +22,6 @@ export default function LeagueDetails() {
       </GradientBackground>
     );
   }
-
-  const currentUserMember = league.members.find(
-    (m: { userId: string; role: string }) =>
-      m.role === "OWNER" || m.role === "ADMIN",
-  );
-  const userIsAdmin = league.members.some(
-    (m: { userId: string; role: string }) =>
-      m.role === "OWNER" || m.role === "ADMIN",
-  );
 
   return (
     <GradientBackground>
@@ -88,7 +76,7 @@ export default function LeagueDetails() {
                     <Pressable className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]">
                       <View className="flex-row items-center justify-between">
                         <View className="flex-1">
-                          <Text className="mb-1 text-xs font-bold uppercase text-[#50C878]">
+                          <Text className="mb-1 text-xs font-bold text-[#50C878] uppercase">
                             Round {round.roundNumber}
                           </Text>
                           <Text className="text-lg font-semibold text-[#DCE4E4]">
@@ -111,14 +99,14 @@ export default function LeagueDetails() {
             </View>
           ) : (
             <View className="items-center py-8">
-              <Text className="italic text-[#8FA8A8]">
+              <Text className="text-[#8FA8A8] italic">
                 No rounds started yet
               </Text>
             </View>
           )}
 
           {/* Members */}
-          <Text className="mb-4 mt-8 text-xl font-bold text-[#DCE4E4]">
+          <Text className="mt-8 mb-4 text-xl font-bold text-[#DCE4E4]">
             Members
           </Text>
           <View className="flex-row flex-wrap gap-2">
@@ -136,9 +124,7 @@ export default function LeagueDetails() {
                     {member.user.name ?? "Unknown"}
                   </Text>
                   {member.role === "OWNER" && (
-                    <Text className="text-xs font-bold text-[#50C878]">
-                      👑
-                    </Text>
+                    <Text className="text-xs font-bold text-[#50C878]">👑</Text>
                   )}
                 </View>
               ),
