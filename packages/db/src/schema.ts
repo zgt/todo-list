@@ -75,6 +75,9 @@ export const Category = pgTable(
   ],
 );
 
+export const TaskPriority = z.enum(["high", "medium", "low"]);
+export type TaskPriority = z.infer<typeof TaskPriority>;
+
 export const Task = pgTable(
   "task",
   (t) => ({
@@ -89,6 +92,7 @@ export const Task = pgTable(
     title: t.varchar({ length: 500 }).notNull(),
     description: t.text(),
     completed: t.boolean().notNull().default(false),
+    priority: t.varchar({ length: 10 }).default("medium"),
     dueDate: t.timestamp("due_date", { withTimezone: true, mode: "date" }),
     createdAt: t
       .timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -115,6 +119,11 @@ export const Task = pgTable(
     }),
   }),
   (table) => [
+    index("task_user_id_priority_completed_idx").on(
+      table.userId,
+      table.priority,
+      table.completed,
+    ),
     index("task_user_id_deleted_at_order_idx").on(
       table.userId,
       table.deletedAt,
@@ -127,6 +136,10 @@ export const Task = pgTable(
     ),
     index("task_user_id_archived_at_idx").on(table.userId, table.archivedAt),
     index("task_category_id_idx").on(table.categoryId),
+    check(
+      "task_priority_check",
+      sql`${table.priority} IN ('high', 'medium', 'low') OR ${table.priority} IS NULL`,
+    ),
   ],
 );
 
@@ -135,6 +148,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   description: z.string().max(5000).optional(),
   categoryId: z.string().uuid().optional(),
   dueDate: z.date().optional(),
+  priority: TaskPriority.optional().default("medium"),
 }).omit({
   id: true,
   userId: true,
@@ -155,6 +169,7 @@ export const UpdateTaskSchema = z.object({
   completed: z.boolean().optional(),
   categoryId: z.string().uuid().nullable().optional(),
   dueDate: z.date().nullable().optional(),
+  priority: TaskPriority.nullable().optional(),
   orderIndex: z.number().int().optional(),
   createdAt: z.date().optional(),
   completedAt: z.date().nullable().optional(),
