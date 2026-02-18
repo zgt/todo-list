@@ -7,6 +7,7 @@ import { localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
 import { generateUUID } from "~/utils/uuid";
+import { getTaskNotificationPrefs } from "~/utils/notification-prefs";
 import {
   cancelTaskReminder,
   rescheduleAllReminders,
@@ -166,7 +167,16 @@ export function useTasks(
 
       // Schedule notification if task has a due date
       if (newTask.dueDate) {
-        void scheduleTaskReminder(taskId, newTask.title, newTask.dueDate);
+        void getTaskNotificationPrefs().then((prefs) => {
+          if (prefs.enabled && newTask.dueDate) {
+            void scheduleTaskReminder(
+              taskId,
+              newTask.title,
+              newTask.dueDate,
+              prefs.offsetMinutes,
+            );
+          }
+        });
       }
 
       return newTask;
@@ -215,7 +225,18 @@ export function useTasks(
           data.dueDate !== undefined ? data.dueDate : existing.dueDate;
         const effectiveTitle = data.title ?? existing.title;
         if (effectiveDueDate) {
-          void scheduleTaskReminder(id, effectiveTitle, effectiveDueDate);
+          void getTaskNotificationPrefs().then((prefs) => {
+            if (prefs.enabled) {
+              void scheduleTaskReminder(
+                id,
+                effectiveTitle,
+                effectiveDueDate,
+                prefs.offsetMinutes,
+              );
+            } else {
+              void cancelTaskReminder(id);
+            }
+          });
         } else {
           void cancelTaskReminder(id);
         }
@@ -300,7 +321,16 @@ export function useTasks(
       if (completed) {
         void cancelTaskReminder(id);
       } else if (existing.dueDate) {
-        void scheduleTaskReminder(id, existing.title, existing.dueDate);
+        void getTaskNotificationPrefs().then((prefs) => {
+          if (prefs.enabled && existing.dueDate) {
+            void scheduleTaskReminder(
+              id,
+              existing.title,
+              existing.dueDate,
+              prefs.offsetMinutes,
+            );
+          }
+        });
       }
 
       const updatedTask = { ...existing, ...updates };
@@ -321,7 +351,11 @@ export function useTasks(
   // Reschedule all notifications when tasks load (safety net on app launch)
   useEffect(() => {
     if (tasks.length > 0) {
-      void rescheduleAllReminders(tasks);
+      void getTaskNotificationPrefs().then((prefs) => {
+        if (prefs.enabled) {
+          void rescheduleAllReminders(tasks, prefs.offsetMinutes);
+        }
+      });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- only on mount
 

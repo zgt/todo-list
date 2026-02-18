@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Link } from "expo-router";
-import { LogOut, Music } from "lucide-react-native";
+import { Bell, LogOut, Music } from "lucide-react-native";
 
 import type { User } from "~/utils/auth";
 import { authClient } from "~/utils/auth";
@@ -129,6 +129,18 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                 <Music size={20} color="#50C878" />
                 <RNText className="text-base font-medium text-[#DCE4E4]">
                   Music Leagues
+                </RNText>
+              </Pressable>
+            </Link>
+
+            <Link href="/settings" asChild>
+              <Pressable
+                onPress={onClose}
+                className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              >
+                <Bell size={20} color="#50C878" />
+                <RNText className="text-base font-medium text-[#DCE4E4]">
+                  Notifications
                 </RNText>
               </Pressable>
             </Link>
