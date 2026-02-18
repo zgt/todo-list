@@ -14,7 +14,7 @@ export function RoundThemeCard({
   votingDeadline,
 }: RoundThemeCardProps) {
   return (
-    <View className="mb-6 rounded-xl border border-[#164B49] bg-[#102A2A] p-6 shadow-lg">
+    <View className="mb-6 rounded-xl border border-[#164B49] bg-[#102A2A] p-6">
       <Text className="mb-2 text-sm font-bold tracking-wide text-[#50C878] uppercase">
         Theme
       </Text>

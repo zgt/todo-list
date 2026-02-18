@@ -58,7 +58,11 @@ export function SubmissionPhaseView({
           {mySubmissions.map((sub) => (
             <View
               key={sub.id}
-              className="flex-row items-center gap-3 rounded-lg border border-[#50C878]/30 bg-[#50C878]/5 p-3"
+              className="flex-row items-center gap-3 rounded-lg border p-3"
+              style={{
+                borderColor: "rgba(80,200,120,0.3)",
+                backgroundColor: "rgba(80,200,120,0.05)",
+              }}
             >
               {sub.albumArtUrl ? (
                 <Image

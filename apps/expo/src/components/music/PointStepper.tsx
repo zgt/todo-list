@@ -54,8 +54,16 @@ export function PointStepper({
       <Pressable
         onPress={handleIncrement}
         disabled={!canIncrement}
-        className="h-9 w-9 items-center justify-center rounded-full border border-[#50C878]/50 bg-[#50C878]/10 active:bg-[#50C878]/20"
-        style={!canIncrement ? { opacity: 0.3 } : undefined}
+        className="h-9 w-9 items-center justify-center rounded-full border"
+        style={({ pressed }) => [
+          {
+            borderColor: "rgba(80,200,120,0.5)",
+            backgroundColor: pressed
+              ? "rgba(80,200,120,0.2)"
+              : "rgba(80,200,120,0.1)",
+          },
+          !canIncrement && { opacity: 0.3 },
+        ]}
       >
         <Plus size={16} color="#50C878" />
       </Pressable>

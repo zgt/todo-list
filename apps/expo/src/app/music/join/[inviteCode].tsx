@@ -119,7 +119,10 @@ export default function JoinLeague() {
         <View className="flex-1 justify-center px-6">
           <View className="rounded-2xl border border-[#164B49] bg-[#102A2A] p-6">
             {/* Invite badge */}
-            <View className="mb-4 self-start rounded-full bg-[#50C878]/20 px-3 py-1">
+            <View
+              className="mb-4 self-start rounded-full px-3 py-1"
+              style={{ backgroundColor: "rgba(80,200,120,0.2)" }}
+            >
               <Text className="text-xs font-bold text-[#50C878] uppercase">
                 You're invited
               </Text>

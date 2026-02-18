@@ -96,8 +96,16 @@ export function RoundAdminControls({
         <Pressable
           onPress={handleAdvancePhase}
           disabled={advancePhaseMutation.isPending}
-          className="flex-row items-center justify-center gap-2 rounded-xl border border-[#50C878]/30 bg-[#50C878]/10 py-3 active:bg-[#50C878]/20"
-          style={advancePhaseMutation.isPending ? { opacity: 0.5 } : undefined}
+          className="flex-row items-center justify-center gap-2 rounded-xl border py-3"
+          style={({ pressed }) => [
+            {
+              borderColor: "rgba(80,200,120,0.3)",
+              backgroundColor: pressed
+                ? "rgba(80,200,120,0.2)"
+                : "rgba(80,200,120,0.1)",
+            },
+            advancePhaseMutation.isPending && { opacity: 0.5 },
+          ]}
         >
           {advancePhaseMutation.isPending ? (
             <ActivityIndicator color="#50C878" size="small" />
@@ -167,7 +175,13 @@ export function RoundAdminControls({
 
       {/* Show current playlist URL if set */}
       {currentPlaylistUrl && !showPlaylistInput && (
-        <View className="rounded-lg border border-[#164B49]/50 bg-[#0A1A1A]/50 px-3 py-2">
+        <View
+          className="rounded-lg border px-3 py-2"
+          style={{
+            borderColor: "rgba(22,75,73,0.5)",
+            backgroundColor: "rgba(10,26,26,0.5)",
+          }}
+        >
           <Text className="text-xs text-[#8FA8A8]">Current playlist:</Text>
           <Text className="text-xs text-[#50C878]" numberOfLines={1}>
             {currentPlaylistUrl}

@@ -98,7 +98,13 @@ export function VotingPhaseView({
   if (hasSubmittedVotes) {
     return (
       <View className="gap-3">
-        <View className="items-center gap-2 rounded-xl border border-[#50C878]/30 bg-[#50C878]/10 p-4">
+        <View
+          className="items-center gap-2 rounded-xl border p-4"
+          style={{
+            borderColor: "rgba(80,200,120,0.3)",
+            backgroundColor: "rgba(80,200,120,0.1)",
+          }}
+        >
           <Check size={24} color="#50C878" />
           <Text className="text-base font-semibold text-[#50C878]">
             Votes Submitted
@@ -109,7 +115,11 @@ export function VotingPhaseView({
           </Text>
           <Pressable
             onPress={handleEditVotes}
-            className="mt-2 flex-row items-center gap-2 rounded-lg border border-[#50C878]/30 px-4 py-2 active:bg-[#50C878]/10"
+            className="mt-2 flex-row items-center gap-2 rounded-lg border px-4 py-2"
+            style={({ pressed }) => [
+              { borderColor: "rgba(80,200,120,0.3)" },
+              pressed && { backgroundColor: "rgba(80,200,120,0.1)" },
+            ]}
           >
             <Edit3 size={14} color="#50C878" />
             <Text className="text-sm font-semibold text-[#50C878]">

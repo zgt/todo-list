@@ -29,9 +29,14 @@ export function PhaseProgressBar({ currentPhase }: PhaseProgressBarProps) {
                   isDone
                     ? "bg-[#50C878]"
                     : isActive
-                      ? "border-2 border-[#50C878] bg-[#50C878]/20"
+                      ? "border-2 border-[#50C878]"
                       : "border border-[#164B49] bg-[#0A1A1A]"
                 }`}
+                style={
+                  isActive && !isDone
+                    ? { backgroundColor: "rgba(80,200,120,0.2)" }
+                    : undefined
+                }
               >
                 {isDone ? (
                   <Check size={16} color="#0A1A1A" strokeWidth={3} />

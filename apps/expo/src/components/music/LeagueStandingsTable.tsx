@@ -58,8 +58,16 @@ export function LeagueStandingsTable({
           <View
             key={entry.user.id}
             className={`flex-row items-center px-4 py-3 ${
-              isCurrentUser ? "bg-[#50C878]/10" : ""
-            } ${index < standings.length - 1 ? "border-b border-[#164B49]/50" : ""}`}
+              index < standings.length - 1 ? "border-b" : ""
+            }`}
+            style={{
+              ...(isCurrentUser
+                ? { backgroundColor: "rgba(80,200,120,0.1)" }
+                : {}),
+              ...(index < standings.length - 1
+                ? { borderBottomColor: "rgba(22,75,73,0.5)" }
+                : {}),
+            }}
           >
             {/* Position */}
             <View className="w-8">

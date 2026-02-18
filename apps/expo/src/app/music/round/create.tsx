@@ -185,11 +185,16 @@ export default function CreateRound() {
                     <Pressable
                       key={preset.days}
                       onPress={() => setSubmissionDays(preset.days)}
-                      className={`rounded-full px-4 py-2 ${
+                      className={`rounded-full border px-4 py-2 ${
                         submissionDays === preset.days
-                          ? "border border-[#50C878] bg-[#50C878]/20"
-                          : "border border-[#164B49] bg-[#102A2A]"
+                          ? "border-[#50C878]"
+                          : "border-[#164B49] bg-[#102A2A]"
                       }`}
+                      style={
+                        submissionDays === preset.days
+                          ? { backgroundColor: "rgba(80,200,120,0.2)" }
+                          : undefined
+                      }
                     >
                       <Text
                         className={`text-sm font-medium ${
@@ -221,11 +226,16 @@ export default function CreateRound() {
                     <Pressable
                       key={preset.days}
                       onPress={() => setVotingGapDays(preset.days)}
-                      className={`rounded-full px-4 py-2 ${
+                      className={`rounded-full border px-4 py-2 ${
                         votingGapDays === preset.days
-                          ? "border border-[#50C878] bg-[#50C878]/20"
-                          : "border border-[#164B49] bg-[#102A2A]"
+                          ? "border-[#50C878]"
+                          : "border-[#164B49] bg-[#102A2A]"
                       }`}
+                      style={
+                        votingGapDays === preset.days
+                          ? { backgroundColor: "rgba(80,200,120,0.2)" }
+                          : undefined
+                      }
                     >
                       <Text
                         className={`text-sm font-medium ${
@@ -248,7 +258,10 @@ export default function CreateRound() {
               </View>
 
               {/* Summary */}
-              <View className="mb-6 rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 p-4">
+              <View
+                className="mb-6 rounded-xl border border-[#164B49] p-4"
+                style={{ backgroundColor: "rgba(10,26,26,0.6)" }}
+              >
                 <Text className="mb-2 text-sm font-bold text-[#DCE4E4]">
                   Summary
                 </Text>

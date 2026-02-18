@@ -47,19 +47,26 @@ export function ResultCard({
 
   return (
     <View
-      className={`rounded-xl border p-4 ${
+      className="rounded-xl border p-4"
+      style={
         isWinner
-          ? "border-[#FFD700]/50 bg-[#FFD700]/5"
-          : "border-[#164B49] bg-[#102A2A]"
-      }`}
+          ? {
+              borderColor: "rgba(255,215,0,0.5)",
+              backgroundColor: "rgba(255,215,0,0.05)",
+            }
+          : { borderColor: "#164B49", backgroundColor: "#102A2A" }
+      }
     >
       {/* Main row */}
       <View className="flex-row items-center gap-3">
         {/* Rank badge */}
         <View
-          className={`h-9 w-9 items-center justify-center rounded-full ${
-            isWinner ? "bg-[#FFD700]/20" : "bg-[#0A1A1A]"
-          }`}
+          className="h-9 w-9 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: isWinner
+              ? "rgba(255,215,0,0.2)"
+              : "#0A1A1A",
+          }}
         >
           {isWinner ? (
             <Trophy size={18} color="#FFD700" />
@@ -149,7 +156,8 @@ export function ResultCard({
                 .map((vote, idx) => (
                   <View
                     key={idx}
-                    className="flex-row items-center justify-between rounded-lg bg-[#0A1A1A]/60 px-3 py-2"
+                    className="flex-row items-center justify-between rounded-lg px-3 py-2"
+                    style={{ backgroundColor: "rgba(10,26,26,0.6)" }}
                   >
                     <View className="flex-row items-center gap-2">
                       {vote.voter?.image ? (
@@ -182,7 +190,8 @@ export function ResultCard({
               {comments.map((comment, idx) => (
                 <View
                   key={idx}
-                  className="flex-row gap-2 rounded-lg bg-[#0A1A1A]/60 px-3 py-2"
+                  className="flex-row gap-2 rounded-lg px-3 py-2"
+                  style={{ backgroundColor: "rgba(10,26,26,0.6)" }}
                 >
                   <MessageSquare size={12} color="#8FA8A8" className="mt-0.5" />
                   <View className="flex-1">

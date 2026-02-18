@@ -20,11 +20,15 @@ export function SubmissionListItem({
 
   return (
     <View
-      className={`rounded-lg border p-3 ${
+      className="rounded-lg border p-3"
+      style={
         sub.isOwn
-          ? "border-[#50C878]/50 bg-[#50C878]/10"
-          : "border-[#164B49] bg-[#102A2A]"
-      }`}
+          ? {
+              borderColor: "rgba(80,200,120,0.5)",
+              backgroundColor: "rgba(80,200,120,0.1)",
+            }
+          : { borderColor: "#164B49", backgroundColor: "#102A2A" }
+      }
     >
       <View className="flex-row items-center gap-3">
         {sub.albumArtUrl ? (
@@ -51,7 +55,8 @@ export function SubmissionListItem({
           <Pressable
             onPress={handleOpenSpotify}
             hitSlop={8}
-            className="rounded-md bg-[#1DB954]/20 px-2 py-1"
+            className="rounded-md px-2 py-1"
+            style={{ backgroundColor: "rgba(29,185,84,0.2)" }}
           >
             <View className="flex-row items-center gap-1">
               <ExternalLink size={10} color="#1DB954" />

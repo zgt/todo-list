@@ -129,7 +129,13 @@ export default function RoundDetails() {
               onPress={() =>
                 router.push(`/music/round/${id}/playlist` as never)
               }
-              className="mb-6 flex-row items-center justify-center gap-2 rounded-xl border border-[#1DB954]/30 bg-[#1DB954]/10 py-3 active:bg-[#1DB954]/20"
+              className="mb-6 flex-row items-center justify-center gap-2 rounded-xl border py-3"
+              style={({ pressed }) => ({
+                borderColor: "rgba(29,185,84,0.3)",
+                backgroundColor: pressed
+                  ? "rgba(29,185,84,0.2)"
+                  : "rgba(29,185,84,0.1)",
+              })}
             >
               <ListMusic size={18} color="#1DB954" />
               <Text className="font-semibold text-[#1DB954]">

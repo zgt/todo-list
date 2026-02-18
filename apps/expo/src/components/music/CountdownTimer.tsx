@@ -41,7 +41,10 @@ export function CountdownTimer({ deadline, label }: CountdownTimerProps) {
 
   if (time.total <= 0) {
     return (
-      <View className="flex-row items-center gap-2 rounded-lg bg-[#8FA8A8]/10 px-3 py-2">
+      <View
+        className="flex-row items-center gap-2 rounded-lg px-3 py-2"
+        style={{ backgroundColor: "rgba(143,168,168,0.1)" }}
+      >
         <Clock size={14} color="#8FA8A8" />
         <Text className="text-xs font-medium text-[#8FA8A8]">
           {label ? `${label}: ` : ""}Deadline passed
@@ -57,15 +60,16 @@ export function CountdownTimer({ deadline, label }: CountdownTimerProps) {
 
   const accentColor = isUrgent ? "#E57373" : isWarning ? "#FFD700" : "#50C878";
 
-  const bgClass = isUrgent
-    ? "bg-[#E57373]/10"
+  const bgStyle = isUrgent
+    ? { backgroundColor: "rgba(229,115,115,0.1)" as const }
     : isWarning
-      ? "bg-[#FFD700]/10"
-      : "bg-[#50C878]/10";
+      ? { backgroundColor: "rgba(255,215,0,0.1)" as const }
+      : { backgroundColor: "rgba(80,200,120,0.1)" as const };
 
   return (
     <View
-      className={`flex-row items-center gap-2 rounded-lg px-3 py-2 ${bgClass}`}
+      className="flex-row items-center gap-2 rounded-lg px-3 py-2"
+      style={bgStyle}
     >
       <Clock size={14} color={accentColor} />
       {label && <Text className="text-xs text-[#8FA8A8]">{label}</Text>}

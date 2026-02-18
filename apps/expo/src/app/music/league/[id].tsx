@@ -363,10 +363,16 @@ export default function LeagueDetails() {
                     <View
                       key={member.id}
                       className={`flex-row items-center gap-2 rounded-full px-3 py-1 ${
-                        member.userId === currentUserId
-                          ? "border border-[#50C878]/40 bg-[#50C878]/20"
-                          : "bg-[#164B49]"
+                        member.userId === currentUserId ? "border" : "bg-[#164B49]"
                       }`}
+                      style={
+                        member.userId === currentUserId
+                          ? {
+                              borderColor: "rgba(80,200,120,0.4)",
+                              backgroundColor: "rgba(80,200,120,0.2)",
+                            }
+                          : undefined
+                      }
                     >
                       <Text
                         className={`text-sm font-medium ${
