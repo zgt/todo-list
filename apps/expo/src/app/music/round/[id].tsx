@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,12 +18,16 @@ import {
   Check,
   ChevronRight,
   Clock,
+  Edit3,
   Link as LinkIcon,
   Music,
+  Send,
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { PhaseProgressBar } from "~/components/music/PhaseProgressBar";
+import { RemainingPointsBadge } from "~/components/music/RemainingPointsBadge";
+import { VoteCard } from "~/components/music/VoteCard";
 import { trpc } from "~/utils/api";
 
 const PHASE_LABELS: Record<string, string> = {
@@ -49,6 +54,13 @@ export default function RoundDetails() {
   const queryClient = useQueryClient();
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [showPlaylistInput, setShowPlaylistInput] = useState(false);
+
+  // Voting state
+  const [voteAllocations, setVoteAllocations] = useState<
+    Record<string, number>
+  >({});
+  const [voteComments, setVoteComments] = useState<Record<string, string>>({});
+  const [hasSubmittedVotes, setHasSubmittedVotes] = useState(false);
 
   const { data: round, isLoading } = useQuery(
     trpc.musicLeague.getRoundById.queryOptions(
@@ -92,6 +104,39 @@ export default function RoundDetails() {
     }),
   );
 
+  const submitVotesMutation = useMutation(
+    trpc.musicLeague.submitVotes.mutationOptions({
+      onSuccess: async () => {
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+        await queryClient.invalidateQueries(
+          trpc.musicLeague.getRoundById.queryFilter(),
+        );
+        setHasSubmittedVotes(true);
+        Alert.alert("Votes submitted!", "Your votes have been recorded.");
+      },
+      onError: (error) => {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert("Failed to submit votes", error.message);
+      },
+    }),
+  );
+
+  const handlePointsChange = useCallback(
+    (submissionId: string, points: number) => {
+      setVoteAllocations((prev) => ({ ...prev, [submissionId]: points }));
+    },
+    [],
+  );
+
+  const handleCommentChange = useCallback(
+    (submissionId: string, comment: string) => {
+      setVoteComments((prev) => ({ ...prev, [submissionId]: comment }));
+    },
+    [],
+  );
+
   if (isLoading || !round) {
     return (
       <GradientBackground>
@@ -106,6 +151,7 @@ export default function RoundDetails() {
 
   const { status, submissions } = round;
   const isSubmissionPhase = status === "SUBMISSION";
+  const isVotingPhase = status === "VOTING";
   const isResultsPhase = status === "RESULTS" || status === "COMPLETED";
   const isAdmin = round.userRole === "OWNER" || round.userRole === "ADMIN";
   const canAdvance = isAdmin && status !== "COMPLETED";
@@ -113,6 +159,44 @@ export default function RoundDetails() {
   const mySubmissions = submissions.filter((s: { isOwn: boolean }) => s.isOwn);
   const maxSongs = round.songsPerRound;
   const canSubmitMore = mySubmissions.length < maxSongs;
+
+  // Voting calculations
+  const votableSubmissions = submissions.filter(
+    (s: { isOwn: boolean }) => !s.isOwn,
+  );
+  const totalBudget = round.upvotePointsPerRound;
+  const usedPoints = Object.values(voteAllocations).reduce(
+    (sum, pts) => sum + pts,
+    0,
+  );
+  const remainingPoints = totalBudget - usedPoints;
+  const showVotingUI = isVotingPhase && !hasSubmittedVotes;
+
+  const handleSubmitVotes = () => {
+    const votes = Object.entries(voteAllocations)
+      .filter(([, points]) => points > 0)
+      .map(([submissionId, points]) => ({ submissionId, points }));
+
+    const comments = Object.entries(voteComments)
+      .filter(([, text]) => text.trim().length > 0)
+      .map(([submissionId, text]) => ({ submissionId, text: text.trim() }));
+
+    if (votes.length === 0) {
+      Alert.alert(
+        "No votes",
+        "Please allocate at least some points before submitting.",
+      );
+      return;
+    }
+
+    submitVotesMutation.mutate({ roundId: id, votes, comments });
+  };
+
+  const handleEditVotes = () => {
+    setHasSubmittedVotes(false);
+    setVoteAllocations({});
+    setVoteComments({});
+  };
 
   const handleAdvancePhase = () => {
     const nextPhase = PHASE_LABELS[status] ?? "next phase";
@@ -138,7 +222,7 @@ export default function RoundDetails() {
     setPlaylistUrlMutation.mutate({ roundId: id, playlistUrl: url });
   };
 
-  const renderSubmission = useCallback(({ item: sub, index }: { item: SubmissionItem; index: number }) => (
+  const renderSubmission = ({ item: sub, index }: { item: SubmissionItem; index: number }) => (
     <View
       className={`rounded-lg border p-3 ${
         sub.isOwn
@@ -196,7 +280,29 @@ export default function RoundDetails() {
         )}
       </View>
     </View>
-  ), [isResultsPhase]);
+  );
+
+  const renderVoteCard = ({ item: sub }: { item: SubmissionItem }) => (
+    <VoteCard
+      submissionId={sub.id}
+      trackName={sub.trackName}
+      artistName={sub.artistName}
+      albumName={sub.albumName}
+      albumArtUrl={sub.albumArtUrl}
+      points={voteAllocations[sub.id] ?? 0}
+      maxPoints={(voteAllocations[sub.id] ?? 0) + remainingPoints}
+      comment={voteComments[sub.id] ?? ""}
+      onPointsChange={handlePointsChange}
+      onCommentChange={handleCommentChange}
+    />
+  );
+
+  // Determine FlatList data and renderer based on phase
+  const listData = showVotingUI
+    ? (votableSubmissions as SubmissionItem[])
+    : (submissions as SubmissionItem[]);
+
+  const listRenderItem = showVotingUI ? renderVoteCard : renderSubmission;
 
   return (
     <GradientBackground>
@@ -223,9 +329,9 @@ export default function RoundDetails() {
         </View>
 
         <FlatList
-          data={submissions as SubmissionItem[]}
+          data={listData}
           keyExtractor={(item) => item.id}
-          renderItem={renderSubmission}
+          renderItem={listRenderItem}
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
           ListHeaderComponent={
             <View>
@@ -462,17 +568,110 @@ export default function RoundDetails() {
                 </View>
               )}
 
-              {/* Submissions Header */}
-              <Text className="mb-4 text-xl font-bold text-[#DCE4E4]">
-                {isResultsPhase ? "Results" : "Submissions"} ({submissions.length})
-              </Text>
+              {/* Voting Phase - Active Voting UI */}
+              {showVotingUI && (
+                <View className="mb-4 gap-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xl font-bold text-[#DCE4E4]">
+                      Cast Your Votes
+                    </Text>
+                    <RemainingPointsBadge
+                      remaining={remainingPoints}
+                      total={totalBudget}
+                    />
+                  </View>
+                  <Text className="text-sm text-[#8FA8A8]">
+                    Distribute {totalBudget} points across submissions. Tap + to
+                    add points.
+                  </Text>
 
-              {submissions.length === 0 && (
-                <Text className="py-8 text-center italic text-[#8FA8A8]">
-                  No submissions yet. Be the first!
-                </Text>
+                  {votableSubmissions.length === 0 && (
+                    <Text className="py-8 text-center italic text-[#8FA8A8]">
+                      No other submissions to vote on yet.
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              {/* Voting Phase - Already Submitted */}
+              {isVotingPhase && hasSubmittedVotes && (
+                <View className="mb-4 gap-3">
+                  <View className="items-center gap-2 rounded-xl border border-[#50C878]/30 bg-[#50C878]/10 p-4">
+                    <Check size={24} color="#50C878" />
+                    <Text className="text-base font-semibold text-[#50C878]">
+                      Votes Submitted
+                    </Text>
+                    <Text className="text-center text-sm text-[#8FA8A8]">
+                      Your votes have been recorded. You can edit them before
+                      voting closes.
+                    </Text>
+                    <Pressable
+                      onPress={handleEditVotes}
+                      className="mt-2 flex-row items-center gap-2 rounded-lg border border-[#50C878]/30 px-4 py-2 active:bg-[#50C878]/10"
+                    >
+                      <Edit3 size={14} color="#50C878" />
+                      <Text className="text-sm font-semibold text-[#50C878]">
+                        Edit Votes
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <Text className="text-xl font-bold text-[#DCE4E4]">
+                    Submissions ({submissions.length})
+                  </Text>
+                </View>
+              )}
+
+              {/* Non-voting section headers */}
+              {!isVotingPhase && (
+                <>
+                  <Text className="mb-4 text-xl font-bold text-[#DCE4E4]">
+                    {isResultsPhase ? "Results" : "Submissions"} (
+                    {submissions.length})
+                  </Text>
+
+                  {submissions.length === 0 && (
+                    <Text className="py-8 text-center italic text-[#8FA8A8]">
+                      No submissions yet. Be the first!
+                    </Text>
+                  )}
+                </>
               )}
             </View>
+          }
+          ListFooterComponent={
+            showVotingUI && votableSubmissions.length > 0 ? (
+              <View className="mt-4 gap-3 pb-4">
+                <View className="flex-row items-center justify-center">
+                  <RemainingPointsBadge
+                    remaining={remainingPoints}
+                    total={totalBudget}
+                  />
+                </View>
+
+                <Pressable
+                  onPress={handleSubmitVotes}
+                  disabled={submitVotesMutation.isPending || usedPoints === 0}
+                  className="flex-row items-center justify-center gap-2 rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
+                  style={
+                    submitVotesMutation.isPending || usedPoints === 0
+                      ? { opacity: 0.5 }
+                      : undefined
+                  }
+                >
+                  {submitVotesMutation.isPending ? (
+                    <ActivityIndicator color="#0A1A1A" size="small" />
+                  ) : (
+                    <>
+                      <Send size={18} color="#0A1A1A" />
+                      <Text className="text-base font-bold text-[#0A1A1A]">
+                        Submit Votes ({usedPoints}/{totalBudget} pts)
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            ) : undefined
           }
         />
       </SafeAreaView>
