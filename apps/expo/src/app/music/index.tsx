@@ -139,14 +139,14 @@ export default function MusicLeagueDashboard() {
             </View>
           </ScrollView>
         ) : (
-          <>
+          <View style={{ flex: 1 }}>
           <View style={{ backgroundColor: "red", padding: 8, margin: 8 }}>
             <Text style={{ color: "white", fontWeight: "bold" }}>
               DEBUG: {leagues?.length ?? 0} leagues found. isLoading={String(isLoading)}
             </Text>
           </View>
           <ScrollView
-            style={{ flex: 1, borderWidth: 2, borderColor: "yellow" }}
+            style={{ flex: 1 }}
             contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
             refreshControl={
               <RefreshControl
@@ -205,7 +205,7 @@ export default function MusicLeagueDashboard() {
               </Pressable>
             ))}
           </ScrollView>
-          </>
+          </View>
         )}
       </SafeAreaView>
     </GradientBackground>
