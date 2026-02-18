@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -41,7 +41,8 @@ import {
 export default function SettingsScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [permissionStatus, setPermissionStatus] = useState<string>("undetermined");
+  const [permissionStatus, setPermissionStatus] =
+    useState<string>("undetermined");
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [offsetMinutes, setOffsetMinutes] = useState(15);
 
@@ -232,7 +233,8 @@ function TestNotificationsSection() {
 
   const testPushGeneric = useMutation(
     trpc.notification.sendTestPush.mutationOptions({
-      onSuccess: () => Alert.alert("Sent", "Server push sent — check your device."),
+      onSuccess: () =>
+        Alert.alert("Sent", "Server push sent — check your device."),
       onError: (e) => Alert.alert("Failed", e.message),
     }),
   );
@@ -288,7 +290,10 @@ function TestNotificationsSection() {
         fiveSecondsFromNow,
         0,
       );
-      Alert.alert("Scheduled", "Task reminder will fire in ~5 seconds. Background the app to see it!");
+      Alert.alert(
+        "Scheduled",
+        "Task reminder will fire in ~5 seconds. Background the app to see it!",
+      );
     } catch (e) {
       Alert.alert("Failed", e instanceof Error ? e.message : "Unknown error");
     } finally {

@@ -1,3 +1,4 @@
+import type { Href } from "expo-router";
 import { useEffect } from "react";
 import { Alert, Image, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
@@ -133,7 +134,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
               </Pressable>
             </Link>
 
-            <Link href="/settings" asChild>
+            <Link href={"/settings" as Href} asChild>
               <Pressable
                 onPress={onClose}
                 className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"

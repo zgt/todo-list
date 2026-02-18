@@ -1,5 +1,6 @@
 import Expo from "expo-server-sdk";
-import { eq, inArray } from "@acme/db";
+
+import { inArray } from "@acme/db";
 import { db } from "@acme/db/client";
 import { PushToken } from "@acme/db/schema";
 

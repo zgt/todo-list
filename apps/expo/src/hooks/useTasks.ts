@@ -6,13 +6,13 @@ import { db } from "~/db/client";
 import { localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
-import { generateUUID } from "~/utils/uuid";
 import { getTaskNotificationPrefs } from "~/utils/notification-prefs";
 import {
   cancelTaskReminder,
   rescheduleAllReminders,
   scheduleTaskReminder,
 } from "~/utils/notifications";
+import { generateUUID } from "~/utils/uuid";
 
 export interface UseTasksResult {
   tasks: LocalTask[];

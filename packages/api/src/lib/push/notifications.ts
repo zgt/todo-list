@@ -13,20 +13,6 @@ function formatDate(date: Date): string {
   });
 }
 
-async function getLeagueMemberIds(leagueId: string): Promise<string[]> {
-  const members = await db.query.LeagueMember.findMany({
-    where: eq(LeagueMember.leagueId, leagueId),
-    with: { user: true },
-  });
-  return members
-    .filter((m) => {
-      const prefs = m.user.notificationPreferences as Record<string, boolean> | null;
-      // Default to opted-in if no preferences set
-      return prefs === null || prefs === undefined;
-    })
-    .map((m) => m.userId);
-}
-
 async function getLeagueMemberIdsWithPref(
   leagueId: string,
   prefKey: string,
@@ -37,9 +23,12 @@ async function getLeagueMemberIdsWithPref(
   });
   return members
     .filter((m) => {
-      const prefs = m.user.notificationPreferences as Record<string, boolean> | null;
+      const prefs = m.user.notificationPreferences as Record<
+        string,
+        boolean
+      > | null;
       // Opted-in by default; only skip if explicitly false
-      return !prefs || prefs[prefKey] !== false;
+      return prefs?.[prefKey] !== false;
     })
     .map((m) => m.userId);
 }
@@ -154,9 +143,7 @@ export async function pushNotifySubmissionReminder(
 }
 
 /** Push: Voting deadline reminder (only to members who haven't voted) */
-export async function pushNotifyVotingReminder(
-  roundId: string,
-): Promise<void> {
+export async function pushNotifyVotingReminder(roundId: string): Promise<void> {
   const round = await db.query.Round.findFirst({
     where: eq(Round.id, roundId),
     with: {

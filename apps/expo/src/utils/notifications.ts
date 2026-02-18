@@ -1,6 +1,6 @@
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -22,11 +22,14 @@ export type NotificationData = TaskNotificationData | LeagueNotificationData;
 /** Configure how notifications are displayed when the app is foregrounded */
 export function configureNotificationHandler() {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
+    handleNotification: () =>
+      Promise.resolve({
+        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
   });
 }
 
@@ -34,7 +37,7 @@ export function configureNotificationHandler() {
 
 export async function requestPermissions(): Promise<boolean> {
   const { status: existing } = await Notifications.getPermissionsAsync();
-  if (existing === "granted") return true;
+  if (existing === Notifications.PermissionStatus.GRANTED) return true;
 
   const { status } = await Notifications.requestPermissionsAsync({
     ios: {
@@ -44,7 +47,7 @@ export async function requestPermissions(): Promise<boolean> {
     },
   });
 
-  return status === "granted";
+  return status === Notifications.PermissionStatus.GRANTED;
 }
 
 export async function getPermissionStatus(): Promise<string> {
@@ -56,9 +59,11 @@ export async function getPermissionStatus(): Promise<string> {
 
 export async function getExpoPushToken(): Promise<string | null> {
   try {
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId;
+    const expoEasConfig = Constants.expoConfig?.extra?.eas as
+      | { projectId?: string }
+      | undefined;
+    const easConfig = Constants.easConfig as { projectId?: string } | undefined;
+    const projectId = expoEasConfig?.projectId ?? easConfig?.projectId;
 
     if (!projectId) {
       console.warn("[Notifications] No EAS project ID found");
@@ -146,13 +151,13 @@ export async function cancelAllTaskReminders(): Promise<void> {
  * Call on app launch as a safety net.
  */
 export async function rescheduleAllReminders(
-  tasks: Array<{
+  tasks: {
     id: string;
     title: string;
     dueDate: Date | null;
     completed: boolean;
     deletedAt: Date | null;
-  }>,
+  }[],
   offsetMinutes = 0,
 ): Promise<void> {
   // Cancel all existing task reminders
@@ -164,9 +169,11 @@ export async function rescheduleAllReminders(
   );
 
   await Promise.all(
-    activeTasks.map((t) =>
-      scheduleTaskReminder(t.id, t.title, t.dueDate!, offsetMinutes),
-    ),
+    activeTasks
+      .filter((t): t is typeof t & { dueDate: Date } => t.dueDate !== null)
+      .map((t) =>
+        scheduleTaskReminder(t.id, t.title, t.dueDate, offsetMinutes),
+      ),
   );
 }
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 
-import { getExpoPushToken } from "~/utils/notifications";
 import { vanillaTrpc } from "~/utils/api";
+import { getExpoPushToken } from "~/utils/notifications";
 
 /**
  * Registers the device's Expo push token with the server on mount.

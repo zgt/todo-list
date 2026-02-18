@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 
 import type { NotificationData } from "~/utils/notifications";
 import {
@@ -16,8 +16,12 @@ import {
  */
 export function useNotifications() {
   const router = useRouter();
-  const responseListener = useRef<Notifications.EventSubscription>();
-  const notificationListener = useRef<Notifications.EventSubscription>();
+  const responseListener = useRef<Notifications.EventSubscription | undefined>(
+    undefined,
+  );
+  const notificationListener = useRef<
+    Notifications.EventSubscription | undefined
+  >(undefined);
 
   useEffect(() => {
     // Configure foreground behavior
@@ -38,30 +42,23 @@ export function useNotifications() {
     // Handle user tapping a notification
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content
-          .data as NotificationData;
+        const data = response.notification.request.content.data as unknown as
+          | NotificationData
+          | undefined;
 
         if (data?.type === "task-reminder" && "taskId" in data) {
           // Navigate to task list — could add a task detail route later
           router.push("/");
-        } else if (data?.type === "league" && "roundId" in data && data.roundId) {
+        } else if (data?.type === "league" && data.roundId) {
           router.push(`/music/round/${data.roundId}`);
-        } else if (data?.type === "league" && "leagueId" in data && data.leagueId) {
+        } else if (data?.type === "league" && data.leagueId) {
           router.push(`/music/league/${data.leagueId}`);
         }
       });
 
     return () => {
-      if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(
-          notificationListener.current,
-        );
-      }
-      if (responseListener.current) {
-        Notifications.removeNotificationSubscription(
-          responseListener.current,
-        );
-      }
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
     };
   }, [router]);
 }

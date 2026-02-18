@@ -85,10 +85,7 @@ export const notificationRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const messages: Record<
-        string,
-        { title: string; body: string; data: Record<string, unknown> }
-      > = {
+      const messages = {
         generic: {
           title: "🔔 Test Notification",
           body: "If you see this, push notifications are working!",
@@ -111,7 +108,7 @@ export const notificationRouter = {
         },
       };
 
-      const msg = messages[input.variant] ?? messages.generic!;
+      const msg = messages[input.variant];
       await sendPushToUser(ctx.session.user.id, msg);
 
       return { success: true };
