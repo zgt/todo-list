@@ -104,7 +104,8 @@ export default function MusicLeagueDashboard() {
           </View>
         ) : !leagues || leagues.length === 0 ? (
           <ScrollView
-            contentContainerClassName="flex-1 justify-center px-8"
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flex: 1, justifyContent: "center", paddingHorizontal: 32 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -136,8 +137,8 @@ export default function MusicLeagueDashboard() {
           </ScrollView>
         ) : (
           <ScrollView
-            className="flex-1"
-            contentContainerClassName="p-4 gap-3 pb-8"
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
