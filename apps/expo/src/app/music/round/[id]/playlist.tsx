@@ -28,7 +28,7 @@ interface Track {
 }
 
 export default function PlaylistView() {
-  const { roundId } = useLocalSearchParams<{ roundId: string }>();
+  const { id: roundId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 

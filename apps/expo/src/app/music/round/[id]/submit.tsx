@@ -32,7 +32,7 @@ interface SpotifyTrack {
 }
 
 export default function SubmitSong() {
-  const { roundId } = useLocalSearchParams<{ roundId: string }>();
+  const { id: roundId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
 
