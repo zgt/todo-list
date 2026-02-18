@@ -278,7 +278,7 @@ export function TaskCard({
             <PrioritySelector
               value={priority}
               onChange={onChangePriority}
-              trigger={<PriorityBadge priority={priority} />}
+              trigger={<PriorityBadge priority={priority} size="sm" showLabel={false} />}
             />
             <CategoryWheelPicker
               selectedCategoryId={categoryId}
@@ -297,7 +297,7 @@ export function TaskCard({
                 onChangePriority(p);
                 onSave({ priority: p });
               }}
-              trigger={<PriorityBadge priority={priority} />}
+              trigger={<PriorityBadge priority={priority} size="sm" showLabel={false} />}
             />
             {task.category && (
               <View
