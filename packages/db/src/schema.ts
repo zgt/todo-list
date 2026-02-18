@@ -386,6 +386,44 @@ export const Comment = pgTable(
   ],
 );
 
+// Push Notification Tokens
+export const PushToken = pgTable(
+  "push_token",
+  (t) => ({
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: t
+      .text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    token: t.text().notNull(),
+    platform: t.text().notNull(), // 'ios' | 'android'
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: t
+      .timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date())
+      .notNull(),
+  }),
+  (table) => [
+    index("push_token_user_id_idx").on(table.userId),
+    index("push_token_token_unique").on(table.token),
+  ],
+);
+
+export const pushTokenRelations = relations(PushToken, ({ one }) => ({
+  user: one(user, {
+    fields: [PushToken.userId],
+    references: [user.id],
+  }),
+}));
+
 export const ThemeTemplate = pgTable("theme_template", (t) => ({
   id: t
     .text()

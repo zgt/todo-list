@@ -10,6 +10,10 @@
     "./notifications": {
       "types": "./dist/lib/email/notifications.d.ts",
       "default": "./src/lib/email/notifications.ts"
+    },
+    "./push-notifications": {
+      "types": "./dist/lib/push/notifications.d.ts",
+      "default": "./src/lib/push/notifications.ts"
     }
   },
   "license": "MIT",
@@ -26,6 +30,7 @@
     "@acme/db": "workspace:*",
     "@acme/validators": "workspace:*",
     "@trpc/server": "catalog:",
+    "expo-server-sdk": "^5.0.0",
     "resend": "^6.9.2",
     "superjson": "2.2.6",
     "zod": "catalog:"

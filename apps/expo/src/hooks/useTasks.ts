@@ -7,6 +7,11 @@ import { localTask } from "~/db/schema";
 import { syncManager } from "~/sync/manager";
 import { authClient } from "~/utils/auth";
 import { generateUUID } from "~/utils/uuid";
+import {
+  cancelTaskReminder,
+  rescheduleAllReminders,
+  scheduleTaskReminder,
+} from "~/utils/notifications";
 
 export interface UseTasksResult {
   tasks: LocalTask[];
@@ -22,12 +27,18 @@ export interface UseTasksResult {
 export interface CreateTaskData {
   title: string;
   description?: string;
+  dueDate?: Date;
+  priority?: "low" | "medium" | "high";
+  categoryId?: string;
 }
 
 export interface UpdateTaskData {
   title?: string;
   description?: string;
   completed?: boolean;
+  dueDate?: Date | null;
+  priority?: "low" | "medium" | "high" | null;
+  categoryId?: string | null;
 }
 
 export function useTasks(
@@ -137,10 +148,10 @@ export function useTasks(
       lastSyncedAt: null,
       localVersion: 1,
       serverVersion: 0,
-      categoryId: null,
-      dueDate: null,
+      categoryId: data.categoryId ?? null,
+      dueDate: data.dueDate ?? null,
       orderIndex: 0,
-      priority: null,
+      priority: data.priority ?? null,
     };
 
     // Optimistic update
@@ -152,6 +163,11 @@ export function useTasks(
 
       // Queue for sync
       await syncManager.queueOperation("task", taskId, "create", newTask);
+
+      // Schedule notification if task has a due date
+      if (newTask.dueDate) {
+        void scheduleTaskReminder(taskId, newTask.title, newTask.dueDate);
+      }
 
       return newTask;
     } catch (err) {
@@ -190,6 +206,21 @@ export function useTasks(
       await syncManager.queueOperation("task", id, "update", updates);
 
       const updatedTask = { ...existing, ...updates };
+
+      // Update notification: reschedule if due date changed, cancel if completed
+      if (data.completed) {
+        void cancelTaskReminder(id);
+      } else {
+        const effectiveDueDate =
+          data.dueDate !== undefined ? data.dueDate : existing.dueDate;
+        const effectiveTitle = data.title ?? existing.title;
+        if (effectiveDueDate) {
+          void scheduleTaskReminder(id, effectiveTitle, effectiveDueDate);
+        } else {
+          void cancelTaskReminder(id);
+        }
+      }
+
       return updatedTask;
     } catch (err) {
       // Rollback optimistic update
@@ -219,6 +250,9 @@ export function useTasks(
           localVersion: existing.localVersion + 1,
         })
         .where(eq(localTask.id, id));
+
+      // Cancel any scheduled notification
+      void cancelTaskReminder(id);
 
       // Queue for sync with version info for conflict detection
       await syncManager.queueOperation("task", id, "delete", {
@@ -262,6 +296,13 @@ export function useTasks(
       // Queue for sync
       await syncManager.queueOperation("task", id, "update", updates);
 
+      // Cancel notification when completing, reschedule when uncompleting
+      if (completed) {
+        void cancelTaskReminder(id);
+      } else if (existing.dueDate) {
+        void scheduleTaskReminder(id, existing.title, existing.dueDate);
+      }
+
       const updatedTask = { ...existing, ...updates };
       return updatedTask;
     } catch (err) {
@@ -276,6 +317,13 @@ export function useTasks(
     await syncManager.fullSync();
     await loadTasks();
   };
+
+  // Reschedule all notifications when tasks load (safety net on app launch)
+  useEffect(() => {
+    if (tasks.length > 0) {
+      void rescheduleAllReminders(tasks);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- only on mount
 
   return {
     tasks,

@@ -18,6 +18,11 @@ import {
   notifyRoundStarted,
   notifyVotingOpen,
 } from "../../lib/email/notifications";
+import {
+  pushNotifyResultsAvailable,
+  pushNotifyRoundStarted,
+  pushNotifyVotingOpen,
+} from "../../lib/push/notifications";
 import { searchTracks } from "../../lib/spotify";
 import { protectedProcedure, publicProcedure } from "../../trpc";
 
@@ -368,6 +373,7 @@ export const musicLeagueRouter = {
       // Send round started notifications (fire and forget)
       if (round?.id) {
         void notifyRoundStarted(round.id);
+        void pushNotifyRoundStarted(round.id);
       }
 
       return round;
@@ -864,8 +870,10 @@ export const musicLeagueRouter = {
       // Send notifications based on phase transition (fire and forget)
       if (nextStatus === "VOTING") {
         void notifyVotingOpen(input.roundId);
+        void pushNotifyVotingOpen(input.roundId);
       } else if (nextStatus === "RESULTS") {
         void notifyResultsAvailable(input.roundId);
+        void pushNotifyResultsAvailable(input.roundId);
       }
 
       return { status: nextStatus };

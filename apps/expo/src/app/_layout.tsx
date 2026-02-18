@@ -8,6 +8,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthGuard } from "~/components/AuthGuard";
 import { DotBackground } from "~/components/DotBackground";
+import { useNotifications } from "~/hooks/useNotifications";
+import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { queryClient } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
@@ -35,6 +37,12 @@ if (SENTRY_DSN) {
 function RootLayout() {
   const colorScheme = useColorScheme();
   const { data: session, isPending, error } = authClient.useSession();
+
+  // Set up notification handlers and permissions
+  useNotifications();
+
+  // Register push token with server when authenticated
+  usePushTokenRegistration();
 
   if (isPending) {
     return <DotBackground trigger={1} />;

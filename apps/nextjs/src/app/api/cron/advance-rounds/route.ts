@@ -5,6 +5,12 @@ import {
   notifyVotingOpen,
   sendSubmissionReminders,
 } from "@acme/api/notifications";
+import {
+  pushNotifyResultsAvailable,
+  pushNotifySubmissionReminder,
+  pushNotifyVotingOpen,
+  pushNotifyVotingReminder,
+} from "@acme/api/push-notifications";
 import { and, eq, lt } from "@acme/db";
 import { db } from "@acme/db/client";
 import { Round } from "@acme/db/schema";
@@ -59,6 +65,7 @@ export async function GET(request: Request) {
       .where(eq(Round.id, round.id));
     summary.listeningToVoting.push(round.id);
     await notifyVotingOpen(round.id);
+    void pushNotifyVotingOpen(round.id);
   }
 
   // VOTING where votingDeadline < now → advance to RESULTS (calculate point totals)
@@ -73,6 +80,7 @@ export async function GET(request: Request) {
       .where(eq(Round.id, round.id));
     summary.votingToResults.push(round.id);
     await notifyResultsAvailable(round.id);
+    void pushNotifyResultsAvailable(round.id);
   }
 
   // Submission reminders: rounds where submissionDeadline is within 24h
@@ -84,9 +92,22 @@ export async function GET(request: Request) {
     ),
   });
 
+  // Voting reminders: rounds where votingDeadline is within 24h
+  const upcomingVotingRounds = await db.query.Round.findMany({
+    where: and(
+      eq(Round.status, "VOTING"),
+      lt(Round.votingDeadline, twentyFourHoursFromNow),
+    ),
+  });
+
   for (const round of upcomingSubmissionRounds) {
     await sendSubmissionReminders(round.id);
+    void pushNotifySubmissionReminder(round.id);
     summary.submissionReminders.push(round.id);
+  }
+
+  for (const round of upcomingVotingRounds) {
+    void pushNotifyVotingReminder(round.id);
   }
 
   return NextResponse.json({
