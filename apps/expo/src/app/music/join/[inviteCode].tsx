@@ -1,6 +1,6 @@
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Users } from "lucide-react-native";
 
@@ -70,11 +70,9 @@ export default function JoinLeague() {
           <Stack.Screen options={{ headerShown: false }} />
 
           <View className="flex-row items-center px-4 py-4">
-            <Link href="/music" asChild>
-              <Pressable className="rounded-full bg-[#164B49] p-2">
-                <ArrowLeft color="#DCE4E4" size={24} />
-              </Pressable>
-            </Link>
+            <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+              <ArrowLeft color="#DCE4E4" size={24} />
+            </Pressable>
           </View>
 
           <View className="flex-1 items-center justify-center px-8">
@@ -85,13 +83,11 @@ export default function JoinLeague() {
               The invite code "{inviteCode}" doesn't match any league. Check the
               code and try again.
             </Text>
-            <Link href="/music" asChild>
-              <Pressable className="rounded-xl bg-[#164B49] px-6 py-3 active:bg-[#21716C]">
-                <Text className="font-semibold text-[#DCE4E4]">
-                  Back to Dashboard
-                </Text>
-              </Pressable>
-            </Link>
+            <Pressable onPress={() => router.back()} className="rounded-xl bg-[#164B49] px-6 py-3 active:bg-[#21716C]">
+              <Text className="font-semibold text-[#DCE4E4]">
+                Back to Dashboard
+              </Text>
+            </Pressable>
           </View>
         </SafeAreaView>
       </GradientBackground>
@@ -105,11 +101,9 @@ export default function JoinLeague() {
 
         {/* Header */}
         <View className="flex-row items-center px-4 py-4">
-          <Link href="/music" asChild>
-            <Pressable className="rounded-full bg-[#164B49] p-2">
-              <ArrowLeft color="#DCE4E4" size={24} />
-            </Pressable>
-          </Link>
+          <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+            <ArrowLeft color="#DCE4E4" size={24} />
+          </Pressable>
         </View>
 
         {/* League Preview */}

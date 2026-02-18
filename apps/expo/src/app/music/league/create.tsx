@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react-native";
 
@@ -103,11 +103,9 @@ export default function CreateLeague() {
 
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-4">
-          <Link href="/music" asChild>
-            <Pressable className="rounded-full bg-[#164B49] p-2">
-              <ArrowLeft color="#DCE4E4" size={24} />
-            </Pressable>
-          </Link>
+          <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+            <ArrowLeft color="#DCE4E4" size={24} />
+          </Pressable>
           <Text className="text-xl font-bold text-[#DCE4E4]">
             Create League
           </Text>

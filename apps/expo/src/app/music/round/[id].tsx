@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Clock } from "lucide-react-native";
 
@@ -9,6 +9,7 @@ import { trpc } from "~/utils/api";
 
 export default function RoundDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { data: round, isLoading } = useQuery(
     trpc.musicLeague.getRoundById.queryOptions(
       { roundId: id },
@@ -39,11 +40,9 @@ export default function RoundDetails() {
 
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-4">
-          <Link href={`/music/league/${round.leagueId}` as never} asChild>
-            <Pressable className="rounded-full bg-[#164B49] p-2">
-              <ArrowLeft color="#DCE4E4" size={24} />
-            </Pressable>
-          </Link>
+          <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+            <ArrowLeft color="#DCE4E4" size={24} />
+          </Pressable>
           <View>
             <Text className="text-center text-xl font-bold text-[#DCE4E4]">
               Round {round.roundNumber}
