@@ -26,6 +26,7 @@ export default function MusicLeagueDashboard() {
   const {
     data: leagues,
     isLoading,
+    error,
     refetch,
   } = useQuery(trpc.musicLeague.getAllLeagues.queryOptions());
 
@@ -153,38 +154,46 @@ export default function MusicLeagueDashboard() {
                 href={`/music/league/${item.id}` as never}
                 asChild
               >
-                <Pressable className="rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]/60">
-                  <View className="flex-row items-center justify-between">
-                    <Text className="flex-1 text-xl font-semibold text-[#DCE4E4]">
+                <Pressable
+                  style={{
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: "#164B49",
+                    backgroundColor: "#102A2A",
+                    padding: 16,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <Text style={{ flex: 1, fontSize: 18, fontWeight: "600", color: "#DCE4E4" }}>
                       {item.name}
                     </Text>
-                    <View className="ml-2 rounded-full bg-[#50C878]/15 px-2.5 py-1">
-                      <Text className="text-xs font-medium text-[#50C878]">
+                    <View style={{ marginLeft: 8, borderRadius: 9999, backgroundColor: "rgba(80,200,120,0.15)", paddingHorizontal: 10, paddingVertical: 4 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "500", color: "#50C878" }}>
                         {item.memberCount} members
                       </Text>
                     </View>
                   </View>
 
                   {item.currentRound ? (
-                    <View className="mt-3 rounded-lg bg-[#0A1A1A]/60 p-3">
-                      <View className="flex-row items-center justify-between">
-                        <View className="flex-1">
-                          <Text className="mb-0.5 text-xs font-bold text-[#50C878] uppercase">
+                    <View style={{ marginTop: 12, borderRadius: 8, backgroundColor: "rgba(10,26,26,0.6)", padding: 12 }}>
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ marginBottom: 2, fontSize: 11, fontWeight: "700", color: "#50C878", textTransform: "uppercase" }}>
                             Current Round
                           </Text>
-                          <Text className="text-base font-medium text-[#DCE4E4]">
+                          <Text style={{ fontSize: 15, fontWeight: "500", color: "#DCE4E4" }}>
                             {item.currentRound.themeName}
                           </Text>
                         </View>
-                        <View className="ml-2 rounded-md bg-[#164B49] px-2 py-1">
-                          <Text className="text-xs font-medium text-[#8FA8A8]">
+                        <View style={{ marginLeft: 8, borderRadius: 6, backgroundColor: "#164B49", paddingHorizontal: 8, paddingVertical: 4 }}>
+                          <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>
                             {item.currentRound.status}
                           </Text>
                         </View>
                       </View>
                     </View>
                   ) : (
-                    <Text className="mt-2 text-sm text-[#8FA8A8] italic">
+                    <Text style={{ marginTop: 8, fontSize: 13, color: "#8FA8A8", fontStyle: "italic" }}>
                       No active rounds
                     </Text>
                   )}
