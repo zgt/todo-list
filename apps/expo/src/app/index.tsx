@@ -42,8 +42,8 @@ import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import type { PriorityLevel } from "../components/priority-config";
-import { CategoryFilter } from "~/components/category-filter";
-import { useCategoryFilter } from "~/components/category-filter-context";
+import { CategoryFilter } from "./_components/category-filter";
+import { useCategoryFilter } from "./_components/category-filter-context";
 import { PriorityFilter } from "~/components/priority-filter";
 
 const DUMMY_TASK_ID = "dummy-create-task";
