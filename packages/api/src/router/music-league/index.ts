@@ -534,6 +534,29 @@ export const musicLeagueRouter = {
       });
     }),
 
+  deleteSubmission: protectedProcedure
+    .input(z.object({ submissionId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const submission = await ctx.db.query.Submission.findFirst({
+        where: eq(Submission.id, input.submissionId),
+        with: { round: true },
+      });
+
+      if (!submission) throw new TRPCError({ code: "NOT_FOUND" });
+      if (submission.userId !== ctx.session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (submission.round.status !== "SUBMISSION") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only delete during submission phase",
+        });
+      }
+
+      await ctx.db.delete(Submission).where(eq(Submission.id, input.submissionId));
+      return { success: true };
+    }),
+
   // --- VOTE PROCEDURES ---
 
   submitVotes: protectedProcedure
