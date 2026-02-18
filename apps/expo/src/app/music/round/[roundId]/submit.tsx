@@ -16,9 +16,9 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Search, X } from "lucide-react-native";
 
+import { GradientBackground } from "~/components/GradientBackground";
 import { AudioPreviewPlayer } from "~/components/music/AudioPreviewPlayer";
 import { SpotifyTrackCard } from "~/components/music/SpotifyTrackCard";
-import { GradientBackground } from "~/components/GradientBackground";
 import { trpc } from "~/utils/api";
 
 interface SpotifyTrack {
@@ -201,7 +201,7 @@ export default function SubmitSong() {
           {selectedTrack && (
             <View className="mx-4 mb-3 rounded-xl border border-[#50C878] bg-[#102A2A] p-4">
               <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-xs font-bold uppercase text-[#50C878]">
+                <Text className="text-xs font-bold text-[#50C878] uppercase">
                   Selected Track
                 </Text>
                 <Pressable onPress={handleClearSelection} hitSlop={8}>
@@ -240,10 +240,7 @@ export default function SubmitSong() {
                   >
                     {selectedTrack.artistName}
                   </Text>
-                  <Text
-                    className="text-xs text-[#8FA8A8]"
-                    numberOfLines={1}
-                  >
+                  <Text className="text-xs text-[#8FA8A8]" numberOfLines={1}>
                     {selectedTrack.albumName}
                   </Text>
                 </View>

@@ -8,14 +8,7 @@ import {
   Text as RNText,
   View,
 } from "react-native";
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 // SQLite imports preserved for future offline work (unused currently)
@@ -27,10 +20,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 // SQLite imports preserved for future offline work
 //import { desc, eq, isNull, sql } from "drizzle-orm";
 //import { useLiveQuery } from "drizzle-orm/expo-sqlite";
-import { Layers, List, RefreshCw } from "lucide-react-native";
+import { Layers, List } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
+import type { PriorityLevel } from "../components/priority-config";
+import { PriorityFilter } from "~/components/priority-filter";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
@@ -41,10 +36,8 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
-import type { PriorityLevel } from "../components/priority-config";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
-import { PriorityFilter } from "~/components/priority-filter";
 
 const DUMMY_TASK_ID = "dummy-create-task";
 
@@ -61,57 +54,6 @@ function Header({ onProfilePress }: { onProfilePress: () => void }) {
         <SignInButton provider={Platform.OS === "ios" ? "apple" : "discord"} />
       )}
     </View>
-  );
-}
-
-function RefreshButton({
-  onPress,
-  isRefreshing,
-}: {
-  onPress: () => void;
-  isRefreshing: boolean;
-}) {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    if (isRefreshing) {
-      // Start from current position and add 360 for continuous spin
-      const startRotation = rotation.value % 360;
-      rotation.value = startRotation;
-      rotation.value = withRepeat(
-        withTiming(startRotation + 360, {
-          duration: 1000,
-          easing: Easing.linear,
-        }),
-        -1,
-        false,
-      );
-    } else {
-      // Stop animation but keep current rotation
-      cancelAnimation(rotation);
-    }
-  }, [isRefreshing, rotation]);
-
-  const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={isRefreshing}
-      accessibilityRole="button"
-      accessibilityLabel={isRefreshing ? "Refreshing tasks" : "Refresh tasks"}
-    >
-      <Animated.View
-        className="border-border bg-surface h-12 w-12 items-center justify-center rounded-full border-2"
-        style={[isRefreshing && { opacity: 0.6 }]}
-      >
-        <Animated.View style={animatedIconStyle}>
-          <RefreshCw size={24} color="#DCE4E4" />
-        </Animated.View>
-      </Animated.View>
-    </Pressable>
   );
 }
 
@@ -155,7 +97,6 @@ export default function Index() {
       rippleDebounceRef.current = null;
     }, 500);
   }, []);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { effectiveCategoryIds } = useCategoryFilter();
   const [selectedPriorities, setSelectedPriorities] = useState<PriorityLevel[]>(
     [],
@@ -168,7 +109,6 @@ export default function Index() {
     data: serverTasks,
     isLoading: isLoadingTasks,
     isFetching,
-    refetch,
   } = useQuery(
     trpc.task.all.queryOptions(undefined, {
       enabled: !!session,
@@ -497,7 +437,8 @@ export default function Index() {
         // Optimistically update to the new value
         if (previousTasks && session) {
           const optimisticTask: RouterOutputs["task"]["all"][number] = {
-            id: `temp-${Date.now()}`, // Temporary ID
+            // eslint-disable-next-line react-hooks/purity -- Date.now() runs in onMutate callback, not during render
+            id: `temp-${Date.now()}`,
             title: newTask.title,
             description: newTask.description ?? null,
             completed: false,
@@ -506,7 +447,6 @@ export default function Index() {
             archivedAt: null,
             categoryId: newTask.categoryId ?? null,
             userId: session.user.id,
-            priority: "medium",
             version: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -579,18 +519,6 @@ export default function Index() {
       dueDate,
       priority: priority ?? "medium",
     });
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetch();
-      triggerRipple();
-    } catch (error) {
-      console.error("Manual refresh failed:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
   };
 
   const handleCancelEdit = (id: string) => {

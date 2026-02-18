@@ -29,7 +29,7 @@ export function MemberStatusBoard({
     <View className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
       {/* Header */}
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-xs font-semibold uppercase tracking-wide text-[#8FA8A8]">
+        <Text className="text-xs font-semibold tracking-wide text-[#8FA8A8] uppercase">
           {label ??
             (trackAction === "submitted"
               ? "Submission Status"
@@ -48,12 +48,14 @@ export function MemberStatusBoard({
       >
         {members.map((member) => {
           const isDone =
-            trackAction === "submitted"
-              ? member.hasSubmitted
-              : member.hasVoted;
+            trackAction === "submitted" ? member.hasSubmitted : member.hasVoted;
 
           return (
-            <View key={member.id} className="items-center" style={{ width: 52 }}>
+            <View
+              key={member.id}
+              className="items-center"
+              style={{ width: 52 }}
+            >
               {/* Avatar with status indicator */}
               <View className="relative">
                 {member.image ? (
@@ -88,7 +90,7 @@ export function MemberStatusBoard({
 
                 {/* Status badge */}
                 <View
-                  className="absolute -bottom-0.5 -right-0.5 items-center justify-center rounded-full"
+                  className="absolute -right-0.5 -bottom-0.5 items-center justify-center rounded-full"
                   style={{
                     width: 16,
                     height: 16,

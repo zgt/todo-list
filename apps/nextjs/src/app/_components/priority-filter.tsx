@@ -9,7 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 
 import { usePriorityFilter } from "./priority-filter-context";
 
-const priorities: { key: TaskPriority; label: string; icon: typeof ArrowUp; color: string }[] = [
+const priorities: {
+  key: TaskPriority;
+  label: string;
+  icon: typeof ArrowUp;
+  color: string;
+}[] = [
   { key: "high", label: "High", icon: ArrowUp, color: "#EF4444" },
   { key: "medium", label: "Medium", icon: Minus, color: "#F59E0B" },
   { key: "low", label: "Low", icon: ArrowDown, color: "#3B82F6" },
@@ -57,7 +62,11 @@ export function PriorityFilter() {
                   isSelected && "bg-[#102A2A] text-white",
                 )}
               >
-                <Icon className="size-3.5" style={{ color }} strokeWidth={2.5} />
+                <Icon
+                  className="size-3.5"
+                  style={{ color }}
+                  strokeWidth={2.5}
+                />
                 <span className="flex-1 text-left">{label}</span>
                 {isSelected && (
                   <div

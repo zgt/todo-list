@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, ListMusic, Music } from "lucide-react-native";
+import { ArrowLeft, ExternalLink, ListMusic } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { SpotifyTrackCard } from "~/components/music/SpotifyTrackCard";
@@ -125,7 +125,7 @@ export default function PlaylistView() {
             <View className="mb-4">
               {/* Theme & Track Count */}
               <View className="mb-4 rounded-xl border border-[#164B49] bg-[#102A2A] p-4">
-                <Text className="mb-1 text-xs font-bold uppercase tracking-wide text-[#50C878]">
+                <Text className="mb-1 text-xs font-bold tracking-wide text-[#50C878] uppercase">
                   Theme
                 </Text>
                 <Text className="text-2xl font-bold text-[#DCE4E4]">

@@ -142,7 +142,7 @@ export const ThemeTemplatePicker = forwardRef<
                 backgroundColor: CATEGORY_COLORS[item.category] ?? "#50C878",
               }}
             />
-            <Text className="text-sm font-bold uppercase tracking-wide text-[#8FA8A8]">
+            <Text className="text-sm font-bold tracking-wide text-[#8FA8A8] uppercase">
               {item.category}
             </Text>
           </View>
@@ -154,9 +154,7 @@ export const ThemeTemplatePicker = forwardRef<
           onPress={() => handleSelect(item.template.name)}
           className="mx-4 mb-1.5 rounded-lg border border-[#164B49] bg-[#0A1A1A] px-4 py-3 active:bg-[#164B49]"
         >
-          <Text className="text-base text-[#DCE4E4]">
-            {item.template.name}
-          </Text>
+          <Text className="text-base text-[#DCE4E4]">{item.template.name}</Text>
         </Pressable>
       );
     },

@@ -15,12 +15,12 @@ import Animated, {
 } from "react-native-reanimated";
 import { Check, Save, Trash2 } from "lucide-react-native";
 
+import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
 import { CategoryWheelPicker } from "./CategoryWheelPicker";
 import { DatePickerPill } from "./DatePickerPill";
 import { PriorityBadge } from "./PriorityBadge";
 import { PrioritySelector } from "./PrioritySelector";
-import type { PriorityLevel } from "./priority-config";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -278,7 +278,13 @@ export function TaskCard({
             <PrioritySelector
               value={priority}
               onChange={onChangePriority}
-              trigger={<PriorityBadge priority={priority} size="sm" showLabel={false} />}
+              trigger={
+                <PriorityBadge
+                  priority={priority}
+                  size="sm"
+                  showLabel={false}
+                />
+              }
             />
             <CategoryWheelPicker
               selectedCategoryId={categoryId}
@@ -297,7 +303,13 @@ export function TaskCard({
                 onChangePriority(p);
                 onSave({ priority: p });
               }}
-              trigger={<PriorityBadge priority={priority} size="sm" showLabel={false} />}
+              trigger={
+                <PriorityBadge
+                  priority={priority}
+                  size="sm"
+                  showLabel={false}
+                />
+              }
             />
             {task.category && (
               <View

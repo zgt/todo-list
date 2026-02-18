@@ -127,7 +127,8 @@ export function ResultCard({
         >
           <Text className="text-xs text-[#8FA8A8]">
             {votesWithPoints.length} vote{votesWithPoints.length !== 1 && "s"}
-            {comments.length > 0 && ` · ${comments.length} comment${comments.length !== 1 ? "s" : ""}`}
+            {comments.length > 0 &&
+              ` · ${comments.length} comment${comments.length !== 1 ? "s" : ""}`}
           </Text>
           {expanded ? (
             <ChevronUp size={14} color="#8FA8A8" />

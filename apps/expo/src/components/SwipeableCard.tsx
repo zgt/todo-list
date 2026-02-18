@@ -13,6 +13,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import type { PriorityLevel } from "./priority-config";
+import type { LocalTask } from "~/db/client";
 import { SwipeOverlay } from "./SwipeOverlay";
 import { TaskCard } from "./TaskCard";
 

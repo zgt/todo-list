@@ -1,5 +1,6 @@
+import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useMemo, useRef } from "react";
-import { Pressable, Text, View, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -7,7 +8,8 @@ import {
 } from "@gorhom/bottom-sheet";
 import { Filter } from "lucide-react-native";
 
-import { PRIORITY_CONFIG, type PriorityLevel } from "~/components/priority-config";
+import type { PriorityLevel } from "~/components/priority-config";
+import { PRIORITY_CONFIG } from "~/components/priority-config";
 
 interface PriorityFilterProps {
   selectedPriorities: PriorityLevel[];
@@ -33,12 +35,7 @@ export function PriorityFilter({
     }
   };
 
-  const handleClear = () => {
-    onChange([]);
-    bottomSheetRef.current?.dismiss();
-  };
-
-  const renderBackdrop = (props: any) => (
+  const renderBackdrop = (props: BottomSheetBackdropProps) => (
     <BottomSheetBackdrop
       {...props}
       disappearsOnIndex={-1}
@@ -111,7 +108,9 @@ export function PriorityFilter({
                   <Text
                     style={[
                       styles.pillText,
-                      isSelected ? { color: config.color } : { color: "#8FA8A8" },
+                      isSelected
+                        ? { color: config.color }
+                        : { color: "#8FA8A8" },
                     ]}
                   >
                     {config.label}

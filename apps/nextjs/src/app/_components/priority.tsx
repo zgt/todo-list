@@ -39,7 +39,7 @@ export function PriorityBadge({
   priority,
   variant = "default",
 }: {
-  priority: TaskPriority | string | null;
+  priority: string | null;
   variant?: "default" | "compact" | "icon-only";
 }) {
   if (!priority || !(priority in priorityConfig)) return null;
@@ -63,9 +63,7 @@ export function PriorityBadge({
     <div
       className={cn(
         "inline-flex items-center gap-1 rounded-full border font-medium backdrop-blur-md",
-        variant === "compact"
-          ? "px-2 py-0.5 text-[10px]"
-          : "px-3 py-1 text-xs",
+        variant === "compact" ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs",
       )}
       style={{
         backgroundColor: `${config.color}${config.bgOpacity}`,
@@ -89,7 +87,7 @@ export function PrioritySelector({
   onChange,
   disabled,
 }: {
-  value: TaskPriority | string | null | undefined;
+  value: string | null | undefined;
   onChange: (priority: TaskPriority | undefined) => void;
   disabled?: boolean;
 }) {
@@ -102,30 +100,31 @@ export function PrioritySelector({
       disabled={disabled}
     >
       <SelectTrigger
-        className={cn(
-          "bg-background/50 w-full border-0 focus-visible:ring-1",
-        )}
+        className={cn("bg-background/50 w-full border-0 focus-visible:ring-1")}
       >
         <SelectValue placeholder="Priority" />
       </SelectTrigger>
       <SelectContent>
-        {(Object.entries(priorityConfig) as [TaskPriority, (typeof priorityConfig)[TaskPriority]][]).map(
-          ([key, config]) => {
-            const Icon = config.icon;
-            return (
-              <SelectItem key={key} value={key}>
-                <span className="flex items-center gap-2">
-                  <Icon
-                    className="size-3.5"
-                    style={{ color: config.color }}
-                    strokeWidth={2.5}
-                  />
-                  <span>{config.label}</span>
-                </span>
-              </SelectItem>
-            );
-          },
-        )}
+        {(
+          Object.entries(priorityConfig) as [
+            TaskPriority,
+            (typeof priorityConfig)[TaskPriority],
+          ][]
+        ).map(([key, config]) => {
+          const Icon = config.icon;
+          return (
+            <SelectItem key={key} value={key}>
+              <span className="flex items-center gap-2">
+                <Icon
+                  className="size-3.5"
+                  style={{ color: config.color }}
+                  strokeWidth={2.5}
+                />
+                <span>{config.label}</span>
+              </span>
+            </SelectItem>
+          );
+        })}
       </SelectContent>
     </Select>
   );
@@ -138,12 +137,12 @@ export function PrioritySelectorPill({
   onChange,
   disabled,
 }: {
-  value: TaskPriority | string | null | undefined;
+  value: string | null | undefined;
   onChange: (priority: TaskPriority) => void;
   disabled?: boolean;
 }) {
-  const current = (value as TaskPriority) ?? "medium";
-  const config = priorityConfig[current] ?? priorityConfig.medium;
+  const current = (value ?? "medium") as TaskPriority;
+  const config = priorityConfig[current];
   const Icon = config.icon;
 
   return (
@@ -168,23 +167,26 @@ export function PrioritySelectorPill({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {(Object.entries(priorityConfig) as [TaskPriority, (typeof priorityConfig)[TaskPriority]][]).map(
-          ([key, cfg]) => {
-            const ItemIcon = cfg.icon;
-            return (
-              <SelectItem key={key} value={key}>
-                <span className="flex items-center gap-2">
-                  <ItemIcon
-                    className="size-3.5"
-                    style={{ color: cfg.color }}
-                    strokeWidth={2.5}
-                  />
-                  <span>{cfg.label}</span>
-                </span>
-              </SelectItem>
-            );
-          },
-        )}
+        {(
+          Object.entries(priorityConfig) as [
+            TaskPriority,
+            (typeof priorityConfig)[TaskPriority],
+          ][]
+        ).map(([key, cfg]) => {
+          const ItemIcon = cfg.icon;
+          return (
+            <SelectItem key={key} value={key}>
+              <span className="flex items-center gap-2">
+                <ItemIcon
+                  className="size-3.5"
+                  style={{ color: cfg.color }}
+                  strokeWidth={2.5}
+                />
+                <span>{cfg.label}</span>
+              </span>
+            </SelectItem>
+          );
+        })}
       </SelectContent>
     </Select>
   );

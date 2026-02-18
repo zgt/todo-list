@@ -1,4 +1,5 @@
-import React, { useMemo, useRef } from "react";
+import type React from "react";
+import { useMemo, useRef } from "react";
 import { Pressable, Text, View } from "react-native";
 import {
   BottomSheetBackdrop,
@@ -7,7 +8,8 @@ import {
 } from "@gorhom/bottom-sheet";
 import { Check } from "lucide-react-native";
 
-import { PRIORITY_CONFIG, type PriorityLevel } from "./priority-config";
+import type { PriorityLevel } from "./priority-config";
+import { PRIORITY_CONFIG } from "./priority-config";
 
 interface PrioritySelectorProps {
   value: PriorityLevel;
@@ -81,12 +83,10 @@ export function PrioritySelector({
   return (
     <>
       <Pressable onPress={handleOpen} disabled={disabled}>
-        {trigger ? (
-          trigger
-        ) : (
-          <View className="flex-row items-center gap-2 rounded-lg bg-[#102A2A] p-4 border border-[#164B49]">
+        {trigger ?? (
+          <View className="flex-row items-center gap-2 rounded-lg border border-[#164B49] bg-[#102A2A] p-4">
             <CurrentIcon size={20} color={currentConfig.color} />
-            <Text className="text-[#DCE4E4] font-medium">
+            <Text className="font-medium text-[#DCE4E4]">
               {value ? currentConfig.label : "No Priority"}
             </Text>
           </View>
@@ -119,7 +119,7 @@ export function PrioritySelector({
               if (!config) return null;
               const isSelected = value === p;
               const Icon = config.Icon;
-              
+
               return (
                 <Pressable
                   key={p ?? "null"}

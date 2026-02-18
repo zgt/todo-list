@@ -23,20 +23,20 @@ import {
   Trophy,
 } from "lucide-react-native";
 
-import { GradientBackground } from "~/components/GradientBackground";
 import type { LeagueSettingsSheetRef } from "~/components/music/LeagueSettingsSheet";
+import { GradientBackground } from "~/components/GradientBackground";
 import { LeagueSettingsSheet } from "~/components/music/LeagueSettingsSheet";
 import { LeagueStandingsTable } from "~/components/music/LeagueStandingsTable";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
-type RoundItem = {
+interface RoundItem {
   id: string;
   roundNumber: number;
   themeName: string;
   themeDescription: string | null;
   status: string;
-};
+}
 
 export default function LeagueDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,10 +56,7 @@ export default function LeagueDetails() {
     trpc.musicLeague.getLeagueById.queryOptions({ id: id }, { enabled: !!id }),
   );
 
-  const {
-    data: standings,
-    refetch: refetchStandings,
-  } = useQuery(
+  const { data: standings, refetch: refetchStandings } = useQuery(
     trpc.musicLeague.getLeagueStandings.queryOptions(
       { leagueId: id },
       { enabled: !!id },
@@ -179,33 +176,36 @@ export default function LeagueDetails() {
     );
   };
 
-  const renderRoundCard = useCallback(({ item }: { item: RoundItem }) => (
-    <Pressable
-      onPress={() => router.push(`/music/round/${item.id}` as never)}
-      className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
-    >
-      <View className="flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text className="mb-1 text-xs font-bold uppercase text-[#50C878]">
-            Round {item.roundNumber}
-          </Text>
-          <Text className="text-lg font-semibold text-[#DCE4E4]">
-            {item.themeName}
-          </Text>
-          {item.themeDescription && (
-            <Text className="text-sm text-[#8FA8A8]">
-              {item.themeDescription}
+  const renderRoundCard = useCallback(
+    ({ item }: { item: RoundItem }) => (
+      <Pressable
+        onPress={() => router.push(`/music/round/${item.id}` as never)}
+        className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
+      >
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1">
+            <Text className="mb-1 text-xs font-bold text-[#50C878] uppercase">
+              Round {item.roundNumber}
             </Text>
-          )}
+            <Text className="text-lg font-semibold text-[#DCE4E4]">
+              {item.themeName}
+            </Text>
+            {item.themeDescription && (
+              <Text className="text-sm text-[#8FA8A8]">
+                {item.themeDescription}
+              </Text>
+            )}
+          </View>
+          <View className="ml-2 rounded-md bg-[#0A1A1A] px-2 py-1">
+            <Text className="text-xs font-medium text-[#DCE4E4]">
+              {item.status}
+            </Text>
+          </View>
         </View>
-        <View className="ml-2 rounded-md bg-[#0A1A1A] px-2 py-1">
-          <Text className="text-xs font-medium text-[#DCE4E4]">
-            {item.status}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
-  ), [router]);
+      </Pressable>
+    ),
+    [router],
+  );
 
   if (isLoading || !league) {
     return (
@@ -304,7 +304,9 @@ export default function LeagueDetails() {
               {/* Admin: Create Round Button */}
               {isAdmin && (
                 <Pressable
-                  onPress={() => router.push(`/music/round/create?leagueId=${id}` as never)}
+                  onPress={() =>
+                    router.push(`/music/round/create?leagueId=${id}` as never)
+                  }
                   className="mb-4 flex-row items-center justify-center gap-2 rounded-xl bg-[#50C878] py-3 active:bg-[#66D99A]"
                 >
                   <Plus size={20} color="#0A1A1A" strokeWidth={3} />
@@ -362,7 +364,7 @@ export default function LeagueDetails() {
                       key={member.id}
                       className={`flex-row items-center gap-2 rounded-full px-3 py-1 ${
                         member.userId === currentUserId
-                          ? "bg-[#50C878]/20 border border-[#50C878]/40"
+                          ? "border border-[#50C878]/40 bg-[#50C878]/20"
                           : "bg-[#164B49]"
                       }`}
                     >
@@ -393,7 +395,9 @@ export default function LeagueDetails() {
                     disabled={leaveLeagueMutation.isPending}
                     className="flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
                     style={
-                      leaveLeagueMutation.isPending ? { opacity: 0.5 } : undefined
+                      leaveLeagueMutation.isPending
+                        ? { opacity: 0.5 }
+                        : undefined
                     }
                   >
                     <LogOut size={18} color="#ef4444" />
@@ -409,7 +413,9 @@ export default function LeagueDetails() {
                     disabled={deleteLeagueMutation.isPending}
                     className="flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
                     style={
-                      deleteLeagueMutation.isPending ? { opacity: 0.5 } : undefined
+                      deleteLeagueMutation.isPending
+                        ? { opacity: 0.5 }
+                        : undefined
                     }
                   >
                     <Trash2 size={18} color="#ef4444" />

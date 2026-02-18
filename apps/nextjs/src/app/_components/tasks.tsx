@@ -12,6 +12,7 @@ import { Calendar, Check, Pencil, Trash2, X } from "lucide-react";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@acme/api";
+import type { TaskPriority } from "@acme/db/schema";
 import { CreateTaskSchema } from "@acme/db/schema";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -29,8 +30,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { toast } from "@acme/ui/toast";
 
 import { useSession } from "~/auth/client";
-import type { TaskPriority } from "@acme/db/schema";
-
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreePicker } from "./category-tree-picker";
@@ -219,7 +218,7 @@ export function TaskCard(props: {
     props.task.categoryId ?? undefined,
   );
   const [editedPriority, setEditedPriority] = useState<TaskPriority>(
-    (props.task.priority as TaskPriority) ?? "medium",
+    (props.task.priority ?? "medium") as TaskPriority,
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -280,7 +279,7 @@ export function TaskCard(props: {
     setEditedDescription(props.task.description ?? "");
     setEditedDueDate(props.task.dueDate ?? undefined);
     setEditedCategoryId(props.task.categoryId ?? undefined);
-    setEditedPriority((props.task.priority as TaskPriority) ?? "medium");
+    setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setIsEditing(true);
     setTimeout(() => titleInputRef.current?.focus(), 0);
   };
@@ -319,7 +318,7 @@ export function TaskCard(props: {
     setEditedDescription(props.task.description ?? "");
     setEditedDueDate(props.task.dueDate ?? undefined);
     setEditedCategoryId(props.task.categoryId ?? undefined);
-    setEditedPriority((props.task.priority as TaskPriority) ?? "medium");
+    setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setIsEditing(false);
   };
 

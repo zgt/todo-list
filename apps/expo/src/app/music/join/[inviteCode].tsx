@@ -18,7 +18,7 @@ export default function JoinLeague() {
     error,
   } = useQuery(
     trpc.musicLeague.getLeagueByInviteCode.queryOptions(
-      { inviteCode: inviteCode ?? "" },
+      { inviteCode },
       { enabled: !!inviteCode },
     ),
   );
@@ -70,7 +70,10 @@ export default function JoinLeague() {
           <Stack.Screen options={{ headerShown: false }} />
 
           <View className="flex-row items-center px-4 py-4">
-            <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+            <Pressable
+              onPress={() => router.back()}
+              className="rounded-full bg-[#164B49] p-2"
+            >
               <ArrowLeft color="#DCE4E4" size={24} />
             </Pressable>
           </View>
@@ -83,7 +86,10 @@ export default function JoinLeague() {
               The invite code "{inviteCode}" doesn't match any league. Check the
               code and try again.
             </Text>
-            <Pressable onPress={() => router.back()} className="rounded-xl bg-[#164B49] px-6 py-3 active:bg-[#21716C]">
+            <Pressable
+              onPress={() => router.back()}
+              className="rounded-xl bg-[#164B49] px-6 py-3 active:bg-[#21716C]"
+            >
               <Text className="font-semibold text-[#DCE4E4]">
                 Back to Dashboard
               </Text>
@@ -101,7 +107,10 @@ export default function JoinLeague() {
 
         {/* Header */}
         <View className="flex-row items-center px-4 py-4">
-          <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+          <Pressable
+            onPress={() => router.back()}
+            className="rounded-full bg-[#164B49] p-2"
+          >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
         </View>

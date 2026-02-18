@@ -4,6 +4,7 @@ import * as React from "react";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { TaskPriority } from "@acme/db/schema";
 import { Button } from "@acme/ui/button";
 import { DatePicker } from "@acme/ui/date-picker";
 import { Input } from "@acme/ui/input";
@@ -16,8 +17,6 @@ import {
   SelectValue,
 } from "@acme/ui/select";
 import { toast } from "@acme/ui/toast";
-
-import type { TaskPriority } from "@acme/db/schema";
 
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
@@ -123,10 +122,7 @@ export function NewTaskModal() {
                 ))}
               </SelectContent>
             </Select>
-            <PrioritySelector
-              value={priority}
-              onChange={setPriority}
-            />
+            <PrioritySelector value={priority} onChange={setPriority} />
             <DatePicker
               date={date}
               onDateChange={setDate}

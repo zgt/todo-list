@@ -39,11 +39,7 @@ const PREF_DESCRIPTIONS: Record<keyof NotificationPrefs, string> = {
   resultsAvailable: "Get notified when round results are in",
 };
 
-function SettingsForm({
-  initialPrefs,
-}: {
-  initialPrefs: NotificationPrefs;
-}) {
+function SettingsForm({ initialPrefs }: { initialPrefs: NotificationPrefs }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [prefs, setPrefs] = useState<NotificationPrefs>(initialPrefs);

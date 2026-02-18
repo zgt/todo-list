@@ -13,8 +13,8 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, Check, Sparkles } from "lucide-react-native";
 
-import { GradientBackground } from "~/components/GradientBackground";
 import type { ThemeTemplatePickerRef } from "~/components/music/ThemeTemplatePicker";
+import { GradientBackground } from "~/components/GradientBackground";
 import { ThemeTemplatePicker } from "~/components/music/ThemeTemplatePicker";
 import { trpc } from "~/utils/api";
 
@@ -116,9 +116,7 @@ export default function CreateRound() {
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
-          <Text className="text-xl font-bold text-[#DCE4E4]">
-            Create Round
-          </Text>
+          <Text className="text-xl font-bold text-[#DCE4E4]">Create Round</Text>
           <View className="w-10" />
         </View>
 
@@ -257,13 +255,15 @@ export default function CreateRound() {
                 <View className="flex-row items-center gap-2">
                   <Check size={14} color="#50C878" />
                   <Text className="text-sm text-[#8FA8A8]">
-                    Submissions open for {submissionDays} day{submissionDays !== 1 ? "s" : ""}
+                    Submissions open for {submissionDays} day
+                    {submissionDays !== 1 ? "s" : ""}
                   </Text>
                 </View>
                 <View className="mt-1 flex-row items-center gap-2">
                   <Check size={14} color="#50C878" />
                   <Text className="text-sm text-[#8FA8A8]">
-                    Voting open for {votingGapDays} day{votingGapDays !== 1 ? "s" : ""} after
+                    Voting open for {votingGapDays} day
+                    {votingGapDays !== 1 ? "s" : ""} after
                   </Text>
                 </View>
                 <View className="mt-1 flex-row items-center gap-2">

@@ -27,8 +27,8 @@ import {
   Send,
 } from "lucide-react-native";
 
-import { CountdownTimer } from "~/components/music/CountdownTimer";
 import { GradientBackground } from "~/components/GradientBackground";
+import { CountdownTimer } from "~/components/music/CountdownTimer";
 import { MemberStatusBoard } from "~/components/music/MemberStatusBoard";
 import { PhaseProgressBar } from "~/components/music/PhaseProgressBar";
 import { RemainingPointsBadge } from "~/components/music/RemainingPointsBadge";
@@ -278,17 +278,11 @@ export default function RoundDetails() {
 
   const handleOpenSpotify = (spotifyTrackId: string) => {
     void Linking.openURL(`spotify:track:${spotifyTrackId}`).catch(() => {
-      void Linking.openURL(
-        `https://open.spotify.com/track/${spotifyTrackId}`,
-      );
+      void Linking.openURL(`https://open.spotify.com/track/${spotifyTrackId}`);
     });
   };
 
-  const renderSubmission = ({
-    item: sub,
-  }: {
-    item: SubmissionItem;
-  }) => (
+  const renderSubmission = ({ item: sub }: { item: SubmissionItem }) => (
     <View
       className={`rounded-lg border p-3 ${
         sub.isOwn
@@ -405,7 +399,7 @@ export default function RoundDetails() {
             <Text className="text-center text-xl font-bold text-[#DCE4E4]">
               Round {round.roundNumber}
             </Text>
-            <Text className="text-center text-xs font-medium uppercase text-[#50C878]">
+            <Text className="text-center text-xs font-medium text-[#50C878] uppercase">
               {status}
             </Text>
           </View>
@@ -561,10 +555,10 @@ export default function RoundDetails() {
 
               {/* Theme Card */}
               <View className="mb-6 rounded-xl border border-[#164B49] bg-[#102A2A] p-6 shadow-lg">
-                <Text className="mb-2 text-sm font-bold uppercase tracking-wide text-[#50C878]">
+                <Text className="mb-2 text-sm font-bold tracking-wide text-[#50C878] uppercase">
                   Theme
                 </Text>
-                <Text className="mb-4 text-3xl font-bold leading-tight text-[#DCE4E4]">
+                <Text className="mb-4 text-3xl leading-tight font-bold text-[#DCE4E4]">
                   {round.themeName}
                 </Text>
                 {round.themeDescription && (
@@ -576,7 +570,7 @@ export default function RoundDetails() {
                 {/* Deadlines */}
                 <View className="mt-6 flex-row gap-4 border-t border-[#164B49] pt-4">
                   <View className="flex-1">
-                    <Text className="mb-1 text-xs font-medium uppercase text-[#8FA8A8]">
+                    <Text className="mb-1 text-xs font-medium text-[#8FA8A8] uppercase">
                       Submit By
                     </Text>
                     <Text className="text-sm font-semibold text-[#DCE4E4]">
@@ -584,7 +578,7 @@ export default function RoundDetails() {
                     </Text>
                   </View>
                   <View className="flex-1">
-                    <Text className="mb-1 text-xs font-medium uppercase text-[#8FA8A8]">
+                    <Text className="mb-1 text-xs font-medium text-[#8FA8A8] uppercase">
                       Vote By
                     </Text>
                     <Text className="text-sm font-semibold text-[#DCE4E4]">
@@ -714,7 +708,7 @@ export default function RoundDetails() {
                   </Text>
 
                   {votableSubmissions.length === 0 && (
-                    <Text className="py-8 text-center italic text-[#8FA8A8]">
+                    <Text className="py-8 text-center text-[#8FA8A8] italic">
                       No other submissions to vote on yet.
                     </Text>
                   )}
@@ -759,7 +753,7 @@ export default function RoundDetails() {
                   </Text>
 
                   {submissions.length === 0 && (
-                    <Text className="py-8 text-center italic text-[#8FA8A8]">
+                    <Text className="py-8 text-center text-[#8FA8A8] italic">
                       No submissions yet. Be the first!
                     </Text>
                   )}

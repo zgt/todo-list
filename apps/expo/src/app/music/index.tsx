@@ -40,59 +40,67 @@ export default function MusicLeagueDashboard() {
   const handleJoinNavigate = () => {
     const code = inviteCode.trim().toUpperCase();
     if (!code) {
-      Alert.alert("Enter a code", "Please enter an invite code to join a league.");
+      Alert.alert(
+        "Enter a code",
+        "Please enter an invite code to join a league.",
+      );
       return;
     }
     setInviteCode("");
     router.push(`/music/join/${code}` as never);
   };
 
-  const renderLeagueCard = useCallback(({ item }: { item: NonNullable<typeof leagues>[number] }) => (
-    <Pressable
-      onPress={() => router.push(`/music/league/${item.id}` as never)}
-      className="mx-4 mb-3 rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]/60"
-    >
-      <View className="flex-row items-center justify-between">
-        <Text className="flex-1 text-lg font-semibold text-[#DCE4E4]">
-          {item.name}
-        </Text>
-        <View className="ml-2 rounded-full bg-[#50C878]/15 px-2.5 py-1">
-          <Text className="text-xs font-medium text-[#50C878]">
-            {item.memberCount} members
+  const renderLeagueCard = useCallback(
+    ({ item }: { item: NonNullable<typeof leagues>[number] }) => (
+      <Pressable
+        onPress={() => router.push(`/music/league/${item.id}` as never)}
+        className="mx-4 mb-3 rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]/60"
+      >
+        <View className="flex-row items-center justify-between">
+          <Text className="flex-1 text-lg font-semibold text-[#DCE4E4]">
+            {item.name}
           </Text>
-        </View>
-      </View>
-
-      {item.currentRound ? (
-        <View className="mt-3 rounded-lg bg-[#0A1A1A]/60 p-3">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="mb-0.5 text-[11px] font-bold uppercase text-[#50C878]">
-                Current Round
-              </Text>
-              <Text className="text-[15px] font-medium text-[#DCE4E4]">
-                {item.currentRound.themeName}
-              </Text>
-            </View>
-            <View className="ml-2 rounded-md bg-[#164B49] px-2 py-1">
-              <Text className="text-xs font-medium text-[#8FA8A8]">
-                {item.currentRound.status}
-              </Text>
-            </View>
+          <View className="ml-2 rounded-full bg-[#50C878]/15 px-2.5 py-1">
+            <Text className="text-xs font-medium text-[#50C878]">
+              {item.memberCount} members
+            </Text>
           </View>
         </View>
-      ) : (
-        <Text className="mt-2 text-sm italic text-[#8FA8A8]">
-          No active rounds
-        </Text>
-      )}
-    </Pressable>
-  ), [router]);
+
+        {item.currentRound ? (
+          <View className="mt-3 rounded-lg bg-[#0A1A1A]/60 p-3">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <Text className="mb-0.5 text-[11px] font-bold text-[#50C878] uppercase">
+                  Current Round
+                </Text>
+                <Text className="text-[15px] font-medium text-[#DCE4E4]">
+                  {item.currentRound.themeName}
+                </Text>
+              </View>
+              <View className="ml-2 rounded-md bg-[#164B49] px-2 py-1">
+                <Text className="text-xs font-medium text-[#8FA8A8]">
+                  {item.currentRound.status}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <Text className="mt-2 text-sm text-[#8FA8A8] italic">
+            No active rounds
+          </Text>
+        )}
+      </Pressable>
+    ),
+    [router],
+  );
 
   return (
     <GradientBackground>
       <SafeAreaView className="flex-1" edges={["top"]}>
-        <Stack.Screen options={{ title: "Music Leagues", headerShown: false }} />
+        <Stack.Screen
+          options={{ title: "Music Leagues", headerShown: false }}
+        />
 
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 py-4">
@@ -156,7 +164,8 @@ export default function MusicLeagueDashboard() {
               No leagues yet
             </Text>
             <Text className="mb-6 text-center text-sm leading-5 text-[#8FA8A8]">
-              Create a new league to play with friends, or enter an invite code above to join one.
+              Create a new league to play with friends, or enter an invite code
+              above to join one.
             </Text>
             <Pressable
               onPress={() => router.push("/music/league/create" as never)}

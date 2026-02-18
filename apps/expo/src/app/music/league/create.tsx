@@ -103,7 +103,10 @@ export default function CreateLeague() {
 
         {/* Header */}
         <View className="flex-row items-center justify-between px-4 py-4">
-          <Pressable onPress={() => router.back()} className="rounded-full bg-[#164B49] p-2">
+          <Pressable
+            onPress={() => router.back()}
+            className="rounded-full bg-[#164B49] p-2"
+          >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
           <Text className="text-xl font-bold text-[#DCE4E4]">
@@ -113,7 +116,7 @@ export default function CreateLeague() {
         </View>
 
         <FlatList
-          data={[{ key: 'form' }]}
+          data={[{ key: "form" }]}
           renderItem={() => null}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}

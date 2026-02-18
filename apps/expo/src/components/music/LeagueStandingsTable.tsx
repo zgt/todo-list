@@ -32,13 +32,21 @@ export function LeagueStandingsTable({
   }
 
   return (
-    <View className="rounded-xl border border-[#164B49] bg-[#102A2A] overflow-hidden">
+    <View className="overflow-hidden rounded-xl border border-[#164B49] bg-[#102A2A]">
       {/* Header */}
       <View className="flex-row items-center border-b border-[#164B49] px-4 py-3">
-        <Text className="w-8 text-xs font-bold text-[#8FA8A8] uppercase">#</Text>
-        <Text className="flex-1 text-xs font-bold text-[#8FA8A8] uppercase">Player</Text>
-        <Text className="w-14 text-center text-xs font-bold text-[#8FA8A8] uppercase">Pts</Text>
-        <Text className="w-14 text-center text-xs font-bold text-[#8FA8A8] uppercase">Wins</Text>
+        <Text className="w-8 text-xs font-bold text-[#8FA8A8] uppercase">
+          #
+        </Text>
+        <Text className="flex-1 text-xs font-bold text-[#8FA8A8] uppercase">
+          Player
+        </Text>
+        <Text className="w-14 text-center text-xs font-bold text-[#8FA8A8] uppercase">
+          Pts
+        </Text>
+        <Text className="w-14 text-center text-xs font-bold text-[#8FA8A8] uppercase">
+          Wins
+        </Text>
       </View>
 
       {/* Rows */}

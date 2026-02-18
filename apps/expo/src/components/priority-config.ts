@@ -1,5 +1,5 @@
-import { ArrowDown, ArrowUp, Circle, Minus } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
+import { ArrowDown, ArrowUp, Circle, Minus } from "lucide-react-native";
 
 interface PriorityConfigItem {
   label: string;

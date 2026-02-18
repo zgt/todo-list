@@ -55,11 +55,7 @@ export function CountdownTimer({ deadline, label }: CountdownTimerProps) {
   // Less than 24 hours = warning
   const isWarning = time.total < 24 * 60 * 60 * 1000;
 
-  const accentColor = isUrgent
-    ? "#E57373"
-    : isWarning
-      ? "#FFD700"
-      : "#50C878";
+  const accentColor = isUrgent ? "#E57373" : isWarning ? "#FFD700" : "#50C878";
 
   const bgClass = isUrgent
     ? "bg-[#E57373]/10"
@@ -68,11 +64,11 @@ export function CountdownTimer({ deadline, label }: CountdownTimerProps) {
       : "bg-[#50C878]/10";
 
   return (
-    <View className={`flex-row items-center gap-2 rounded-lg px-3 py-2 ${bgClass}`}>
+    <View
+      className={`flex-row items-center gap-2 rounded-lg px-3 py-2 ${bgClass}`}
+    >
       <Clock size={14} color={accentColor} />
-      {label && (
-        <Text className="text-xs text-[#8FA8A8]">{label}</Text>
-      )}
+      {label && <Text className="text-xs text-[#8FA8A8]">{label}</Text>}
       <View className="flex-row items-center gap-1">
         {time.days > 0 && (
           <>

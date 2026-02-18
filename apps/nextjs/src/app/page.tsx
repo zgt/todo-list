@@ -39,34 +39,34 @@ export default async function HomePage() {
 
               <div className="relative z-10 flex h-full flex-col">
                 <CategoryFilterProvider>
-                <PriorityFilterProvider>
-                  <TaskHeader />
+                  <PriorityFilterProvider>
+                    <TaskHeader />
 
-                  <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
-                    {session?.user ? (
-                      <Suspense
-                        fallback={
-                          <div className="flex w-full flex-col gap-4">
-                            <TaskCardSkeleton />
-                            <TaskCardSkeleton />
-                            <TaskCardSkeleton />
-                          </div>
-                        }
-                      >
-                        <TaskList />
-                      </Suspense>
-                    ) : (
-                      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                        <h2 className="mb-2 text-2xl font-bold text-white">
-                          Welcome to Tokilist
-                        </h2>
-                        <p className="text-muted-foreground mb-6">
-                          Please sign in to manage your tasks
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </PriorityFilterProvider>
+                    <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
+                      {session?.user ? (
+                        <Suspense
+                          fallback={
+                            <div className="flex w-full flex-col gap-4">
+                              <TaskCardSkeleton />
+                              <TaskCardSkeleton />
+                              <TaskCardSkeleton />
+                            </div>
+                          }
+                        >
+                          <TaskList />
+                        </Suspense>
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                          <h2 className="mb-2 text-2xl font-bold text-white">
+                            Welcome to Tokilist
+                          </h2>
+                          <p className="text-muted-foreground mb-6">
+                            Please sign in to manage your tasks
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </PriorityFilterProvider>
                 </CategoryFilterProvider>
               </div>
             </div>

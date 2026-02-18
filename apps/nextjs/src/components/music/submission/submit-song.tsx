@@ -46,21 +46,18 @@ export function SubmitSong({ roundId, songsPerRound }: SubmitSongProps) {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   // Debounced search handler
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearchQuery(value);
-      setShowResults(true);
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      if (!value.trim()) {
-        setDebouncedQuery("");
-        return;
-      }
-      debounceTimerRef.current = setTimeout(() => {
-        setDebouncedQuery(value.trim());
-      }, 300);
-    },
-    [],
-  );
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setShowResults(true);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    if (!value.trim()) {
+      setDebouncedQuery("");
+      return;
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedQuery(value.trim());
+    }, 300);
+  }, []);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -247,7 +244,7 @@ export function SubmitSong({ roundId, songsPerRound }: SubmitSongProps) {
           /* Search input */
           <div className="relative" ref={dropdownRef}>
             <div className="relative">
-              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
                 ref={inputRef}
                 placeholder="Search for a song on Spotify..."
@@ -259,13 +256,13 @@ export function SubmitSong({ roundId, songsPerRound }: SubmitSongProps) {
                 className="pl-9"
               />
               {isSearching && (
-                <Loader2 className="text-muted-foreground absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+                <Loader2 className="text-muted-foreground absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
               )}
             </div>
 
             {/* Search results dropdown */}
             {showResults && debouncedQuery && (
-              <div className="border-border bg-popover absolute left-0 right-0 z-50 mt-1 max-h-[360px] overflow-y-auto rounded-lg border shadow-lg">
+              <div className="border-border bg-popover absolute right-0 left-0 z-50 mt-1 max-h-[360px] overflow-y-auto rounded-lg border shadow-lg">
                 {searchResults && searchResults.length > 0 ? (
                   <ul role="listbox" className="py-1">
                     {searchResults.map((track) => (

@@ -6,8 +6,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
-import type { LocalTask } from "~/db/client";
 import type { PriorityLevel } from "./priority-config";
+import type { LocalTask } from "~/db/client";
 import { SwipeableCard } from "./SwipeableCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -89,9 +89,9 @@ export function SwipeableCardStack({
 
         // Then by priority (descending)
         const priorityA =
-          PRIORITY_WEIGHTS[(a.priority as string) ?? "none"] ?? 0;
+          PRIORITY_WEIGHTS[(a.priority ?? "none") as string] ?? 0;
         const priorityB =
-          PRIORITY_WEIGHTS[(b.priority as string) ?? "none"] ?? 0;
+          PRIORITY_WEIGHTS[(b.priority ?? "none") as string] ?? 0;
         return priorityB - priorityA;
       }),
     [],

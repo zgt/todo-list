@@ -33,12 +33,8 @@ export function RemainingPointsBadge({
     <View
       className={`flex-row items-center gap-2 rounded-full border px-4 py-2 ${bgClass} ${borderClass}`}
     >
-      <Text className={`text-sm font-bold ${colorClass}`}>
-        {remaining}
-      </Text>
-      <Text className="text-xs text-[#8FA8A8]">
-        / {total} pts remaining
-      </Text>
+      <Text className={`text-sm font-bold ${colorClass}`}>{remaining}</Text>
+      <Text className="text-xs text-[#8FA8A8]">/ {total} pts remaining</Text>
     </View>
   );
 }

@@ -1,6 +1,8 @@
 import { memo } from "react";
 import { Text, View } from "react-native";
-import { type PriorityLevel, PRIORITY_CONFIG } from "./priority-config";
+
+import type { PriorityLevel } from "./priority-config";
+import { PRIORITY_CONFIG } from "./priority-config";
 
 interface PriorityBadgeProps {
   priority: PriorityLevel;
@@ -17,10 +19,14 @@ export const PriorityBadge = memo(
 
     return (
       <View
-        className={`flex-row items-center gap-1 rounded-full ${
-          config.bgClass
-        }`}
-        style={{ paddingHorizontal: 10, paddingVertical: 4, borderWidth: 2, borderColor: `${config.color}60`, borderRadius: 9999 }}
+        className={`flex-row items-center gap-1 rounded-full ${config.bgClass}`}
+        style={{
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderWidth: 2,
+          borderColor: `${config.color}60`,
+          borderRadius: 9999,
+        }}
       >
         <Icon size={size === "sm" ? 12 : 16} color={`${config.color}CC`} />
         {showLabel && (

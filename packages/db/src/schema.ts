@@ -29,7 +29,6 @@ export const roundStatusEnum = pgEnum("round_status", [
   "COMPLETED",
 ]);
 
-
 export const Post = pgTable("post", (t) => ({
   id: t.uuid().notNull().primaryKey().defaultRandom(),
   title: t.varchar({ length: 256 }).notNull(),
