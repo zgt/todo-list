@@ -2,8 +2,8 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Pressable,
-  ScrollView,
   Switch,
   Text,
   TextInput,
@@ -112,105 +112,110 @@ export default function CreateLeague() {
           <View className="w-10" />
         </View>
 
-        <ScrollView
+        <FlatList
+          data={[]}
+          renderItem={null}
+          keyboardShouldPersistTaps="handled"
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 16 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Name */}
-          <View className="mb-4">
-            <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-              League Name *
-            </Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Friday Vibes"
-              placeholderTextColor="#8FA8A8"
-              maxLength={100}
-              className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
-            />
-          </View>
-
-          {/* Description */}
-          <View className="mb-6">
-            <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-              Description
-            </Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="What's this league about?"
-              placeholderTextColor="#8FA8A8"
-              maxLength={500}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
-            />
-          </View>
-
-          {/* Settings */}
-          <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
-            Settings
-          </Text>
-
-          <View className="mb-4 gap-3">
-            <NumberStepper
-              label="Songs per round"
-              value={songsPerRound}
-              onChange={setSongsPerRound}
-              min={1}
-              max={5}
-            />
-
-            <NumberStepper
-              label="Upvote points per round"
-              value={upvotePoints}
-              onChange={setUpvotePoints}
-              min={1}
-              max={20}
-            />
-
-            {/* Allow Downvotes Toggle */}
-            <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
-              <View className="flex-1">
-                <Text className="text-base font-medium text-[#DCE4E4]">
-                  Allow downvotes
+          ListHeaderComponent={
+            <View>
+              {/* Name */}
+              <View className="mb-4">
+                <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                  League Name *
                 </Text>
-                <Text className="mt-0.5 text-xs text-[#8FA8A8]">
-                  Members can spend points to downvote songs
-                </Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="e.g. Friday Vibes"
+                  placeholderTextColor="#8FA8A8"
+                  maxLength={100}
+                  className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
+                />
               </View>
-              <Switch
-                value={allowDownvotes}
-                onValueChange={setAllowDownvotes}
-                trackColor={{ false: "#164B49", true: "#50C878" }}
-                thumbColor={allowDownvotes ? "#0A1A1A" : "#8FA8A8"}
-              />
-            </View>
-          </View>
 
-          {/* Create Button */}
-          <Pressable
-            onPress={handleCreate}
-            disabled={createMutation.isPending || !name.trim()}
-            className="mt-4 mb-8 items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
-            style={
-              createMutation.isPending || !name.trim()
-                ? { opacity: 0.5 }
-                : undefined
-            }
-          >
-            {createMutation.isPending ? (
-              <ActivityIndicator color="#0A1A1A" />
-            ) : (
-              <Text className="text-lg font-bold text-[#0A1A1A]">
-                Create League
+              {/* Description */}
+              <View className="mb-6">
+                <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                  Description
+                </Text>
+                <TextInput
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="What's this league about?"
+                  placeholderTextColor="#8FA8A8"
+                  maxLength={500}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                  className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
+                />
+              </View>
+
+              {/* Settings */}
+              <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
+                Settings
               </Text>
-            )}
-          </Pressable>
-        </ScrollView>
+
+              <View className="mb-4 gap-3">
+                <NumberStepper
+                  label="Songs per round"
+                  value={songsPerRound}
+                  onChange={setSongsPerRound}
+                  min={1}
+                  max={5}
+                />
+
+                <NumberStepper
+                  label="Upvote points per round"
+                  value={upvotePoints}
+                  onChange={setUpvotePoints}
+                  min={1}
+                  max={20}
+                />
+
+                {/* Allow Downvotes Toggle */}
+                <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
+                  <View className="flex-1">
+                    <Text className="text-base font-medium text-[#DCE4E4]">
+                      Allow downvotes
+                    </Text>
+                    <Text className="mt-0.5 text-xs text-[#8FA8A8]">
+                      Members can spend points to downvote songs
+                    </Text>
+                  </View>
+                  <Switch
+                    value={allowDownvotes}
+                    onValueChange={setAllowDownvotes}
+                    trackColor={{ false: "#164B49", true: "#50C878" }}
+                    thumbColor={allowDownvotes ? "#0A1A1A" : "#8FA8A8"}
+                  />
+                </View>
+              </View>
+
+              {/* Create Button */}
+              <Pressable
+                onPress={handleCreate}
+                disabled={createMutation.isPending || !name.trim()}
+                className="mt-4 mb-8 items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
+                style={
+                  createMutation.isPending || !name.trim()
+                    ? { opacity: 0.5 }
+                    : undefined
+                }
+              >
+                {createMutation.isPending ? (
+                  <ActivityIndicator color="#0A1A1A" />
+                ) : (
+                  <Text className="text-lg font-bold text-[#0A1A1A]">
+                    Create League
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          }
+        />
       </SafeAreaView>
     </GradientBackground>
   );
