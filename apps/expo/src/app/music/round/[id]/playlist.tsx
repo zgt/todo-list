@@ -76,10 +76,14 @@ export default function PlaylistView() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView className="flex-1 items-center justify-center">
+        <SafeAreaView
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Stack.Screen options={{ headerShown: false }} />
           <ActivityIndicator size="large" color="#50C878" />
-          <Text className="mt-3 text-[#8FA8A8]">Loading playlist...</Text>
+          <Text style={{ marginTop: 12, color: "#8FA8A8" }}>
+            Loading playlist...
+          </Text>
         </SafeAreaView>
       </GradientBackground>
     );
@@ -87,26 +91,42 @@ export default function PlaylistView() {
 
   return (
     <GradientBackground>
-      <SafeAreaView className="flex-1" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4">
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+          }}
+        >
           <Pressable
             onPress={() => router.back()}
-            className="rounded-full bg-[#164B49] p-2"
+            style={{
+              borderRadius: 9999,
+              backgroundColor: "#164B49",
+              padding: 8,
+            }}
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
-          <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-[#DCE4E4]">Playlist</Text>
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Text
+              style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}
+            >
+              Playlist
+            </Text>
             {playlist && (
-              <Text className="text-xs text-[#8FA8A8]">
+              <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
                 Round {playlist.roundNumber}
               </Text>
             )}
           </View>
-          <View className="w-10" />
+          <View style={{ width: 40 }} />
         </View>
 
         <FlatList
@@ -122,16 +142,38 @@ export default function PlaylistView() {
             />
           }
           ListHeaderComponent={
-            <View className="mb-4">
+            <View style={{ marginBottom: 16 }}>
               {/* Theme & Track Count */}
-              <View className="mb-4 rounded-xl border border-[#164B49] bg-[#102A2A] p-4">
-                <Text className="mb-1 text-xs font-bold tracking-wide text-[#50C878] uppercase">
+              <View
+                style={{
+                  marginBottom: 16,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: "#164B49",
+                  backgroundColor: "#102A2A",
+                  padding: 16,
+                }}
+              >
+                <Text
+                  style={{
+                    marginBottom: 4,
+                    fontSize: 12,
+                    fontWeight: "700",
+                    letterSpacing: 0.5,
+                    color: "#50C878",
+                    textTransform: "uppercase",
+                  }}
+                >
                   Theme
                 </Text>
-                <Text className="text-2xl font-bold text-[#DCE4E4]">
+                <Text
+                  style={{ fontSize: 24, fontWeight: "700", color: "#DCE4E4" }}
+                >
                   {playlist?.themeName ?? "Playlist"}
                 </Text>
-                <Text className="mt-2 text-sm text-[#8FA8A8]">
+                <Text
+                  style={{ marginTop: 8, fontSize: 14, color: "#8FA8A8" }}
+                >
                   {playlist?.tracks.length ?? 0} track
                   {(playlist?.tracks.length ?? 0) !== 1 ? "s" : ""}
                 </Text>
@@ -141,10 +183,26 @@ export default function PlaylistView() {
               {playlist?.playlistUrl && (
                 <Pressable
                   onPress={handleOpenPlaylist}
-                  className="mb-4 flex-row items-center justify-center gap-2 rounded-xl border border-[#1DB954]/30 bg-[#1DB954]/10 py-3 active:bg-[#1DB954]/20"
+                  style={{
+                    marginBottom: 16,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: "rgba(29, 185, 84, 0.3)",
+                    backgroundColor: "rgba(29, 185, 84, 0.1)",
+                    paddingVertical: 12,
+                  }}
                 >
                   <ExternalLink size={18} color="#1DB954" />
-                  <Text className="font-semibold text-[#1DB954]">
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      color: "#1DB954",
+                    }}
+                  >
                     Open in Spotify
                   </Text>
                 </Pressable>
@@ -152,11 +210,21 @@ export default function PlaylistView() {
             </View>
           }
           ListEmptyComponent={
-            <View className="items-center py-16">
-              <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-[#164B49]">
+            <View style={{ alignItems: "center", paddingVertical: 64 }}>
+              <View
+                style={{
+                  marginBottom: 16,
+                  width: 64,
+                  height: 64,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 9999,
+                  backgroundColor: "#164B49",
+                }}
+              >
                 <ListMusic size={28} color="#8FA8A8" />
               </View>
-              <Text className="text-base text-[#8FA8A8]">
+              <Text style={{ fontSize: 16, color: "#8FA8A8" }}>
                 No tracks in this playlist yet
               </Text>
             </View>

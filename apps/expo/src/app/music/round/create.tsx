@@ -278,17 +278,27 @@ export default function CreateRound() {
               <Pressable
                 onPress={handleCreate}
                 disabled={createRoundMutation.isPending || !themeName.trim()}
-                className="items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
-                style={
-                  createRoundMutation.isPending || !themeName.trim()
-                    ? { opacity: 0.5 }
-                    : undefined
-                }
+                style={{
+                  alignItems: "center",
+                  borderRadius: 12,
+                  backgroundColor: "#50C878",
+                  paddingVertical: 16,
+                  opacity:
+                    createRoundMutation.isPending || !themeName.trim()
+                      ? 0.5
+                      : 1,
+                }}
               >
                 {createRoundMutation.isPending ? (
                   <ActivityIndicator color="#0A1A1A" />
                 ) : (
-                  <Text className="text-lg font-bold text-[#0A1A1A]">
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: "#0A1A1A",
+                    }}
+                  >
                     Create Round
                   </Text>
                 )}

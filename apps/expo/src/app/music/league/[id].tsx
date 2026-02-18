@@ -19,7 +19,6 @@ import {
   RefreshCw,
   Settings,
   Share2,
-  Trash2,
   Trophy,
 } from "lucide-react-native";
 
@@ -388,8 +387,8 @@ export default function LeagueDetails() {
               </View>
 
               {/* Actions */}
-              <View className="mt-8 gap-3">
-                {!isOwner && (
+              {!isOwner && (
+                <View className="mt-8">
                   <Pressable
                     onPress={handleLeaveLeague}
                     disabled={leaveLeagueMutation.isPending}
@@ -405,26 +404,8 @@ export default function LeagueDetails() {
                       Leave League
                     </Text>
                   </Pressable>
-                )}
-
-                {isOwner && (
-                  <Pressable
-                    onPress={handleDeleteLeague}
-                    disabled={deleteLeagueMutation.isPending}
-                    className="flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
-                    style={
-                      deleteLeagueMutation.isPending
-                        ? { opacity: 0.5 }
-                        : undefined
-                    }
-                  >
-                    <Trash2 size={18} color="#ef4444" />
-                    <Text className="font-semibold text-red-400">
-                      Delete League
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
+                </View>
+              )}
             </View>
           }
         />
@@ -439,6 +420,8 @@ export default function LeagueDetails() {
             songsPerRound={league.songsPerRound}
             upvotePointsPerRound={league.upvotePointsPerRound}
             allowDownvotes={league.allowDownvotes}
+            isOwner={isOwner}
+            onDeleteLeague={handleDeleteLeague}
           />
         )}
       </SafeAreaView>

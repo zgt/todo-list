@@ -141,37 +141,70 @@ export default function SubmitSong() {
 
   return (
     <GradientBackground>
-      <SafeAreaView className="flex-1" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
+          style={{ flex: 1 }}
         >
           {/* Header */}
-          <View className="flex-row items-center gap-3 px-4 py-4">
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+            }}
+          >
             <Pressable
               onPress={() => router.back()}
-              className="rounded-full bg-[#164B49] p-2"
+              style={{
+                borderRadius: 9999,
+                backgroundColor: "#164B49",
+                padding: 8,
+              }}
             >
               <ArrowLeft color="#DCE4E4" size={24} />
             </Pressable>
-            <View className="flex-1">
-              <Text className="text-xl font-bold text-[#DCE4E4]">
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: "700",
+                  color: "#DCE4E4",
+                }}
+              >
                 Submit a Song
               </Text>
               {round && (
-                <Text className="text-xs text-[#8FA8A8]">
-                  {round.themeName} &middot; {remainingSlots} of {maxSongs}{" "}
-                  remaining
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: "#8FA8A8",
+                    marginTop: 2,
+                  }}
+                >
+                  {round.themeName} · {remainingSlots} of {maxSongs} remaining
                 </Text>
               )}
             </View>
           </View>
 
           {/* Search Input */}
-          <View className="px-4 pb-3">
-            <View className="flex-row items-center rounded-xl border border-[#164B49] bg-[#102A2A] px-3">
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#164B49",
+                backgroundColor: "#102A2A",
+                paddingHorizontal: 12,
+              }}
+            >
               <Search size={18} color="#8FA8A8" />
               <TextInput
                 value={searchText}
@@ -181,7 +214,13 @@ export default function SubmitSong() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 returnKeyType="search"
-                className="flex-1 py-3 pl-2 text-base text-[#DCE4E4]"
+                style={{
+                  flex: 1,
+                  paddingVertical: 12,
+                  paddingLeft: 8,
+                  fontSize: 16,
+                  color: "#DCE4E4",
+                }}
               />
               {searchText.length > 0 && (
                 <Pressable
@@ -199,9 +238,33 @@ export default function SubmitSong() {
 
           {/* Selected Track Preview */}
           {selectedTrack && (
-            <View className="mx-4 mb-3 rounded-xl border border-[#50C878] bg-[#102A2A] p-4">
-              <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-xs font-bold text-[#50C878] uppercase">
+            <View
+              style={{
+                marginHorizontal: 16,
+                marginBottom: 12,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#50C878",
+                backgroundColor: "#102A2A",
+                padding: 16,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "700",
+                    color: "#50C878",
+                    textTransform: "uppercase",
+                  }}
+                >
                   Selected Track
                 </Text>
                 <Pressable onPress={handleClearSelection} hitSlop={8}>
@@ -209,7 +272,13 @@ export default function SubmitSong() {
                 </Pressable>
               </View>
 
-              <View className="flex-row items-center gap-4">
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
                 {/* Larger album art */}
                 {selectedTrack.albumArtUrl ? (
                   <Image
@@ -227,20 +296,34 @@ export default function SubmitSong() {
                   />
                 )}
 
-                <View className="flex-1">
+                <View style={{ flex: 1 }}>
                   <Text
-                    className="text-lg font-bold text-[#DCE4E4]"
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: "#DCE4E4",
+                    }}
                     numberOfLines={2}
                   >
                     {selectedTrack.trackName}
                   </Text>
                   <Text
-                    className="mt-1 text-sm text-[#8FA8A8]"
+                    style={{
+                      fontSize: 14,
+                      color: "#8FA8A8",
+                      marginTop: 4,
+                    }}
                     numberOfLines={1}
                   >
                     {selectedTrack.artistName}
                   </Text>
-                  <Text className="text-xs text-[#8FA8A8]" numberOfLines={1}>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: "#8FA8A8",
+                    }}
+                    numberOfLines={1}
+                  >
                     {selectedTrack.albumName}
                   </Text>
                 </View>
@@ -255,17 +338,26 @@ export default function SubmitSong() {
               <Pressable
                 onPress={handleSubmit}
                 disabled={submitMutation.isPending || remainingSlots <= 0}
-                className="mt-4 items-center rounded-lg bg-[#50C878] py-3 active:bg-[#66D99A]"
-                style={
-                  submitMutation.isPending || remainingSlots <= 0
-                    ? { opacity: 0.5 }
-                    : undefined
-                }
+                style={{
+                  marginTop: 16,
+                  alignItems: "center",
+                  borderRadius: 8,
+                  backgroundColor: "#50C878",
+                  paddingVertical: 12,
+                  opacity:
+                    submitMutation.isPending || remainingSlots <= 0 ? 0.5 : 1,
+                }}
               >
                 {submitMutation.isPending ? (
                   <ActivityIndicator color="#0A1A1A" size="small" />
                 ) : (
-                  <Text className="text-base font-bold text-[#0A1A1A]">
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "700",
+                      color: "#0A1A1A",
+                    }}
+                  >
                     {remainingSlots <= 0
                       ? "Submission limit reached"
                       : "Submit Song"}
@@ -284,8 +376,21 @@ export default function SubmitSong() {
             keyboardShouldPersistTaps="handled"
             ListHeaderComponent={
               debouncedQuery.length > 0 ? (
-                <View className="mb-2 flex-row items-center justify-between">
-                  <Text className="text-sm font-medium text-[#8FA8A8]">
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "500",
+                      color: "#8FA8A8",
+                    }}
+                  >
                     {isSearching || isFetching
                       ? "Searching..."
                       : searchResults && searchResults.length > 0
@@ -300,13 +405,27 @@ export default function SubmitSong() {
             }
             ListEmptyComponent={
               debouncedQuery.length === 0 ? (
-                <View className="items-center py-16">
-                  <Search size={48} color="#164B49" />
-                  <Text className="mt-4 text-center text-base text-[#8FA8A8]">
+                <View style={{ alignItems: "center", paddingVertical: 64 }}>
+                  <Search size={48} color="#8FA8A8" />
+                  <Text
+                    style={{
+                      marginTop: 16,
+                      textAlign: "center",
+                      fontSize: 16,
+                      color: "#8FA8A8",
+                    }}
+                  >
                     Search for a song to submit
                   </Text>
                   {round && (
-                    <Text className="mt-1 text-center text-sm text-[#8FA8A8]">
+                    <Text
+                      style={{
+                        marginTop: 4,
+                        textAlign: "center",
+                        fontSize: 14,
+                        color: "#8FA8A8",
+                      }}
+                    >
                       Theme: {round.themeName}
                     </Text>
                   )}

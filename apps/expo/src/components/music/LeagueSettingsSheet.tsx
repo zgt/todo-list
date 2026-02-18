@@ -21,7 +21,7 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react-native";
 
 import { trpc } from "~/utils/api";
 
@@ -37,6 +37,8 @@ interface LeagueSettings {
   songsPerRound: number;
   upvotePointsPerRound: number;
   allowDownvotes: boolean;
+  isOwner?: boolean;
+  onDeleteLeague?: () => void;
 }
 
 function SettingsStepper({
@@ -92,6 +94,8 @@ export const LeagueSettingsSheet = forwardRef<
       songsPerRound,
       upvotePointsPerRound,
       allowDownvotes,
+      isOwner,
+      onDeleteLeague,
     },
     ref,
   ) => {
@@ -265,21 +269,42 @@ export const LeagueSettingsSheet = forwardRef<
           <Pressable
             onPress={handleSave}
             disabled={updateMutation.isPending || !editName.trim()}
-            className="items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
-            style={
-              updateMutation.isPending || !editName.trim()
-                ? { opacity: 0.5 }
-                : undefined
-            }
+            style={{
+              alignItems: "center",
+              borderRadius: 12,
+              backgroundColor: "#50C878",
+              paddingVertical: 16,
+              opacity:
+                updateMutation.isPending || !editName.trim() ? 0.5 : 1,
+            }}
           >
             {updateMutation.isPending ? (
               <ActivityIndicator color="#0A1A1A" />
             ) : (
-              <Text className="text-lg font-bold text-[#0A1A1A]">
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontWeight: "700",
+                  color: "#0A1A1A",
+                }}
+              >
                 Save Changes
               </Text>
             )}
           </Pressable>
+
+          {/* Delete League */}
+          {isOwner && onDeleteLeague && (
+            <Pressable
+              onPress={onDeleteLeague}
+              className="mt-6 flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
+            >
+              <Trash2 size={18} color="#ef4444" />
+              <Text className="font-semibold text-red-400">
+                Delete League
+              </Text>
+            </Pressable>
+          )}
         </BottomSheetScrollView>
       </BottomSheetModal>
     );

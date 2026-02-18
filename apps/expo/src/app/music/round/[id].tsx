@@ -21,7 +21,6 @@ import {
 import {
   Check,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   ChevronUp,
   Circle,
@@ -39,6 +38,7 @@ import {
   Users,
   Vote,
   Wand2,
+  ArrowLeft,
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
@@ -120,7 +120,7 @@ export default function RoundDetails() {
         <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <Stack.Screen options={{ headerShown: false }} />
           <ActivityIndicator size="large" color="#50C878" />
-          <Text className="mt-3 text-[#8FA8A8]">Loading round...</Text>
+          <Text style={{ marginTop: 12, fontSize: 14, color: "#8FA8A8" }}>Loading round...</Text>
         </SafeAreaView>
       </GradientBackground>
     );
@@ -132,7 +132,7 @@ export default function RoundDetails() {
       <GradientBackground>
         <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <Stack.Screen options={{ headerShown: false }} />
-          <Text className="mb-4 text-lg text-[#8FA8A8]">Round not found</Text>
+          <Text style={{ marginBottom: 16, fontSize: 18, color: "#8FA8A8" }}>Round not found</Text>
           <Pressable
             onPress={() => router.back()}
             style={{
@@ -144,7 +144,7 @@ export default function RoundDetails() {
               borderColor: "#164B49",
             }}
           >
-            <Text className="font-medium text-[#50C878]">Go Back</Text>
+            <Text style={{ fontWeight: "500", color: "#50C878" }}>Go Back</Text>
           </Pressable>
         </SafeAreaView>
       </GradientBackground>
@@ -183,22 +183,18 @@ export default function RoundDetails() {
                 <Pressable
                   onPress={() => router.back()}
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: "#102A2A",
-                    borderWidth: 1,
-                    borderColor: "#164B49",
+                    borderRadius: 9999,
+                    backgroundColor: "#164B49",
+                    padding: 8,
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  <ChevronLeft size={20} color="#DCE4E4" />
+                  <ArrowLeft size={24} color="#DCE4E4" />
                 </Pressable>
 
                 <Text
-                  className="text-lg font-semibold text-[#DCE4E4]"
-                  style={{ flex: 1, marginLeft: 12 }}
+                  style={{ flex: 1, marginLeft: 12, fontSize: 18, fontWeight: "600", color: "#DCE4E4" }}
                 >
                   Round {round.roundNumber}
                 </Text>
@@ -450,16 +446,16 @@ function CountdownTimer({
       }}
     >
       <Clock size={16} color="#8FA8A8" />
-      <Text className="text-[#8FA8A8]" style={{ fontSize: 13, marginLeft: 8 }}>
+      <Text style={{ fontSize: 13, marginLeft: 8, color: "#8FA8A8" }}>
         {label}
       </Text>
       <Text
-        className="text-[#DCE4E4]"
         style={{
           fontSize: 14,
           fontWeight: "700",
           fontVariant: ["tabular-nums"],
           marginLeft: "auto",
+          color: "#DCE4E4",
         }}
       >
         {formatCountdown(remaining)}
@@ -493,16 +489,14 @@ function ThemeCard({
       }}
     >
       <Text
-        className="text-xl font-bold text-[#DCE4E4]"
-        style={{ marginBottom: themeDescription ? 8 : 12 }}
+        style={{ marginBottom: themeDescription ? 8 : 12, fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}
       >
         {themeName}
       </Text>
 
       {themeDescription ? (
         <Text
-          className="text-[#8FA8A8]"
-          style={{ fontSize: 14, lineHeight: 20, marginBottom: 12 }}
+          style={{ fontSize: 14, lineHeight: 20, marginBottom: 12, color: "#8FA8A8" }}
         >
           {themeDescription}
         </Text>
@@ -519,20 +513,20 @@ function ThemeCard({
         >
           {submissionDeadline && (
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text className="text-[#8FA8A8]" style={{ fontSize: 12 }}>
+              <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
                 Submission deadline
               </Text>
-              <Text className="text-[#DCE4E4]" style={{ fontSize: 12, fontWeight: "600" }}>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: "#DCE4E4" }}>
                 {formatDate(submissionDeadline)}
               </Text>
             </View>
           )}
           {votingDeadline && (
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-              <Text className="text-[#8FA8A8]" style={{ fontSize: 12 }}>
+              <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
                 Voting deadline
               </Text>
-              <Text className="text-[#DCE4E4]" style={{ fontSize: 12, fontWeight: "600" }}>
+              <Text style={{ fontSize: 12, fontWeight: "600", color: "#DCE4E4" }}>
                 {formatDate(votingDeadline)}
               </Text>
             </View>
@@ -627,10 +621,10 @@ function SubmissionPhaseSection({
           <Music size={18} color="#50C878" />
         </View>
         <View style={{ marginLeft: 12, flex: 1 }}>
-          <Text className="text-sm font-semibold text-[#DCE4E4]">
+          <Text style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }}>
             Submission Phase
           </Text>
-          <Text className="text-xs text-[#8FA8A8]" style={{ marginTop: 2 }}>
+          <Text style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}>
             {submissionCount}/{memberCount} members have submitted
           </Text>
         </View>
@@ -639,7 +633,7 @@ function SubmissionPhaseSection({
       {/* User's Submissions or Empty State */}
       {submissions.length > 0 ? (
         <View style={{ gap: 8 }}>
-          <Text className="text-xs font-medium text-[#8FA8A8]">
+          <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>
             {submissions.length}/{songsPerRound} songs submitted
           </Text>
           {submissions.map((sub) => (
@@ -676,15 +670,14 @@ function SubmissionPhaseSection({
               )}
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text
-                  className="text-sm font-semibold text-[#DCE4E4]"
+                  style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }}
                   numberOfLines={1}
                 >
                   {sub.trackName}
                 </Text>
                 <Text
-                  className="text-xs text-[#8FA8A8]"
+                  style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}
                   numberOfLines={1}
-                  style={{ marginTop: 2 }}
                 >
                   {sub.artistName}
                 </Text>
@@ -730,7 +723,7 @@ function SubmissionPhaseSection({
           >
             <Music size={24} color="#50C878" />
           </View>
-          <Text className="text-sm text-[#8FA8A8]">
+          <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
             No songs submitted yet
           </Text>
         </View>
@@ -809,8 +802,7 @@ function ViewPlaylistButton({
 
       {showTrackCount && (
         <Text
-          className="text-[#8FA8A8]"
-          style={{ fontSize: 13, textAlign: "center" }}
+          style={{ fontSize: 13, textAlign: "center", color: "#8FA8A8" }}
         >
           Listen to all {trackCount} tracks before voting begins
         </Text>
@@ -908,7 +900,7 @@ function VotingPhaseSection({
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Vote size={18} color="#FFA500" />
-        <Text className="text-base font-semibold text-[#DCE4E4]">
+        <Text style={{ fontSize: 16, fontWeight: "600", color: "#DCE4E4" }}>
           Vote on Songs
         </Text>
       </View>
@@ -976,15 +968,14 @@ function VotingPhaseSection({
               )}
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text
-                  className="text-sm font-semibold text-[#DCE4E4]"
+                  style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }}
                   numberOfLines={1}
                 >
                   {sub.trackName}
                 </Text>
                 <Text
-                  className="text-xs text-[#8FA8A8]"
+                  style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}
                   numberOfLines={1}
-                  style={{ marginTop: 2 }}
                 >
                   {sub.artistName}
                 </Text>
@@ -1151,7 +1142,7 @@ function ResultsPhaseSection({
           marginBottom: 16,
         }}
       >
-        <Text className="text-sm text-[#8FA8A8]">No results available</Text>
+        <Text style={{ fontSize: 14, color: "#8FA8A8" }}>No results available</Text>
       </View>
     );
   }
@@ -1177,8 +1168,7 @@ function ResultsPhaseSection({
       >
         <Trophy size={20} color="#EAB308" />
         <Text
-          className="text-sm font-bold text-[#EAB308]"
-          style={{ marginLeft: 10, flex: 1 }}
+          style={{ marginLeft: 10, flex: 1, fontSize: 14, fontWeight: "700", color: "#EAB308" }}
         >
           {winner.submitter?.name ?? "Unknown"} wins the round!
         </Text>
@@ -1282,15 +1272,14 @@ function PodiumCard({
         {/* Track info */}
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text
-            className={`font-bold text-[#DCE4E4] ${rank === 1 ? "text-base" : "text-sm"}`}
+            style={{ fontWeight: "700", color: "#DCE4E4", fontSize: rank === 1 ? 16 : 14 }}
             numberOfLines={1}
           >
             {submission.trackName}
           </Text>
           <Text
-            className="text-xs text-[#8FA8A8]"
+            style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}
             numberOfLines={1}
-            style={{ marginTop: 2 }}
           >
             {submission.artistName}
           </Text>
@@ -1318,8 +1307,7 @@ function PodiumCard({
                 </View>
               )}
               <Text
-                className="text-xs text-[#8FA8A8]"
-                style={{ marginLeft: 4 }}
+                style={{ marginLeft: 4, fontSize: 12, color: "#8FA8A8" }}
                 numberOfLines={1}
               >
                 {submission.submitter.name ?? "Unknown"}
@@ -1358,8 +1346,7 @@ function PodiumCard({
           <ChevronDown size={14} color="#8FA8A8" />
         )}
         <Text
-          className="text-xs text-[#8FA8A8]"
-          style={{ marginLeft: 4 }}
+          style={{ marginLeft: 4, fontSize: 12, color: "#8FA8A8" }}
         >
           {expanded ? "Hide details" : "Show votes & comments"}
         </Text>
@@ -1438,10 +1425,10 @@ function CompactResultRow({
 
         {/* Track info */}
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text className="text-sm font-semibold text-[#DCE4E4]" numberOfLines={1}>
+          <Text style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }} numberOfLines={1}>
             {submission.trackName}
           </Text>
-          <Text className="text-xs text-[#8FA8A8]" numberOfLines={1} style={{ marginTop: 1 }}>
+          <Text style={{ marginTop: 1, fontSize: 12, color: "#8FA8A8" }} numberOfLines={1}>
             {submission.artistName}
             {submission.submitter?.name ? ` · ${submission.submitter.name}` : ""}
           </Text>
@@ -1529,8 +1516,7 @@ function VoteCommentDetails({
                 </View>
               )}
               <Text
-                className="text-xs text-[#DCE4E4]"
-                style={{ marginLeft: 6, flex: 1 }}
+                style={{ marginLeft: 6, flex: 1, fontSize: 12, color: "#DCE4E4" }}
                 numberOfLines={1}
               >
                 {vote.voter?.name ?? "Unknown"}
@@ -1548,7 +1534,7 @@ function VoteCommentDetails({
           ))}
         </View>
       ) : (
-        <Text className="text-xs text-[#8FA8A8]">No votes received</Text>
+        <Text style={{ fontSize: 12, color: "#8FA8A8" }}>No votes received</Text>
       )}
 
       {/* Comments */}
@@ -1556,12 +1542,12 @@ function VoteCommentDetails({
         <View style={{ gap: 6, marginTop: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <MessageCircle size={12} color="#8FA8A8" />
-            <Text className="text-xs font-medium text-[#8FA8A8]">Comments</Text>
+            <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>Comments</Text>
           </View>
           {comments.map((comment, idx) => (
             <View key={idx} style={{ marginLeft: 4 }}>
-              <Text className="text-xs text-[#DCE4E4]">
-                <Text className="font-semibold text-[#8FA8A8]">
+              <Text style={{ fontSize: 12, color: "#DCE4E4" }}>
+                <Text style={{ fontWeight: "600", color: "#8FA8A8" }}>
                   {comment.user?.name ?? "Unknown"}:{" "}
                 </Text>
                 {comment.text}
@@ -1684,7 +1670,7 @@ function AdminControls({
       }}
     >
       {/* Header */}
-      <Text className="text-sm font-semibold text-[#DCE4E4]">
+      <Text style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }}>
         Admin Controls
       </Text>
 
@@ -1692,7 +1678,7 @@ function AdminControls({
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Link size={14} color="#8FA8A8" />
-          <Text className="text-xs text-[#8FA8A8]">Spotify Playlist URL</Text>
+          <Text style={{ fontSize: 12, color: "#8FA8A8" }}>Spotify Playlist URL</Text>
         </View>
         <TextInput
           placeholder="https://open.spotify.com/playlist/..."
@@ -1818,7 +1804,7 @@ function AdminControls({
       )}
 
       {status !== "COMPLETED" && (
-        <Text className="text-xs text-[#8FA8A8]" style={{ textAlign: "center" }}>
+        <Text style={{ textAlign: "center", fontSize: 12, color: "#8FA8A8" }}>
           Move from {status} to {PHASE_NEXT_LABELS[status] ?? "next phase"}
         </Text>
       )}
@@ -1865,7 +1851,7 @@ function MemberStatusBoard({
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
         <Users size={16} color="#8FA8A8" />
-        <Text className="text-sm font-semibold text-[#DCE4E4]">
+        <Text style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }}>
           Member Status
         </Text>
       </View>
@@ -1910,8 +1896,7 @@ function MemberStatusBoard({
 
               {/* Name */}
               <Text
-                className="text-sm text-[#DCE4E4]"
-                style={{ flex: 1, marginLeft: 10 }}
+                style={{ flex: 1, marginLeft: 10, fontSize: 14, color: "#DCE4E4" }}
                 numberOfLines={1}
               >
                 {member.name ?? "Unknown"}
@@ -1948,8 +1933,7 @@ function MemberStatusBoard({
         }}
       >
         <Text
-          className="text-xs text-[#8FA8A8]"
-          style={{ textAlign: "center" }}
+          style={{ textAlign: "center", fontSize: 12, color: "#8FA8A8" }}
         >
           {summaryLabel}
         </Text>
