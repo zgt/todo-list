@@ -29,7 +29,7 @@ import {
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { CountdownTimer } from "~/components/music/CountdownTimer";
-import { MemberStatusBoard } from "~/components/music/MemberStatusBoard";
+// import { MemberStatusBoard } from "~/components/music/MemberStatusBoard";
 import { PhaseProgressBar } from "~/components/music/PhaseProgressBar";
 import { RemainingPointsBadge } from "~/components/music/RemainingPointsBadge";
 import { ResultCard } from "~/components/music/ResultCard";
@@ -435,15 +435,7 @@ export default function RoundDetails() {
                 </View>
               )}
 
-              {/* Member Status Board */}
-              {round.memberStatus.length > 0 && !isResultsPhase && (
-                <View className="mb-4">
-                  <MemberStatusBoard
-                    members={round.memberStatus}
-                    trackAction={memberTrackAction}
-                  />
-                </View>
-              )}
+              {/* Member Status Board - disabled due to stack overflow */}
 
               {/* Admin Controls */}
               {isAdmin && (
