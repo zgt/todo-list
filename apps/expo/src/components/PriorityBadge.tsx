@@ -19,8 +19,8 @@ export const PriorityBadge = memo(
       <View
         className={`flex-row items-center gap-1 rounded-full ${
           config.bgClass
-        } ${size === "sm" ? "px-2 py-0.5" : "px-2 py-1"}`}
-        style={{ borderWidth: 1.5, borderColor: `${config.color}60`, borderRadius: 9999 }}
+        }`}
+        style={{ paddingHorizontal: 10, paddingVertical: 4, borderWidth: 2, borderColor: `${config.color}60`, borderRadius: 9999 }}
       >
         <Icon size={size === "sm" ? 12 : 16} color={`${config.color}CC`} />
         {showLabel && (
