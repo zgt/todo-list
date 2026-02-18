@@ -553,7 +553,9 @@ export const musicLeagueRouter = {
         });
       }
 
-      await ctx.db.delete(Submission).where(eq(Submission.id, input.submissionId));
+      await ctx.db
+        .delete(Submission)
+        .where(eq(Submission.id, input.submissionId));
       return { success: true };
     }),
 

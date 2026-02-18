@@ -11,14 +11,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
+  ArrowLeft,
   Check,
   ChevronDown,
   ChevronRight,
@@ -37,8 +34,6 @@ import {
   Trophy,
   Users,
   Vote,
-  Wand2,
-  ArrowLeft,
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
@@ -99,7 +94,7 @@ export default function RoundDetails() {
     refetch,
   } = useQuery(
     trpc.musicLeague.getRoundById.queryOptions(
-      { roundId: id! },
+      { roundId: id },
       { enabled: !!id },
     ),
   );
@@ -117,10 +112,14 @@ export default function RoundDetails() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <SafeAreaView
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Stack.Screen options={{ headerShown: false }} />
           <ActivityIndicator size="large" color="#50C878" />
-          <Text style={{ marginTop: 12, fontSize: 14, color: "#8FA8A8" }}>Loading round...</Text>
+          <Text style={{ marginTop: 12, fontSize: 14, color: "#8FA8A8" }}>
+            Loading round...
+          </Text>
         </SafeAreaView>
       </GradientBackground>
     );
@@ -130,9 +129,13 @@ export default function RoundDetails() {
   if (error || !round) {
     return (
       <GradientBackground>
-        <SafeAreaView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <SafeAreaView
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Stack.Screen options={{ headerShown: false }} />
-          <Text style={{ marginBottom: 16, fontSize: 18, color: "#8FA8A8" }}>Round not found</Text>
+          <Text style={{ marginBottom: 16, fontSize: 18, color: "#8FA8A8" }}>
+            Round not found
+          </Text>
           <Pressable
             onPress={() => router.back()}
             style={{
@@ -151,7 +154,10 @@ export default function RoundDetails() {
     );
   }
 
-  const statusColor = STATUS_COLORS[round.status] ?? STATUS_COLORS.COMPLETED!;
+  const statusColor = STATUS_COLORS[round.status] ?? {
+    bg: "rgba(138, 138, 138, 0.2)",
+    text: "#8A8A8A",
+  };
 
   return (
     <GradientBackground>
@@ -194,7 +200,13 @@ export default function RoundDetails() {
                 </Pressable>
 
                 <Text
-                  style={{ flex: 1, marginLeft: 12, fontSize: 18, fontWeight: "600", color: "#DCE4E4" }}
+                  style={{
+                    flex: 1,
+                    marginLeft: 12,
+                    fontSize: 18,
+                    fontWeight: "600",
+                    color: "#DCE4E4",
+                  }}
                 >
                   Round {round.roundNumber}
                 </Text>
@@ -208,7 +220,11 @@ export default function RoundDetails() {
                   }}
                 >
                   <Text
-                    style={{ color: statusColor.text, fontSize: 12, fontWeight: "600" }}
+                    style={{
+                      color: statusColor.text,
+                      fontSize: 12,
+                      fontWeight: "600",
+                    }}
                   >
                     {round.status}
                   </Text>
@@ -236,7 +252,7 @@ export default function RoundDetails() {
               {/* Submission Phase Section */}
               {round.status === "SUBMISSION" && (
                 <SubmissionPhaseSection
-                  roundId={id!}
+                  roundId={id}
                   submissions={round.submissions.filter((s) => s.isOwn)}
                   submissionCount={round.submissionCount}
                   memberCount={round.memberCount}
@@ -249,7 +265,7 @@ export default function RoundDetails() {
                 round.status,
               ) && (
                 <ViewPlaylistButton
-                  roundId={id!}
+                  roundId={id}
                   trackCount={round.submissions.length}
                   showTrackCount={round.status === "LISTENING"}
                 />
@@ -258,7 +274,7 @@ export default function RoundDetails() {
               {/* Voting Phase Section */}
               {round.status === "VOTING" && (
                 <VotingPhaseSection
-                  roundId={id!}
+                  roundId={id}
                   submissions={round.submissions.filter((s) => !s.isOwn)}
                   upvotePointsPerRound={round.upvotePointsPerRound}
                 />
@@ -272,7 +288,7 @@ export default function RoundDetails() {
               {/* Admin Controls */}
               {(round.userRole === "OWNER" || round.userRole === "ADMIN") && (
                 <AdminControls
-                  roundId={id!}
+                  roundId={id}
                   status={round.status}
                   playlistUrl={round.playlistUrl}
                 />
@@ -331,18 +347,22 @@ function PhaseProgressBar({ status }: { status: string }) {
               : "#8FA8A8";
 
           return (
-            <View
-              key={step}
-              style={{ flex: 1, alignItems: "center" }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", width: "100%" }}>
+            <View key={step} style={{ flex: 1, alignItems: "center" }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  width: "100%",
+                }}
+              >
                 {/* Connecting line before (except first step) */}
                 {i > 0 && (
                   <View
                     style={{
                       flex: 1,
                       height: 2,
-                      backgroundColor: isPast || isActive ? "#50C878" : "#1A3A3A",
+                      backgroundColor:
+                        isPast || isActive ? "#50C878" : "#1A3A3A",
                     }}
                   />
                 )}
@@ -426,7 +446,9 @@ function CountdownTimer({
   if (!showTimer || !deadline) return null;
 
   const deadlineMs =
-    typeof deadline === "string" ? new Date(deadline).getTime() : deadline.getTime();
+    typeof deadline === "string"
+      ? new Date(deadline).getTime()
+      : deadline.getTime();
   const remaining = deadlineMs - now;
   const label =
     status === "SUBMISSION" ? "Submissions close in" : "Voting closes in";
@@ -489,20 +511,30 @@ function ThemeCard({
       }}
     >
       <Text
-        style={{ marginBottom: themeDescription ? 8 : 12, fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}
+        style={{
+          marginBottom: themeDescription ? 8 : 12,
+          fontSize: 20,
+          fontWeight: "700",
+          color: "#DCE4E4",
+        }}
       >
         {themeName}
       </Text>
 
       {themeDescription ? (
         <Text
-          style={{ fontSize: 14, lineHeight: 20, marginBottom: 12, color: "#8FA8A8" }}
+          style={{
+            fontSize: 14,
+            lineHeight: 20,
+            marginBottom: 12,
+            color: "#8FA8A8",
+          }}
         >
           {themeDescription}
         </Text>
       ) : null}
 
-      {(submissionDeadline || votingDeadline) && (
+      {(submissionDeadline ?? votingDeadline) && (
         <View
           style={{
             borderTopWidth: 1,
@@ -512,21 +544,29 @@ function ThemeCard({
           }}
         >
           {submissionDeadline && (
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
               <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
                 Submission deadline
               </Text>
-              <Text style={{ fontSize: 12, fontWeight: "600", color: "#DCE4E4" }}>
+              <Text
+                style={{ fontSize: 12, fontWeight: "600", color: "#DCE4E4" }}
+              >
                 {formatDate(submissionDeadline)}
               </Text>
             </View>
           )}
           {votingDeadline && (
-            <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
               <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
                 Voting deadline
               </Text>
-              <Text style={{ fontSize: 12, fontWeight: "600", color: "#DCE4E4" }}>
+              <Text
+                style={{ fontSize: 12, fontWeight: "600", color: "#DCE4E4" }}
+              >
                 {formatDate(votingDeadline)}
               </Text>
             </View>
@@ -581,12 +621,10 @@ function SubmissionPhaseSection({
       {
         text: "Remove",
         style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteSubmission.mutateAsync({ submissionId });
-          } catch {
+        onPress: () => {
+          void deleteSubmission.mutateAsync({ submissionId }).catch(() => {
             Alert.alert("Error", "Failed to remove submission.");
-          }
+          });
         },
       },
     ]);
@@ -801,9 +839,7 @@ function ViewPlaylistButton({
       </Pressable>
 
       {showTrackCount && (
-        <Text
-          style={{ fontSize: 13, textAlign: "center", color: "#8FA8A8" }}
-        >
+        <Text style={{ fontSize: 13, textAlign: "center", color: "#8FA8A8" }}>
           Listen to all {trackCount} tracks before voting begins
         </Text>
       )}
@@ -1032,9 +1068,7 @@ function VotingPhaseSection({
                     height: 32,
                     borderRadius: 16,
                     backgroundColor:
-                      remaining <= 0
-                        ? "#1A3A3A"
-                        : "rgba(80, 200, 120, 0.2)",
+                      remaining <= 0 ? "#1A3A3A" : "rgba(80, 200, 120, 0.2)",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
@@ -1090,7 +1124,10 @@ function VotingPhaseSection({
           <ActivityIndicator size="small" color="#0A1A1A" />
         ) : (
           <>
-            <Check size={20} color={allPointsAllocated ? "#0A1A1A" : "#8FA8A8"} />
+            <Check
+              size={20}
+              color={allPointsAllocated ? "#0A1A1A" : "#8FA8A8"}
+            />
             <Text
               style={{
                 color: allPointsAllocated ? "#0A1A1A" : "#8FA8A8",
@@ -1118,7 +1155,10 @@ interface ResultSubmission {
   spotifyTrackId: string;
   submitter: { name: string | null; image: string | null } | null;
   totalPoints: number;
-  votes: { voter: { name: string | null; image: string | null } | null; points: number }[];
+  votes: {
+    voter: { name: string | null; image: string | null } | null;
+    points: number;
+  }[];
   comments: { user: { name: string | null } | null; text: string }[];
 }
 
@@ -1142,12 +1182,15 @@ function ResultsPhaseSection({
           marginBottom: 16,
         }}
       >
-        <Text style={{ fontSize: 14, color: "#8FA8A8" }}>No results available</Text>
+        <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
+          No results available
+        </Text>
       </View>
     );
   }
 
-  const winner = sorted[0]!;
+  const winner = sorted[0];
+  if (!winner) return null;
   const podium = sorted.slice(0, 3);
   const rest = sorted.slice(3);
 
@@ -1168,7 +1211,13 @@ function ResultsPhaseSection({
       >
         <Trophy size={20} color="#EAB308" />
         <Text
-          style={{ marginLeft: 10, flex: 1, fontSize: 14, fontWeight: "700", color: "#EAB308" }}
+          style={{
+            marginLeft: 10,
+            flex: 1,
+            fontSize: 14,
+            fontWeight: "700",
+            color: "#EAB308",
+          }}
         >
           {winner.submitter?.name ?? "Unknown"} wins the round!
         </Text>
@@ -1176,7 +1225,11 @@ function ResultsPhaseSection({
 
       {/* Podium Cards */}
       {podium.map((sub, idx) => (
-        <PodiumCard key={sub.id} submission={sub} rank={(idx + 1) as 1 | 2 | 3} />
+        <PodiumCard
+          key={sub.id}
+          submission={sub}
+          rank={(idx + 1) as 1 | 2 | 3}
+        />
       ))}
 
       {/* Remaining Results */}
@@ -1252,7 +1305,11 @@ function PodiumCard({
         {submission.albumArtUrl ? (
           <Image
             source={{ uri: submission.albumArtUrl }}
-            style={{ width: style.artSize, height: style.artSize, borderRadius: 8 }}
+            style={{
+              width: style.artSize,
+              height: style.artSize,
+              borderRadius: 8,
+            }}
           />
         ) : (
           <View
@@ -1272,7 +1329,11 @@ function PodiumCard({
         {/* Track info */}
         <View style={{ flex: 1, marginLeft: 12 }}>
           <Text
-            style={{ fontWeight: "700", color: "#DCE4E4", fontSize: rank === 1 ? 16 : 14 }}
+            style={{
+              fontWeight: "700",
+              color: "#DCE4E4",
+              fontSize: rank === 1 ? 16 : 14,
+            }}
             numberOfLines={1}
           >
             {submission.trackName}
@@ -1284,7 +1345,13 @@ function PodiumCard({
             {submission.artistName}
           </Text>
           {submission.submitter && (
-            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 4,
+              }}
+            >
               {submission.submitter.image ? (
                 <Image
                   source={{ uri: submission.submitter.image }}
@@ -1301,7 +1368,9 @@ function PodiumCard({
                     justifyContent: "center",
                   }}
                 >
-                  <Text style={{ color: "#8FA8A8", fontSize: 8, fontWeight: "700" }}>
+                  <Text
+                    style={{ color: "#8FA8A8", fontSize: 8, fontWeight: "700" }}
+                  >
                     {(submission.submitter.name ?? "?")[0]?.toUpperCase()}
                   </Text>
                 </View>
@@ -1345,9 +1414,7 @@ function PodiumCard({
         ) : (
           <ChevronDown size={14} color="#8FA8A8" />
         )}
-        <Text
-          style={{ marginLeft: 4, fontSize: 12, color: "#8FA8A8" }}
-        >
+        <Text style={{ marginLeft: 4, fontSize: 12, color: "#8FA8A8" }}>
           {expanded ? "Hide details" : "Show votes & comments"}
         </Text>
       </Pressable>
@@ -1425,12 +1492,20 @@ function CompactResultRow({
 
         {/* Track info */}
         <View style={{ flex: 1, marginLeft: 10 }}>
-          <Text style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }} numberOfLines={1}>
+          <Text
+            style={{ fontSize: 14, fontWeight: "600", color: "#DCE4E4" }}
+            numberOfLines={1}
+          >
             {submission.trackName}
           </Text>
-          <Text style={{ marginTop: 1, fontSize: 12, color: "#8FA8A8" }} numberOfLines={1}>
+          <Text
+            style={{ marginTop: 1, fontSize: 12, color: "#8FA8A8" }}
+            numberOfLines={1}
+          >
             {submission.artistName}
-            {submission.submitter?.name ? ` · ${submission.submitter.name}` : ""}
+            {submission.submitter?.name
+              ? ` · ${submission.submitter.name}`
+              : ""}
           </Text>
         </View>
 
@@ -1492,7 +1567,10 @@ function VoteCommentDetails({
       {sortedVotes.length > 0 ? (
         <View style={{ gap: 6 }}>
           {sortedVotes.map((vote, idx) => (
-            <View key={idx} style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              key={idx}
+              style={{ flexDirection: "row", alignItems: "center" }}
+            >
               {/* Voter avatar */}
               {vote.voter?.image ? (
                 <Image
@@ -1510,13 +1588,20 @@ function VoteCommentDetails({
                     justifyContent: "center",
                   }}
                 >
-                  <Text style={{ color: "#8FA8A8", fontSize: 9, fontWeight: "700" }}>
+                  <Text
+                    style={{ color: "#8FA8A8", fontSize: 9, fontWeight: "700" }}
+                  >
                     {(vote.voter?.name ?? "?")[0]?.toUpperCase()}
                   </Text>
                 </View>
               )}
               <Text
-                style={{ marginLeft: 6, flex: 1, fontSize: 12, color: "#DCE4E4" }}
+                style={{
+                  marginLeft: 6,
+                  flex: 1,
+                  fontSize: 12,
+                  color: "#DCE4E4",
+                }}
                 numberOfLines={1}
               >
                 {vote.voter?.name ?? "Unknown"}
@@ -1534,7 +1619,9 @@ function VoteCommentDetails({
           ))}
         </View>
       ) : (
-        <Text style={{ fontSize: 12, color: "#8FA8A8" }}>No votes received</Text>
+        <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
+          No votes received
+        </Text>
       )}
 
       {/* Comments */}
@@ -1542,7 +1629,9 @@ function VoteCommentDetails({
         <View style={{ gap: 6, marginTop: 4 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
             <MessageCircle size={12} color="#8FA8A8" />
-            <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>Comments</Text>
+            <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>
+              Comments
+            </Text>
           </View>
           {comments.map((comment, idx) => (
             <View key={idx} style={{ marginLeft: 4 }}>
@@ -1645,12 +1734,10 @@ function AdminControls({
         { text: "Cancel", style: "cancel" },
         {
           text: "Advance",
-          onPress: async () => {
-            try {
-              await advancePhaseMutation.mutateAsync({ roundId });
-            } catch {
+          onPress: () => {
+            void advancePhaseMutation.mutateAsync({ roundId }).catch(() => {
               Alert.alert("Error", "Failed to advance phase.");
-            }
+            });
           },
         },
       ],
@@ -1678,7 +1765,9 @@ function AdminControls({
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <Link size={14} color="#8FA8A8" />
-          <Text style={{ fontSize: 12, color: "#8FA8A8" }}>Spotify Playlist URL</Text>
+          <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
+            Spotify Playlist URL
+          </Text>
         </View>
         <TextInput
           placeholder="https://open.spotify.com/playlist/..."
@@ -1741,7 +1830,9 @@ function AdminControls({
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: generateSuccess ? "rgba(80,200,120,0.2)" : "#1A3A3A",
+              backgroundColor: generateSuccess
+                ? "rgba(80,200,120,0.2)"
+                : "#1A3A3A",
               borderRadius: 8,
               paddingVertical: 10,
               gap: 6,
@@ -1819,13 +1910,13 @@ function MemberStatusBoard({
   memberStatus,
 }: {
   status: string;
-  memberStatus: Array<{
+  memberStatus: {
     id: string;
     name: string | null;
     image: string | null;
     hasSubmitted: boolean;
     hasVoted: boolean;
-  }>;
+  }[];
 }) {
   const isSubmission = status === "SUBMISSION";
   const completedCount = memberStatus.filter((m) =>
@@ -1896,7 +1987,12 @@ function MemberStatusBoard({
 
               {/* Name */}
               <Text
-                style={{ flex: 1, marginLeft: 10, fontSize: 14, color: "#DCE4E4" }}
+                style={{
+                  flex: 1,
+                  marginLeft: 10,
+                  fontSize: 14,
+                  color: "#DCE4E4",
+                }}
                 numberOfLines={1}
               >
                 {member.name ?? "Unknown"}
@@ -1932,9 +2028,7 @@ function MemberStatusBoard({
           paddingTop: 10,
         }}
       >
-        <Text
-          style={{ textAlign: "center", fontSize: 12, color: "#8FA8A8" }}
-        >
+        <Text style={{ textAlign: "center", fontSize: 12, color: "#8FA8A8" }}>
           {summaryLabel}
         </Text>
       </View>

@@ -115,9 +115,7 @@ export default function PlaylistView() {
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
           <View style={{ flex: 1, alignItems: "center" }}>
-            <Text
-              style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}
-            >
+            <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
               Playlist
             </Text>
             {playlist && (
@@ -171,9 +169,7 @@ export default function PlaylistView() {
                 >
                   {playlist?.themeName ?? "Playlist"}
                 </Text>
-                <Text
-                  style={{ marginTop: 8, fontSize: 14, color: "#8FA8A8" }}
-                >
+                <Text style={{ marginTop: 8, fontSize: 14, color: "#8FA8A8" }}>
                   {playlist?.tracks.length ?? 0} track
                   {(playlist?.tracks.length ?? 0) !== 1 ? "s" : ""}
                 </Text>

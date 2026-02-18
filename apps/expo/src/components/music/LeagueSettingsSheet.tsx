@@ -274,8 +274,7 @@ export const LeagueSettingsSheet = forwardRef<
               borderRadius: 12,
               backgroundColor: "#50C878",
               paddingVertical: 16,
-              opacity:
-                updateMutation.isPending || !editName.trim() ? 0.5 : 1,
+              opacity: updateMutation.isPending || !editName.trim() ? 0.5 : 1,
             }}
           >
             {updateMutation.isPending ? (
@@ -300,9 +299,7 @@ export const LeagueSettingsSheet = forwardRef<
               className="mt-6 flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
             >
               <Trash2 size={18} color="#ef4444" />
-              <Text className="font-semibold text-red-400">
-                Delete League
-              </Text>
+              <Text className="font-semibold text-red-400">Delete League</Text>
             </Pressable>
           )}
         </BottomSheetScrollView>
