@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Pressable,
   Text,
   TextInput,
@@ -17,6 +18,7 @@ import {
   ChevronRight,
   Clock,
   Link as LinkIcon,
+  Music,
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
@@ -35,6 +37,8 @@ type SubmissionItem = {
   isOwn: boolean;
   trackName: string;
   artistName: string;
+  albumName: string;
+  albumArtUrl: string | null;
   submitter: { name: string | null } | null;
   totalPoints: number;
 };
@@ -106,7 +110,9 @@ export default function RoundDetails() {
   const isAdmin = round.userRole === "OWNER" || round.userRole === "ADMIN";
   const canAdvance = isAdmin && status !== "COMPLETED";
 
-  const mySubmission = submissions.find((s: { isOwn: boolean }) => s.isOwn);
+  const mySubmissions = submissions.filter((s: { isOwn: boolean }) => s.isOwn);
+  const maxSongs = round.songsPerRound ?? 1;
+  const canSubmitMore = mySubmissions.length < maxSongs;
 
   const handleAdvancePhase = () => {
     const nextPhase = PHASE_LABELS[status] ?? "next phase";
@@ -149,7 +155,16 @@ export default function RoundDetails() {
           </View>
         )}
 
-        <View className="h-12 w-12 rounded bg-[#0A1A1A]" />
+        {sub.albumArtUrl ? (
+          <Image
+            source={{ uri: sub.albumArtUrl }}
+            style={{ width: 48, height: 48, borderRadius: 6 }}
+          />
+        ) : (
+          <View className="h-12 w-12 items-center justify-center rounded bg-[#0A1A1A]">
+            <Music size={20} color="#8FA8A8" />
+          </View>
+        )}
 
         <View className="flex-1">
           <Text
