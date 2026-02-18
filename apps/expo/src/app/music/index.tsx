@@ -30,6 +30,8 @@ export default function MusicLeagueDashboard() {
     refetch,
   } = useQuery(trpc.musicLeague.getAllLeagues.queryOptions());
 
+  console.log("🎵 MUSIC DASHBOARD:", JSON.stringify({ isLoading, error: error?.message, leagueCount: leagues?.length, firstLeague: leagues?.[0]?.name }));
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -137,8 +139,13 @@ export default function MusicLeagueDashboard() {
             </View>
           </ScrollView>
         ) : (
+          <View style={{ backgroundColor: "red", padding: 8, margin: 8 }}>
+            <Text style={{ color: "white", fontWeight: "bold" }}>
+              DEBUG: {leagues?.length ?? 0} leagues found. isLoading={String(isLoading)}
+            </Text>
+          </View>
           <ScrollView
-            style={{ flex: 1 }}
+            style={{ flex: 1, borderWidth: 2, borderColor: "yellow" }}
             contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
             refreshControl={
               <RefreshControl
