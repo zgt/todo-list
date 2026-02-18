@@ -123,8 +123,8 @@ export default function CreateRound() {
         </View>
 
         <ScrollView
-          className="flex-1 px-4"
-          contentContainerStyle={{ paddingBottom: 32 }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Theme Name */}

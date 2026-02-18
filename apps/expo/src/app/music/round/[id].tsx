@@ -147,7 +147,7 @@ export default function RoundDetails() {
           <View className="w-10" />
         </View>
 
-        <ScrollView className="flex-1 p-4">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
           {/* Phase Progress Bar */}
           <View className="mb-6 rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-4">
             <PhaseProgressBar currentPhase={status} />

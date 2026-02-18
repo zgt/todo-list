@@ -113,7 +113,8 @@ export default function CreateLeague() {
         </View>
 
         <ScrollView
-          className="flex-1 px-4"
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Name */}
