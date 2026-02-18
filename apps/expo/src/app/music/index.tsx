@@ -139,6 +139,7 @@ export default function MusicLeagueDashboard() {
             </View>
           </ScrollView>
         ) : (
+          <>
           <View style={{ backgroundColor: "red", padding: 8, margin: 8 }}>
             <Text style={{ color: "white", fontWeight: "bold" }}>
               DEBUG: {leagues?.length ?? 0} leagues found. isLoading={String(isLoading)}
@@ -208,6 +209,7 @@ export default function MusicLeagueDashboard() {
               </Link>
             ))}
           </ScrollView>
+          </>
         )}
       </SafeAreaView>
     </GradientBackground>
