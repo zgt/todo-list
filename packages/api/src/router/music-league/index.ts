@@ -305,7 +305,7 @@ export const musicLeagueRouter = {
     .input(
       z.object({
         query: z.string().min(1).max(200),
-        limit: z.number().int().min(1).max(20).default(10),
+        limit: z.number().int().min(1).max(10).default(10),
       }),
     )
     .query(async ({ input }) => {

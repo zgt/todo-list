@@ -61,7 +61,7 @@ export default function SubmitSong() {
     isFetching,
   } = useQuery(
     trpc.musicLeague.searchSpotify.queryOptions(
-      { query: debouncedQuery, limit: 15 },
+      { query: debouncedQuery, limit: 10 },
       { enabled: debouncedQuery.length > 0 },
     ),
   );
