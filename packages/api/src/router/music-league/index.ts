@@ -388,6 +388,7 @@ export const musicLeagueRouter = {
             with: {
               user: true,
               votes: { with: { voter: true } },
+              comments: { with: { user: true } },
             },
           },
         },
@@ -429,6 +430,10 @@ export const musicLeagueRouter = {
             votes:
               round.status === "RESULTS" || round.status === "COMPLETED"
                 ? sub.votes
+                : [],
+            comments:
+              round.status === "RESULTS" || round.status === "COMPLETED"
+                ? sub.comments
                 : [],
             totalPoints:
               round.status === "RESULTS" || round.status === "COMPLETED"

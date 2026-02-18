@@ -17,16 +17,18 @@ import {
   ArrowLeft,
   Check,
   ChevronRight,
-  Clock,
   Edit3,
   Link as LinkIcon,
   Music,
   Send,
 } from "lucide-react-native";
 
+import { CountdownTimer } from "~/components/music/CountdownTimer";
 import { GradientBackground } from "~/components/GradientBackground";
+import { MemberStatusBoard } from "~/components/music/MemberStatusBoard";
 import { PhaseProgressBar } from "~/components/music/PhaseProgressBar";
 import { RemainingPointsBadge } from "~/components/music/RemainingPointsBadge";
+import { ResultCard } from "~/components/music/ResultCard";
 import { VoteCard } from "~/components/music/VoteCard";
 import { trpc } from "~/utils/api";
 
@@ -44,8 +46,16 @@ interface SubmissionItem {
   artistName: string;
   albumName: string;
   albumArtUrl: string | null;
-  submitter: { name: string | null } | null;
+  submitter: { name: string | null; image: string | null } | null;
   totalPoints: number;
+  votes: {
+    voter: { name: string | null; image: string | null } | null;
+    points: number;
+  }[];
+  comments: {
+    user: { name: string | null } | null;
+    text: string;
+  }[];
 }
 
 export default function RoundDetails() {
@@ -172,6 +182,31 @@ export default function RoundDetails() {
   const remainingPoints = totalBudget - usedPoints;
   const showVotingUI = isVotingPhase && !hasSubmittedVotes;
 
+  // Sort results by points descending
+  const sortedSubmissions = isResultsPhase
+    ? [...submissions].sort(
+        (a: { totalPoints: number }, b: { totalPoints: number }) =>
+          b.totalPoints - a.totalPoints,
+      )
+    : submissions;
+
+  // Determine the active countdown deadline
+  const activeDeadline = isSubmissionPhase
+    ? round.submissionDeadline
+    : isVotingPhase
+      ? round.votingDeadline
+      : null;
+  const deadlineLabel = isSubmissionPhase
+    ? "Submissions close"
+    : isVotingPhase
+      ? "Voting closes"
+      : null;
+
+  // Determine member status tracking action for current phase
+  const memberTrackAction: "submitted" | "voted" = isVotingPhase
+    ? "voted"
+    : "submitted";
+
   const handleSubmitVotes = () => {
     const votes = Object.entries(voteAllocations)
       .filter(([, points]) => points > 0)
@@ -222,7 +257,11 @@ export default function RoundDetails() {
     setPlaylistUrlMutation.mutate({ roundId: id, playlistUrl: url });
   };
 
-  const renderSubmission = ({ item: sub, index }: { item: SubmissionItem; index: number }) => (
+  const renderSubmission = ({
+    item: sub,
+  }: {
+    item: SubmissionItem;
+  }) => (
     <View
       className={`rounded-lg border p-3 ${
         sub.isOwn
@@ -231,14 +270,6 @@ export default function RoundDetails() {
       }`}
     >
       <View className="flex-row items-center gap-3">
-        {isResultsPhase && (
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-[#0A1A1A]">
-            <Text className="font-bold text-[#DCE4E4]">
-              #{index + 1}
-            </Text>
-          </View>
-        )}
-
         {sub.albumArtUrl ? (
           <Image
             source={{ uri: sub.albumArtUrl }}
@@ -251,35 +282,35 @@ export default function RoundDetails() {
         )}
 
         <View className="flex-1">
-          <Text
-            className="font-semibold text-[#DCE4E4]"
-            numberOfLines={1}
-          >
+          <Text className="font-semibold text-[#DCE4E4]" numberOfLines={1}>
             {sub.trackName}
           </Text>
-          <Text
-            className="text-xs text-[#8FA8A8]"
-            numberOfLines={1}
-          >
+          <Text className="text-xs text-[#8FA8A8]" numberOfLines={1}>
             {sub.artistName}
           </Text>
-          {isResultsPhase && sub.submitter && (
-            <Text className="mt-1 text-xs text-[#50C878]">
-              Submitted by {sub.submitter.name}
-            </Text>
-          )}
         </View>
-
-        {isResultsPhase && (
-          <View className="items-end">
-            <Text className="text-lg font-bold text-[#50C878]">
-              {sub.totalPoints}
-            </Text>
-            <Text className="text-xs text-[#8FA8A8]">pts</Text>
-          </View>
-        )}
       </View>
     </View>
+  );
+
+  const renderResult = ({
+    item: sub,
+    index,
+  }: {
+    item: SubmissionItem;
+    index: number;
+  }) => (
+    <ResultCard
+      rank={index + 1}
+      trackName={sub.trackName}
+      artistName={sub.artistName}
+      albumName={sub.albumName}
+      albumArtUrl={sub.albumArtUrl}
+      submitterName={sub.submitter?.name ?? null}
+      totalPoints={sub.totalPoints}
+      votes={sub.votes}
+      comments={sub.comments}
+    />
   );
 
   const renderVoteCard = ({ item: sub }: { item: SubmissionItem }) => (
@@ -298,11 +329,22 @@ export default function RoundDetails() {
   );
 
   // Determine FlatList data and renderer based on phase
-  const listData = showVotingUI
-    ? (votableSubmissions as SubmissionItem[])
-    : (submissions as SubmissionItem[]);
+  let listData: SubmissionItem[];
+  let listRenderItem: (props: {
+    item: SubmissionItem;
+    index: number;
+  }) => React.JSX.Element;
 
-  const listRenderItem = showVotingUI ? renderVoteCard : renderSubmission;
+  if (showVotingUI) {
+    listData = votableSubmissions as SubmissionItem[];
+    listRenderItem = renderVoteCard;
+  } else if (isResultsPhase) {
+    listData = sortedSubmissions as SubmissionItem[];
+    listRenderItem = renderResult;
+  } else {
+    listData = submissions as SubmissionItem[];
+    listRenderItem = renderSubmission;
+  }
 
   return (
     <GradientBackground>
@@ -339,6 +381,26 @@ export default function RoundDetails() {
               <View className="mb-6 rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-4">
                 <PhaseProgressBar currentPhase={status} />
               </View>
+
+              {/* Countdown Timer */}
+              {activeDeadline && deadlineLabel && (
+                <View className="mb-4">
+                  <CountdownTimer
+                    deadline={activeDeadline}
+                    label={deadlineLabel}
+                  />
+                </View>
+              )}
+
+              {/* Member Status Board */}
+              {round.memberStatus.length > 0 && !isResultsPhase && (
+                <View className="mb-4">
+                  <MemberStatusBoard
+                    members={round.memberStatus}
+                    trackAction={memberTrackAction}
+                  />
+                </View>
+              )}
 
               {/* Admin Controls */}
               {isAdmin && (
@@ -465,23 +527,17 @@ export default function RoundDetails() {
                 {/* Deadlines */}
                 <View className="mt-6 flex-row gap-4 border-t border-[#164B49] pt-4">
                   <View className="flex-1">
-                    <View className="mb-1 flex-row items-center gap-1">
-                      <Clock size={12} color="#8FA8A8" />
-                      <Text className="text-xs font-medium uppercase text-[#8FA8A8]">
-                        Submit By
-                      </Text>
-                    </View>
+                    <Text className="mb-1 text-xs font-medium uppercase text-[#8FA8A8]">
+                      Submit By
+                    </Text>
                     <Text className="text-sm font-semibold text-[#DCE4E4]">
                       {new Date(round.submissionDeadline).toLocaleDateString()}
                     </Text>
                   </View>
                   <View className="flex-1">
-                    <View className="mb-1 flex-row items-center gap-1">
-                      <Clock size={12} color="#8FA8A8" />
-                      <Text className="text-xs font-medium uppercase text-[#8FA8A8]">
-                        Vote By
-                      </Text>
-                    </View>
+                    <Text className="mb-1 text-xs font-medium uppercase text-[#8FA8A8]">
+                      Vote By
+                    </Text>
                     <Text className="text-sm font-semibold text-[#DCE4E4]">
                       {new Date(round.votingDeadline).toLocaleDateString()}
                     </Text>
@@ -501,9 +557,7 @@ export default function RoundDetails() {
                       <Text className="text-sm font-bold text-[#DCE4E4]">
                         {round.submissionCount}/{round.memberCount} songs
                       </Text>
-                      <View
-                        className="h-2 w-16 overflow-hidden rounded-full bg-[#164B49]"
-                      >
+                      <View className="h-2 w-16 overflow-hidden rounded-full bg-[#164B49]">
                         <View
                           className="h-full rounded-full bg-[#50C878]"
                           style={{
@@ -531,7 +585,11 @@ export default function RoundDetails() {
                           {sub.albumArtUrl ? (
                             <Image
                               source={{ uri: sub.albumArtUrl }}
-                              style={{ width: 40, height: 40, borderRadius: 6 }}
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: 6,
+                              }}
                             />
                           ) : (
                             <View className="h-10 w-10 items-center justify-center rounded bg-[#0A1A1A]">
@@ -539,10 +597,16 @@ export default function RoundDetails() {
                             </View>
                           )}
                           <View className="flex-1">
-                            <Text className="font-medium text-[#DCE4E4]" numberOfLines={1}>
+                            <Text
+                              className="font-medium text-[#DCE4E4]"
+                              numberOfLines={1}
+                            >
                               {sub.trackName}
                             </Text>
-                            <Text className="text-xs text-[#8FA8A8]" numberOfLines={1}>
+                            <Text
+                              className="text-xs text-[#8FA8A8]"
+                              numberOfLines={1}
+                            >
                               {sub.artistName}
                             </Text>
                           </View>
