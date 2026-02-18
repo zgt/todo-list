@@ -176,13 +176,7 @@ export default function ProfileScreen() {
                   <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
                     Best Submission
                   </Text>
-                  <View
-                    className="rounded-xl border p-4"
-                    style={{
-                      borderColor: "rgba(255,215,0,0.3)",
-                      backgroundColor: "rgba(255,215,0,0.05)",
-                    }}
-                  >
+                  <View className="rounded-xl border border-[#FFD700]/30 bg-[#FFD700]/5 p-4">
                     <View className="flex-row items-center gap-4">
                       {profile.bestSubmission.albumArtUrl ? (
                         <Image

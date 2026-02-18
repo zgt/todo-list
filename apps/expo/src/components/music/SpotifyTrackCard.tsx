@@ -49,15 +49,11 @@ export function SpotifyTrackCard({
 
   const content = (
     <View
-      className="rounded-lg border p-3"
-      style={
+      className={`rounded-lg border p-3 ${
         selected
-          ? {
-              borderColor: "#50C878",
-              backgroundColor: "rgba(80,200,120,0.1)",
-            }
-          : { borderColor: "#164B49", backgroundColor: "#102A2A" }
-      }
+          ? "border-[#50C878] bg-[#50C878]/10"
+          : "border-[#164B49] bg-[#102A2A]"
+      }`}
     >
       <View className="flex-row items-center gap-3">
         {/* Album Art */}
@@ -99,8 +95,7 @@ export function SpotifyTrackCard({
             <Pressable
               onPress={handleOpenSpotify}
               hitSlop={8}
-              className="rounded-md px-2 py-1"
-              style={{ backgroundColor: "rgba(29,185,84,0.2)" }}
+              className="rounded-md bg-[#1DB954]/20 px-2 py-1"
             >
               <View className="flex-row items-center gap-1">
                 <ExternalLink size={10} color="#1DB954" />

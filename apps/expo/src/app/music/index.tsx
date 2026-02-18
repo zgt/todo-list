@@ -54,19 +54,13 @@ export default function MusicLeagueDashboard() {
     ({ item }: { item: NonNullable<typeof leagues>[number] }) => (
       <Pressable
         onPress={() => router.push(`/music/league/${item.id}` as never)}
-        className="mx-4 mb-3 rounded-xl border border-[#164B49] bg-[#102A2A] p-4"
-        style={({ pressed }) =>
-          pressed ? { backgroundColor: "rgba(22,75,73,0.6)" } : undefined
-        }
+        className="mx-4 mb-3 rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]/60"
       >
         <View className="flex-row items-center justify-between">
           <Text className="flex-1 text-lg font-semibold text-[#DCE4E4]">
             {item.name}
           </Text>
-          <View
-            className="ml-2 rounded-full px-2.5 py-1"
-            style={{ backgroundColor: "rgba(80,200,120,0.15)" }}
-          >
+          <View className="ml-2 rounded-full bg-[#50C878]/15 px-2.5 py-1">
             <Text className="text-xs font-medium text-[#50C878]">
               {item.memberCount} members
             </Text>
@@ -74,10 +68,7 @@ export default function MusicLeagueDashboard() {
         </View>
 
         {item.currentRound ? (
-          <View
-            className="mt-3 rounded-lg p-3"
-            style={{ backgroundColor: "rgba(10,26,26,0.6)" }}
-          >
+          <View className="mt-3 rounded-lg bg-[#0A1A1A]/60 p-3">
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
                 <Text className="mb-0.5 text-[11px] font-bold text-[#50C878] uppercase">
