@@ -60,7 +60,14 @@ async function spotifyFetch<T>(path: string): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`Spotify API error: ${res.status} ${res.statusText}`);
+    const errorBody = await res.text();
+    console.error(`Spotify API error: ${res.status} ${res.statusText}`, {
+      path,
+      errorBody,
+    });
+    throw new Error(
+      `Spotify API error: ${res.status} ${res.statusText} - ${errorBody}`,
+    );
   }
 
   return res.json() as Promise<T>;
