@@ -123,10 +123,9 @@ export default function CreateRound() {
         </View>
 
         <FlatList
-          data={[]}
-          renderItem={null}
+          data={[{ key: "form" }]}
+          renderItem={() => null}
           keyboardShouldPersistTaps="handled"
-          style={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
           ListHeaderComponent={
             <View>

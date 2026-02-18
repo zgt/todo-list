@@ -211,7 +211,6 @@ export default function RoundDetails() {
           data={submissions as SubmissionItem[]}
           keyExtractor={(item) => item.id}
           renderItem={renderSubmission}
-          style={{ flex: 1 }}
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
           ListHeaderComponent={
             <View>
