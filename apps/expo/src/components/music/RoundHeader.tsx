@@ -10,7 +10,11 @@ interface RoundHeaderProps {
 export function RoundHeader({ roundNumber, status, onBack }: RoundHeaderProps) {
   return (
     <View className="flex-row items-center justify-between px-4 py-4">
-      <Pressable onPress={onBack} className="rounded-full bg-[#164B49] p-2">
+      <Pressable 
+        onPress={onBack} 
+        className="rounded-full p-2"
+        style={{ backgroundColor: "#164B49" }}
+      >
         <ArrowLeft color="#DCE4E4" size={24} />
       </Pressable>
       <View>
