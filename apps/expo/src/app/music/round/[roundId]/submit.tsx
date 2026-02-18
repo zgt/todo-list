@@ -45,11 +45,6 @@ export default function SubmitSong() {
   useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
-    if (searchText.trim().length === 0) {
-      setDebouncedQuery("");
-      return;
-    }
-
     debounceTimer.current = setTimeout(() => {
       setDebouncedQuery(searchText.trim());
     }, 300);

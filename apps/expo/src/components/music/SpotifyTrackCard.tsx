@@ -42,8 +42,8 @@ export function SpotifyTrackCard({
   children,
 }: SpotifyTrackCardProps) {
   const handleOpenSpotify = () => {
-    Linking.openURL(`spotify:track:${spotifyTrackId}`).catch(() => {
-      Linking.openURL(
+    void Linking.openURL(`spotify:track:${spotifyTrackId}`).catch(() => {
+      void Linking.openURL(
         `https://open.spotify.com/track/${spotifyTrackId}`,
       );
     });

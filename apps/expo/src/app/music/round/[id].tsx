@@ -32,7 +32,7 @@ const PHASE_LABELS: Record<string, string> = {
   RESULTS: "Completed",
 };
 
-type SubmissionItem = {
+interface SubmissionItem {
   id: string;
   isOwn: boolean;
   trackName: string;
@@ -41,7 +41,7 @@ type SubmissionItem = {
   albumArtUrl: string | null;
   submitter: { name: string | null } | null;
   totalPoints: number;
-};
+}
 
 export default function RoundDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -111,7 +111,7 @@ export default function RoundDetails() {
   const canAdvance = isAdmin && status !== "COMPLETED";
 
   const mySubmissions = submissions.filter((s: { isOwn: boolean }) => s.isOwn);
-  const maxSongs = round.songsPerRound ?? 1;
+  const maxSongs = round.songsPerRound;
   const canSubmitMore = mySubmissions.length < maxSongs;
 
   const handleAdvancePhase = () => {
@@ -383,30 +383,81 @@ export default function RoundDetails() {
                 </View>
               </View>
 
-              {/* User Actions */}
+              {/* Submission Phase Actions */}
               {isSubmissionPhase && (
-                <View className="mb-8">
-                  {mySubmission ? (
-                    <View className="rounded-lg border border-[#50C878]/30 bg-[#164B49]/30 p-4">
-                      <View className="mb-2 flex-row items-center gap-2">
-                        <Check size={16} color="#50C878" />
-                        <Text className="font-semibold text-[#50C878]">
-                          You've submitted!
+                <View className="mb-6 gap-3">
+                  {/* Submission Progress */}
+                  <View className="flex-row items-center justify-between rounded-lg border border-[#164B49] bg-[#102A2A] px-4 py-3">
+                    <Text className="text-sm font-medium text-[#8FA8A8]">
+                      Submission progress
+                    </Text>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-sm font-bold text-[#DCE4E4]">
+                        {round.submissionCount}/{round.memberCount} songs
+                      </Text>
+                      <View
+                        className="h-2 w-16 overflow-hidden rounded-full bg-[#164B49]"
+                      >
+                        <View
+                          className="h-full rounded-full bg-[#50C878]"
+                          style={{
+                            width: `${Math.min(100, (round.submissionCount / Math.max(1, round.memberCount)) * 100)}%`,
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* My Submissions */}
+                  {mySubmissions.length > 0 && (
+                    <View className="gap-2">
+                      <View className="flex-row items-center gap-2">
+                        <Check size={14} color="#50C878" />
+                        <Text className="text-sm font-semibold text-[#50C878]">
+                          Your submissions ({mySubmissions.length}/{maxSongs})
                         </Text>
                       </View>
-                      <Text className="text-lg font-medium text-[#DCE4E4]">
-                        {mySubmission.trackName}
-                      </Text>
-                      <Text className="text-sm text-[#8FA8A8]">
-                        {mySubmission.artistName}
-                      </Text>
+                      {mySubmissions.map((sub: SubmissionItem) => (
+                        <View
+                          key={sub.id}
+                          className="flex-row items-center gap-3 rounded-lg border border-[#50C878]/30 bg-[#50C878]/5 p-3"
+                        >
+                          {sub.albumArtUrl ? (
+                            <Image
+                              source={{ uri: sub.albumArtUrl }}
+                              style={{ width: 40, height: 40, borderRadius: 6 }}
+                            />
+                          ) : (
+                            <View className="h-10 w-10 items-center justify-center rounded bg-[#0A1A1A]">
+                              <Music size={16} color="#8FA8A8" />
+                            </View>
+                          )}
+                          <View className="flex-1">
+                            <Text className="font-medium text-[#DCE4E4]" numberOfLines={1}>
+                              {sub.trackName}
+                            </Text>
+                            <Text className="text-xs text-[#8FA8A8]" numberOfLines={1}>
+                              {sub.artistName}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
                     </View>
-                  ) : (
-                    <View className="items-center rounded-lg bg-[#50C878] p-4">
-                      <Text className="text-lg font-bold text-[#0A1A1A]">
+                  )}
+
+                  {/* Submit a Song Button */}
+                  {canSubmitMore && (
+                    <Pressable
+                      onPress={() =>
+                        router.push(`/music/round/${id}/submit` as never)
+                      }
+                      className="flex-row items-center justify-center gap-2 rounded-lg bg-[#50C878] py-4 active:bg-[#66D99A]"
+                    >
+                      <Music size={20} color="#0A1A1A" />
+                      <Text className="text-base font-bold text-[#0A1A1A]">
                         Submit a Song
                       </Text>
-                    </View>
+                    </Pressable>
                   )}
                 </View>
               )}

@@ -16,7 +16,7 @@ export function AudioPreviewPlayer({ previewUrl }: AudioPreviewPlayerProps) {
 
   useEffect(() => {
     return () => {
-      soundRef.current?.unloadAsync();
+      void soundRef.current?.unloadAsync();
     };
   }, []);
 
@@ -31,7 +31,7 @@ export function AudioPreviewPlayer({ previewUrl }: AudioPreviewPlayerProps) {
       setProgress(0);
       setDuration(0);
     };
-    cleanup();
+    void cleanup();
   }, [previewUrl]);
 
   const handlePlayPause = async () => {
@@ -64,7 +64,7 @@ export function AudioPreviewPlayer({ previewUrl }: AudioPreviewPlayerProps) {
           if (status.didJustFinish) {
             setIsPlaying(false);
             setProgress(0);
-            soundRef.current?.setPositionAsync(0);
+            void soundRef.current?.setPositionAsync(0);
           }
         },
       );
