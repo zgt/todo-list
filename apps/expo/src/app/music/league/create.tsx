@@ -112,9 +112,13 @@ export default function CreateLeague() {
           <View className="w-10" />
         </View>
 
+        <View style={{ flex: 1, backgroundColor: 'rgba(255,0,0,0.2)' }}>
+          <View style={{ backgroundColor: 'blue', padding: 10, margin: 10 }}>
+            <Text className="text-white font-bold">DEBUG: Form should be below</Text>
+          </View>
         <FlatList
-          data={[]}
-          renderItem={null}
+          data={[{ key: 'form' }]}
+          renderItem={() => null}
           keyboardShouldPersistTaps="handled"
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 16 }}
@@ -216,6 +220,7 @@ export default function CreateLeague() {
             </View>
           }
         />
+        </View>
       </SafeAreaView>
     </GradientBackground>
   );
