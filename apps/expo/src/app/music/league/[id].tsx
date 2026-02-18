@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -264,17 +264,15 @@ export default function LeagueDetails() {
 
           {/* Admin: Create Round Button */}
           {isAdmin && (
-            <Link
-              href={`/music/round/create?leagueId=${id}` as never}
-              asChild
+            <Pressable
+              onPress={() => router.push(`/music/round/create?leagueId=${id}` as never)}
+              className="mb-4 flex-row items-center justify-center gap-2 rounded-xl bg-[#50C878] py-3 active:bg-[#66D99A]"
             >
-              <Pressable className="mb-4 flex-row items-center justify-center gap-2 rounded-xl bg-[#50C878] py-3 active:bg-[#66D99A]">
-                <Plus size={20} color="#0A1A1A" strokeWidth={3} />
-                <Text className="text-base font-bold text-[#0A1A1A]">
-                  Create Round
-                </Text>
-              </Pressable>
-            </Link>
+              <Plus size={20} color="#0A1A1A" strokeWidth={3} />
+              <Text className="text-base font-bold text-[#0A1A1A]">
+                Create Round
+              </Text>
+            </Pressable>
           )}
 
           {/* Standings */}
@@ -308,34 +306,32 @@ export default function LeagueDetails() {
                   themeDescription: string | null;
                   status: string;
                 }) => (
-                  <Link
+                  <Pressable
                     key={round.id}
-                    href={`/music/round/${round.id}` as never}
-                    asChild
+                    onPress={() => router.push(`/music/round/${round.id}` as never)}
+                    className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
                   >
-                    <Pressable className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]">
-                      <View className="flex-row items-center justify-between">
-                        <View className="flex-1">
-                          <Text className="mb-1 text-xs font-bold text-[#50C878] uppercase">
-                            Round {round.roundNumber}
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-1">
+                        <Text className="mb-1 text-xs font-bold uppercase text-[#50C878]">
+                          Round {round.roundNumber}
+                        </Text>
+                        <Text className="text-lg font-semibold text-[#DCE4E4]">
+                          {round.themeName}
+                        </Text>
+                        {round.themeDescription && (
+                          <Text className="text-sm text-[#8FA8A8]">
+                            {round.themeDescription}
                           </Text>
-                          <Text className="text-lg font-semibold text-[#DCE4E4]">
-                            {round.themeName}
-                          </Text>
-                          {round.themeDescription && (
-                            <Text className="text-sm text-[#8FA8A8]">
-                              {round.themeDescription}
-                            </Text>
-                          )}
-                        </View>
-                        <View className="ml-2 rounded-md bg-[#0A1A1A] px-2 py-1">
-                          <Text className="text-xs font-medium text-[#DCE4E4]">
-                            {round.status}
-                          </Text>
-                        </View>
+                        )}
                       </View>
-                    </Pressable>
-                  </Link>
+                      <View className="ml-2 rounded-md bg-[#0A1A1A] px-2 py-1">
+                        <Text className="text-xs font-medium text-[#DCE4E4]">
+                          {round.status}
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
                 ),
               )}
             </View>
