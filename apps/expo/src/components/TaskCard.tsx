@@ -76,6 +76,8 @@ export function TaskCard({
   dueDate,
   onChangeCategoryId,
   onChangeDueDate,
+  priority,
+  onChangePriority,
 }: TaskCardProps) {
   const progress = useSharedValue(isCompact ? 1 : 0);
 
@@ -120,8 +122,8 @@ export function TaskCard({
     if (priority === "high") {
       return {
         ...styles.cardDefault,
-        borderLeftWidth: 4,
-        borderColor: "#EF4444",
+        borderWidth: 1,
+        borderColor: "rgba(239, 68, 68, 0.4)",
         backgroundColor: "rgba(239, 68, 68, 0.05)",
       };
     }
@@ -130,8 +132,8 @@ export function TaskCard({
     if (priority === "medium") {
       return {
         ...styles.cardDefault,
-        borderLeftWidth: 4,
-        borderColor: "#50C878",
+        borderWidth: 1,
+        borderColor: "rgba(80, 200, 120, 0.3)",
       };
     }
 
@@ -141,24 +143,6 @@ export function TaskCard({
   // Compact layout (row)
   const renderCompactLayout = () => (
     <View className="flex-1 flex-row items-center gap-3 px-4">
-      {/* Priority Strip */}
-      {priority && !task.completed && (
-        <View
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 4,
-            backgroundColor:
-              priority === "high"
-                ? "#EF4444"
-                : priority === "medium"
-                  ? "#50C878"
-                  : "#3B82F6",
-          }}
-        />
-      )}
       {/* Left: Checkbox */}
       <Pressable onPress={isEditing ? handleSave : onToggle}>
         <View

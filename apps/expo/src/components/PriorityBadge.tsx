@@ -20,9 +20,9 @@ export const PriorityBadge = memo(
         className={`flex-row items-center gap-1 rounded-full ${
           config.bgClass
         } ${size === "sm" ? "px-1.5 py-0.5" : "px-2 py-1"}`}
-        style={{ borderWidth: 1, borderColor: config.borderColor }}
+        style={{ borderWidth: 1, borderColor: `${config.color}40` }}
       >
-        <Icon size={size === "sm" ? 12 : 16} color={config.color} />
+        <Icon size={size === "sm" ? 12 : 16} color={`${config.color}CC`} />
         {showLabel && (
           <Text className={`text-xs font-medium ${config.textClass}`}>
             {config.label}
