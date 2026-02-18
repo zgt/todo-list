@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { Music, Plus, Search } from "lucide-react-native";
+import { Music, Plus, Search, User } from "lucide-react-native";
 
 import { trpc } from "~/utils/api";
 import { GradientBackground } from "../../components/GradientBackground";
@@ -99,13 +99,21 @@ export default function MusicLeagueDashboard() {
           <Text className="text-3xl font-bold text-[#DCE4E4]">
             Music Leagues
           </Text>
-          <Pressable
-            onPress={() => router.push("/music/league/create" as never)}
-            className="flex-row items-center gap-1.5 rounded-full bg-[#50C878] px-4 py-2 active:bg-[#66D99A]"
-          >
-            <Plus size={18} color="#0A1A1A" strokeWidth={3} />
-            <Text className="text-sm font-bold text-[#0A1A1A]">Create</Text>
-          </Pressable>
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              onPress={() => router.push("/music/profile" as never)}
+              className="h-10 w-10 items-center justify-center rounded-full bg-[#164B49] active:bg-[#21716C]"
+            >
+              <User size={18} color="#DCE4E4" />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/music/league/create" as never)}
+              className="flex-row items-center gap-1.5 rounded-full bg-[#50C878] px-4 py-2 active:bg-[#66D99A]"
+            >
+              <Plus size={18} color="#0A1A1A" strokeWidth={3} />
+              <Text className="text-sm font-bold text-[#0A1A1A]">Create</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Join League Input */}

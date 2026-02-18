@@ -4,7 +4,9 @@ import {
   Alert,
   FlatList,
   Image,
+  Linking,
   Pressable,
+  RefreshControl,
   Text,
   TextInput,
   View,
@@ -18,7 +20,9 @@ import {
   Check,
   ChevronRight,
   Edit3,
+  ExternalLink,
   Link as LinkIcon,
+  ListMusic,
   Music,
   Send,
 } from "lucide-react-native";
@@ -46,6 +50,7 @@ interface SubmissionItem {
   artistName: string;
   albumName: string;
   albumArtUrl: string | null;
+  spotifyTrackId: string;
   submitter: { name: string | null; image: string | null } | null;
   totalPoints: number;
   votes: {
@@ -62,6 +67,7 @@ export default function RoundDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [showPlaylistInput, setShowPlaylistInput] = useState(false);
 
@@ -72,12 +78,25 @@ export default function RoundDetails() {
   const [voteComments, setVoteComments] = useState<Record<string, string>>({});
   const [hasSubmittedVotes, setHasSubmittedVotes] = useState(false);
 
-  const { data: round, isLoading } = useQuery(
+  const {
+    data: round,
+    isLoading,
+    refetch,
+  } = useQuery(
     trpc.musicLeague.getRoundById.queryOptions(
       { roundId: id },
       { enabled: !!id },
     ),
   );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
 
   const advancePhaseMutation = useMutation(
     trpc.musicLeague.advanceRoundPhase.mutationOptions({
@@ -257,6 +276,14 @@ export default function RoundDetails() {
     setPlaylistUrlMutation.mutate({ roundId: id, playlistUrl: url });
   };
 
+  const handleOpenSpotify = (spotifyTrackId: string) => {
+    void Linking.openURL(`spotify:track:${spotifyTrackId}`).catch(() => {
+      void Linking.openURL(
+        `https://open.spotify.com/track/${spotifyTrackId}`,
+      );
+    });
+  };
+
   const renderSubmission = ({
     item: sub,
   }: {
@@ -289,6 +316,21 @@ export default function RoundDetails() {
             {sub.artistName}
           </Text>
         </View>
+
+        {sub.spotifyTrackId && (
+          <Pressable
+            onPress={() => handleOpenSpotify(sub.spotifyTrackId)}
+            hitSlop={8}
+            className="rounded-md bg-[#1DB954]/20 px-2 py-1"
+          >
+            <View className="flex-row items-center gap-1">
+              <ExternalLink size={10} color="#1DB954" />
+              <Text className="text-[10px] font-medium text-[#1DB954]">
+                Spotify
+              </Text>
+            </View>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -375,6 +417,13 @@ export default function RoundDetails() {
           keyExtractor={(item) => item.id}
           renderItem={listRenderItem}
           contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 32 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#50C878"
+            />
+          }
           ListHeaderComponent={
             <View>
               {/* Phase Progress Bar */}
@@ -544,6 +593,21 @@ export default function RoundDetails() {
                   </View>
                 </View>
               </View>
+
+              {/* Playlist Link (non-submission phases) */}
+              {!isSubmissionPhase && (
+                <Pressable
+                  onPress={() =>
+                    router.push(`/music/round/${id}/playlist` as never)
+                  }
+                  className="mb-6 flex-row items-center justify-center gap-2 rounded-xl border border-[#1DB954]/30 bg-[#1DB954]/10 py-3 active:bg-[#1DB954]/20"
+                >
+                  <ListMusic size={18} color="#1DB954" />
+                  <Text className="font-semibold text-[#1DB954]">
+                    View Playlist
+                  </Text>
+                </Pressable>
+              )}
 
               {/* Submission Phase Actions */}
               {isSubmissionPhase && (
