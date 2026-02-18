@@ -157,56 +157,52 @@ export default function MusicLeagueDashboard() {
             }
           >
             {leagues.map((item) => (
-              <Link
+              <Pressable
                 key={item.id}
-                href={`/music/league/${item.id}` as never}
-                asChild
+                onPress={() => router.push(`/music/league/${item.id}` as never)}
+                style={{
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: "#164B49",
+                  backgroundColor: "#102A2A",
+                  padding: 16,
+                }}
               >
-                <Pressable
-                  style={{
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: "#164B49",
-                    backgroundColor: "#102A2A",
-                    padding: 16,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <Text style={{ flex: 1, fontSize: 18, fontWeight: "600", color: "#DCE4E4" }}>
-                      {item.name}
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <Text style={{ flex: 1, fontSize: 18, fontWeight: "600", color: "#DCE4E4" }}>
+                    {item.name}
+                  </Text>
+                  <View style={{ marginLeft: 8, borderRadius: 9999, backgroundColor: "rgba(80,200,120,0.15)", paddingHorizontal: 10, paddingVertical: 4 }}>
+                    <Text style={{ fontSize: 12, fontWeight: "500", color: "#50C878" }}>
+                      {item.memberCount} members
                     </Text>
-                    <View style={{ marginLeft: 8, borderRadius: 9999, backgroundColor: "rgba(80,200,120,0.15)", paddingHorizontal: 10, paddingVertical: 4 }}>
-                      <Text style={{ fontSize: 12, fontWeight: "500", color: "#50C878" }}>
-                        {item.memberCount} members
-                      </Text>
-                    </View>
                   </View>
+                </View>
 
-                  {item.currentRound ? (
-                    <View style={{ marginTop: 12, borderRadius: 8, backgroundColor: "rgba(10,26,26,0.6)", padding: 12 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ marginBottom: 2, fontSize: 11, fontWeight: "700", color: "#50C878", textTransform: "uppercase" }}>
-                            Current Round
-                          </Text>
-                          <Text style={{ fontSize: 15, fontWeight: "500", color: "#DCE4E4" }}>
-                            {item.currentRound.themeName}
-                          </Text>
-                        </View>
-                        <View style={{ marginLeft: 8, borderRadius: 6, backgroundColor: "#164B49", paddingHorizontal: 8, paddingVertical: 4 }}>
-                          <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>
-                            {item.currentRound.status}
-                          </Text>
-                        </View>
+                {item.currentRound ? (
+                  <View style={{ marginTop: 12, borderRadius: 8, backgroundColor: "rgba(10,26,26,0.6)", padding: 12 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ marginBottom: 2, fontSize: 11, fontWeight: "700", color: "#50C878", textTransform: "uppercase" }}>
+                          Current Round
+                        </Text>
+                        <Text style={{ fontSize: 15, fontWeight: "500", color: "#DCE4E4" }}>
+                          {item.currentRound.themeName}
+                        </Text>
+                      </View>
+                      <View style={{ marginLeft: 8, borderRadius: 6, backgroundColor: "#164B49", paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: "500", color: "#8FA8A8" }}>
+                          {item.currentRound.status}
+                        </Text>
                       </View>
                     </View>
-                  ) : (
-                    <Text style={{ marginTop: 8, fontSize: 13, color: "#8FA8A8", fontStyle: "italic" }}>
-                      No active rounds
-                    </Text>
-                  )}
-                </Pressable>
-              </Link>
+                  </View>
+                ) : (
+                  <Text style={{ marginTop: 8, fontSize: 13, color: "#8FA8A8", fontStyle: "italic" }}>
+                    No active rounds
+                  </Text>
+                )}
+              </Pressable>
             ))}
           </ScrollView>
           </>
