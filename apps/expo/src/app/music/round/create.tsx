@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -10,10 +9,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Sparkles } from "lucide-react-native";
+import { ArrowLeft, Calendar, Check, Sparkles } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
 import type { ThemeTemplatePickerRef } from "~/components/music/ThemeTemplatePicker";
@@ -23,9 +21,24 @@ import { trpc } from "~/utils/api";
 function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
-  result.setHours(20, 0, 0, 0); // default to 8 PM
+  result.setHours(20, 0, 0, 0);
   return result;
 }
+
+const SUBMISSION_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+  { label: "1 week", days: 7 },
+];
+
+const VOTING_GAP_PRESETS = [
+  { label: "+1 day", days: 1 },
+  { label: "+2 days", days: 2 },
+  { label: "+3 days", days: 3 },
+  { label: "+5 days", days: 5 },
+];
 
 export default function CreateRound() {
   const { leagueId } = useLocalSearchParams<{ leagueId: string }>();
@@ -35,16 +48,11 @@ export default function CreateRound() {
 
   const [themeName, setThemeName] = useState("");
   const [themeDescription, setThemeDescription] = useState("");
-  const [submissionDeadline, setSubmissionDeadline] = useState(
-    addDays(new Date(), 3),
-  );
-  const [votingDeadline, setVotingDeadline] = useState(
-    addDays(new Date(), 5),
-  );
+  const [submissionDays, setSubmissionDays] = useState(3);
+  const [votingGapDays, setVotingGapDays] = useState(2);
 
-  // Android picker visibility state
-  const [showSubmissionPicker, setShowSubmissionPicker] = useState(false);
-  const [showVotingPicker, setShowVotingPicker] = useState(false);
+  const submissionDeadline = addDays(new Date(), submissionDays);
+  const votingDeadline = addDays(submissionDeadline, votingGapDays);
 
   const createRoundMutation = useMutation(
     trpc.musicLeague.createRound.mutationOptions({
@@ -76,20 +84,6 @@ export default function CreateRound() {
       Alert.alert("Error", "Missing league ID.");
       return;
     }
-    if (submissionDeadline <= new Date()) {
-      Alert.alert(
-        "Invalid deadline",
-        "Submission deadline must be in the future.",
-      );
-      return;
-    }
-    if (votingDeadline <= submissionDeadline) {
-      Alert.alert(
-        "Invalid deadline",
-        "Voting deadline must be after submission deadline.",
-      );
-      return;
-    }
 
     createRoundMutation.mutate({
       leagueId,
@@ -108,31 +102,6 @@ export default function CreateRound() {
       hour: "numeric",
       minute: "2-digit",
     });
-
-  const onSubmissionDateChange = (_: unknown, selectedDate?: Date) => {
-    if (Platform.OS === "android") setShowSubmissionPicker(false);
-    if (selectedDate) {
-      setSubmissionDeadline(selectedDate);
-      // Auto-adjust voting deadline if it's before the new submission deadline
-      if (votingDeadline <= selectedDate) {
-        setVotingDeadline(addDays(selectedDate, 2));
-      }
-    }
-  };
-
-  const onVotingDateChange = (_: unknown, selectedDate?: Date) => {
-    if (Platform.OS === "android") setShowVotingPicker(false);
-    if (selectedDate) {
-      if (selectedDate <= submissionDeadline) {
-        Alert.alert(
-          "Invalid date",
-          "Voting deadline must be after submission deadline.",
-        );
-        return;
-      }
-      setVotingDeadline(selectedDate);
-    }
-  };
 
   return (
     <GradientBackground>
@@ -154,8 +123,8 @@ export default function CreateRound() {
         </View>
 
         <ScrollView
-          className="flex-1"
-          contentContainerClassName="p-4 pb-8"
+          className="flex-1 px-4"
+          contentContainerStyle={{ paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Theme Name */}
@@ -202,83 +171,105 @@ export default function CreateRound() {
             />
           </View>
 
-          {/* Deadlines Section */}
+          {/* Submission Deadline */}
           <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
             Deadlines
           </Text>
 
-          {/* Submission Deadline */}
           <View className="mb-4">
             <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-              Submission Deadline
+              Submission window
             </Text>
-            {Platform.OS === "android" ? (
-              <Pressable
-                onPress={() => setShowSubmissionPicker(true)}
-                className="flex-row items-center gap-3 rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3"
-              >
-                <Calendar size={18} color="#50C878" />
-                <Text className="flex-1 text-base text-[#DCE4E4]">
-                  {formatDate(submissionDeadline)}
-                </Text>
-              </Pressable>
-            ) : (
-              <View className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-2">
-                <DateTimePicker
-                  value={submissionDeadline}
-                  mode="datetime"
-                  display="compact"
-                  minimumDate={new Date()}
-                  onChange={onSubmissionDateChange}
-                  themeVariant="dark"
-                />
-              </View>
-            )}
-            {showSubmissionPicker && Platform.OS === "android" && (
-              <DateTimePicker
-                value={submissionDeadline}
-                mode="datetime"
-                minimumDate={new Date()}
-                onChange={onSubmissionDateChange}
-              />
-            )}
+            <View className="flex-row flex-wrap gap-2">
+              {SUBMISSION_PRESETS.map((preset) => (
+                <Pressable
+                  key={preset.days}
+                  onPress={() => setSubmissionDays(preset.days)}
+                  className={`rounded-full px-4 py-2 ${
+                    submissionDays === preset.days
+                      ? "border border-[#50C878] bg-[#50C878]/20"
+                      : "border border-[#164B49] bg-[#102A2A]"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      submissionDays === preset.days
+                        ? "text-[#50C878]"
+                        : "text-[#8FA8A8]"
+                    }`}
+                  >
+                    {preset.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <View className="mt-2 flex-row items-center gap-2">
+              <Calendar size={14} color="#8FA8A8" />
+              <Text className="text-xs text-[#8FA8A8]">
+                Closes {formatDate(submissionDeadline)}
+              </Text>
+            </View>
           </View>
 
           {/* Voting Deadline */}
-          <View className="mb-8">
+          <View className="mb-6">
             <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-              Voting Deadline
+              Voting window (after submissions close)
             </Text>
-            {Platform.OS === "android" ? (
-              <Pressable
-                onPress={() => setShowVotingPicker(true)}
-                className="flex-row items-center gap-3 rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3"
-              >
-                <Calendar size={18} color="#50C878" />
-                <Text className="flex-1 text-base text-[#DCE4E4]">
-                  {formatDate(votingDeadline)}
-                </Text>
-              </Pressable>
-            ) : (
-              <View className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-2">
-                <DateTimePicker
-                  value={votingDeadline}
-                  mode="datetime"
-                  display="compact"
-                  minimumDate={submissionDeadline}
-                  onChange={onVotingDateChange}
-                  themeVariant="dark"
-                />
-              </View>
-            )}
-            {showVotingPicker && Platform.OS === "android" && (
-              <DateTimePicker
-                value={votingDeadline}
-                mode="datetime"
-                minimumDate={submissionDeadline}
-                onChange={onVotingDateChange}
-              />
-            )}
+            <View className="flex-row flex-wrap gap-2">
+              {VOTING_GAP_PRESETS.map((preset) => (
+                <Pressable
+                  key={preset.days}
+                  onPress={() => setVotingGapDays(preset.days)}
+                  className={`rounded-full px-4 py-2 ${
+                    votingGapDays === preset.days
+                      ? "border border-[#50C878] bg-[#50C878]/20"
+                      : "border border-[#164B49] bg-[#102A2A]"
+                  }`}
+                >
+                  <Text
+                    className={`text-sm font-medium ${
+                      votingGapDays === preset.days
+                        ? "text-[#50C878]"
+                        : "text-[#8FA8A8]"
+                    }`}
+                  >
+                    {preset.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <View className="mt-2 flex-row items-center gap-2">
+              <Calendar size={14} color="#8FA8A8" />
+              <Text className="text-xs text-[#8FA8A8]">
+                Closes {formatDate(votingDeadline)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Summary */}
+          <View className="mb-6 rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 p-4">
+            <Text className="mb-2 text-sm font-bold text-[#DCE4E4]">
+              Summary
+            </Text>
+            <View className="flex-row items-center gap-2">
+              <Check size={14} color="#50C878" />
+              <Text className="text-sm text-[#8FA8A8]">
+                Submissions open for {submissionDays} day{submissionDays !== 1 ? "s" : ""}
+              </Text>
+            </View>
+            <View className="mt-1 flex-row items-center gap-2">
+              <Check size={14} color="#50C878" />
+              <Text className="text-sm text-[#8FA8A8]">
+                Voting open for {votingGapDays} day{votingGapDays !== 1 ? "s" : ""} after
+              </Text>
+            </View>
+            <View className="mt-1 flex-row items-center gap-2">
+              <Check size={14} color="#50C878" />
+              <Text className="text-sm text-[#8FA8A8]">
+                Results on {formatDate(votingDeadline)}
+              </Text>
+            </View>
           </View>
 
           {/* Create Button */}
@@ -302,7 +293,6 @@ export default function CreateRound() {
           </Pressable>
         </ScrollView>
 
-        {/* Theme Template Picker */}
         <ThemeTemplatePicker
           ref={themePickerRef}
           onSelectTheme={setThemeName}
