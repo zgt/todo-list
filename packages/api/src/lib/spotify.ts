@@ -204,22 +204,9 @@ export async function createPlaylist(
 ): Promise<string> {
   const token = await getUserAccessToken();
 
-  // Get the user's Spotify ID
-  const meRes = await fetch(`${API_BASE}/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  if (!meRes.ok) {
-    throw new Error(`Failed to fetch Spotify profile: ${meRes.status}`);
-  }
-
-  const me = (await meRes.json()) as { id: string };
-  console.log("Spotify user ID:", me.id);
-
-  // Create playlist
-  console.log("Creating playlist for user:", me.id, "name:", name);
+  // Create playlist using /me/playlists (required for dev mode apps)
   const createRes = await fetch(
-    `${API_BASE}/users/${me.id}/playlists`,
+    `${API_BASE}/me/playlists`,
     {
       method: "POST",
       headers: {
