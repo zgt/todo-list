@@ -22,6 +22,7 @@ export const memberRoleEnum = pgEnum("member_role", [
 ]);
 
 export const roundStatusEnum = pgEnum("round_status", [
+  "PENDING",
   "SUBMISSION",
   "LISTENING",
   "VOTING",
@@ -195,7 +196,16 @@ export const League = pgTable(
     downvotePointValue: t.integer("downvote_point_value").default(-1).notNull(),
     upvotePointsPerRound: t
       .integer("upvote_points_per_round")
-      .default(10)
+      .default(5)
+      .notNull(),
+    submissionWindowDays: t
+      .integer("submission_window_days")
+      .default(3)
+      .notNull(),
+    votingWindowDays: t.integer("voting_window_days").default(2).notNull(),
+    downvotePointsPerRound: t
+      .integer("downvote_points_per_round")
+      .default(3)
       .notNull(),
     isPublic: t.boolean("is_public").default(false).notNull(),
 
@@ -252,6 +262,10 @@ export const Round = pgTable(
     themeName: t.text("theme_name").notNull(),
     themeDescription: t.text("theme_description"),
     status: roundStatusEnum("status").default("SUBMISSION").notNull(),
+    startDate: t
+      .timestamp("start_date", { withTimezone: true, mode: "date" })
+      .notNull()
+      .default(sql`now()`),
     submissionDeadline: t
       .timestamp("submission_deadline", { withTimezone: true, mode: "date" })
       .notNull(),

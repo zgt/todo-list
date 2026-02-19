@@ -162,7 +162,10 @@ export const musicLeagueRouter = {
         songsPerRound: z.number().int().min(1).max(5).default(1),
         maxMembers: z.number().int().min(2).max(50).default(20),
         allowDownvotes: z.boolean().default(false),
-        upvotePointsPerRound: z.number().int().min(1).max(20).default(10),
+        upvotePointsPerRound: z.number().int().min(1).max(20).default(5),
+        submissionWindowDays: z.number().int().min(1).max(14).default(3),
+        votingWindowDays: z.number().int().min(1).max(14).default(2),
+        downvotePointsPerRound: z.number().int().min(1).max(10).default(3),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -177,6 +180,9 @@ export const musicLeagueRouter = {
           maxMembers: input.maxMembers,
           allowDownvotes: input.allowDownvotes,
           upvotePointsPerRound: input.upvotePointsPerRound,
+          submissionWindowDays: input.submissionWindowDays,
+          votingWindowDays: input.votingWindowDays,
+          downvotePointsPerRound: input.downvotePointsPerRound,
           inviteCode: generateInviteCode(),
           creatorId: ctx.session.user.id,
           status: "ACTIVE",
@@ -320,8 +326,6 @@ export const musicLeagueRouter = {
         leagueId: z.string(),
         themeName: z.string().min(1).max(200),
         themeDescription: z.string().max(500).optional(),
-        submissionDeadline: z.string().datetime(),
-        votingDeadline: z.string().datetime(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -339,14 +343,14 @@ export const musicLeagueRouter = {
         });
       }
 
-      const submissionDeadline = new Date(input.submissionDeadline);
-      const votingDeadline = new Date(input.votingDeadline);
-      const now = new Date();
+      const league = await ctx.db.query.League.findFirst({
+        where: eq(League.id, input.leagueId),
+      });
 
-      if (submissionDeadline <= now) {
+      if (!league) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Submission deadline must be in the future",
+          code: "NOT_FOUND",
+          message: "League not found",
         });
       }
 
@@ -357,6 +361,46 @@ export const musicLeagueRouter = {
 
       const roundNumber = (lastRound?.roundNumber ?? 0) + 1;
 
+      const addDays = (date: Date, days: number): Date => {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+      };
+
+      let startDate: Date;
+      let submissionDeadline: Date;
+      let votingDeadline: Date;
+      let status: "SUBMISSION" | "PENDING";
+
+      if (!lastRound || lastRound.status === "COMPLETED") {
+        // No previous round or previous is completed → start now
+        startDate = new Date();
+        submissionDeadline = addDays(startDate, league.submissionWindowDays);
+        votingDeadline = addDays(
+          submissionDeadline,
+          league.votingWindowDays,
+        );
+        status = "SUBMISSION";
+      } else {
+        // Previous round is NOT completed → queue as PENDING
+        // Reject if there is already a PENDING round
+        if (lastRound.status === "PENDING") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "There is already a pending round. Only one pending round is allowed at a time.",
+          });
+        }
+
+        startDate = lastRound.votingDeadline;
+        submissionDeadline = addDays(startDate, league.submissionWindowDays);
+        votingDeadline = addDays(
+          submissionDeadline,
+          league.votingWindowDays,
+        );
+        status = "PENDING";
+      }
+
       const [round] = await ctx.db
         .insert(Round)
         .values({
@@ -364,14 +408,15 @@ export const musicLeagueRouter = {
           roundNumber,
           themeName: input.themeName,
           themeDescription: input.themeDescription,
+          startDate,
           submissionDeadline,
           votingDeadline,
-          status: "SUBMISSION",
+          status,
         })
         .returning();
 
-      // Send round started notifications (fire and forget)
-      if (round?.id) {
+      // Send round started notifications only if starting immediately
+      if (round?.id && status === "SUBMISSION") {
         void notifyRoundStarted(round.id);
         void pushNotifyRoundStarted(round.id);
       }
@@ -477,6 +522,7 @@ export const musicLeagueRouter = {
         upvotePointsPerRound: round.league.upvotePointsPerRound,
         allowDownvotes: round.league.allowDownvotes,
         downvotePointValue: round.league.downvotePointValue,
+        downvotePointsPerRound: round.league.downvotePointsPerRound,
         songsPerRound: round.league.songsPerRound,
         memberCount: round.league.members.length,
         submissionCount: round.submissions.length,
@@ -594,6 +640,34 @@ export const musicLeagueRouter = {
       if (!round) throw new TRPCError({ code: "NOT_FOUND" });
       if (round.status !== "VOTING") {
         throw new TRPCError({ code: "BAD_REQUEST" });
+      }
+
+      // Validate upvote and downvote points separately
+      const upvoteTotal = input.votes
+        .filter((v) => v.points > 0)
+        .reduce((sum, v) => sum + v.points, 0);
+      const downvoteTotal = input.votes
+        .filter((v) => v.points < 0)
+        .reduce((sum, v) => sum + Math.abs(v.points), 0);
+
+      if (upvoteTotal > round.league.upvotePointsPerRound) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Upvote points (${upvoteTotal}) exceed the limit of ${round.league.upvotePointsPerRound}`,
+        });
+      }
+
+      if (
+        downvoteTotal > 0 &&
+        (!round.league.allowDownvotes ||
+          downvoteTotal > round.league.downvotePointsPerRound)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: round.league.allowDownvotes
+            ? `Downvote points (${downvoteTotal}) exceed the limit of ${round.league.downvotePointsPerRound}`
+            : "Downvotes are not allowed in this league",
+        });
       }
 
       await ctx.db.transaction(async (tx) => {
@@ -740,6 +814,9 @@ export const musicLeagueRouter = {
         songsPerRound: z.number().int().min(1).max(5).optional(),
         allowDownvotes: z.boolean().optional(),
         upvotePointsPerRound: z.number().int().min(1).max(20).optional(),
+        submissionWindowDays: z.number().int().min(1).max(14).optional(),
+        votingWindowDays: z.number().int().min(1).max(14).optional(),
+        downvotePointsPerRound: z.number().int().min(1).max(10).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -770,6 +847,12 @@ export const musicLeagueRouter = {
         setValues.allowDownvotes = updates.allowDownvotes;
       if (updates.upvotePointsPerRound !== undefined)
         setValues.upvotePointsPerRound = updates.upvotePointsPerRound;
+      if (updates.submissionWindowDays !== undefined)
+        setValues.submissionWindowDays = updates.submissionWindowDays;
+      if (updates.votingWindowDays !== undefined)
+        setValues.votingWindowDays = updates.votingWindowDays;
+      if (updates.downvotePointsPerRound !== undefined)
+        setValues.downvotePointsPerRound = updates.downvotePointsPerRound;
 
       if (Object.keys(setValues).length === 0) {
         throw new TRPCError({
@@ -845,7 +928,9 @@ export const musicLeagueRouter = {
         "COMPLETED",
       ] as const;
 
-      const currentIndex = phaseOrder.indexOf(round.status);
+      const currentIndex = phaseOrder.indexOf(
+        round.status as (typeof phaseOrder)[number],
+      );
 
       if (currentIndex === -1 || currentIndex >= phaseOrder.length - 1) {
         throw new TRPCError({
@@ -874,6 +959,54 @@ export const musicLeagueRouter = {
       } else if (nextStatus === "RESULTS") {
         void notifyResultsAvailable(input.roundId);
         void pushNotifyResultsAvailable(input.roundId);
+      }
+
+      // When a round completes, activate any PENDING round in the same league
+      if (nextStatus === "COMPLETED") {
+        const pendingRound = await ctx.db.query.Round.findFirst({
+          where: and(
+            eq(Round.leagueId, round.leagueId),
+            eq(Round.status, "PENDING"),
+          ),
+          orderBy: (r, { asc }) => [asc(r.roundNumber)],
+        });
+
+        if (pendingRound) {
+          const now = new Date();
+          const addDays = (date: Date, days: number): Date => {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+          };
+
+          const league = await ctx.db.query.League.findFirst({
+            where: eq(League.id, round.leagueId),
+          });
+
+          if (league) {
+            const newSubmissionDeadline = addDays(
+              now,
+              league.submissionWindowDays,
+            );
+            const newVotingDeadline = addDays(
+              newSubmissionDeadline,
+              league.votingWindowDays,
+            );
+
+            await ctx.db
+              .update(Round)
+              .set({
+                status: "SUBMISSION",
+                startDate: now,
+                submissionDeadline: newSubmissionDeadline,
+                votingDeadline: newVotingDeadline,
+              })
+              .where(eq(Round.id, pendingRound.id));
+
+            void notifyRoundStarted(pendingRound.id);
+            void pushNotifyRoundStarted(pendingRound.id);
+          }
+        }
       }
 
       return { status: nextStatus };

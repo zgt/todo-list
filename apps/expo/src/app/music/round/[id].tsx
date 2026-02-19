@@ -40,6 +40,7 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { trpc } from "~/utils/api";
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  PENDING: { bg: "rgba(138, 138, 138, 0.15)", text: "#6B7280" },
   SUBMISSION: { bg: "rgba(80, 200, 120, 0.2)", text: "#50C878" },
   LISTENING: { bg: "rgba(100, 149, 237, 0.2)", text: "#6495ED" },
   VOTING: { bg: "rgba(255, 165, 0, 0.2)", text: "#FFA500" },
@@ -249,8 +250,50 @@ export default function RoundDetails() {
                 votingDeadline={round.votingDeadline}
               />
 
+              {/* PENDING Banner */}
+              {round.status === "PENDING" && (
+                <View
+                  style={{
+                    backgroundColor: "rgba(107, 114, 128, 0.1)",
+                    borderWidth: 1,
+                    borderColor: "rgba(107, 114, 128, 0.3)",
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    marginBottom: 16,
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <Clock size={18} color="#6B7280" />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: "#8FA8A8",
+                      }}
+                    >
+                      Waiting for previous round to finish
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#6B7280",
+                        marginTop: 2,
+                      }}
+                    >
+                      This round will start automatically when the current round
+                      completes
+                    </Text>
+                  </View>
+                </View>
+              )}
+
               {/* Phase Progress Bar */}
-              <PhaseProgressBar status={round.status} />
+              {round.status !== "PENDING" && (
+                <PhaseProgressBar status={round.status} />
+              )}
 
               {/* Countdown Timer */}
               <CountdownTimer

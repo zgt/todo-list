@@ -20,6 +20,21 @@ import { Textarea } from "@acme/ui/textarea";
 
 import { useTRPC } from "~/trpc/react";
 
+const SUBMISSION_WINDOW_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+  { label: "1 week", days: 7 },
+];
+
+const VOTING_WINDOW_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+];
+
 export default function CreateLeague() {
   const trpc = useTRPC();
   const router = useRouter();
@@ -27,7 +42,10 @@ export default function CreateLeague() {
   const [description, setDescription] = useState("");
   const [songsPerRound, setSongsPerRound] = useState(1);
   const [allowDownvotes, setAllowDownvotes] = useState(false);
-  const [upvotePointsPerRound, setUpvotePointsPerRound] = useState(10);
+  const [upvotePointsPerRound, setUpvotePointsPerRound] = useState(5);
+  const [downvotePointsPerRound, setDownvotePointsPerRound] = useState(3);
+  const [submissionWindowDays, setSubmissionWindowDays] = useState(3);
+  const [votingWindowDays, setVotingWindowDays] = useState(2);
 
   const createLeague = useMutation(
     trpc.musicLeague.createLeague.mutationOptions({
@@ -45,6 +63,9 @@ export default function CreateLeague() {
       songsPerRound,
       allowDownvotes,
       upvotePointsPerRound,
+      submissionWindowDays,
+      votingWindowDays,
+      downvotePointsPerRound,
     });
   };
 
@@ -77,6 +98,50 @@ export default function CreateLeague() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
+            </div>
+
+            {/* Round Windows */}
+            <div className="flex flex-col gap-1.5">
+              <Label>Submission Window</Label>
+              <div className="flex flex-wrap gap-2">
+                {SUBMISSION_WINDOW_PRESETS.map((preset) => (
+                  <button
+                    key={preset.days}
+                    type="button"
+                    onClick={() => setSubmissionWindowDays(preset.days)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                      submissionWindowDays === preset.days
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Voting Window</Label>
+              <p className="text-muted-foreground text-xs">
+                After submissions close
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {VOTING_WINDOW_PRESETS.map((preset) => (
+                  <button
+                    key={preset.days}
+                    type="button"
+                    onClick={() => setVotingWindowDays(preset.days)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                      votingWindowDays === preset.days
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -121,8 +186,36 @@ export default function CreateLeague() {
                 checked={allowDownvotes}
                 onCheckedChange={(v) => setAllowDownvotes(v === true)}
               />
-              <Label htmlFor="allow-downvotes">Allow downvotes</Label>
+              <div>
+                <Label htmlFor="allow-downvotes">Allow downvotes</Label>
+                <p className="text-muted-foreground text-xs">
+                  Members can spend points to downvote songs
+                </p>
+              </div>
             </div>
+
+            {allowDownvotes && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="downvotePoints">
+                  Downvote Points per Round
+                </Label>
+                <Input
+                  id="downvotePoints"
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={downvotePointsPerRound}
+                  onChange={(e) =>
+                    setDownvotePointsPerRound(
+                      Math.min(10, Math.max(1, Number(e.target.value))),
+                    )
+                  }
+                />
+                <p className="text-muted-foreground text-xs">
+                  Points each member can use for downvotes (1-10)
+                </p>
+              </div>
+            )}
 
             {createLeague.error && (
               <p className="text-destructive text-sm">

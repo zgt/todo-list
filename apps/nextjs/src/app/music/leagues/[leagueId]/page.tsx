@@ -16,6 +16,16 @@ import {
   Users,
 } from "lucide-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@acme/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@acme/ui/avatar";
 import { Badge } from "@acme/ui/badge";
 import { Button } from "@acme/ui/button";
@@ -245,6 +255,7 @@ export default function LeagueDetail() {
               {league.rounds.length > 0 ? (
                 <div className="space-y-3">
                   {league.rounds.map((round) => {
+                    const isPending = round.status === "PENDING";
                     const isScored =
                       round.status === "RESULTS" ||
                       round.status === "COMPLETED";
@@ -256,10 +267,14 @@ export default function LeagueDetail() {
                       <Link
                         key={round.id}
                         href={`/music/leagues/${league.id}/rounds/${round.id}`}
-                        className="border-border/50 hover:bg-muted flex items-center justify-between rounded-lg border p-3 transition-colors"
+                        className={`border-border/50 hover:bg-muted flex items-center justify-between rounded-lg border p-3 transition-colors ${
+                          isPending ? "opacity-50" : ""
+                        }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium">
+                          <p
+                            className={`font-medium ${isPending ? "text-muted-foreground" : ""}`}
+                          >
                             Round {round.roundNumber}: {round.themeName}
                           </p>
                           {winner && (
@@ -274,7 +289,9 @@ export default function LeagueDetail() {
                             </p>
                           )}
                         </div>
-                        <Badge variant="secondary">{round.status}</Badge>
+                        <Badge variant={isPending ? "outline" : "secondary"}>
+                          {isPending ? "Pending" : round.status}
+                        </Badge>
                       </Link>
                     );
                   })}
@@ -345,21 +362,28 @@ export default function LeagueDetail() {
         league={league}
         isOwner={isOwner}
         onLeave={() => leaveLeague.mutate({ leagueId: league.id })}
-        onDelete={() => {
-          if (
-            confirm(
-              "Are you sure you want to delete this league? This cannot be undone.",
-            )
-          ) {
-            deleteLeague.mutate({ leagueId: league.id });
-          }
-        }}
+        onDelete={() => deleteLeague.mutate({ leagueId: league.id })}
         isLeaving={leaveLeague.isPending}
         isDeleting={deleteLeague.isPending}
       />
     </div>
   );
 }
+
+const SUBMISSION_WINDOW_OPTIONS = [
+  { label: "1 day", value: 1 },
+  { label: "2 days", value: 2 },
+  { label: "3 days", value: 3 },
+  { label: "5 days", value: 5 },
+  { label: "1 week", value: 7 },
+];
+
+const VOTING_WINDOW_OPTIONS = [
+  { label: "1 day", value: 1 },
+  { label: "2 days", value: 2 },
+  { label: "3 days", value: 3 },
+  { label: "5 days", value: 5 },
+];
 
 function SettingsModal({
   open,
@@ -380,6 +404,9 @@ function SettingsModal({
     songsPerRound: number;
     allowDownvotes: boolean;
     upvotePointsPerRound: number;
+    submissionWindowDays: number;
+    votingWindowDays: number;
+    downvotePointsPerRound: number;
     members: { role: string; userId: string }[];
   };
   onLeave: () => void;
@@ -395,6 +422,16 @@ function SettingsModal({
   const [songsPerRound, setSongsPerRound] = useState(league.songsPerRound);
   const [allowDownvotes, setAllowDownvotes] = useState(league.allowDownvotes);
   const [upvotePoints, setUpvotePoints] = useState(league.upvotePointsPerRound);
+  const [submissionWindowDays, setSubmissionWindowDays] = useState(
+    league.submissionWindowDays,
+  );
+  const [votingWindowDays, setVotingWindowDays] = useState(
+    league.votingWindowDays,
+  );
+  const [downvotePoints, setDownvotePoints] = useState(
+    league.downvotePointsPerRound,
+  );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const updateSettings = useMutation(
     trpc.musicLeague.updateLeagueSettings.mutationOptions({
@@ -415,132 +452,223 @@ function SettingsModal({
       songsPerRound,
       allowDownvotes,
       upvotePointsPerRound: upvotePoints,
+      submissionWindowDays,
+      votingWindowDays,
+      downvotePointsPerRound: downvotePoints,
     });
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>League Settings</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) onClose();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>League Settings</DialogTitle>
+          </DialogHeader>
 
-        <div className="flex flex-col gap-4">
-          {isOwner ? (
-            <>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="settings-name">League Name</Label>
-                <Input
-                  id="settings-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={100}
-                />
-              </div>
+          <div className="flex flex-col gap-4">
+            {isOwner ? (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="settings-name">League Name</Label>
+                  <Input
+                    id="settings-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
 
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="settings-desc">Description</Label>
-                <Textarea
-                  id="settings-desc"
-                  rows={2}
-                  maxLength={500}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="settings-desc">Description</Label>
+                  <Textarea
+                    id="settings-desc"
+                    rows={2}
+                    maxLength={500}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
 
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="settings-songs">Songs per Round</Label>
-                <Select
-                  value={String(songsPerRound)}
-                  onValueChange={(value) => setSongsPerRound(Number(value))}
-                >
-                  <SelectTrigger id="settings-songs" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <SelectItem key={n} value={String(n)}>
-                        {n}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Submission Window</Label>
+                  <Select
+                    value={String(submissionWindowDays)}
+                    onValueChange={(v) => setSubmissionWindowDays(Number(v))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUBMISSION_WINDOW_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={String(opt.value)}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="settings-points">Upvote Points per Round</Label>
-                <Input
-                  id="settings-points"
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={upvotePoints}
-                  onChange={(e) => setUpvotePoints(Number(e.target.value))}
-                />
-              </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Voting Window</Label>
+                  <Select
+                    value={String(votingWindowDays)}
+                    onValueChange={(v) => setVotingWindowDays(Number(v))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VOTING_WINDOW_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={String(opt.value)}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="settings-downvotes"
-                  checked={allowDownvotes}
-                  onCheckedChange={(checked) =>
-                    setAllowDownvotes(checked === true)
-                  }
-                />
-                <Label htmlFor="settings-downvotes">Allow downvotes</Label>
-              </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="settings-songs">Songs per Round</Label>
+                  <Select
+                    value={String(songsPerRound)}
+                    onValueChange={(value) => setSongsPerRound(Number(value))}
+                  >
+                    <SelectTrigger id="settings-songs" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {updateSettings.error && (
-                <p className="text-destructive text-sm">
-                  {updateSettings.error.message}
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="settings-points">
+                    Upvote Points per Round
+                  </Label>
+                  <Input
+                    id="settings-points"
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={upvotePoints}
+                    onChange={(e) => setUpvotePoints(Number(e.target.value))}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="settings-downvotes"
+                    checked={allowDownvotes}
+                    onCheckedChange={(checked) =>
+                      setAllowDownvotes(checked === true)
+                    }
+                  />
+                  <Label htmlFor="settings-downvotes">Allow downvotes</Label>
+                </div>
+
+                {allowDownvotes && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="settings-downvote-points">
+                      Downvote Points per Round
+                    </Label>
+                    <Input
+                      id="settings-downvote-points"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={downvotePoints}
+                      onChange={(e) =>
+                        setDownvotePoints(Number(e.target.value))
+                      }
+                    />
+                  </div>
+                )}
+
+                {updateSettings.error && (
+                  <p className="text-destructive text-sm">
+                    {updateSettings.error.message}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="py-2">
+                <p className="text-muted-foreground text-sm">
+                  You are a member of this league.
                 </p>
+              </div>
+            )}
+
+            <Separator />
+
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="secondary"
+                onClick={onLeave}
+                disabled={isLeaving}
+              >
+                <LogOut className="h-4 w-4" />
+                {isLeaving ? "Leaving..." : "Leave League"}
+              </Button>
+              {isOwner && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete League
+                </Button>
               )}
-            </>
-          ) : (
-            <div className="py-2">
-              <p className="text-muted-foreground text-sm">
-                You are a member of this league.
-              </p>
             </div>
-          )}
+          </div>
 
-          <Separator />
-
-          <div className="flex flex-col gap-2">
-            <Button variant="secondary" onClick={onLeave} disabled={isLeaving}>
-              <LogOut className="h-4 w-4" />
-              {isLeaving ? "Leaving..." : "Leave League"}
+          <DialogFooter>
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
             </Button>
             {isOwner && (
-              <Button
-                variant="destructive"
-                onClick={onDelete}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-4 w-4" />
-                {isDeleting ? "Deleting..." : "Delete League"}
+              <Button onClick={handleSave} disabled={updateSettings.isPending}>
+                {updateSettings.isPending ? "Saving..." : "Save Changes"}
               </Button>
             )}
-          </div>
-        </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          {isOwner && (
-            <Button onClick={handleSave} disabled={updateSettings.isPending}>
-              {updateSettings.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete League</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{league.name}&rdquo; and all
+              its rounds, submissions, and votes. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                onDelete();
+              }}
+            >
+              {isDeleting ? "Deleting..." : "Delete League"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

@@ -230,7 +230,8 @@ export default function RoundDetail() {
   }
 
   const isAdmin = round.userRole === "OWNER" || round.userRole === "ADMIN";
-  const canAdvance = isAdmin && round.status !== "COMPLETED";
+  const canAdvance =
+    isAdmin && round.status !== "COMPLETED" && round.status !== "PENDING";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -257,40 +258,67 @@ export default function RoundDetail() {
               </p>
             )}
           </div>
-          <Badge variant="secondary" className="mt-1">
-            {round.status}
+          <Badge
+            variant={round.status === "PENDING" ? "outline" : "secondary"}
+            className="mt-1"
+          >
+            {round.status === "PENDING" ? "Pending" : round.status}
           </Badge>
         </div>
       </div>
 
-      {/* Phase progress */}
-      <Card className="mb-6">
-        <CardContent>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-            <PhaseProgressBar status={round.status} />
-
-            {activeDeadline && countdown !== "Ended" && (
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="text-muted-foreground h-4 w-4" />
-                <span className="text-muted-foreground">
-                  {round.status === "SUBMISSION"
-                    ? "Submissions close"
-                    : round.status === "LISTENING"
-                      ? "Voting opens"
-                      : "Voting closes"}{" "}
-                  in
-                </span>
-                <span className="font-mono font-medium">{countdown}</span>
+      {/* PENDING Banner */}
+      {round.status === "PENDING" && (
+        <Card className="border-muted mb-6">
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <Clock className="text-muted-foreground h-5 w-5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium">
+                  Waiting for previous round to finish
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  This round will start automatically when the current round
+                  completes
+                </p>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Phase progress */}
+      {round.status !== "PENDING" && (
+        <Card className="mb-6">
+          <CardContent>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+              <PhaseProgressBar status={round.status} />
+
+              {activeDeadline && countdown !== "Ended" && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="text-muted-foreground h-4 w-4" />
+                  <span className="text-muted-foreground">
+                    {round.status === "SUBMISSION"
+                      ? "Submissions close"
+                      : round.status === "LISTENING"
+                        ? "Voting opens"
+                        : "Voting closes"}{" "}
+                    in
+                  </span>
+                  <span className="font-mono font-medium">{countdown}</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          <PhaseContent round={round} leagueId={params.leagueId} />
+          {round.status !== "PENDING" && (
+            <PhaseContent round={round} leagueId={params.leagueId} />
+          )}
         </div>
 
         {/* Sidebar */}

@@ -10,35 +10,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Check, Sparkles } from "lucide-react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Calendar, Clock, Info, Sparkles } from "lucide-react-native";
 
 import type { ThemeTemplatePickerRef } from "~/components/music/ThemeTemplatePicker";
 import { GradientBackground } from "~/components/GradientBackground";
 import { ThemeTemplatePicker } from "~/components/music/ThemeTemplatePicker";
 import { trpc } from "~/utils/api";
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  result.setHours(20, 0, 0, 0);
-  return result;
-}
-
-const SUBMISSION_PRESETS = [
-  { label: "1 day", days: 1 },
-  { label: "2 days", days: 2 },
-  { label: "3 days", days: 3 },
-  { label: "5 days", days: 5 },
-  { label: "1 week", days: 7 },
-];
-
-const VOTING_GAP_PRESETS = [
-  { label: "+1 day", days: 1 },
-  { label: "+2 days", days: 2 },
-  { label: "+3 days", days: 3 },
-  { label: "+5 days", days: 5 },
-];
 
 export default function CreateRound() {
   const { leagueId } = useLocalSearchParams<{ leagueId: string }>();
@@ -48,11 +26,19 @@ export default function CreateRound() {
 
   const [themeName, setThemeName] = useState("");
   const [themeDescription, setThemeDescription] = useState("");
-  const [submissionDays, setSubmissionDays] = useState(3);
-  const [votingGapDays, setVotingGapDays] = useState(2);
 
-  const submissionDeadline = addDays(new Date(), submissionDays);
-  const votingDeadline = addDays(submissionDeadline, votingGapDays);
+  const { data: league } = useQuery(
+    trpc.musicLeague.getLeagueById.queryOptions(
+      { id: leagueId },
+      { enabled: !!leagueId },
+    ),
+  );
+
+  // Check if there's an unfinished round
+  const hasUnfinishedRound = league?.rounds.some(
+    (r: { status: string }) =>
+      r.status !== "COMPLETED" && r.status !== "PENDING",
+  );
 
   const createRoundMutation = useMutation(
     trpc.musicLeague.createRound.mutationOptions({
@@ -89,19 +75,8 @@ export default function CreateRound() {
       leagueId,
       themeName: themeName.trim(),
       themeDescription: themeDescription.trim() || undefined,
-      submissionDeadline: submissionDeadline.toISOString(),
-      votingDeadline: votingDeadline.toISOString(),
     });
   };
-
-  const formatDate = (date: Date) =>
-    date.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
 
   return (
     <GradientBackground>
@@ -171,107 +146,40 @@ export default function CreateRound() {
                 />
               </View>
 
-              {/* Submission Deadline */}
-              <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
-                Deadlines
-              </Text>
-
-              <View className="mb-4">
-                <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-                  Submission window
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {SUBMISSION_PRESETS.map((preset) => (
-                    <Pressable
-                      key={preset.days}
-                      onPress={() => setSubmissionDays(preset.days)}
-                      className={`rounded-full px-4 py-2 ${
-                        submissionDays === preset.days
-                          ? "border border-[#50C878] bg-[#50C878]/20"
-                          : "border border-[#164B49] bg-[#102A2A]"
-                      }`}
-                    >
-                      <Text
-                        className={`text-sm font-medium ${
-                          submissionDays === preset.days
-                            ? "text-[#50C878]"
-                            : "text-[#8FA8A8]"
-                        }`}
-                      >
-                        {preset.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <View className="mt-2 flex-row items-center gap-2">
-                  <Calendar size={14} color="#8FA8A8" />
-                  <Text className="text-xs text-[#8FA8A8]">
-                    Closes {formatDate(submissionDeadline)}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Voting Deadline */}
-              <View className="mb-6">
-                <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-                  Voting window (after submissions close)
-                </Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {VOTING_GAP_PRESETS.map((preset) => (
-                    <Pressable
-                      key={preset.days}
-                      onPress={() => setVotingGapDays(preset.days)}
-                      className={`rounded-full px-4 py-2 ${
-                        votingGapDays === preset.days
-                          ? "border border-[#50C878] bg-[#50C878]/20"
-                          : "border border-[#164B49] bg-[#102A2A]"
-                      }`}
-                    >
-                      <Text
-                        className={`text-sm font-medium ${
-                          votingGapDays === preset.days
-                            ? "text-[#50C878]"
-                            : "text-[#8FA8A8]"
-                        }`}
-                      >
-                        {preset.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <View className="mt-2 flex-row items-center gap-2">
-                  <Calendar size={14} color="#8FA8A8" />
-                  <Text className="text-xs text-[#8FA8A8]">
-                    Closes {formatDate(votingDeadline)}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Summary */}
+              {/* League Defaults Summary */}
               <View className="mb-6 rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 p-4">
-                <Text className="mb-2 text-sm font-bold text-[#DCE4E4]">
-                  Summary
+                <Text className="mb-3 text-sm font-bold text-[#DCE4E4]">
+                  Round Schedule
                 </Text>
-                <View className="flex-row items-center gap-2">
-                  <Check size={14} color="#50C878" />
-                  <Text className="text-sm text-[#8FA8A8]">
-                    Submissions open for {submissionDays} day
-                    {submissionDays !== 1 ? "s" : ""}
-                  </Text>
-                </View>
-                <View className="mt-1 flex-row items-center gap-2">
-                  <Check size={14} color="#50C878" />
-                  <Text className="text-sm text-[#8FA8A8]">
-                    Voting open for {votingGapDays} day
-                    {votingGapDays !== 1 ? "s" : ""} after
-                  </Text>
-                </View>
-                <View className="mt-1 flex-row items-center gap-2">
-                  <Check size={14} color="#50C878" />
-                  <Text className="text-sm text-[#8FA8A8]">
-                    Results on {formatDate(votingDeadline)}
-                  </Text>
-                </View>
+                {league ? (
+                  <>
+                    <View className="mb-2 flex-row items-center gap-2">
+                      <Calendar size={14} color="#50C878" />
+                      <Text className="text-sm text-[#8FA8A8]">
+                        {league.submissionWindowDays} day
+                        {league.submissionWindowDays !== 1 ? "s" : ""} for
+                        submissions
+                      </Text>
+                    </View>
+                    <View className="mb-2 flex-row items-center gap-2">
+                      <Clock size={14} color="#50C878" />
+                      <Text className="text-sm text-[#8FA8A8]">
+                        {league.votingWindowDays} day
+                        {league.votingWindowDays !== 1 ? "s" : ""} for voting
+                      </Text>
+                    </View>
+                    {hasUnfinishedRound && (
+                      <View className="mt-2 flex-row items-start gap-2 rounded-lg bg-[#FFA500]/10 p-3">
+                        <Info size={14} color="#FFA500" style={{ marginTop: 1 }} />
+                        <Text className="flex-1 text-xs text-[#FFA500]">
+                          This round will start after the current round ends
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <ActivityIndicator size="small" color="#50C878" />
+                )}
               </View>
 
               {/* Create Button */}
@@ -299,7 +207,7 @@ export default function CreateRound() {
                       color: "#0A1A1A",
                     }}
                   >
-                    Create Round
+                    {hasUnfinishedRound ? "Queue Round" : "Create Round"}
                   </Text>
                 )}
               </Pressable>

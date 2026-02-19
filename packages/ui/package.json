@@ -28,7 +28,8 @@
     "./textarea": "./src/textarea.tsx",
     "./avatar": "./src/avatar.tsx",
     "./table": "./src/table.tsx",
-    "./switch": "./src/switch.tsx"
+    "./switch": "./src/switch.tsx",
+    "./alert-dialog": "./src/alert-dialog.tsx"
   },
   "license": "MIT",
   "scripts": {

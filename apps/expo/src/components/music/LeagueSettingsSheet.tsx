@@ -9,6 +9,7 @@ import {
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Pressable,
   Switch,
   Text,
@@ -21,7 +22,12 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronUp, Trash2 } from "lucide-react-native";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+} from "lucide-react-native";
 
 import { trpc } from "~/utils/api";
 
@@ -37,6 +43,9 @@ interface LeagueSettings {
   songsPerRound: number;
   upvotePointsPerRound: number;
   allowDownvotes: boolean;
+  downvotePointsPerRound: number;
+  submissionWindowDays: number;
+  votingWindowDays: number;
   isOwner?: boolean;
   onDeleteLeague?: () => void;
 }
@@ -82,6 +91,99 @@ function SettingsStepper({
   );
 }
 
+const SUBMISSION_WINDOW_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+  { label: "1 week", days: 7 },
+];
+
+const VOTING_WINDOW_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+];
+
+function DeleteConfirmModal({
+  visible,
+  leagueName,
+  onConfirm,
+  onCancel,
+  isDeleting,
+}: {
+  visible: boolean;
+  leagueName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  isDeleting: boolean;
+}) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
+      <View className="flex-1 items-center justify-center bg-black/60 px-6">
+        <View className="w-full max-w-sm rounded-2xl border border-[#164B49] bg-[#102A2A] p-6">
+          {/* Warning Icon */}
+          <View className="mb-4 items-center">
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-red-500/15">
+              <AlertTriangle size={28} color="#ef4444" />
+            </View>
+          </View>
+
+          {/* Title */}
+          <Text className="mb-2 text-center text-lg font-bold text-[#DCE4E4]">
+            Delete League
+          </Text>
+
+          {/* Description */}
+          <Text className="mb-1 text-center text-sm text-[#8FA8A8]">
+            Are you sure you want to delete
+          </Text>
+          <Text className="mb-3 text-center text-base font-semibold text-[#50C878]">
+            {leagueName}
+          </Text>
+          <Text className="mb-6 text-center text-sm text-[#8FA8A8]">
+            This will permanently delete all rounds, submissions, and votes.
+            This action cannot be undone.
+          </Text>
+
+          {/* Buttons */}
+          <View className="gap-3">
+            <Pressable
+              onPress={onConfirm}
+              disabled={isDeleting}
+              className="items-center rounded-xl bg-red-500 py-3.5 active:bg-red-600"
+              style={isDeleting ? { opacity: 0.6 } : undefined}
+            >
+              {isDeleting ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text className="text-base font-bold text-white">
+                  Delete League
+                </Text>
+              )}
+            </Pressable>
+            <Pressable
+              onPress={onCancel}
+              disabled={isDeleting}
+              className="items-center rounded-xl border border-[#164B49] py-3.5 active:bg-[#164B49]/50"
+            >
+              <Text className="text-base font-medium text-[#DCE4E4]">
+                Cancel
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export const LeagueSettingsSheet = forwardRef<
   LeagueSettingsSheetRef,
   LeagueSettings
@@ -94,6 +196,9 @@ export const LeagueSettingsSheet = forwardRef<
       songsPerRound,
       upvotePointsPerRound,
       allowDownvotes,
+      downvotePointsPerRound,
+      submissionWindowDays,
+      votingWindowDays,
       isOwner,
       onDeleteLeague,
     },
@@ -109,8 +214,16 @@ export const LeagueSettingsSheet = forwardRef<
       useState(upvotePointsPerRound);
     const [editAllowDownvotes, setEditAllowDownvotes] =
       useState(allowDownvotes);
+    const [editDownvotePoints, setEditDownvotePoints] =
+      useState(downvotePointsPerRound);
+    const [editSubmissionWindowDays, setEditSubmissionWindowDays] =
+      useState(submissionWindowDays);
+    const [editVotingWindowDays, setEditVotingWindowDays] =
+      useState(votingWindowDays);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const snapPoints = useMemo(() => ["75%"], []);
+    const snapPoints = useMemo(() => ["85%"], []);
 
     const updateMutation = useMutation(
       trpc.musicLeague.updateLeagueSettings.mutationOptions({}),
@@ -122,12 +235,18 @@ export const LeagueSettingsSheet = forwardRef<
       setEditSongsPerRound(songsPerRound);
       setEditUpvotePoints(upvotePointsPerRound);
       setEditAllowDownvotes(allowDownvotes);
+      setEditDownvotePoints(downvotePointsPerRound);
+      setEditSubmissionWindowDays(submissionWindowDays);
+      setEditVotingWindowDays(votingWindowDays);
     }, [
       name,
       description,
       songsPerRound,
       upvotePointsPerRound,
       allowDownvotes,
+      downvotePointsPerRound,
+      submissionWindowDays,
+      votingWindowDays,
     ]);
 
     useImperativeHandle(ref, () => ({
@@ -151,6 +270,9 @@ export const LeagueSettingsSheet = forwardRef<
           songsPerRound: editSongsPerRound,
           upvotePointsPerRound: editUpvotePoints,
           allowDownvotes: editAllowDownvotes,
+          downvotePointsPerRound: editDownvotePoints,
+          submissionWindowDays: editSubmissionWindowDays,
+          votingWindowDays: editVotingWindowDays,
         },
         {
           onSuccess: () => {
@@ -166,6 +288,11 @@ export const LeagueSettingsSheet = forwardRef<
       );
     };
 
+    const handleDeleteConfirm = () => {
+      setIsDeleting(true);
+      onDeleteLeague?.();
+    };
+
     const renderBackdrop = useCallback(
       (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
         <BottomSheetBackdrop
@@ -178,132 +305,221 @@ export const LeagueSettingsSheet = forwardRef<
     );
 
     return (
-      <BottomSheetModal
-        ref={bottomSheetRef}
-        snapPoints={snapPoints}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={{ backgroundColor: "#102A2A" }}
-        handleIndicatorStyle={{ backgroundColor: "#8FA8A8" }}
-      >
-        <BottomSheetScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      <>
+        <BottomSheetModal
+          ref={bottomSheetRef}
+          snapPoints={snapPoints}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={{ backgroundColor: "#102A2A" }}
+          handleIndicatorStyle={{ backgroundColor: "#8FA8A8" }}
         >
-          <Text className="mb-6 text-xl font-bold text-[#DCE4E4]">
-            League Settings
-          </Text>
-
-          {/* Name */}
-          <View className="mb-4">
-            <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-              League Name
+          <BottomSheetScrollView
+            contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          >
+            <Text className="mb-6 text-xl font-bold text-[#DCE4E4]">
+              League Settings
             </Text>
-            <TextInput
-              value={editName}
-              onChangeText={setEditName}
-              placeholder="League name"
-              placeholderTextColor="#8FA8A8"
-              maxLength={100}
-              className="rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3 text-base text-[#DCE4E4]"
-            />
-          </View>
 
-          {/* Description */}
-          <View className="mb-6">
-            <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
-              Description
-            </Text>
-            <TextInput
-              value={editDescription}
-              onChangeText={setEditDescription}
-              placeholder="What's this league about?"
-              placeholderTextColor="#8FA8A8"
-              maxLength={500}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3 text-base text-[#DCE4E4]"
-            />
-          </View>
-
-          {/* Settings */}
-          <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
-            Settings
-          </Text>
-
-          <View className="mb-6 gap-3">
-            <SettingsStepper
-              label="Songs per round"
-              value={editSongsPerRound}
-              onChange={setEditSongsPerRound}
-              min={1}
-              max={5}
-            />
-
-            <SettingsStepper
-              label="Upvote points"
-              value={editUpvotePoints}
-              onChange={setEditUpvotePoints}
-              min={1}
-              max={20}
-            />
-
-            <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3">
-              <View className="flex-1">
-                <Text className="text-base font-medium text-[#DCE4E4]">
-                  Allow downvotes
-                </Text>
-                <Text className="mt-0.5 text-xs text-[#8FA8A8]">
-                  Members can spend points to downvote songs
-                </Text>
-              </View>
-              <Switch
-                value={editAllowDownvotes}
-                onValueChange={setEditAllowDownvotes}
-                trackColor={{ false: "#164B49", true: "#50C878" }}
-                thumbColor={editAllowDownvotes ? "#0A1A1A" : "#8FA8A8"}
+            {/* Name */}
+            <View className="mb-4">
+              <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                League Name
+              </Text>
+              <TextInput
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="League name"
+                placeholderTextColor="#8FA8A8"
+                maxLength={100}
+                className="rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3 text-base text-[#DCE4E4]"
               />
             </View>
-          </View>
 
-          {/* Save Button */}
-          <Pressable
-            onPress={handleSave}
-            disabled={updateMutation.isPending || !editName.trim()}
-            style={{
-              alignItems: "center",
-              borderRadius: 12,
-              backgroundColor: "#50C878",
-              paddingVertical: 16,
-              opacity: updateMutation.isPending || !editName.trim() ? 0.5 : 1,
-            }}
-          >
-            {updateMutation.isPending ? (
-              <ActivityIndicator color="#0A1A1A" />
-            ) : (
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "700",
-                  color: "#0A1A1A",
-                }}
-              >
-                Save Changes
+            {/* Description */}
+            <View className="mb-6">
+              <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                Description
               </Text>
-            )}
-          </Pressable>
+              <TextInput
+                value={editDescription}
+                onChangeText={setEditDescription}
+                placeholder="What's this league about?"
+                placeholderTextColor="#8FA8A8"
+                maxLength={500}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3 text-base text-[#DCE4E4]"
+              />
+            </View>
 
-          {/* Delete League */}
-          {isOwner && onDeleteLeague && (
+            {/* Round Windows */}
+            <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
+              Round Windows
+            </Text>
+
+            {/* Submission Window Presets */}
+            <View className="mb-4">
+              <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                Submission window
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {SUBMISSION_WINDOW_PRESETS.map((preset) => (
+                  <Pressable
+                    key={preset.days}
+                    onPress={() => setEditSubmissionWindowDays(preset.days)}
+                    className={`rounded-full px-4 py-2 ${
+                      editSubmissionWindowDays === preset.days
+                        ? "border border-[#50C878] bg-[#50C878]/20"
+                        : "border border-[#164B49] bg-[#0A1A1A]"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${
+                        editSubmissionWindowDays === preset.days
+                          ? "text-[#50C878]"
+                          : "text-[#8FA8A8]"
+                      }`}
+                    >
+                      {preset.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Voting Window Presets */}
+            <View className="mb-6">
+              <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                Voting window (after submissions close)
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {VOTING_WINDOW_PRESETS.map((preset) => (
+                  <Pressable
+                    key={preset.days}
+                    onPress={() => setEditVotingWindowDays(preset.days)}
+                    className={`rounded-full px-4 py-2 ${
+                      editVotingWindowDays === preset.days
+                        ? "border border-[#50C878] bg-[#50C878]/20"
+                        : "border border-[#164B49] bg-[#0A1A1A]"
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${
+                        editVotingWindowDays === preset.days
+                          ? "text-[#50C878]"
+                          : "text-[#8FA8A8]"
+                      }`}
+                    >
+                      {preset.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Settings */}
+            <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
+              Settings
+            </Text>
+
+            <View className="mb-6 gap-3">
+              <SettingsStepper
+                label="Songs per round"
+                value={editSongsPerRound}
+                onChange={setEditSongsPerRound}
+                min={1}
+                max={5}
+              />
+
+              <SettingsStepper
+                label="Upvote points"
+                value={editUpvotePoints}
+                onChange={setEditUpvotePoints}
+                min={1}
+                max={20}
+              />
+
+              <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3">
+                <View className="flex-1">
+                  <Text className="text-base font-medium text-[#DCE4E4]">
+                    Allow downvotes
+                  </Text>
+                  <Text className="mt-0.5 text-xs text-[#8FA8A8]">
+                    Members can spend points to downvote songs
+                  </Text>
+                </View>
+                <Switch
+                  value={editAllowDownvotes}
+                  onValueChange={setEditAllowDownvotes}
+                  trackColor={{ false: "#164B49", true: "#50C878" }}
+                  thumbColor={editAllowDownvotes ? "#0A1A1A" : "#8FA8A8"}
+                />
+              </View>
+
+              {editAllowDownvotes && (
+                <SettingsStepper
+                  label="Downvote points"
+                  value={editDownvotePoints}
+                  onChange={setEditDownvotePoints}
+                  min={1}
+                  max={10}
+                />
+              )}
+            </View>
+
+            {/* Save Button */}
             <Pressable
-              onPress={onDeleteLeague}
-              className="mt-6 flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
+              onPress={handleSave}
+              disabled={updateMutation.isPending || !editName.trim()}
+              style={{
+                alignItems: "center",
+                borderRadius: 12,
+                backgroundColor: "#50C878",
+                paddingVertical: 16,
+                opacity:
+                  updateMutation.isPending || !editName.trim() ? 0.5 : 1,
+              }}
             >
-              <Trash2 size={18} color="#ef4444" />
-              <Text className="font-semibold text-red-400">Delete League</Text>
+              {updateMutation.isPending ? (
+                <ActivityIndicator color="#0A1A1A" />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "700",
+                    color: "#0A1A1A",
+                  }}
+                >
+                  Save Changes
+                </Text>
+              )}
             </Pressable>
-          )}
-        </BottomSheetScrollView>
-      </BottomSheetModal>
+
+            {/* Delete League */}
+            {isOwner && onDeleteLeague && (
+              <Pressable
+                onPress={() => setDeleteModalVisible(true)}
+                className="mt-6 flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
+              >
+                <Trash2 size={18} color="#ef4444" />
+                <Text className="font-semibold text-red-400">
+                  Delete League
+                </Text>
+              </Pressable>
+            )}
+          </BottomSheetScrollView>
+        </BottomSheetModal>
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmModal
+          visible={deleteModalVisible}
+          leagueName={name}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteModalVisible(false)}
+          isDeleting={isDeleting}
+        />
+      </>
     );
   },
 );

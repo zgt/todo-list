@@ -186,33 +186,57 @@ export default function LeagueDetails() {
   };
 
   const renderRoundCard = useCallback(
-    ({ item }: { item: RoundItem }) => (
-      <Pressable
-        onPress={() => router.push(`/music/round/${item.id}` as never)}
-        className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
-      >
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="mb-1 text-xs font-bold text-[#50C878] uppercase">
-              Round {item.roundNumber}
-            </Text>
-            <Text className="text-lg font-semibold text-[#DCE4E4]">
-              {item.themeName}
-            </Text>
-            {item.themeDescription && (
-              <Text className="text-sm text-[#8FA8A8]">
-                {item.themeDescription}
+    ({ item }: { item: RoundItem }) => {
+      const isPending = item.status === "PENDING";
+
+      return (
+        <Pressable
+          onPress={() => router.push(`/music/round/${item.id}` as never)}
+          className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
+          style={isPending ? { opacity: 0.5 } : undefined}
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text
+                className="mb-1 text-xs font-bold uppercase"
+                style={{ color: isPending ? "#6B7280" : "#50C878" }}
+              >
+                Round {item.roundNumber}
               </Text>
-            )}
+              <Text
+                className="text-lg font-semibold"
+                style={{ color: isPending ? "#6B7280" : "#DCE4E4" }}
+              >
+                {item.themeName}
+              </Text>
+              {item.themeDescription && (
+                <Text
+                  className="text-sm"
+                  style={{ color: isPending ? "#4B5563" : "#8FA8A8" }}
+                >
+                  {item.themeDescription}
+                </Text>
+              )}
+            </View>
+            <View
+              className="ml-2 rounded-md px-2 py-1"
+              style={{
+                backgroundColor: isPending
+                  ? "rgba(107, 114, 128, 0.15)"
+                  : "#0A1A1A",
+              }}
+            >
+              <Text
+                className="text-xs font-medium"
+                style={{ color: isPending ? "#6B7280" : "#DCE4E4" }}
+              >
+                {isPending ? "Pending" : item.status}
+              </Text>
+            </View>
           </View>
-          <View className="ml-2 rounded-md bg-[#0A1A1A] px-2 py-1">
-            <Text className="text-xs font-medium text-[#DCE4E4]">
-              {item.status}
-            </Text>
-          </View>
-        </View>
-      </Pressable>
-    ),
+        </Pressable>
+      );
+    },
     [router],
   );
 
@@ -430,6 +454,9 @@ export default function LeagueDetails() {
             songsPerRound={league.songsPerRound}
             upvotePointsPerRound={league.upvotePointsPerRound}
             allowDownvotes={league.allowDownvotes}
+            downvotePointsPerRound={league.downvotePointsPerRound}
+            submissionWindowDays={league.submissionWindowDays}
+            votingWindowDays={league.votingWindowDays}
             isOwner={isOwner}
             onDeleteLeague={handleDeleteLeague}
           />

@@ -7,6 +7,7 @@ import {
 } from "@acme/api/notifications";
 import {
   pushNotifyResultsAvailable,
+  pushNotifyRoundStarted,
   pushNotifySubmissionReminder,
   pushNotifyVotingOpen,
   pushNotifyVotingReminder,
@@ -31,11 +32,13 @@ export async function GET(request: Request) {
     listeningToVoting: string[];
     votingToResults: string[];
     submissionReminders: string[];
+    pendingToSubmission: string[];
   } = {
     submissionToListening: [],
     listeningToVoting: [],
     votingToResults: [],
     submissionReminders: [],
+    pendingToSubmission: [],
   };
 
   // SUBMISSION where submissionDeadline < now → advance to LISTENING
@@ -121,6 +124,50 @@ export async function GET(request: Request) {
     summary.votingToResults.push(round.id);
     await notifyResultsAvailable(round.id);
     void pushNotifyResultsAvailable(round.id);
+
+    // Check for PENDING rounds in the same league to activate
+    const pendingRound = await db.query.Round.findFirst({
+      where: and(
+        eq(Round.leagueId, round.leagueId),
+        eq(Round.status, "PENDING"),
+      ),
+    });
+
+    if (pendingRound) {
+      const league = await db.query.League.findFirst({
+        where: eq(League.id, round.leagueId),
+      });
+
+      if (league) {
+        const addDays = (date: Date, days: number): Date => {
+          const result = new Date(date);
+          result.setDate(result.getDate() + days);
+          return result;
+        };
+
+        const newSubmissionDeadline = addDays(
+          now,
+          league.submissionWindowDays,
+        );
+        const newVotingDeadline = addDays(
+          newSubmissionDeadline,
+          league.votingWindowDays,
+        );
+
+        await db
+          .update(Round)
+          .set({
+            status: "SUBMISSION",
+            startDate: now,
+            submissionDeadline: newSubmissionDeadline,
+            votingDeadline: newVotingDeadline,
+          })
+          .where(eq(Round.id, pendingRound.id));
+
+        summary.pendingToSubmission.push(pendingRound.id);
+        void pushNotifyRoundStarted(pendingRound.id);
+      }
+    }
   }
 
   // Submission reminders: rounds where submissionDeadline is within 24h

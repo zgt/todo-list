@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { BookOpen, Sparkles } from "lucide-react";
+import { BookOpen, Calendar, Clock, Info, Sparkles } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
 import { Card, CardContent } from "@acme/ui/card";
@@ -167,55 +167,27 @@ const CATEGORIES = [
   "Personal",
 ] as const;
 
-function toLocalDatetimeString(date: Date): string {
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
 export default function CreateRound() {
   const params = useParams<{ leagueId: string }>();
   const router = useRouter();
   const trpc = useTRPC();
 
-  const defaultSubmission = new Date();
-  defaultSubmission.setDate(defaultSubmission.getDate() + 3);
-  const defaultVoting = new Date();
-  defaultVoting.setDate(defaultVoting.getDate() + 5);
-
   const [themeName, setThemeName] = useState("");
   const [themeDescription, setThemeDescription] = useState("");
-  const [submissionDeadline, setSubmissionDeadline] = useState(
-    toLocalDatetimeString(defaultSubmission),
-  );
-  const [votingDeadline, setVotingDeadline] = useState(
-    toLocalDatetimeString(defaultVoting),
-  );
   const [showThemeBrowser, setShowThemeBrowser] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("Classic");
 
-  const { data: latestRound } = useQuery(
-    trpc.musicLeague.getLatestRound.queryOptions({
-      leagueId: params.leagueId,
+  const { data: league } = useQuery(
+    trpc.musicLeague.getLeagueById.queryOptions({
+      id: params.leagueId,
     }),
   );
 
-  const [prevLatestRound, setPrevLatestRound] = useState(latestRound);
-  if (latestRound && latestRound !== prevLatestRound) {
-    setPrevLatestRound(latestRound);
-    const now = new Date();
-    const previousVotingEnd = new Date(latestRound.votingDeadline);
-
-    const baseDate = previousVotingEnd > now ? previousVotingEnd : now;
-
-    const newSubmission = new Date(baseDate);
-    newSubmission.setDate(newSubmission.getDate() + 3);
-
-    const newVoting = new Date(baseDate);
-    newVoting.setDate(newVoting.getDate() + 5);
-
-    setSubmissionDeadline(toLocalDatetimeString(newSubmission));
-    setVotingDeadline(toLocalDatetimeString(newVoting));
-  }
+  // Check if there's an unfinished round (not COMPLETED and not PENDING)
+  const hasUnfinishedRound = league?.rounds.some(
+    (r: { status: string }) =>
+      r.status !== "COMPLETED" && r.status !== "PENDING",
+  );
 
   const createRound = useMutation(
     trpc.musicLeague.createRound.mutationOptions({
@@ -230,15 +202,10 @@ export default function CreateRound() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const subDate = new Date(submissionDeadline);
-    const voteDate = new Date(votingDeadline);
-
     createRound.mutate({
       leagueId: params.leagueId,
       themeName,
       themeDescription: themeDescription || undefined,
-      submissionDeadline: subDate.toISOString(),
-      votingDeadline: voteDate.toISOString(),
     });
   };
 
@@ -247,14 +214,6 @@ export default function CreateRound() {
     setThemeDescription(description);
     setShowThemeBrowser(false);
   };
-
-  const validationError = (() => {
-    const sub = new Date(submissionDeadline);
-    const vote = new Date(votingDeadline);
-    if (vote <= sub) return "Voting deadline must be after submission deadline";
-    if (sub <= new Date()) return "Submission deadline must be in the future";
-    return null;
-  })();
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8">
@@ -305,28 +264,37 @@ export default function CreateRound() {
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="submission-deadline">Submission Deadline</Label>
-              <Input
-                id="submission-deadline"
-                type="datetime-local"
-                required
-                value={submissionDeadline}
-                onChange={(e) => setSubmissionDeadline(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="voting-deadline">Voting Deadline</Label>
-              <Input
-                id="voting-deadline"
-                type="datetime-local"
-                required
-                value={votingDeadline}
-                onChange={(e) => setVotingDeadline(e.target.value)}
-              />
-              {votingDeadline && submissionDeadline && validationError && (
-                <p className="text-destructive text-xs">{validationError}</p>
+            {/* League Defaults Summary */}
+            <div className="bg-muted/50 border-border/50 rounded-lg border p-4">
+              <p className="mb-3 text-sm font-medium">Round Schedule</p>
+              {league ? (
+                <div className="space-y-2">
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {league.submissionWindowDays} day
+                      {league.submissionWindowDays !== 1 ? "s" : ""} for
+                      submissions
+                    </span>
+                  </div>
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {league.votingWindowDays} day
+                      {league.votingWindowDays !== 1 ? "s" : ""} for voting
+                    </span>
+                  </div>
+                  {hasUnfinishedRound && (
+                    <div className="mt-2 flex items-start gap-2 rounded-md bg-orange-500/10 p-2.5">
+                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500" />
+                      <p className="text-xs text-orange-500">
+                        This round will start after the current round ends
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-muted-foreground text-sm">Loading...</div>
               )}
             </div>
 
@@ -346,13 +314,13 @@ export default function CreateRound() {
               </Button>
               <Button
                 type="submit"
-                disabled={
-                  !themeName.trim() ||
-                  !!validationError ||
-                  createRound.isPending
-                }
+                disabled={!themeName.trim() || createRound.isPending}
               >
-                {createRound.isPending ? "Creating..." : "Create Round"}
+                {createRound.isPending
+                  ? "Creating..."
+                  : hasUnfinishedRound
+                    ? "Queue Round"
+                    : "Create Round"}
               </Button>
             </div>
           </form>

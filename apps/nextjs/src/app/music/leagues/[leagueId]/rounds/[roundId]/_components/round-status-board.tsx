@@ -28,7 +28,7 @@ export function RoundStatusBoard({
   memberStatus,
   status,
 }: RoundStatusBoardProps) {
-  if (status === "RESULTS" || status === "COMPLETED") {
+  if (status === "PENDING" || status === "RESULTS" || status === "COMPLETED") {
     return null;
   }
 

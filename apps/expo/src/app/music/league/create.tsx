@@ -58,6 +58,21 @@ function NumberStepper({
   );
 }
 
+const SUBMISSION_WINDOW_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+  { label: "1 week", days: 7 },
+];
+
+const VOTING_WINDOW_PRESETS = [
+  { label: "1 day", days: 1 },
+  { label: "2 days", days: 2 },
+  { label: "3 days", days: 3 },
+  { label: "5 days", days: 5 },
+];
+
 export default function CreateLeague() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -65,8 +80,11 @@ export default function CreateLeague() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [songsPerRound, setSongsPerRound] = useState(1);
-  const [upvotePoints, setUpvotePoints] = useState(10);
+  const [upvotePoints, setUpvotePoints] = useState(5);
   const [allowDownvotes, setAllowDownvotes] = useState(false);
+  const [downvotePoints, setDownvotePoints] = useState(3);
+  const [submissionWindowDays, setSubmissionWindowDays] = useState(3);
+  const [votingWindowDays, setVotingWindowDays] = useState(2);
 
   const createMutation = useMutation(
     trpc.musicLeague.createLeague.mutationOptions({
@@ -93,6 +111,9 @@ export default function CreateLeague() {
       songsPerRound,
       upvotePointsPerRound: upvotePoints,
       allowDownvotes,
+      submissionWindowDays,
+      votingWindowDays,
+      downvotePointsPerRound: downvotePoints,
     });
   };
 
@@ -155,6 +176,71 @@ export default function CreateLeague() {
                 />
               </View>
 
+              {/* Round Windows */}
+              <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
+                Round Windows
+              </Text>
+
+              {/* Submission Window Presets */}
+              <View className="mb-4">
+                <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                  Submission window
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {SUBMISSION_WINDOW_PRESETS.map((preset) => (
+                    <Pressable
+                      key={preset.days}
+                      onPress={() => setSubmissionWindowDays(preset.days)}
+                      className={`rounded-full px-4 py-2 ${
+                        submissionWindowDays === preset.days
+                          ? "border border-[#50C878] bg-[#50C878]/20"
+                          : "border border-[#164B49] bg-[#102A2A]"
+                      }`}
+                    >
+                      <Text
+                        className={`text-sm font-medium ${
+                          submissionWindowDays === preset.days
+                            ? "text-[#50C878]"
+                            : "text-[#8FA8A8]"
+                        }`}
+                      >
+                        {preset.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              {/* Voting Window Presets */}
+              <View className="mb-6">
+                <Text className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                  Voting window (after submissions close)
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {VOTING_WINDOW_PRESETS.map((preset) => (
+                    <Pressable
+                      key={preset.days}
+                      onPress={() => setVotingWindowDays(preset.days)}
+                      className={`rounded-full px-4 py-2 ${
+                        votingWindowDays === preset.days
+                          ? "border border-[#50C878] bg-[#50C878]/20"
+                          : "border border-[#164B49] bg-[#102A2A]"
+                      }`}
+                    >
+                      <Text
+                        className={`text-sm font-medium ${
+                          votingWindowDays === preset.days
+                            ? "text-[#50C878]"
+                            : "text-[#8FA8A8]"
+                        }`}
+                      >
+                        {preset.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
               {/* Settings */}
               <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
                 Settings
@@ -194,6 +280,17 @@ export default function CreateLeague() {
                     thumbColor={allowDownvotes ? "#0A1A1A" : "#8FA8A8"}
                   />
                 </View>
+
+                {/* Downvote Points (only when downvotes enabled) */}
+                {allowDownvotes && (
+                  <NumberStepper
+                    label="Downvote points per round"
+                    value={downvotePoints}
+                    onChange={setDownvotePoints}
+                    min={1}
+                    max={10}
+                  />
+                )}
               </View>
 
               {/* Create Button */}
