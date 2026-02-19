@@ -11,9 +11,10 @@ import {
   pushNotifyVotingOpen,
   pushNotifyVotingReminder,
 } from "@acme/api/push-notifications";
+import { createPlaylist } from "@acme/api/spotify";
 import { and, eq, lt } from "@acme/db";
 import { db } from "@acme/db/client";
-import { Round } from "@acme/db/schema";
+import { League, Round, Submission } from "@acme/db/schema";
 
 import { env } from "~/env";
 
@@ -46,6 +47,45 @@ export async function GET(request: Request) {
   });
 
   for (const round of submissionRounds) {
+    // Create Spotify playlist from submissions
+    let playlistUrl: string | null = null;
+    try {
+      const submissions = await db.query.Submission.findMany({
+        where: eq(Submission.roundId, round.id),
+      });
+
+      if (submissions.length > 0) {
+        const league = await db.query.League.findFirst({
+          where: eq(League.id, round.leagueId),
+        });
+
+        const playlistName = league
+          ? `${league.name} - ${round.themeName}`
+          : round.themeName;
+
+        playlistUrl = await createPlaylist(
+          playlistName,
+          `Round ${round.roundNumber}: ${round.themeName}`,
+          submissions.map((s) => s.spotifyTrackId),
+        );
+
+        await db
+          .update(Round)
+          .set({ playlistUrl })
+          .where(eq(Round.id, round.id));
+
+        console.log(
+          `Created playlist for round ${round.id}: ${playlistUrl}`,
+        );
+      }
+    } catch (err) {
+      console.error(
+        `Failed to create playlist for round ${round.id}:`,
+        err,
+      );
+      // Don't block phase transition if playlist creation fails
+    }
+
     await db
       .update(Round)
       .set({ status: "LISTENING" })

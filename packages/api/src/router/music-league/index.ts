@@ -23,7 +23,7 @@ import {
   pushNotifyRoundStarted,
   pushNotifyVotingOpen,
 } from "../../lib/push/notifications";
-import { searchTracks } from "../../lib/spotify";
+import { createPlaylist, searchTracks } from "../../lib/spotify";
 import { protectedProcedure, publicProcedure } from "../../trpc";
 
 // Helper for invite codes
@@ -946,8 +946,30 @@ export const musicLeagueRouter = {
         });
       }
 
-      // Stub: Spotify API integration can be added later
-      return { playlistUrl: "" };
+      const submissions = await ctx.db.query.Submission.findMany({
+        where: eq(Submission.roundId, input.roundId),
+      });
+
+      if (submissions.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No submissions to create playlist from",
+        });
+      }
+
+      const playlistName = `${round.league.name} - ${round.themeName}`;
+      const playlistUrl = await createPlaylist(
+        playlistName,
+        `Round ${round.roundNumber}: ${round.themeName}`,
+        submissions.map((s) => s.spotifyTrackId),
+      );
+
+      await ctx.db
+        .update(Round)
+        .set({ playlistUrl })
+        .where(eq(Round.id, input.roundId));
+
+      return { playlistUrl };
     }),
 
   // --- PLAYLIST & TRACK PROCEDURES ---

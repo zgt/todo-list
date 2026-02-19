@@ -14,6 +14,10 @@
     "./push-notifications": {
       "types": "./dist/lib/push/notifications.d.ts",
       "default": "./src/lib/push/notifications.ts"
+    },
+    "./spotify": {
+      "types": "./dist/lib/spotify.d.ts",
+      "default": "./src/lib/spotify.ts"
     }
   },
   "license": "MIT",
