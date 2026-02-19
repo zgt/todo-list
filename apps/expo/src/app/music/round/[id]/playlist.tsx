@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -31,6 +31,15 @@ export default function PlaylistView() {
   const { id: roundId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [rippleTrigger, setRippleTrigger] = useState(0);
+  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRipple = useCallback(() => {
+    if (rippleDebounceRef.current) return;
+    setRippleTrigger((prev) => prev + 1);
+    rippleDebounceRef.current = setTimeout(() => {
+      rippleDebounceRef.current = null;
+    }, 500);
+  }, []);
 
   const {
     data: playlist,
@@ -45,12 +54,13 @@ export default function PlaylistView() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    triggerRipple();
     try {
       await refetch();
     } finally {
       setRefreshing(false);
     }
-  }, [refetch]);
+  }, [refetch, triggerRipple]);
 
   const handleOpenPlaylist = () => {
     if (playlist?.playlistUrl) {
@@ -90,7 +100,7 @@ export default function PlaylistView() {
   }
 
   return (
-    <GradientBackground>
+    <GradientBackground rippleTrigger={rippleTrigger}>
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -50,6 +50,15 @@ export default function SettingsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [rippleTrigger, setRippleTrigger] = useState(0);
+  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRipple = useCallback(() => {
+    if (rippleDebounceRef.current) return;
+    setRippleTrigger((prev) => prev + 1);
+    rippleDebounceRef.current = setTimeout(() => {
+      rippleDebounceRef.current = null;
+    }, 500);
+  }, []);
 
   const {
     data: profile,
@@ -112,12 +121,13 @@ export default function SettingsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    triggerRipple();
     try {
       await refetch();
     } finally {
       setRefreshing(false);
     }
-  }, [refetch]);
+  }, [refetch, triggerRipple]);
 
   if (isLoading) {
     return (
@@ -134,7 +144,7 @@ export default function SettingsScreen() {
   const allEnabled = Object.values(prefs).every(Boolean);
 
   return (
-    <GradientBackground>
+    <GradientBackground rippleTrigger={rippleTrigger}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 

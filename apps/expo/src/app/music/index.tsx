@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,15 @@ export default function MusicLeagueDashboard() {
   const router = useRouter();
   const [inviteCode, setInviteCode] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [rippleTrigger, setRippleTrigger] = useState(0);
+  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRipple = useCallback(() => {
+    if (rippleDebounceRef.current) return;
+    setRippleTrigger((prev) => prev + 1);
+    rippleDebounceRef.current = setTimeout(() => {
+      rippleDebounceRef.current = null;
+    }, 500);
+  }, []);
 
   const {
     data: leagues,
@@ -30,12 +39,13 @@ export default function MusicLeagueDashboard() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    triggerRipple();
     try {
       await refetch();
     } finally {
       setRefreshing(false);
     }
-  }, [refetch]);
+  }, [refetch, triggerRipple]);
 
   const handleJoinNavigate = () => {
     const code = inviteCode.trim().toUpperCase();
@@ -96,7 +106,7 @@ export default function MusicLeagueDashboard() {
   );
 
   return (
-    <GradientBackground>
+    <GradientBackground rippleTrigger={rippleTrigger}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen
           options={{ title: "Music Leagues", headerShown: false }}
@@ -150,48 +160,55 @@ export default function MusicLeagueDashboard() {
         </View>
 
         {/* Content */}
-        {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#50C878" />
-            <Text className="mt-3 text-[#8FA8A8]">Loading leagues...</Text>
-          </View>
-        ) : !leagues || leagues.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-8">
-            <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#164B49]">
-              <Music size={36} color="#50C878" />
+        <View className="flex-1">
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center">
+              <ActivityIndicator size="large" color="#50C878" />
+              <Text className="mt-3 text-[#8FA8A8]">Loading leagues...</Text>
             </View>
-            <Text className="mb-2 text-center text-xl font-bold text-[#DCE4E4]">
-              No leagues yet
-            </Text>
-            <Text className="mb-6 text-center text-sm leading-5 text-[#8FA8A8]">
-              Create a new league to play with friends, or enter an invite code
-              above to join one.
-            </Text>
-            <Pressable
-              onPress={() => router.push("/music/league/create" as never)}
-              className="flex-row items-center gap-2 rounded-xl bg-[#50C878] px-6 py-3 active:bg-[#66D99A]"
-            >
-              <Plus size={20} color="#0A1A1A" strokeWidth={3} />
-              <Text className="text-base font-bold text-[#0A1A1A]">
-                Create Your First League
+          ) : !leagues || leagues.length === 0 ? (
+            <View className="flex-1 items-center justify-center px-8">
+              <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#164B49]">
+                <Music size={36} color="#50C878" />
+              </View>
+              <Text className="mb-2 text-center text-xl font-bold text-[#DCE4E4]">
+                No leagues yet
               </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <FlatList
-            data={leagues}
-            keyExtractor={(item) => item.id}
-            renderItem={renderLeagueCard}
-            contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor="#50C878"
-              />
-            }
-          />
-        )}
+              <Text className="mb-6 text-center text-sm leading-5 text-[#8FA8A8]">
+                Create a new league to play with friends, or enter an invite
+                code above to join one.
+              </Text>
+              <Pressable
+                onPress={() => router.push("/music/league/create" as never)}
+                className="flex-row items-center gap-2 rounded-xl bg-[#50C878] px-6 py-3 active:bg-[#66D99A]"
+              >
+                <Plus size={20} color="#0A1A1A" strokeWidth={3} />
+                <Text className="text-base font-bold text-[#0A1A1A]">
+                  Create Your First League
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <FlatList
+              data={leagues}
+              keyExtractor={(item) => item.id}
+              renderItem={renderLeagueCard}
+              contentContainerStyle={{
+                paddingTop: 8,
+                paddingBottom: 32,
+                flexGrow: 1,
+              }}
+              style={{ flex: 1 }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  tintColor="#50C878"
+                />
+              }
+            />
+          )}
+        </View>
       </SafeAreaView>
     </GradientBackground>
   );

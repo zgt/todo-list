@@ -43,6 +43,15 @@ export default function LeagueDetails() {
   const queryClient = useQueryClient();
   const settingsSheetRef = useRef<LeagueSettingsSheetRef>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [rippleTrigger, setRippleTrigger] = useState(0);
+  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerRipple = useCallback(() => {
+    if (rippleDebounceRef.current) return;
+    setRippleTrigger((prev) => prev + 1);
+    rippleDebounceRef.current = setTimeout(() => {
+      rippleDebounceRef.current = null;
+    }, 500);
+  }, []);
 
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user.id;
@@ -105,12 +114,13 @@ export default function LeagueDetails() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    triggerRipple();
     try {
       await Promise.all([refetchLeague(), refetchStandings()]);
     } finally {
       setRefreshing(false);
     }
-  }, [refetchLeague, refetchStandings]);
+  }, [refetchLeague, refetchStandings, triggerRipple]);
 
   // Determine user role
   const currentMember = league?.members.find(
@@ -219,7 +229,7 @@ export default function LeagueDetails() {
   }
 
   return (
-    <GradientBackground>
+    <GradientBackground rippleTrigger={rippleTrigger}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 

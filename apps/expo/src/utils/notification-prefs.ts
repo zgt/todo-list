@@ -20,13 +20,18 @@ export const REMINDER_OFFSET_OPTIONS = [
 ] as const;
 
 export async function getTaskNotificationPrefs(): Promise<TaskNotificationPrefs> {
-  const enabled = await SecureStore.getItemAsync(TASK_REMINDERS_ENABLED_KEY);
-  const offset = await SecureStore.getItemAsync(TASK_REMINDER_OFFSET_KEY);
+  try {
+    const enabled = await SecureStore.getItemAsync(TASK_REMINDERS_ENABLED_KEY);
+    const offset = await SecureStore.getItemAsync(TASK_REMINDER_OFFSET_KEY);
 
-  return {
-    enabled: enabled !== "false", // default true
-    offsetMinutes: offset ? parseInt(offset, 10) : 15, // default 15 min
-  };
+    return {
+      enabled: enabled !== "false", // default true
+      offsetMinutes: offset ? parseInt(offset, 10) : 15, // default 15 min
+    };
+  } catch (e) {
+    console.error("[NotificationPrefs] Failed to read prefs:", e);
+    return { enabled: true, offsetMinutes: 15 };
+  }
 }
 
 export async function setTaskRemindersEnabled(enabled: boolean): Promise<void> {

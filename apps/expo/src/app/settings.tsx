@@ -49,14 +49,19 @@ export default function SettingsScreen() {
   // Load preferences
   useEffect(() => {
     const load = async () => {
-      const [prefs, status] = await Promise.all([
-        getTaskNotificationPrefs(),
-        getPermissionStatus(),
-      ]);
-      setRemindersEnabled(prefs.enabled);
-      setOffsetMinutes(prefs.offsetMinutes);
-      setPermissionStatus(status);
-      setLoading(false);
+      try {
+        const [prefs, status] = await Promise.all([
+          getTaskNotificationPrefs(),
+          getPermissionStatus(),
+        ]);
+        setRemindersEnabled(prefs.enabled);
+        setOffsetMinutes(prefs.offsetMinutes);
+        setPermissionStatus(status);
+      } catch (e) {
+        console.error("[Settings] Failed to load notification prefs:", e);
+      } finally {
+        setLoading(false);
+      }
     };
     void load();
   }, []);

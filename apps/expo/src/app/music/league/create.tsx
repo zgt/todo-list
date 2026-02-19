@@ -119,7 +119,7 @@ export default function CreateLeague() {
           data={[{ key: "form" }]}
           renderItem={() => null}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 64 }}
           ListHeaderComponent={
             <View>
               {/* Name */}
@@ -200,17 +200,28 @@ export default function CreateLeague() {
               <Pressable
                 onPress={handleCreate}
                 disabled={createMutation.isPending || !name.trim()}
-                className="mt-4 mb-8 items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
-                style={
-                  createMutation.isPending || !name.trim()
-                    ? { opacity: 0.5 }
-                    : undefined
-                }
+                style={{
+                  alignItems: "center",
+                  borderRadius: 12,
+                  backgroundColor: "#50C878",
+                  paddingVertical: 16,
+                  marginTop: 16,
+                  opacity:
+                    createMutation.isPending || !name.trim()
+                      ? 0.5
+                      : 1,
+                }}
               >
                 {createMutation.isPending ? (
                   <ActivityIndicator color="#0A1A1A" />
                 ) : (
-                  <Text className="text-lg font-bold text-[#0A1A1A]">
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: "#0A1A1A",
+                    }}
+                  >
                     Create League
                   </Text>
                 )}

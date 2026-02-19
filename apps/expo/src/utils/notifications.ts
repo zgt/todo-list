@@ -51,8 +51,13 @@ export async function requestPermissions(): Promise<boolean> {
 }
 
 export async function getPermissionStatus(): Promise<string> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return status;
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status;
+  } catch (e) {
+    console.error("[Notifications] Failed to get permission status:", e);
+    return "undetermined";
+  }
 }
 
 // ─── Push Token ──────────────────────────────────────────────────────
