@@ -460,7 +460,7 @@ export function TaskCard(props: {
       <div
         className={cn(
           "z-10 transition-transform duration-300 ease-in-out",
-          !isEditing && "group-hover:-translate-x-32",
+          isEditing ? "-translate-x-32" : "group-hover:-translate-x-32",
         )}
       >
         {isEditing ? (
