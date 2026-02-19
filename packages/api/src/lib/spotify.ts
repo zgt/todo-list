@@ -214,8 +214,10 @@ export async function createPlaylist(
   }
 
   const me = (await meRes.json()) as { id: string };
+  console.log("Spotify user ID:", me.id);
 
   // Create playlist
+  console.log("Creating playlist for user:", me.id, "name:", name);
   const createRes = await fetch(
     `${API_BASE}/users/${me.id}/playlists`,
     {
