@@ -237,7 +237,7 @@ export async function createPlaylist(
   for (let i = 0; i < uris.length; i += 100) {
     const batch = uris.slice(i, i + 100);
     const addRes = await fetch(
-      `${API_BASE}/playlists/${playlist.id}/tracks`,
+      `${API_BASE}/playlists/${playlist.id}/items`,
       {
         method: "POST",
         headers: {
