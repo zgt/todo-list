@@ -143,65 +143,58 @@ export default function SettingsScreen() {
 
   return (
     <GradientBackground rippleTrigger={rippleTrigger}>
-      <SafeAreaView className="flex-1" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
           <Pressable
             onPress={() => router.back()}
-            className="rounded-full bg-[#164B49] p-2"
+            style={{ borderRadius: 999, backgroundColor: '#164B49', padding: 8 }}
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
-          <Text className="text-xl font-bold text-[#DCE4E4]">Settings</Text>
-          <View className="w-10" />
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#DCE4E4' }}>Settings</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#50C878"
-            />
-          }
-        >
+        <View style={{ flex: 1, padding: 16 }}>
           {/* Notification Section Header */}
-          <View className="mb-4 flex-row items-center gap-3">
+          <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             {allEnabled ? (
               <Bell size={22} color="#50C878" />
             ) : (
               <BellOff size={22} color="#8FA8A8" />
             )}
             <View>
-              <Text className="text-lg font-bold text-[#DCE4E4]">
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#DCE4E4' }}>
                 Notifications
               </Text>
-              <Text className="text-sm text-[#8FA8A8]">
+              <Text style={{ fontSize: 14, color: '#8FA8A8' }}>
                 Choose which notifications you receive
               </Text>
             </View>
           </View>
 
           {/* Notification Toggles */}
-          <View className="rounded-xl border border-[#164B49] bg-[#102A2A]">
+          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#164B49', backgroundColor: '#102A2A' }}>
             {NOTIFICATION_PREFS.map((pref, index) => (
               <View
                 key={pref.key}
-                className={`flex-row items-center justify-between p-4 ${
-                  index < NOTIFICATION_PREFS.length - 1
-                    ? "border-b border-[#164B49]"
-                    : ""
-                }`}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 16,
+                  borderBottomWidth: index < NOTIFICATION_PREFS.length - 1 ? 1 : 0,
+                  borderBottomColor: '#164B49',
+                }}
               >
-                <View className="flex-1 pr-4">
-                  <Text className="text-base font-medium text-[#DCE4E4]">
+                <View style={{ flex: 1, paddingRight: 16 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
                     {pref.label}
                   </Text>
-                  <Text className="mt-0.5 text-xs text-[#8FA8A8]">
+                  <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
                     {pref.description}
                   </Text>
                 </View>
@@ -219,22 +212,24 @@ export default function SettingsScreen() {
           <Pressable
             onPress={handleSave}
             disabled={!hasChanges || saveMutation.isPending}
-            className="mt-6 items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
-            style={
-              !hasChanges || saveMutation.isPending
-                ? { opacity: 0.5 }
-                : undefined
-            }
+            style={{
+              marginTop: 24,
+              alignItems: 'center',
+              borderRadius: 12,
+              backgroundColor: '#50C878',
+              paddingVertical: 16,
+              opacity: !hasChanges || saveMutation.isPending ? 0.5 : 1,
+            }}
           >
             {saveMutation.isPending ? (
               <ActivityIndicator color="#0A1A1A" size="small" />
             ) : (
-              <Text className="text-base font-bold text-[#0A1A1A]">
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#0A1A1A' }}>
                 {hasChanges ? "Save Changes" : "No Changes"}
               </Text>
             )}
           </Pressable>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </GradientBackground>
   );

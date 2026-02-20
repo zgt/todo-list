@@ -97,39 +97,36 @@ export default function SettingsScreen() {
 
   return (
     <GradientBackground>
-      <SafeAreaView className="flex-1" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
           <Pressable
             onPress={() => router.back()}
-            className="rounded-full bg-[#164B49] p-2"
+            style={{ borderRadius: 999, backgroundColor: '#164B49', padding: 8 }}
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
-          <Text className="text-xl font-bold text-[#DCE4E4]">
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#DCE4E4' }}>
             Notification Settings
           </Text>
-          <View className="w-10" />
+          <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        >
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
           {/* Permission Status */}
           {permissionStatus !== "granted" && (
             <Pressable
               onPress={handleRequestPermission}
-              className="mb-4 flex-row items-center gap-3 rounded-xl border border-[#E5A04D] bg-[#2A2010] p-4"
+              style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E5A04D', backgroundColor: '#2A2010', padding: 16 }}
             >
               <BellOff size={20} color="#E5A04D" />
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-[#E5A04D]">
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '500', color: '#E5A04D' }}>
                   Notifications are disabled
                 </Text>
-                <Text className="mt-0.5 text-xs text-[#8FA8A8]">
+                <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
                   Tap to enable notifications for this device
                 </Text>
               </View>
@@ -137,30 +134,30 @@ export default function SettingsScreen() {
           )}
 
           {/* Task Reminders Section */}
-          <View className="mb-4 flex-row items-center gap-3">
+          <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             {remindersEnabled ? (
               <Bell size={22} color="#50C878" />
             ) : (
               <BellOff size={22} color="#8FA8A8" />
             )}
             <View>
-              <Text className="text-lg font-bold text-[#DCE4E4]">
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#DCE4E4' }}>
                 Task Reminders
               </Text>
-              <Text className="text-sm text-[#8FA8A8]">
+              <Text style={{ fontSize: 14, color: '#8FA8A8' }}>
                 Get notified before tasks are due
               </Text>
             </View>
           </View>
 
-          <View className="rounded-xl border border-[#164B49] bg-[#102A2A]">
+          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#164B49', backgroundColor: '#102A2A' }}>
             {/* Enable/Disable Toggle */}
-            <View className="flex-row items-center justify-between border-b border-[#164B49] p-4">
-              <View className="flex-1 pr-4">
-                <Text className="text-base font-medium text-[#DCE4E4]">
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#164B49', padding: 16 }}>
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
                   Due Date Reminders
                 </Text>
-                <Text className="mt-0.5 text-xs text-[#8FA8A8]">
+                <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
                   Notify me when tasks are approaching their due date
                 </Text>
               </View>
@@ -174,30 +171,31 @@ export default function SettingsScreen() {
 
             {/* Reminder Offset Selection */}
             {remindersEnabled && (
-              <View className="p-4">
-                <View className="mb-3 flex-row items-center gap-2">
+              <View style={{ padding: 16 }}>
+                <View style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Clock size={16} color="#8FA8A8" />
-                  <Text className="text-sm font-medium text-[#8FA8A8]">
+                  <Text style={{ fontSize: 14, fontWeight: '500', color: '#8FA8A8' }}>
                     Remind me
                   </Text>
                 </View>
-                <View className="gap-1">
+                <View style={{ gap: 4 }}>
                   {REMINDER_OFFSET_OPTIONS.map((option) => (
                     <Pressable
                       key={option.value}
                       onPress={() => handleSelectOffset(option.value)}
-                      className={`rounded-lg px-4 py-3 ${
-                        offsetMinutes === option.value
-                          ? "bg-[#50C878]/20"
-                          : "active:bg-[#183F3F]"
-                      }`}
+                      style={{
+                        borderRadius: 8,
+                        paddingHorizontal: 16,
+                        paddingVertical: 12,
+                        backgroundColor: offsetMinutes === option.value ? 'rgba(80, 200, 120, 0.2)' : 'transparent',
+                      }}
                     >
                       <Text
-                        className={`text-sm ${
-                          offsetMinutes === option.value
-                            ? "font-semibold text-[#50C878]"
-                            : "text-[#DCE4E4]"
-                        }`}
+                        style={{
+                          fontSize: 14,
+                          fontWeight: offsetMinutes === option.value ? '600' : '400',
+                          color: offsetMinutes === option.value ? '#50C878' : '#DCE4E4',
+                        }}
                       >
                         {option.label}
                       </Text>
@@ -209,7 +207,7 @@ export default function SettingsScreen() {
           </View>
 
           {/* Info */}
-          <Text className="mt-4 text-center text-xs text-[#8FA8A8]">
+          <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 12, color: '#8FA8A8' }}>
             Music League notification preferences can be found in{"\n"}
             Music Leagues → Settings
           </Text>
@@ -352,38 +350,47 @@ function TestNotificationsSection() {
   ];
 
   return (
-    <View className="mt-8">
-      <View className="mb-4 flex-row items-center gap-3">
+    <View style={{ marginTop: 32 }}>
+      <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <FlaskConical size={22} color="#E5A04D" />
         <View>
-          <Text className="text-lg font-bold text-[#DCE4E4]">
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#DCE4E4' }}>
             Test Notifications
           </Text>
-          <Text className="text-sm text-[#8FA8A8]">
+          <Text style={{ fontSize: 14, color: '#8FA8A8' }}>
             Tap to test each notification type
           </Text>
         </View>
       </View>
 
-      <View className="gap-2">
+      <View style={{ gap: 8 }}>
         {buttons.map((btn) => (
           <Pressable
             key={btn.label}
             onPress={btn.onPress}
             disabled={btn.loading}
-            className="flex-row items-center gap-3 rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#183F3F]"
-            style={btn.loading ? { opacity: 0.5 } : undefined}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: '#164B49',
+              backgroundColor: '#102A2A',
+              padding: 16,
+              opacity: btn.loading ? 0.5 : 1,
+            }}
           >
             {btn.loading ? (
               <ActivityIndicator size="small" color="#DCE4E4" />
             ) : (
               btn.icon
             )}
-            <View className="flex-1">
-              <Text className="text-sm font-medium text-[#DCE4E4]">
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: '#DCE4E4' }}>
                 {btn.label}
               </Text>
-              <Text className="mt-0.5 text-xs text-[#8FA8A8]">
+              <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
                 {btn.description}
               </Text>
             </View>
