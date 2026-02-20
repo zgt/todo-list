@@ -53,10 +53,8 @@ export default function JoinLeague() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView className="flex-1 items-center justify-center">
+        <SafeAreaView style={{ flex: 1 }}>
           <Stack.Screen options={{ headerShown: false }} />
-          <ActivityIndicator size="large" color="#50C878" />
-          <Text className="mt-4 text-[#8FA8A8]">Looking up league...</Text>
         </SafeAreaView>
       </GradientBackground>
     );

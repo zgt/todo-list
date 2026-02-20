@@ -286,11 +286,9 @@ export default function LeagueDetails() {
 
   if (isLoading || !league) {
     return (
-      <GradientBackground>
-        <SafeAreaView style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <GradientBackground rippleTrigger={rippleTrigger}>
+        <SafeAreaView style={{ flex: 1 }}>
           <Stack.Screen options={{ headerShown: false }} />
-          <ActivityIndicator size="large" color="#50C878" />
-          <Text style={{ marginTop: 12, color: '#8FA8A8' }}>Loading league details...</Text>
         </SafeAreaView>
       </GradientBackground>
     );

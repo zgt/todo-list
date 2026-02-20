@@ -123,10 +123,8 @@ export default function RoundDetails() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView className="flex-1 items-center justify-center">
+        <SafeAreaView style={{ flex: 1 }}>
           <Stack.Screen options={{ headerShown: false }} />
-          <ActivityIndicator size="large" color="#50C878" />
-          <Text className="mt-3 text-[#8FA8A8]">Loading round...</Text>
         </SafeAreaView>
       </GradientBackground>
     );

@@ -161,10 +161,7 @@ export default function MusicLeagueDashboard() {
 
         {/* Content */}
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color="#50C878" />
-            <Text className="mt-3 text-[#8FA8A8]">Loading leagues...</Text>
-          </View>
+          <View style={{ flex: 1 }} />
         ) : !leagues || leagues.length === 0 ? (
           <View className="flex-1 items-center justify-center px-8">
             <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#164B49]">
