@@ -192,7 +192,7 @@ export default function MusicLeagueDashboard() {
             data={leagues}
             keyExtractor={(item) => item.id}
             renderItem={renderLeagueCard}
-            contentContainerStyle={{ paddingTop: 4, paddingBottom: 100 }}
+            contentContainerStyle={{ paddingTop: 4, paddingBottom: 100, flexGrow: 1 }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
