@@ -160,55 +160,48 @@ export default function MusicLeagueDashboard() {
         </View>
 
         {/* Content */}
-        <View className="flex-1">
-          {isLoading ? (
-            <View className="flex-1 items-center justify-center">
-              <ActivityIndicator size="large" color="#50C878" />
-              <Text className="mt-3 text-[#8FA8A8]">Loading leagues...</Text>
+        {isLoading ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#50C878" />
+            <Text className="mt-3 text-[#8FA8A8]">Loading leagues...</Text>
+          </View>
+        ) : !leagues || leagues.length === 0 ? (
+          <View className="flex-1 items-center justify-center px-8">
+            <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#164B49]">
+              <Music size={36} color="#50C878" />
             </View>
-          ) : !leagues || leagues.length === 0 ? (
-            <View className="flex-1 items-center justify-center px-8">
-              <View className="mb-4 h-20 w-20 items-center justify-center rounded-full bg-[#164B49]">
-                <Music size={36} color="#50C878" />
-              </View>
-              <Text className="mb-2 text-center text-xl font-bold text-[#DCE4E4]">
-                No leagues yet
+            <Text className="mb-2 text-center text-xl font-bold text-[#DCE4E4]">
+              No leagues yet
+            </Text>
+            <Text className="mb-6 text-center text-sm leading-5 text-[#8FA8A8]">
+              Create a new league to play with friends, or enter an invite
+              code above to join one.
+            </Text>
+            <Pressable
+              onPress={() => router.push("/music/league/create" as never)}
+              className="flex-row items-center gap-2 rounded-xl bg-[#50C878] px-6 py-3 active:bg-[#66D99A]"
+            >
+              <Plus size={20} color="#0A1A1A" strokeWidth={3} />
+              <Text className="text-base font-bold text-[#0A1A1A]">
+                Create Your First League
               </Text>
-              <Text className="mb-6 text-center text-sm leading-5 text-[#8FA8A8]">
-                Create a new league to play with friends, or enter an invite
-                code above to join one.
-              </Text>
-              <Pressable
-                onPress={() => router.push("/music/league/create" as never)}
-                className="flex-row items-center gap-2 rounded-xl bg-[#50C878] px-6 py-3 active:bg-[#66D99A]"
-              >
-                <Plus size={20} color="#0A1A1A" strokeWidth={3} />
-                <Text className="text-base font-bold text-[#0A1A1A]">
-                  Create Your First League
-                </Text>
-              </Pressable>
-            </View>
-          ) : (
-            <FlatList
-              data={leagues}
-              keyExtractor={(item) => item.id}
-              renderItem={renderLeagueCard}
-              contentContainerStyle={{
-                paddingTop: 8,
-                paddingBottom: 32,
-                flexGrow: 1,
-              }}
-              style={{ flex: 1 }}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor="#50C878"
-                />
-              }
-            />
-          )}
-        </View>
+            </Pressable>
+          </View>
+        ) : (
+          <FlatList
+            data={leagues}
+            keyExtractor={(item) => item.id}
+            renderItem={renderLeagueCard}
+            contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#50C878"
+              />
+            }
+          />
+        )}
       </SafeAreaView>
     </GradientBackground>
   );

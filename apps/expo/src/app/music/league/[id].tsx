@@ -188,49 +188,93 @@ export default function LeagueDetails() {
   const renderRoundCard = useCallback(
     ({ item }: { item: RoundItem }) => {
       const isPending = item.status === "PENDING";
+      
+      // Color-coded status badges
+      const getStatusColors = (status: string) => {
+        switch (status) {
+          case "PENDING":
+            return { bg: "rgba(107, 114, 128, 0.15)", text: "#6B7280" };
+          case "SUBMISSION":
+            return { bg: "rgba(80, 200, 120, 0.2)", text: "#50C878" }; // teal/green
+          case "VOTING":
+            return { bg: "rgba(234, 179, 8, 0.2)", text: "#EAB308" }; // amber
+          case "RESULTS":
+            return { bg: "rgba(100, 149, 237, 0.2)", text: "#6495ED" }; // blue
+          default:
+            return { bg: "rgba(138, 138, 138, 0.15)", text: "#8FA8A8" }; // gray
+        }
+      };
+
+      const statusColors = getStatusColors(item.status);
 
       return (
         <Pressable
           onPress={() => router.push(`/music/round/${item.id}` as never)}
-          className="rounded-lg border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
-          style={isPending ? { opacity: 0.5 } : undefined}
+          style={[
+            {
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: isPending ? "#1A3A3A" : "#164B49",
+              backgroundColor: "#102A2A",
+              padding: 16,
+              marginBottom: 8,
+            },
+            isPending ? { opacity: 0.6 } : undefined,
+          ]}
         >
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
               <Text
-                className="mb-1 text-xs font-bold uppercase"
-                style={{ color: isPending ? "#6B7280" : "#50C878" }}
+                style={{
+                  fontSize: 11,
+                  fontWeight: "700",
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  marginBottom: 6,
+                  color: isPending ? "#6B7280" : "#50C878",
+                }}
               >
                 Round {item.roundNumber}
               </Text>
               <Text
-                className="text-lg font-semibold"
-                style={{ color: isPending ? "#6B7280" : "#DCE4E4" }}
+                style={{
+                  fontSize: 18,
+                  fontWeight: "600",
+                  marginBottom: 4,
+                  color: isPending ? "#6B7280" : "#DCE4E4",
+                }}
               >
                 {item.themeName}
               </Text>
               {item.themeDescription && (
                 <Text
-                  className="text-sm"
-                  style={{ color: isPending ? "#4B5563" : "#8FA8A8" }}
+                  style={{
+                    fontSize: 14,
+                    lineHeight: 20,
+                    color: isPending ? "#4B5563" : "#8FA8A8",
+                  }}
+                  numberOfLines={2}
                 >
                   {item.themeDescription}
                 </Text>
               )}
             </View>
             <View
-              className="ml-2 rounded-md px-2 py-1"
               style={{
-                backgroundColor: isPending
-                  ? "rgba(107, 114, 128, 0.15)"
-                  : "#0A1A1A",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 8,
+                backgroundColor: statusColors.bg,
               }}
             >
               <Text
-                className="text-xs font-medium"
-                style={{ color: isPending ? "#6B7280" : "#DCE4E4" }}
+                style={{
+                  fontSize: 12,
+                  fontWeight: "600",
+                  color: statusColors.text,
+                }}
               >
-                {isPending ? "Pending" : item.status}
+                {item.status}
               </Text>
             </View>
           </View>
@@ -287,7 +331,7 @@ export default function LeagueDetails() {
           data={league.rounds as RoundItem[]}
           keyExtractor={(item) => item.id}
           renderItem={renderRoundCard}
-          contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

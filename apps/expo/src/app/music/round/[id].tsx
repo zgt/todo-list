@@ -123,14 +123,10 @@ export default function RoundDetails() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
+        <SafeAreaView className="flex-1 items-center justify-center">
           <Stack.Screen options={{ headerShown: false }} />
           <ActivityIndicator size="large" color="#50C878" />
-          <Text style={{ marginTop: 12, fontSize: 14, color: "#8FA8A8" }}>
-            Loading round...
-          </Text>
+          <Text className="mt-3 text-[#8FA8A8]">Loading round...</Text>
         </SafeAreaView>
       </GradientBackground>
     );
@@ -140,25 +136,16 @@ export default function RoundDetails() {
   if (error || !round) {
     return (
       <GradientBackground>
-        <SafeAreaView
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
+        <SafeAreaView className="flex-1 items-center justify-center">
           <Stack.Screen options={{ headerShown: false }} />
-          <Text style={{ marginBottom: 16, fontSize: 18, color: "#8FA8A8" }}>
+          <Text className="mb-4 text-lg text-[#8FA8A8]">
             Round not found
           </Text>
           <Pressable
             onPress={() => router.back()}
-            style={{
-              paddingHorizontal: 24,
-              paddingVertical: 12,
-              backgroundColor: "#102A2A",
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: "#164B49",
-            }}
+            className="rounded-lg border border-[#164B49] bg-[#102A2A] px-6 py-3"
           >
-            <Text style={{ fontWeight: "500", color: "#50C878" }}>Go Back</Text>
+            <Text className="font-medium text-[#50C878]">Go Back</Text>
           </Pressable>
         </SafeAreaView>
       </GradientBackground>

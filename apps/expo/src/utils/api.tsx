@@ -31,12 +31,13 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
       transformer: superjson,
       url: `${getBaseUrl()}/api/trpc`,
       headers() {
-        const headers = new Map<string, string>();
-        headers.set("x-trpc-source", "expo-vanilla");
+        const headers: Record<string, string> = {
+          "x-trpc-source": "expo-vanilla",
+        };
 
         const cookies = authClient.getCookie();
         if (cookies) {
-          headers.set("Cookie", cookies);
+          headers["Cookie"] = cookies;
         }
         return headers;
       },
@@ -60,12 +61,13 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         transformer: superjson,
         url: `${getBaseUrl()}/api/trpc`,
         headers() {
-          const headers = new Map<string, string>();
-          headers.set("x-trpc-source", "expo-react");
+          const headers: Record<string, string> = {
+            "x-trpc-source": "expo-react",
+          };
 
           const cookies = authClient.getCookie();
           if (cookies) {
-            headers.set("Cookie", cookies);
+            headers["Cookie"] = cookies;
           }
           return headers;
         },
