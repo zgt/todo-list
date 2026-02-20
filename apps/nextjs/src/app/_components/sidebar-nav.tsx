@@ -34,6 +34,11 @@ const navigation = [
     href: "/music",
     icon: Music,
   },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: Settings,
+  },
 ];
 
 export function AppSidebar({

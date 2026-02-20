@@ -1,30 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "@tanstack/react-form";
 import {
   useMutation,
   useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Calendar, Check, Pencil, Trash2, X } from "lucide-react";
+import { Bell, Calendar, Check, Pencil, Trash2, X } from "lucide-react";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@acme/api";
 import type { TaskPriority } from "@acme/db/schema";
-import { CreateTaskSchema } from "@acme/db/schema";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { Checkbox } from "@acme/ui/checkbox";
 import { DatePicker } from "@acme/ui/date-picker";
-import {
-  Field,
-  FieldContent,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@acme/ui/field";
 import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { toast } from "@acme/ui/toast";
@@ -33,6 +24,7 @@ import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreePicker } from "./category-tree-picker";
+import { useCreateTask } from "./create-task-context";
 import { PriorityBadge, PrioritySelectorPill } from "./priority";
 import { usePriorityFilter } from "./priority-filter-context";
 
@@ -42,15 +34,132 @@ const EditTaskSchema = z.object({
   description: z.string().max(5000).optional(),
 });
 
-export function CreateTaskForm() {
+// --- Helper functions for reminder display and datetime-local conversion ---
+
+function formatReminder(reminderAt: Date): string {
+  const now = new Date();
+  const diff = reminderAt.getTime() - now.getTime();
+  if (diff < 0) return "Overdue";
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  if (minutes < 60) return `in ${minutes}m`;
+  if (hours < 24) return `in ${hours}h`;
+  if (days < 7) return `in ${days}d`;
+  return (
+    reminderAt.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }) +
+    " at " +
+    reminderAt.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+  );
+}
+
+function toDatetimeLocal(date: Date | undefined): string {
+  if (!date) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function fromDatetimeLocal(value: string): Date | undefined {
+  if (!value) return undefined;
+  return new Date(value);
+}
+
+// --- Reminder pill used in both InlineCreateTask and TaskCard edit mode ---
+
+function ReminderPill({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: Date | undefined;
+  onChange: (date: Date | undefined) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+            "transition-all hover:border-[#21716C]",
+            "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+            value
+              ? "border-amber-500/50 bg-amber-500/10 text-amber-400"
+              : "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4] hover:bg-[#102A2A]",
+          )}
+          disabled={disabled}
+        >
+          <Bell className="h-3.5 w-3.5" />
+          {value ? formatReminder(value) : "Reminder"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="end">
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-medium text-[#DCE4E4]">
+            Set reminder
+          </label>
+          <input
+            type="datetime-local"
+            value={toDatetimeLocal(value)}
+            onChange={(e) => onChange(fromDatetimeLocal(e.target.value))}
+            className="rounded-md border border-[#164B49] bg-[#102A2A] px-3 py-2 text-sm text-[#DCE4E4] focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
+          />
+          {value && (
+            <button
+              onClick={() => onChange(undefined)}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
+                "transition-all",
+              )}
+            >
+              <X className="h-3 w-3" />
+              Clear reminder
+            </button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// --- Inline create task row ---
+
+function InlineCreateTask() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const { setIsCreating } = useCreateTask();
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [priority, setPriority] = useState<TaskPriority>("medium");
+  const [reminderAt, setReminderAt] = useState<Date | undefined>();
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { data: categories } = useQuery({
+    ...trpc.category.all.queryOptions(),
+    enabled: !!session?.user,
+  });
 
   const createTask = useMutation(
     trpc.task.create.mutationOptions({
       onSuccess: async () => {
-        form.reset();
         await queryClient.invalidateQueries(trpc.task.pathFilter());
+        setIsCreating(false);
         toast.success("Task created!");
       },
       onError: (err) => {
@@ -63,84 +172,217 @@ export function CreateTaskForm() {
     }),
   );
 
-  const form = useForm({
-    defaultValues: {
-      title: "",
-      description: "",
-    },
-    validators: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-      onSubmit: CreateTaskSchema as any,
-    },
-    onSubmit: (data) => createTask.mutate(data.value),
-  });
+  const handleSave = () => {
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    createTask.mutate({
+      title: title.trim(),
+      description: description || undefined,
+      dueDate,
+      categoryId,
+      priority,
+      reminderAt,
+    });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setIsCreating(false);
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    }
+  };
+
+  useEffect(() => {
+    titleInputRef.current?.focus();
+  }, []);
+
+  // Close on click outside (but not on portal-rendered popovers)
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest("[data-radix-popper-content-wrapper]") ||
+        target.closest("[role='dialog']")
+      ) {
+        return;
+      }
+      if (containerRef.current && !containerRef.current.contains(target)) {
+        setIsCreating(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setIsCreating]);
 
   return (
-    <form
-      className="w-full max-w-2xl"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void form.handleSubmit();
-      }}
+    <div
+      ref={containerRef}
+      className={cn(
+        "group relative flex flex-row items-center gap-4 overflow-hidden rounded-2xl p-6 transition-all duration-300",
+        "glass-card border-primary/50 shadow-glow bg-primary/5",
+      )}
     >
-      <FieldGroup>
-        <form.Field
-          name="title"
-          children={(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldContent>
-                  <FieldLabel htmlFor={field.name}>Task</FieldLabel>
-                </FieldContent>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="What needs to be done?"
-                />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
+      {/* Spacer for checkbox alignment */}
+      <div className="size-6 shrink-0" />
+
+      <div className="grow space-y-2">
+        <div className="flex max-w-2xl gap-3">
+          <div className="w-64">
+            <Input
+              ref={titleInputRef}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Task title"
+              className={cn(
+                "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
+                "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
+                "rounded-md px-3 py-1.5 text-lg font-medium",
+              )}
+              aria-label="New task title"
+              disabled={createTask.isPending}
+            />
+          </div>
+          <div className="w-80">
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Description (optional)"
+              className={cn(
+                "border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
+                "rounded-md px-3 py-1.5 text-sm",
+              )}
+              aria-label="New task description"
+              disabled={createTask.isPending}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Priority */}
+      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
+        <PrioritySelectorPill
+          value={priority}
+          onChange={setPriority}
+          disabled={createTask.isPending}
         />
-        <form.Field
-          name="description"
-          children={(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldContent>
-                  <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                </FieldContent>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="Additional details (optional)"
-                />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
-              </Field>
-            );
-          }}
+      </div>
+
+      {/* Due Date */}
+      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
+                "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
+                "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+              )}
+              disabled={createTask.isPending}
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              {dueDate
+                ? new Date(dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Due date"}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <div className="flex flex-col">
+              <DatePicker date={dueDate} onDateChange={setDueDate} />
+              {dueDate && (
+                <div className="border-t border-[#164B49] p-2">
+                  <button
+                    onClick={() => setDueDate(undefined)}
+                    className={cn(
+                      "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                      "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
+                      "transition-all",
+                    )}
+                  >
+                    <X className="h-3 w-3" />
+                    Clear date
+                  </button>
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Category */}
+      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
+        <CategoryTreePicker
+          categories={categories ?? []}
+          value={categoryId}
+          onChange={setCategoryId}
+          disabled={createTask.isPending}
         />
-      </FieldGroup>
-      <Button type="submit" disabled={createTask.isPending}>
-        {createTask.isPending ? "Creating..." : "Add Task"}
-      </Button>
-    </form>
+      </div>
+
+      {/* Reminder */}
+      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
+        <ReminderPill
+          value={reminderAt}
+          onChange={setReminderAt}
+          disabled={createTask.isPending}
+        />
+      </div>
+
+      {/* Save/Cancel buttons */}
+      <div className="animate-in slide-in-from-right-5 absolute inset-y-0 right-0 flex duration-300">
+        <Button
+          type="button"
+          size="icon"
+          onClick={handleSave}
+          disabled={createTask.isPending || !title.trim()}
+          className={cn(
+            "h-full w-16 rounded-none bg-green-500 text-white hover:bg-green-600 hover:text-white",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+          )}
+          aria-label="Save new task"
+        >
+          {createTask.isPending ? (
+            "..."
+          ) : (
+            <>
+              <Check className="h-5 w-5" />
+              <span className="sr-only">Save</span>
+            </>
+          )}
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          onClick={() => setIsCreating(false)}
+          disabled={createTask.isPending}
+          className="h-full w-16 rounded-none bg-gray-500 text-white hover:bg-gray-600 hover:text-white"
+          aria-label="Cancel creating task"
+        >
+          <X className="h-5 w-5" />
+          <span className="sr-only">Cancel</span>
+        </Button>
+      </div>
+    </div>
   );
 }
+
+// --- Task list ---
 
 export function TaskList() {
   const trpc = useTRPC();
   const { data: tasks } = useSuspenseQuery(trpc.task.all.queryOptions());
+  const { isCreating } = useCreateTask();
 
   // Get selected category IDs from filter context
   const { effectiveCategoryIds } = useCategoryFilter();
@@ -164,7 +406,7 @@ export function TaskList() {
     return true;
   });
 
-  if (tasks.length === 0) {
+  if (tasks.length === 0 && !isCreating) {
     return (
       <div className="relative flex w-full flex-col gap-4">
         <TaskCardSkeleton pulse={false} />
@@ -178,7 +420,7 @@ export function TaskList() {
     );
   }
 
-  if (filteredTasks.length === 0) {
+  if (filteredTasks.length === 0 && !isCreating) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <p className="text-xl font-semibold text-white">
@@ -193,12 +435,15 @@ export function TaskList() {
 
   return (
     <div className="flex w-full flex-col gap-4">
+      {isCreating && <InlineCreateTask />}
       {filteredTasks.map((task) => (
         <TaskCard key={task.id} task={task} />
       ))}
     </div>
   );
 }
+
+// --- Task card ---
 
 export function TaskCard(props: {
   task: RouterOutputs["task"]["all"][number];
@@ -219,6 +464,9 @@ export function TaskCard(props: {
   );
   const [editedPriority, setEditedPriority] = useState<TaskPriority>(
     (props.task.priority ?? "medium") as TaskPriority,
+  );
+  const [editedReminderAt, setEditedReminderAt] = useState<Date | undefined>(
+    props.task.reminderAt ?? undefined,
   );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
@@ -280,6 +528,7 @@ export function TaskCard(props: {
     setEditedDueDate(props.task.dueDate ?? undefined);
     setEditedCategoryId(props.task.categoryId ?? undefined);
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
+    setEditedReminderAt(props.task.reminderAt ?? undefined);
     setIsEditing(true);
     setTimeout(() => titleInputRef.current?.focus(), 0);
   };
@@ -305,6 +554,7 @@ export function TaskCard(props: {
         dueDate: editedDueDate ?? null,
         categoryId: editedCategoryId ?? null,
         priority: editedPriority,
+        reminderAt: editedReminderAt ?? null,
       });
       setIsEditing(false);
       toast.success("Task updated!");
@@ -319,6 +569,7 @@ export function TaskCard(props: {
     setEditedDueDate(props.task.dueDate ?? undefined);
     setEditedCategoryId(props.task.categoryId ?? undefined);
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
+    setEditedReminderAt(props.task.reminderAt ?? undefined);
     setIsEditing(false);
   };
 
@@ -344,7 +595,8 @@ export function TaskCard(props: {
     editedDescription !== (props.task.description ?? "") ||
     editedDueDate?.getTime() !== props.task.dueDate?.getTime() ||
     editedCategoryId !== props.task.categoryId ||
-    editedPriority !== (props.task.priority ?? "medium");
+    editedPriority !== (props.task.priority ?? "medium") ||
+    editedReminderAt?.getTime() !== props.task.reminderAt?.getTime();
 
   return (
     <div
@@ -565,6 +817,29 @@ export function TaskCard(props: {
               }}
             >
               {editedCategory.name}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Reminder */}
+      {isEditing || props.task.reminderAt ? (
+        <div
+          className={cn(
+            "z-10 transition-transform duration-300 ease-in-out",
+            isEditing ? "-translate-x-32" : "group-hover:-translate-x-32",
+          )}
+        >
+          {isEditing ? (
+            <ReminderPill
+              value={editedReminderAt}
+              onChange={setEditedReminderAt}
+              disabled={updateTask.isPending}
+            />
+          ) : props.task.reminderAt ? (
+            <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-400 backdrop-blur-md">
+              <Bell className="h-3.5 w-3.5" />
+              {formatReminder(props.task.reminderAt)}
             </div>
           ) : null}
         </div>

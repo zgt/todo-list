@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PlusIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Search } from "lucide-react";
 
@@ -11,13 +12,14 @@ import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
-import { NewTaskModal } from "./new-task-modal";
+import { useCreateTask } from "./create-task-context";
 import { PriorityFilter } from "./priority-filter";
 
 export function TaskHeader() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { setIsCreating } = useCreateTask();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -74,7 +76,14 @@ export function TaskHeader() {
         </Button>
 
         {/* New Task button */}
-        <NewTaskModal />
+        <Button
+          size="lg"
+          className="bg-primary shadow-glow hover:shadow-glowHover gap-2 rounded-full px-4 lg:px-6"
+          onClick={() => setIsCreating(true)}
+        >
+          <span className="hidden font-semibold lg:inline">New Task</span>
+          <PlusIcon className="h-5 w-5" />
+        </Button>
       </div>
     </header>
   );
