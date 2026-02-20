@@ -131,6 +131,14 @@ export const Task = pgTable(
       withTimezone: true,
       mode: "date",
     }),
+    reminderAt: t.timestamp("reminder_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    reminderSentAt: t.timestamp("reminder_sent_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
     priority: t.varchar({ length: 10 }).default("medium"),
     orderIndex: t.integer("order_index"),
     version: t.integer().notNull().default(1),
@@ -158,6 +166,7 @@ export const Task = pgTable(
       table.priority,
       table.completed,
     ),
+    index("task_reminder_at_idx").on(table.reminderAt),
     check(
       "task_priority_valid",
       sql`${table.priority} IS NULL OR ${table.priority} IN ('high', 'medium', 'low')`,
@@ -438,6 +447,39 @@ export const pushTokenRelations = relations(PushToken, ({ one }) => ({
   }),
 }));
 
+export const UserPreference = pgTable("user_preference", (t) => ({
+  id: t.uuid().notNull().primaryKey().defaultRandom(),
+  userId: t
+    .text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" })
+    .unique(),
+  emailReminders: t.boolean("email_reminders").notNull().default(false),
+  pushReminders: t.boolean("push_reminders").notNull().default(true),
+  reminderOffsetMinutes: t
+    .integer("reminder_offset_minutes")
+    .notNull()
+    .default(15),
+  createdAt: t
+    .timestamp("created_at", { withTimezone: true, mode: "date" })
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: t
+    .timestamp("updated_at", { withTimezone: true, mode: "date" })
+    .$defaultFn(() => new Date())
+    .$onUpdate(() => new Date()),
+}));
+
+export const userPreferenceRelations = relations(
+  UserPreference,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [UserPreference.userId],
+      references: [user.id],
+    }),
+  }),
+);
+
 export const ThemeTemplate = pgTable("theme_template", (t) => ({
   id: t
     .text()
@@ -456,6 +498,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   categoryId: z.string().uuid().optional(),
   dueDate: z.date().optional(),
   priority: TaskPriority.optional().default("medium"),
+  reminderAt: z.date().optional(),
 }).omit({
   id: true,
   userId: true,
@@ -463,6 +506,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   updatedAt: true,
   completedAt: true,
   archivedAt: true,
+  reminderSentAt: true,
   orderIndex: true,
   version: true,
   deletedAt: true,
@@ -481,6 +525,7 @@ export const UpdateTaskSchema = z.object({
   createdAt: z.date().optional(),
   completedAt: z.date().nullable().optional(),
   archivedAt: z.date().nullable().optional(),
+  reminderAt: z.date().nullable().optional(),
   deletedAt: z.date().nullable().optional(),
 });
 
