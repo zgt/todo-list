@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Layers, List } from "lucide-react-native";
 
@@ -83,6 +83,8 @@ function ViewToggleButton({
 
 export default function Index() {
   const { data: session, isPending } = authClient.useSession();
+  const { openTask } = useLocalSearchParams<{ openTask?: string }>();
+  const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [viewMode, setViewMode] = useState<"stack" | "list">("stack");
   const [rippleTrigger, setRippleTrigger] = useState(0);
@@ -128,22 +130,49 @@ export default function Index() {
     if (isFetching) triggerRipple();
   }, [isFetching, triggerRipple]);
 
-  // Reschedule all reminders on mount when tasks are available
-  const hasRescheduled = useRef(false);
+  // Fetch server notification prefs for local scheduling
+  const { data: notifPrefs } = useQuery(
+    trpc.notification.getUserPreferences.queryOptions(undefined, {
+      enabled: !!session,
+      staleTime: 5 * 60 * 1000, // cache for 5 minutes
+    }),
+  );
+
+  // Reschedule local notifications whenever serverTasks refreshes
+  // (covers app foreground, pull-to-refresh, and tasks edited on web)
+  const lastRescheduleRef = useRef<string>("");
   useEffect(() => {
-    if (serverTasks && serverTasks.length > 0 && !hasRescheduled.current) {
-      hasRescheduled.current = true;
-      void rescheduleAllReminders(
-        serverTasks.map((t) => ({
-          id: t.id,
-          title: t.title,
-          dueDate: t.reminderAt ?? t.dueDate,
-          completed: t.completed,
-          deletedAt: t.deletedAt,
-        })),
-      );
+    if (!serverTasks || serverTasks.length === 0) return;
+    if (!notifPrefs?.pushReminders) return;
+
+    // Build a fingerprint to avoid redundant reschedules
+    const fingerprint = serverTasks
+      .map((t) => `${t.id}:${t.reminderAt?.getTime() ?? 0}:${t.completed}`)
+      .join("|");
+    if (fingerprint === lastRescheduleRef.current) return;
+    lastRescheduleRef.current = fingerprint;
+
+    void rescheduleAllReminders(
+      serverTasks.map((t) => ({
+        id: t.id,
+        title: t.title,
+        dueDate: t.reminderAt ?? t.dueDate,
+        completed: t.completed,
+        deletedAt: t.deletedAt,
+      })),
+    );
+  }, [serverTasks, notifPrefs?.pushReminders]);
+
+  // Handle notification tap: open the task's edit sheet
+  useEffect(() => {
+    if (!openTask || !serverTasks) return;
+    const task = serverTasks.find((t) => t.id === openTask);
+    if (task) {
+      setEditingTask(task);
+      // Clear the param so re-renders don't re-open
+      router.setParams({ openTask: undefined });
     }
-  }, [serverTasks]);
+  }, [openTask, serverTasks, router]);
 
   const tasks = useMemo(() => {
     if (!serverTasks) return [];

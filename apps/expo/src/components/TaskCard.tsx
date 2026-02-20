@@ -60,8 +60,41 @@ const SPRING_CONFIG = {
   stiffness: 800,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- server tasks include reminderAt but LocalTask type doesn't
-type TaskWithReminder = { reminderAt?: Date | null };
+// Server tasks include reminderAt/reminderSentAt but LocalTask type doesn't
+type TaskWithReminder = { reminderAt?: Date | null; reminderSentAt?: Date | null };
+
+function getReminderDisplay(reminderAt: Date, reminderSentAt: Date | null) {
+  const now = new Date();
+  const diff = reminderAt.getTime() - now.getTime();
+  const isPast = diff < 0;
+  const isSent = !!reminderSentAt;
+  const isImminent = !isPast && diff <= 60 * 60 * 1000;
+
+  let label: string;
+  let color: string;
+
+  if (isPast && isSent) {
+    label = "Reminded";
+    color = "#8FA8A8"; // muted gray
+  } else if (isPast) {
+    label = "Overdue";
+    color = "#E5A04D"; // amber
+  } else if (isImminent) {
+    const minutes = Math.floor(diff / 60000);
+    label = minutes < 60 ? `in ${minutes}m` : "in <1h";
+    color = "#50C878"; // accent green
+  } else {
+    label = new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(reminderAt);
+    color = "#50C878";
+  }
+
+  return { label, color, isPast, isSent, isImminent };
+}
 
 export function TaskCard({
   task,
@@ -83,6 +116,8 @@ export function TaskCard({
   onChangePriority,
 }: TaskCardProps) {
   const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
+  const reminderSentAt = (task as unknown as TaskWithReminder).reminderSentAt ?? null;
+  const reminderInfo = reminderAt ? getReminderDisplay(reminderAt, reminderSentAt) : null;
   const progress = useSharedValue(isCompact ? 1 : 0);
 
   useEffect(() => {
@@ -200,22 +235,17 @@ export function TaskCard({
               >
                 {task.title}
               </RNText>
-              {reminderAt && (
-                <Bell size={12} color="#50C878" />
+              {reminderInfo && (
+                <Bell size={12} color={reminderInfo.color} />
               )}
             </View>
             {task.description ? (
               <RNText className="text-sm text-white/50" numberOfLines={1}>
                 {task.description}
               </RNText>
-            ) : reminderAt ? (
-              <RNText style={{ fontSize: 11, color: "#8FA8A8" }} numberOfLines={1}>
-                {new Intl.DateTimeFormat("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
-                }).format(reminderAt!)}
+            ) : reminderInfo ? (
+              <RNText style={{ fontSize: 11, color: reminderInfo.color }} numberOfLines={1}>
+                {reminderInfo.label}
               </RNText>
             ) : null}
           </>
@@ -419,16 +449,11 @@ export function TaskCard({
                 {task.description}
               </RNText>
             )}
-            {reminderAt && (
+            {reminderInfo && (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
-                <Bell size={14} color="#50C878" />
-                <RNText style={{ fontSize: 13, color: "#8FA8A8" }}>
-                  {new Intl.DateTimeFormat("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  }).format(reminderAt!)}
+                <Bell size={14} color={reminderInfo.color} />
+                <RNText style={{ fontSize: 13, color: reminderInfo.color }}>
+                  {reminderInfo.label}
                 </RNText>
               </View>
             )}

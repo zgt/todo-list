@@ -44,10 +44,30 @@ const EditTaskSchema = z.object({
 
 // --- Helper functions for reminder display and datetime-local conversion ---
 
-function formatReminder(reminderAt: Date): string {
+type ReminderStatus = "reminded" | "upcoming" | "imminent" | "overdue";
+
+function getReminderStatus(
+  reminderAt: Date,
+  reminderSentAt: Date | null,
+): ReminderStatus {
   const now = new Date();
   const diff = reminderAt.getTime() - now.getTime();
-  if (diff < 0) return "Overdue";
+  if (diff < 0 && reminderSentAt) return "reminded";
+  if (diff < 0) return "overdue";
+  if (diff <= 60 * 60 * 1000) return "imminent"; // within 1 hour
+  return "upcoming";
+}
+
+function formatReminder(
+  reminderAt: Date,
+  reminderSentAt?: Date | null,
+): string {
+  const status = getReminderStatus(reminderAt, reminderSentAt ?? null);
+  if (status === "reminded") return "Reminded";
+  if (status === "overdue") return "Overdue";
+
+  const now = new Date();
+  const diff = reminderAt.getTime() - now.getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -65,6 +85,24 @@ function formatReminder(reminderAt: Date): string {
       minute: "2-digit",
     })
   );
+}
+
+function getReminderBadgeClasses(
+  reminderAt: Date,
+  reminderSentAt: Date | null,
+): string {
+  const status = getReminderStatus(reminderAt, reminderSentAt);
+  switch (status) {
+    case "reminded":
+      return "border-[#164B49] bg-[#102A2A]/80 text-[#8FA8A8]";
+    case "imminent":
+      return "border-[#50C878]/50 bg-[#50C878]/10 text-[#50C878]";
+    case "overdue":
+      return "border-amber-500/30 bg-amber-500/10 text-amber-400";
+    case "upcoming":
+    default:
+      return "border-amber-500/30 bg-amber-500/10 text-amber-400";
+  }
 }
 
 function toDatetimeLocal(date: Date | undefined): string {
@@ -764,9 +802,17 @@ export function TaskCard(props: {
         {/* Reminder - collapsed row */}
         {!isExpanded && props.task.reminderAt ? (
           <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
-            <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-400 backdrop-blur-md">
+            <div
+              className={cn(
+                "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+                getReminderBadgeClasses(
+                  props.task.reminderAt,
+                  props.task.reminderSentAt,
+                ),
+              )}
+            >
               <Bell className="h-3.5 w-3.5" />
-              {formatReminder(props.task.reminderAt)}
+              {formatReminder(props.task.reminderAt, props.task.reminderSentAt)}
             </div>
           </div>
         ) : null}
@@ -931,9 +977,20 @@ export function TaskCard(props: {
                   </div>
                 )}
                 {props.task.reminderAt && (
-                  <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-400 backdrop-blur-md">
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+                      getReminderBadgeClasses(
+                        props.task.reminderAt,
+                        props.task.reminderSentAt,
+                      ),
+                    )}
+                  >
                     <Bell className="h-3.5 w-3.5" />
-                    {formatReminder(props.task.reminderAt)}
+                    {formatReminder(
+                      props.task.reminderAt,
+                      props.task.reminderSentAt,
+                    )}
                   </div>
                 )}
               </div>

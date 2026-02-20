@@ -47,8 +47,11 @@ export function useNotifications() {
           | undefined;
 
         if (data?.type === "task-reminder" && "taskId" in data) {
-          // Navigate to task list — could add a task detail route later
-          router.push("/");
+          // Navigate to task list and open the task's edit sheet
+          router.push({
+            pathname: "/",
+            params: { openTask: data.taskId },
+          });
         } else if (data?.type === "league" && data.roundId) {
           router.push(`/music/round/${data.roundId}`);
         } else if (data?.type === "league" && data.leagueId) {

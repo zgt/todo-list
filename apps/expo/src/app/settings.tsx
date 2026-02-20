@@ -11,13 +11,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import { Stack, useRouter } from "expo-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bell,
   BellOff,
   Clock,
   FlaskConical,
+  Mail,
   Send,
   Smartphone,
   Wifi,
@@ -25,12 +26,7 @@ import {
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { trpc } from "~/utils/api";
-import {
-  getTaskNotificationPrefs,
-  REMINDER_OFFSET_OPTIONS,
-  setTaskReminderOffset,
-  setTaskRemindersEnabled,
-} from "~/utils/notification-prefs";
+import { REMINDER_OFFSET_OPTIONS } from "~/utils/notification-prefs";
 import {
   cancelAllTaskReminders,
   getPermissionStatus,
@@ -40,51 +36,102 @@ import {
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [permissionStatus, setPermissionStatus] =
     useState<string>("undetermined");
-  const [remindersEnabled, setRemindersEnabled] = useState(true);
-  const [offsetMinutes, setOffsetMinutes] = useState(15);
 
-  // Load preferences
+  // Load preferences from server (source of truth)
+  const { data: serverPrefs, isLoading: prefsLoading } = useQuery(
+    trpc.notification.getUserPreferences.queryOptions(),
+  );
+
+  // Local state for optimistic UI (null = use server value)
+  const [localPush, setLocalPush] = useState<boolean | null>(null);
+  const [localEmail, setLocalEmail] = useState<boolean | null>(null);
+  const [localOffset, setLocalOffset] = useState<number | null>(null);
+
+  // Derived values: local override ?? server ?? defaults
+  const pushReminders = localPush ?? serverPrefs?.pushReminders ?? true;
+  const emailReminders = localEmail ?? serverPrefs?.emailReminders ?? false;
+  const offsetMinutes = localOffset ?? serverPrefs?.reminderOffsetMinutes ?? 15;
+
+  // Reset local overrides when server data arrives
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [prefs, status] = await Promise.all([
-          getTaskNotificationPrefs(),
-          getPermissionStatus(),
-        ]);
-        setRemindersEnabled(prefs.enabled);
-        setOffsetMinutes(prefs.offsetMinutes);
-        setPermissionStatus(status);
-      } catch (e) {
-        console.error("[Settings] Failed to load notification prefs:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    void load();
-  }, []);
-
-  const handleToggleReminders = useCallback(async (value: boolean) => {
-    setRemindersEnabled(value);
-    await setTaskRemindersEnabled(value);
-    if (!value) {
-      await cancelAllTaskReminders();
+    if (serverPrefs) {
+      setLocalPush(null);
+      setLocalEmail(null);
+      setLocalOffset(null);
     }
+  }, [serverPrefs]);
+
+  // Check notification permissions
+  useEffect(() => {
+    void getPermissionStatus().then(setPermissionStatus);
   }, []);
 
-  const handleSelectOffset = useCallback(async (minutes: number) => {
-    setOffsetMinutes(minutes);
-    await setTaskReminderOffset(minutes);
-  }, []);
+  // Mutation to update server preferences
+  const updatePrefs = useMutation(
+    trpc.notification.updateUserPreferences.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.notification.getUserPreferences.queryFilter(),
+        );
+        // Reset local overrides
+        setLocalPush(null);
+        setLocalEmail(null);
+        setLocalOffset(null);
+      },
+      onError: () => {
+        Alert.alert("Error", "Failed to save notification preferences.");
+      },
+    }),
+  );
+
+  const handleTogglePush = useCallback(
+    async (value: boolean) => {
+      setLocalPush(value);
+      updatePrefs.mutate({
+        pushReminders: value,
+        emailReminders,
+        reminderOffsetMinutes: offsetMinutes,
+      });
+      if (!value) {
+        await cancelAllTaskReminders();
+      }
+    },
+    [emailReminders, offsetMinutes, updatePrefs],
+  );
+
+  const handleToggleEmail = useCallback(
+    (value: boolean) => {
+      setLocalEmail(value);
+      updatePrefs.mutate({
+        pushReminders,
+        emailReminders: value,
+        reminderOffsetMinutes: offsetMinutes,
+      });
+    },
+    [pushReminders, offsetMinutes, updatePrefs],
+  );
+
+  const handleSelectOffset = useCallback(
+    (minutes: number) => {
+      setLocalOffset(minutes);
+      updatePrefs.mutate({
+        pushReminders,
+        emailReminders,
+        reminderOffsetMinutes: minutes,
+      });
+    },
+    [pushReminders, emailReminders, updatePrefs],
+  );
 
   const handleRequestPermission = useCallback(async () => {
     const granted = await requestPermissions();
     setPermissionStatus(granted ? "granted" : "denied");
   }, []);
 
-  if (loading) {
+  if (prefsLoading) {
     return (
       <GradientBackground>
         <SafeAreaView className="flex-1 items-center justify-center">
@@ -135,7 +182,7 @@ export default function SettingsScreen() {
 
           {/* Task Reminders Section */}
           <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            {remindersEnabled ? (
+            {pushReminders ? (
               <Bell size={22} color="#50C878" />
             ) : (
               <BellOff size={22} color="#8FA8A8" />
@@ -151,26 +198,47 @@ export default function SettingsScreen() {
           </View>
 
           <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#164B49', backgroundColor: '#102A2A' }}>
-            {/* Enable/Disable Toggle */}
+            {/* Push Notifications Toggle */}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#164B49', padding: 16 }}>
               <View style={{ flex: 1, paddingRight: 16 }}>
                 <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
-                  Due Date Reminders
+                  Push Notifications
                 </Text>
                 <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
-                  Notify me when tasks are approaching their due date
+                  Receive push notifications on this device
                 </Text>
               </View>
               <Switch
-                value={remindersEnabled}
-                onValueChange={handleToggleReminders}
+                value={pushReminders}
+                onValueChange={handleTogglePush}
+                trackColor={{ false: "#164B49", true: "#50C878" }}
+                thumbColor="#DCE4E4"
+              />
+            </View>
+
+            {/* Email Reminders Toggle */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: pushReminders ? 1 : 0, borderBottomColor: '#164B49', padding: 16 }}>
+              <View style={{ flex: 1, paddingRight: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Mail size={18} color={emailReminders ? "#50C878" : "#8FA8A8"} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
+                    Email Reminders
+                  </Text>
+                  <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
+                    Receive reminder notifications via email
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={emailReminders}
+                onValueChange={handleToggleEmail}
                 trackColor={{ false: "#164B49", true: "#50C878" }}
                 thumbColor="#DCE4E4"
               />
             </View>
 
             {/* Reminder Offset Selection */}
-            {remindersEnabled && (
+            {pushReminders && (
               <View style={{ padding: 16 }}>
                 <View style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Clock size={16} color="#8FA8A8" />
