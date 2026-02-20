@@ -15,6 +15,10 @@
       "types": "./dist/lib/push/notifications.d.ts",
       "default": "./src/lib/push/notifications.ts"
     },
+    "./reminders": {
+      "types": "./dist/lib/reminders.d.ts",
+      "default": "./src/lib/reminders.ts"
+    },
     "./spotify": {
       "types": "./dist/lib/spotify.d.ts",
       "default": "./src/lib/spotify.ts"

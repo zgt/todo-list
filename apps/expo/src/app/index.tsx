@@ -454,6 +454,8 @@ export default function Index() {
             lastSyncedAt: null,
             orderIndex: 0,
             priority: newTask.priority ?? "medium",
+            reminderAt: newTask.reminderAt ?? null,
+            reminderSentAt: null,
             category: null, // Category details will be filled in after server response
           };
 

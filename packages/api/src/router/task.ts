@@ -20,6 +20,8 @@ function serializeTaskDates<
     archivedAt: unknown;
     deletedAt: unknown;
     lastSyncedAt: unknown;
+    reminderAt: unknown;
+    reminderSentAt: unknown;
   },
 >(task: T) {
   return {
@@ -42,6 +44,12 @@ function serializeTaskDates<
       : null,
     lastSyncedAt: task.lastSyncedAt
       ? new Date(task.lastSyncedAt as string | number | Date)
+      : null,
+    reminderAt: task.reminderAt
+      ? new Date(task.reminderAt as string | number | Date)
+      : null,
+    reminderSentAt: task.reminderSentAt
+      ? new Date(task.reminderSentAt as string | number | Date)
       : null,
   };
 }
@@ -200,6 +208,11 @@ export const taskRouter = {
         updates.completedAt === undefined
       ) {
         updateData.completedAt = updates.completed ? new Date() : null;
+      }
+
+      // Reset reminderSentAt when reminderAt changes so the cron re-processes
+      if (updates.reminderAt !== undefined) {
+        updateData.reminderSentAt = null;
       }
 
       const [task] = await ctx.db

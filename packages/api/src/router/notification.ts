@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
 import { and, eq } from "@acme/db";
-import { PushToken } from "@acme/db/schema";
+import { PushToken, UserPreference } from "@acme/db/schema";
 
 import { sendPushToUser } from "../lib/push";
 import { protectedProcedure } from "../trpc";
@@ -112,5 +112,70 @@ export const notificationRouter = {
       await sendPushToUser(ctx.session.user.id, msg);
 
       return { success: true };
+    }),
+
+  /** Get the current user's notification preferences (with defaults) */
+  getUserPreferences: protectedProcedure.query(async ({ ctx }) => {
+    const prefs = await ctx.db.query.UserPreference.findFirst({
+      where: eq(UserPreference.userId, ctx.session.user.id),
+    });
+
+    if (!prefs) {
+      return {
+        emailReminders: false,
+        pushReminders: true,
+        reminderOffsetMinutes: 15,
+      };
+    }
+
+    return {
+      emailReminders: prefs.emailReminders,
+      pushReminders: prefs.pushReminders,
+      reminderOffsetMinutes: prefs.reminderOffsetMinutes,
+    };
+  }),
+
+  /** Upsert the current user's notification preferences */
+  updateUserPreferences: protectedProcedure
+    .input(
+      z.object({
+        emailReminders: z.boolean().optional(),
+        pushReminders: z.boolean().optional(),
+        reminderOffsetMinutes: z.number().int().min(0).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const [prefs] = await ctx.db
+        .insert(UserPreference)
+        .values({
+          userId,
+          emailReminders: input.emailReminders ?? false,
+          pushReminders: input.pushReminders ?? true,
+          reminderOffsetMinutes: input.reminderOffsetMinutes ?? 15,
+        })
+        .onConflictDoUpdate({
+          target: UserPreference.userId,
+          set: {
+            ...(input.emailReminders !== undefined && {
+              emailReminders: input.emailReminders,
+            }),
+            ...(input.pushReminders !== undefined && {
+              pushReminders: input.pushReminders,
+            }),
+            ...(input.reminderOffsetMinutes !== undefined && {
+              reminderOffsetMinutes: input.reminderOffsetMinutes,
+            }),
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+
+      return {
+        emailReminders: prefs!.emailReminders,
+        pushReminders: prefs!.pushReminders,
+        reminderOffsetMinutes: prefs!.reminderOffsetMinutes,
+      };
     }),
 } satisfies TRPCRouterRecord;
