@@ -13,7 +13,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { Check, Save, Trash2 } from "lucide-react-native";
+import { Bell, Check, Save, Trash2 } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
@@ -60,6 +60,9 @@ const SPRING_CONFIG = {
   stiffness: 800,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- server tasks include reminderAt but LocalTask type doesn't
+type TaskWithReminder = { reminderAt?: Date | null };
+
 export function TaskCard({
   task,
   isCompact,
@@ -79,6 +82,7 @@ export function TaskCard({
   priority,
   onChangePriority,
 }: TaskCardProps) {
+  const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
   const progress = useSharedValue(isCompact ? 1 : 0);
 
   useEffect(() => {
@@ -186,19 +190,34 @@ export function TaskCard({
           </View>
         ) : (
           <>
-            <RNText
-              className={`text-base font-semibold ${
-                task.completed ? "text-white/70 line-through" : "text-white"
-              }`}
-              numberOfLines={1}
-            >
-              {task.title}
-            </RNText>
-            {task.description && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <RNText
+                className={`text-base font-semibold ${
+                  task.completed ? "text-white/70 line-through" : "text-white"
+                }`}
+                numberOfLines={1}
+                style={{ flex: 1 }}
+              >
+                {task.title}
+              </RNText>
+              {reminderAt && (
+                <Bell size={12} color="#50C878" />
+              )}
+            </View>
+            {task.description ? (
               <RNText className="text-sm text-white/50" numberOfLines={1}>
                 {task.description}
               </RNText>
-            )}
+            ) : reminderAt ? (
+              <RNText style={{ fontSize: 11, color: "#8FA8A8" }} numberOfLines={1}>
+                {new Intl.DateTimeFormat("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                }).format(reminderAt!)}
+              </RNText>
+            ) : null}
           </>
         )}
       </View>
@@ -399,6 +418,19 @@ export function TaskCard({
               <RNText className="text-lg leading-relaxed text-white/60">
                 {task.description}
               </RNText>
+            )}
+            {reminderAt && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+                <Bell size={14} color="#50C878" />
+                <RNText style={{ fontSize: 13, color: "#8FA8A8" }}>
+                  {new Intl.DateTimeFormat("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  }).format(reminderAt!)}
+                </RNText>
+              </View>
             )}
           </>
         )}

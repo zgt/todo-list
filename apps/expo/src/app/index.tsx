@@ -11,35 +11,33 @@ import {
 import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
-// SQLite imports preserved for future offline work (unused currently)
-//import type { LocalTask } from "~/db/client";
-//import { db } from "~/db/client";
-//import { localCategory, localTask } from "~/db/schema";
-//import { syncManager } from "~/sync/manager";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-// SQLite imports preserved for future offline work
-//import { desc, eq, isNull, sql } from "drizzle-orm";
-//import { useLiveQuery } from "drizzle-orm/expo-sqlite";
 import { Layers, List } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
 import type { PriorityLevel } from "../components/priority-config";
+import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
-//import { generateUUID } from "~/utils/uuid";
+import {
+  cancelTaskReminder,
+  rescheduleAllReminders,
+  scheduleTaskReminder,
+} from "~/utils/notifications";
 import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
+import { TaskFormSheet } from "../components/TaskFormSheet";
 import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
 
-const DUMMY_TASK_ID = "dummy-create-task";
+type ServerTask = RouterOutputs["task"]["all"][number];
 
 function Header({ onProfilePress }: { onProfilePress: () => void }) {
   const { data: session } = authClient.useSession();
@@ -85,7 +83,6 @@ function ViewToggleButton({
 
 export default function Index() {
   const { data: session, isPending } = authClient.useSession();
-  const [isCreating, setIsCreating] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [viewMode, setViewMode] = useState<"stack" | "list">("stack");
   const [rippleTrigger, setRippleTrigger] = useState(0);
@@ -102,6 +99,10 @@ export default function Index() {
     [],
   );
 
+  // Sheet state
+  const [createSheetVisible, setCreateSheetVisible] = useState(false);
+  const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
+
   const queryClient = useQueryClient();
 
   // Fetch tasks from server via tRPC
@@ -115,18 +116,38 @@ export default function Index() {
     }),
   );
 
+  // Fetch categories for the form sheet
+  const { data: categories } = useQuery(
+    trpc.category.all.queryOptions(undefined, {
+      enabled: !!session,
+    }),
+  );
+
   // Trigger ripple when any query fetch starts
   useEffect(() => {
     if (isFetching) triggerRipple();
   }, [isFetching, triggerRipple]);
 
-  // Use useMemo with only serverTasks dependency to ensure optimistic updates work
-  // while maintaining stable reference for other hooks
+  // Reschedule all reminders on mount when tasks are available
+  const hasRescheduled = useRef(false);
+  useEffect(() => {
+    if (serverTasks && serverTasks.length > 0 && !hasRescheduled.current) {
+      hasRescheduled.current = true;
+      void rescheduleAllReminders(
+        serverTasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          dueDate: t.reminderAt ?? t.dueDate,
+          completed: t.completed,
+          deletedAt: t.deletedAt,
+        })),
+      );
+    }
+  }, [serverTasks]);
+
   const tasks = useMemo(() => {
     if (!serverTasks) return [];
 
-    // Server response already includes category relations
-    // Map to include fields expected by SwipeableCardStack (LocalTask type)
     const priorityOrder: Record<string, number> = {
       high: 0,
       medium: 1,
@@ -135,12 +156,10 @@ export default function Index() {
 
     return [...serverTasks]
       .sort((a, b) => {
-        // Primary sort: Completion status (incomplete first)
         if (a.completed !== b.completed) {
           return a.completed ? 1 : -1;
         }
 
-        // Secondary sort: Priority
         const priorityA = a.priority ?? "medium";
         const priorityB = b.priority ?? "medium";
         const priorityDiff =
@@ -148,19 +167,17 @@ export default function Index() {
 
         if (priorityDiff !== 0) return priorityDiff;
 
-        // Tertiary sort: Creation date (newest first)
         return b.createdAt.getTime() - a.createdAt.getTime();
       })
-      .map((task: RouterOutputs["task"]["all"][number]) => ({
+      .map((task: ServerTask) => ({
         ...task,
-        updatedAt: task.updatedAt ?? task.createdAt, // Ensure updatedAt is never null
+        updatedAt: task.updatedAt ?? task.createdAt,
         category: task.category
           ? {
               name: task.category.name,
               color: task.category.color,
             }
           : null,
-        // Add sync-related fields for type compatibility (unused in server-only mode)
         syncStatus: "synced" as const,
         localVersion: task.version,
         serverVersion: task.version,
@@ -168,9 +185,8 @@ export default function Index() {
         orderIndex: 0,
         priority: task.priority as "high" | "medium" | "low" | null,
       }));
-  }, [serverTasks]); // Only depend on serverTasks, not refreshTrigger
+  }, [serverTasks]);
 
-  // Filter tasks by selected categories (including descendants)
   const filteredTasks = useMemo(() => {
     let result = tasks;
     if (effectiveCategoryIds.length > 0) {
@@ -186,63 +202,23 @@ export default function Index() {
       );
     }
 
-    if (isCreating && session) {
-      const dummyTask = {
-        id: DUMMY_TASK_ID,
-        title: "",
-        description: null,
-        completed: false,
-        completedAt: null,
-        dueDate: null,
-        archivedAt: null,
-        categoryId: null,
-        userId: session.user.id,
-        version: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deletedAt: null,
-        lastSyncedAt: new Date(),
-        orderIndex: 0,
-        syncStatus: "synced" as const,
-        localVersion: 0,
-        serverVersion: 0,
-        category: null,
-        priority: "medium" as PriorityLevel,
-      };
-      // Prepend
-      return [dummyTask, ...result];
-    }
     return result;
-  }, [tasks, effectiveCategoryIds, isCreating, session, selectedPriorities]);
+  }, [tasks, effectiveCategoryIds, selectedPriorities]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
-
-  // Debug logging
-  useEffect(() => {
-    console.log("🔍 Index component render:", {
-      sessionExists: !!session,
-      isPending,
-      tasksCount: tasks.length,
-      serverTasksCount: serverTasks?.length ?? 0,
-      isLoadingTasks,
-    });
-  }, [session, isPending, tasks, serverTasks, isLoadingTasks]);
 
   // tRPC mutation for toggling task completion with optimistic update
   const toggleMutation = useMutation(
     trpc.task.update.mutationOptions({
       onMutate: async (updatedTask) => {
         triggerRipple();
-        // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
-        // Snapshot the previous value
         const previousTasks = queryClient.getQueryData<
           RouterOutputs["task"]["all"]
         >(trpc.task.all.queryKey());
 
-        // Optimistically update the task
         if (previousTasks) {
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
             trpc.task.all.queryKey(),
@@ -262,10 +238,9 @@ export default function Index() {
       },
       onError: (
         error: TRPCClientErrorLike<AppRouter>,
-        updatedTask,
+        _updatedTask,
         context,
       ) => {
-        // Rollback on error
         if (context?.previousTasks) {
           queryClient.setQueryData(
             trpc.task.all.queryKey(),
@@ -279,7 +254,6 @@ export default function Index() {
         );
       },
       onSettled: async () => {
-        // Always refetch after error or success to ensure consistency
         await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
     }),
@@ -287,6 +261,10 @@ export default function Index() {
 
   const handleToggle = async (id: string, completed: boolean) => {
     await toggleMutation.mutateAsync({ id, completed });
+    // Cancel reminder when completing a task
+    if (completed) {
+      void cancelTaskReminder(id);
+    }
   };
 
   // tRPC mutation for generic task updates
@@ -294,15 +272,12 @@ export default function Index() {
     trpc.task.update.mutationOptions({
       onMutate: async (updatedTask) => {
         triggerRipple();
-        // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
-        // Snapshot the previous value
         const previousTasks = queryClient.getQueryData<
           RouterOutputs["task"]["all"]
         >(trpc.task.all.queryKey());
 
-        // Optimistically update the task
         if (previousTasks) {
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
             trpc.task.all.queryKey(),
@@ -322,10 +297,9 @@ export default function Index() {
       },
       onError: (
         error: TRPCClientErrorLike<AppRouter>,
-        updatedTask,
+        _updatedTask,
         context,
       ) => {
-        // Rollback on error
         if (context?.previousTasks) {
           queryClient.setQueryData(
             trpc.task.all.queryKey(),
@@ -339,7 +313,6 @@ export default function Index() {
         );
       },
       onSettled: async () => {
-        // Always refetch after error or success to ensure consistency
         await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
     }),
@@ -355,19 +328,6 @@ export default function Index() {
       priority: PriorityLevel;
     }>,
   ) => {
-    if (id === DUMMY_TASK_ID) {
-      if (!updates.title) return;
-      // Remove dummy BEFORE creating to avoid duplicate with optimistic task
-      setIsCreating(false);
-      await handleCreate(
-        updates.title,
-        updates.description ?? "",
-        updates.categoryId ?? undefined,
-        updates.dueDate ?? undefined,
-        updates.priority ?? "medium",
-      );
-      return;
-    }
     await updateMutation.mutateAsync({ id, ...updates });
   };
 
@@ -376,15 +336,12 @@ export default function Index() {
     trpc.task.delete.mutationOptions({
       onMutate: async (taskId) => {
         triggerRipple();
-        // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
-        // Snapshot the previous value
         const previousTasks = queryClient.getQueryData<
           RouterOutputs["task"]["all"]
         >(trpc.task.all.queryKey());
 
-        // Optimistically remove the task
         if (previousTasks) {
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
             trpc.task.all.queryKey(),
@@ -394,8 +351,7 @@ export default function Index() {
 
         return { previousTasks };
       },
-      onError: (error: TRPCClientErrorLike<AppRouter>, taskId, context) => {
-        // Rollback on error
+      onError: (error: TRPCClientErrorLike<AppRouter>, _taskId, context) => {
         if (context?.previousTasks) {
           queryClient.setQueryData(
             trpc.task.all.queryKey(),
@@ -409,7 +365,6 @@ export default function Index() {
         );
       },
       onSettled: async () => {
-        // Always refetch after error or success to ensure consistency
         await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
     }),
@@ -417,6 +372,7 @@ export default function Index() {
 
   const handleDelete = async (id: string) => {
     await deleteMutation.mutateAsync(id);
+    void cancelTaskReminder(id);
   };
 
   // tRPC mutation for creating task with optimistic update
@@ -424,17 +380,12 @@ export default function Index() {
     trpc.task.create.mutationOptions({
       onMutate: async (newTask) => {
         triggerRipple();
-        console.log("🚀 onMutate called for create");
-        // Cancel outgoing refetches
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
-        // Snapshot the previous value
         const previousTasks = queryClient.getQueryData<
           RouterOutputs["task"]["all"]
         >(trpc.task.all.queryKey());
-        console.log("📊 Previous tasks:", previousTasks?.length);
 
-        // Optimistically update to the new value
         if (previousTasks && session) {
           const optimisticTask: RouterOutputs["task"]["all"][number] = {
             // eslint-disable-next-line react-hooks/purity -- Date.now() runs in onMutate callback, not during render
@@ -456,34 +407,20 @@ export default function Index() {
             priority: newTask.priority ?? "medium",
             reminderAt: newTask.reminderAt ?? null,
             reminderSentAt: null,
-            category: null, // Category details will be filled in after server response
+            category: null,
           };
 
-          // Prepend so new task appears at top (where dummy was)
           const newTasks = [optimisticTask, ...previousTasks];
-          console.log(
-            "✨ Setting optimistic task, new count:",
-            newTasks.length,
-          );
 
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
             trpc.task.all.queryKey(),
             newTasks,
           );
-
-          // Verify it was set
-          const afterSet = queryClient.getQueryData<
-            RouterOutputs["task"]["all"]
-          >(trpc.task.all.queryKey());
-          console.log("✅ After set, task count:", afterSet?.length);
-        } else {
-          console.log("❌ No previous tasks found in cache!");
         }
 
         return { previousTasks };
       },
-      onError: (error: TRPCClientErrorLike<AppRouter>, newTask, context) => {
-        // Rollback on error
+      onError: (error: TRPCClientErrorLike<AppRouter>, _newTask, context) => {
         if (context?.previousTasks) {
           queryClient.setQueryData(
             trpc.task.all.queryKey(),
@@ -497,37 +434,79 @@ export default function Index() {
         );
       },
       onSettled: async () => {
-        // Always refetch after error or success to ensure consistency
         await queryClient.invalidateQueries(trpc.task.all.queryFilter());
       },
     }),
   );
 
-  const handleCreate = async (
-    title: string,
-    description: string,
-    categoryId: string | undefined,
-    dueDate: Date | undefined,
-    priority: PriorityLevel,
-  ) => {
-    if (!session?.user) {
-      throw new Error("User not authenticated");
-    }
+  // Sheet handlers
+  const handleCreateSubmit = async (data: TaskFormData) => {
+    if (!session?.user) return;
 
     await createMutation.mutateAsync({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      categoryId,
-      dueDate,
-      priority: priority ?? "medium",
+      title: data.title,
+      description: data.description || undefined,
+      categoryId: data.categoryId ?? undefined,
+      dueDate: data.dueDate ?? undefined,
+      priority: data.priority ?? "medium",
+      reminderAt: data.reminderAt ?? undefined,
     });
-  };
 
-  const handleCancelEdit = (id: string) => {
-    if (id === DUMMY_TASK_ID) {
-      setIsCreating(false);
+    setCreateSheetVisible(false);
+
+    // Schedule reminder if set
+    if (data.reminderAt) {
+      // Use the task title for the notification; the actual task ID comes from the server
+      // but we schedule optimistically with a temp approach — rescheduleAllReminders on
+      // next mount will fix any ID mismatch
+      void scheduleTaskReminder(
+        `temp-create-${Date.now()}`,
+        data.title,
+        data.reminderAt,
+      );
     }
   };
+
+  const handleEditSubmit = async (data: TaskFormData) => {
+    if (!editingTask) return;
+
+    await updateMutation.mutateAsync({
+      id: editingTask.id,
+      title: data.title,
+      description: data.description || undefined,
+      categoryId: data.categoryId,
+      dueDate: data.dueDate,
+      priority: data.priority ?? "medium",
+      reminderAt: data.reminderAt,
+    });
+
+    setEditingTask(null);
+
+    // Schedule or cancel reminder
+    if (data.reminderAt) {
+      void scheduleTaskReminder(editingTask.id, data.title, data.reminderAt);
+    } else {
+      void cancelTaskReminder(editingTask.id);
+    }
+  };
+
+  const handleEditDelete = async () => {
+    if (!editingTask) return;
+    await deleteMutation.mutateAsync(editingTask.id);
+    void cancelTaskReminder(editingTask.id);
+    setEditingTask(null);
+  };
+
+  // Open edit sheet when a task card is tapped
+  const handleTaskPress = useCallback(
+    (taskId: string) => {
+      const task = serverTasks?.find((t) => t.id === taskId);
+      if (task) {
+        setEditingTask(task);
+      }
+    },
+    [serverTasks],
+  );
 
   // Show loading state while session or tasks are loading
   if (isPending || isLoadingTasks) {
@@ -544,7 +523,6 @@ export default function Index() {
     );
   }
 
-  // Guard against no session (shouldn't happen due to _layout guard, but defensive)
   if (!session) {
     return (
       <GradientBackground>
@@ -556,6 +534,13 @@ export default function Index() {
       </GradientBackground>
     );
   }
+
+  const sheetCategories = (categories ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    color: c.color,
+    icon: c.icon,
+  }));
 
   return (
     <GradientBackground rippleTrigger={rippleTrigger}>
@@ -577,8 +562,7 @@ export default function Index() {
                 onComplete={(id) => handleToggle(id, true)}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
-                autoEditId={isCreating ? DUMMY_TASK_ID : undefined}
-                onCancelEdit={handleCancelEdit}
+                onTaskPress={handleTaskPress}
               />
             ) : (
               <SwipeableCardStack
@@ -588,8 +572,7 @@ export default function Index() {
                 onComplete={(id) => handleToggle(id, true)}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
-                autoEditId={isCreating ? DUMMY_TASK_ID : undefined}
-                onCancelEdit={handleCancelEdit}
+                onTaskPress={handleTaskPress}
               />
             )
           ) : (
@@ -604,7 +587,7 @@ export default function Index() {
         </View>
       </SafeAreaView>
 
-      {/* Bottom button bar - positioned absolutely to hug the bottom */}
+      {/* Bottom button bar */}
       <SafeAreaView
         edges={["bottom"]}
         style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
@@ -624,7 +607,7 @@ export default function Index() {
               setViewMode((v) => (v === "stack" ? "list" : "stack"))
             }
           />
-          <FAB onPress={() => setIsCreating(!isCreating)} />
+          <FAB onPress={() => setCreateSheetVisible(true)} />
         </View>
       </SafeAreaView>
 
@@ -633,6 +616,39 @@ export default function Index() {
         visible={showProfileMenu}
         onClose={() => setShowProfileMenu(false)}
         user={session.user}
+      />
+
+      {/* Create Task Sheet */}
+      <TaskFormSheet
+        visible={createSheetVisible}
+        onClose={() => setCreateSheetVisible(false)}
+        onSubmit={handleCreateSubmit}
+        categories={sheetCategories}
+        isSubmitting={createMutation.isPending}
+        mode="create"
+      />
+
+      {/* Edit Task Sheet */}
+      <TaskFormSheet
+        visible={editingTask !== null}
+        onClose={() => setEditingTask(null)}
+        onSubmit={handleEditSubmit}
+        initialData={
+          editingTask
+            ? {
+                title: editingTask.title,
+                description: editingTask.description ?? "",
+                categoryId: editingTask.categoryId,
+                priority: editingTask.priority as PriorityLevel,
+                dueDate: editingTask.dueDate,
+                reminderAt: editingTask.reminderAt,
+              }
+            : undefined
+        }
+        categories={sheetCategories}
+        isSubmitting={updateMutation.isPending}
+        mode="edit"
+        onDelete={handleEditDelete}
       />
     </GradientBackground>
   );

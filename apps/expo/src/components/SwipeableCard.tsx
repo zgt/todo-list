@@ -56,6 +56,7 @@ interface SwipeableCardProps {
   skipStackAnimation: boolean;
   onNext: () => void;
   onPrevious: () => void;
+  onTaskPress?: () => void;
 }
 
 export function SwipeableCard({
@@ -80,6 +81,7 @@ export function SwipeableCard({
   skipStackAnimation,
   onNext,
   onPrevious,
+  onTaskPress,
 }: SwipeableCardProps) {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -428,6 +430,14 @@ export function SwipeableCard({
     panGesture.activeOffsetX([-15, 15]).failOffsetY([-15, 15]);
   }
 
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    if (onTaskPress && !isEditing && !deletePending) {
+      runOnJS(onTaskPress)();
+    }
+  });
+
+  const composedGesture = Gesture.Race(panGesture, tapGesture);
+
   const cardStyle = useAnimatedStyle(() => {
     if (index === -1 && !isCompact) {
       // Previous card - interpolate position based on swipe progress
@@ -489,7 +499,7 @@ export function SwipeableCard({
   });
 
   return (
-    <GestureDetector gesture={panGesture}>
+    <GestureDetector gesture={composedGesture}>
       <Animated.View
         style={[
           cardStyle,

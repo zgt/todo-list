@@ -37,6 +37,7 @@ interface SwipeableCardStackProps {
   ) => void;
   autoEditId?: string | null;
   onCancelEdit?: (id: string) => void;
+  onTaskPress?: (id: string) => void;
 }
 
 export function SwipeableCardStack({
@@ -48,6 +49,7 @@ export function SwipeableCardStack({
   isCompact,
   autoEditId,
   onCancelEdit,
+  onTaskPress,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
@@ -260,6 +262,7 @@ export function SwipeableCardStack({
             onCancelEdit={handleCancelEdit}
             onNext={handleNext}
             onPrevious={handlePrevious}
+            onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
           />
         );
       })}
