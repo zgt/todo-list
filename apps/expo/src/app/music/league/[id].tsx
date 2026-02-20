@@ -331,7 +331,7 @@ export default function LeagueDetails() {
           data={league.rounds as RoundItem[]}
           keyExtractor={(item) => item.id}
           renderItem={renderRoundCard}
-          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
