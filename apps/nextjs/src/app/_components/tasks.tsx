@@ -7,7 +7,15 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Bell, Calendar, Check, Pencil, Trash2, X } from "lucide-react";
+import {
+  Bell,
+  Calendar,
+  Check,
+  ChevronRight,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import { z } from "zod";
 
 import type { RouterOutputs } from "@acme/api";
@@ -222,156 +230,156 @@ function InlineCreateTask() {
     <div
       ref={containerRef}
       className={cn(
-        "group relative flex flex-row items-center gap-4 overflow-hidden rounded-2xl p-6 transition-all duration-300",
+        "group relative overflow-hidden rounded-2xl transition-all duration-300",
         "glass-card border-primary/50 shadow-glow bg-primary/5",
       )}
     >
-      {/* Spacer for checkbox alignment */}
-      <div className="size-6 shrink-0" />
+      {/* Top row with checkbox spacer and chevron */}
+      <div className="flex flex-row items-center gap-4 p-6 pb-0">
+        {/* Spacer for checkbox alignment */}
+        <div className="size-6 shrink-0" />
 
-      <div className="grow space-y-2">
-        <div className="flex max-w-2xl gap-3">
-          <div className="w-64">
-            <Input
-              ref={titleInputRef}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Task title"
-              className={cn(
-                "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
-                "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-                "rounded-md px-3 py-1.5 text-lg font-medium",
-              )}
-              aria-label="New task title"
-              disabled={createTask.isPending}
-            />
-          </div>
-          <div className="w-80">
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Description (optional)"
-              className={cn(
-                "border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
-                "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-                "rounded-md px-3 py-1.5 text-sm",
-              )}
-              aria-label="New task description"
-              disabled={createTask.isPending}
-            />
-          </div>
+        {/* Chevron in expanded position */}
+        <div className="shrink-0 text-[#8FA8A8]">
+          <ChevronRight className="h-4 w-4 rotate-90 transition-transform duration-300" />
         </div>
+
+        <h2 className="text-lg font-medium text-white/50">New task</h2>
       </div>
 
-      {/* Priority */}
-      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
-        <PrioritySelectorPill
-          value={priority}
-          onChange={setPriority}
-          disabled={createTask.isPending}
-        />
-      </div>
+      {/* Expanded area (always open for create) */}
+      <div className="border-t border-[#164B49] mx-6 mt-4" />
+      <div className="px-6 pb-6 pt-4">
+        {/* Title input (full width) */}
+        <div className="max-w-2xl">
+          <Input
+            ref={titleInputRef}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Task title"
+            className={cn(
+              "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
+              "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
+              "rounded-md px-3 py-1.5 text-lg font-medium",
+            )}
+            aria-label="New task title"
+            disabled={createTask.isPending}
+          />
+        </div>
 
-      {/* Due Date */}
-      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              className={cn(
-                "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
-                "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
-                "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-              )}
-              disabled={createTask.isPending}
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              {dueDate
-                ? new Date(dueDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "Due date"}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="end">
-            <div className="flex flex-col">
-              <DatePicker date={dueDate} onDateChange={setDueDate} />
-              {dueDate && (
-                <div className="border-t border-[#164B49] p-2">
-                  <button
-                    onClick={() => setDueDate(undefined)}
-                    className={cn(
-                      "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
-                      "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
-                      "transition-all",
-                    )}
-                  >
-                    <X className="h-3 w-3" />
-                    Clear date
-                  </button>
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+        {/* Description textarea */}
+        <div className="mt-3 max-w-2xl">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setIsCreating(false);
+            }}
+            placeholder="Description (optional)"
+            rows={3}
+            className={cn(
+              "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+              "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+              "rounded-md px-3 py-2 text-sm",
+            )}
+            aria-label="New task description"
+            disabled={createTask.isPending}
+          />
+        </div>
 
-      {/* Category */}
-      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
-        <CategoryTreePicker
-          categories={categories ?? []}
-          value={categoryId}
-          onChange={setCategoryId}
-          disabled={createTask.isPending}
-        />
-      </div>
+        {/* Field controls row */}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <PrioritySelectorPill
+            value={priority}
+            onChange={setPriority}
+            disabled={createTask.isPending}
+          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
+                  "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
+                  "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                )}
+                disabled={createTask.isPending}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                {dueDate
+                  ? new Date(dueDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Due date"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <div className="flex flex-col">
+                <DatePicker date={dueDate} onDateChange={setDueDate} />
+                {dueDate && (
+                  <div className="border-t border-[#164B49] p-2">
+                    <button
+                      onClick={() => setDueDate(undefined)}
+                      className={cn(
+                        "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                        "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
+                        "transition-all",
+                      )}
+                    >
+                      <X className="h-3 w-3" />
+                      Clear date
+                    </button>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <CategoryTreePicker
+            categories={categories ?? []}
+            value={categoryId}
+            onChange={setCategoryId}
+            disabled={createTask.isPending}
+          />
+          <ReminderPill
+            value={reminderAt}
+            onChange={setReminderAt}
+            disabled={createTask.isPending}
+          />
+        </div>
 
-      {/* Reminder */}
-      <div className="z-10 -translate-x-32 transition-transform duration-300 ease-in-out">
-        <ReminderPill
-          value={reminderAt}
-          onChange={setReminderAt}
-          disabled={createTask.isPending}
-        />
-      </div>
-
-      {/* Save/Cancel buttons */}
-      <div className="animate-in slide-in-from-right-5 absolute inset-y-0 right-0 flex duration-300">
-        <Button
-          type="button"
-          size="icon"
-          onClick={handleSave}
-          disabled={createTask.isPending || !title.trim()}
-          className={cn(
-            "h-full w-16 rounded-none bg-green-500 text-white hover:bg-green-600 hover:text-white",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-          )}
-          aria-label="Save new task"
-        >
-          {createTask.isPending ? (
-            "..."
-          ) : (
-            <>
-              <Check className="h-5 w-5" />
-              <span className="sr-only">Save</span>
-            </>
-          )}
-        </Button>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          onClick={() => setIsCreating(false)}
-          disabled={createTask.isPending}
-          className="h-full w-16 rounded-none bg-gray-500 text-white hover:bg-gray-600 hover:text-white"
-          aria-label="Cancel creating task"
-        >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Cancel</span>
-        </Button>
+        {/* Save/Cancel buttons */}
+        <div className="mt-4 flex justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setIsCreating(false)}
+            disabled={createTask.isPending}
+            className="text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
+          >
+            <X className="mr-1 h-4 w-4" />
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={createTask.isPending || !title.trim()}
+            className={cn(
+              "bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+            )}
+          >
+            {createTask.isPending ? (
+              "..."
+            ) : (
+              <>
+                <Check className="mr-1 h-4 w-4" />
+                Save
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -452,6 +460,7 @@ export function TaskCard(props: {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [editedTitle, setEditedTitle] = useState(props.task.title);
   const [editedDescription, setEditedDescription] = useState(
     props.task.description ?? "",
@@ -529,6 +538,7 @@ export function TaskCard(props: {
     setEditedCategoryId(props.task.categoryId ?? undefined);
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setEditedReminderAt(props.task.reminderAt ?? undefined);
+    setIsExpanded(true);
     setIsEditing(true);
     setTimeout(() => titleInputRef.current?.focus(), 0);
   };
@@ -557,6 +567,7 @@ export function TaskCard(props: {
         reminderAt: editedReminderAt ?? null,
       });
       setIsEditing(false);
+      setIsExpanded(false);
       toast.success("Task updated!");
     } catch {
       // Error is already handled in mutation onError
@@ -571,6 +582,7 @@ export function TaskCard(props: {
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setEditedReminderAt(props.task.reminderAt ?? undefined);
     setIsEditing(false);
+    setIsExpanded(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -601,65 +613,65 @@ export function TaskCard(props: {
   return (
     <div
       className={cn(
-        "group relative flex flex-row items-center gap-4 overflow-hidden rounded-2xl p-6 transition-all duration-300",
+        "group relative overflow-hidden rounded-2xl transition-all duration-300",
         props.task.completed
           ? "glass-card border-primary/50 shadow-glow bg-primary/5"
           : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
       )}
     >
-      <Checkbox
-        checked={props.task.completed}
-        onCheckedChange={handleToggleComplete}
-        disabled={updateTask.isPending || isEditing}
-        className={cn(
-          "size-6 rounded-full border-2 transition-all",
-          props.task.completed
-            ? "bg-primary border-primary text-black"
-            : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
-        )}
-      />
+      {/* Collapsed row */}
+      <div className="flex flex-row items-center gap-4 p-6">
+        <Checkbox
+          checked={props.task.completed}
+          onCheckedChange={handleToggleComplete}
+          disabled={updateTask.isPending || isEditing}
+          className={cn(
+            "size-6 rounded-full border-2 transition-all",
+            props.task.completed
+              ? "bg-primary border-primary text-black"
+              : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
+          )}
+        />
 
-      <div className="grow space-y-2">
-        {/* Title and Description fields */}
-        {isEditing ? (
-          <div className="flex max-w-2xl gap-3">
-            {/* Title field */}
-            <div className="w-64">
-              <Input
-                ref={titleInputRef}
-                value={editedTitle}
-                onChange={(e) => setEditedTitle(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Task title"
-                className={cn(
-                  "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
-                  "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-                  "rounded-md px-3 py-1.5 text-lg font-medium",
-                )}
-                aria-label="Edit task title"
-                disabled={updateTask.isPending}
-              />
-            </div>
-            {/* Description field */}
-            <div className="w-80">
-              <Input
-                value={editedDescription}
-                onChange={(e) => setEditedDescription(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Description (optional)"
-                className={cn(
-                  "border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
-                  "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-                  "rounded-md px-3 py-1.5 text-sm",
-                )}
-                aria-label="Edit task description"
-                disabled={updateTask.isPending}
-              />
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Title field - view mode */}
+        {/* Chevron toggle */}
+        <button
+          onClick={() => {
+            if (isExpanded && isEditing) {
+              handleCancel();
+            } else {
+              setIsExpanded(!isExpanded);
+            }
+          }}
+          className="shrink-0 text-[#8FA8A8] transition-colors hover:text-[#DCE4E4]"
+          aria-label={isExpanded ? "Collapse task" : "Expand task"}
+        >
+          <ChevronRight
+            className={cn(
+              "h-4 w-4 transition-transform duration-300",
+              isExpanded && "rotate-90",
+            )}
+          />
+        </button>
+
+        <div className="grow space-y-2">
+          {/* Title - inline editable */}
+          {isEditing ? (
+            <Input
+              ref={titleInputRef}
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Task title"
+              className={cn(
+                "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
+                "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
+                "rounded-md px-3 py-1.5 text-lg font-medium",
+                "max-w-md",
+              )}
+              aria-label="Edit task title"
+              disabled={updateTask.isPending}
+            />
+          ) : (
             <button
               onClick={handleEditClick}
               disabled={updateTask.isPending}
@@ -683,103 +695,45 @@ export function TaskCard(props: {
                 <Pencil className="h-4 w-4 text-[#50C878]/60 opacity-0 transition-opacity group-hover/title:opacity-100" />
               </div>
             </button>
-            {/* Description field - view mode */}
-            {props.task.description ? (
-              <button
-                onClick={handleEditClick}
-                disabled={updateTask.isPending}
-                className={cn(
-                  "group/desc -m-1 rounded-md p-1 text-left transition-all duration-200",
-                  "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  "max-w-fit",
-                )}
-                aria-label={`Edit task description. Current value: ${props.task.description}`}
-              >
-                <div className="flex items-center gap-2">
-                  <p className="text-muted-foreground text-sm">
-                    {props.task.description}
-                  </p>
-                  <Pencil className="h-3 w-3 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
-                </div>
-              </button>
-            ) : null}
-          </>
-        )}
-      </div>
-
-      {/* Priority */}
-      <div
-        className={cn(
-          "z-10 transition-transform duration-300 ease-in-out",
-          isEditing ? "-translate-x-32" : "group-hover:-translate-x-32",
-        )}
-      >
-        {isEditing ? (
-          <PrioritySelectorPill
-            value={editedPriority}
-            onChange={setEditedPriority}
-            disabled={updateTask.isPending}
-          />
-        ) : (
-          <PriorityBadge priority={props.task.priority} variant="compact" />
-        )}
-      </div>
-
-      {/* Due Date */}
-      {isEditing || editedDueDate ? (
-        <div
-          className={cn(
-            "z-10 transition-transform duration-300 ease-in-out",
-            isEditing ? "-translate-x-32" : "group-hover:-translate-x-32",
           )}
-        >
-          {isEditing ? (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
-                    "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
-                    "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-                  )}
-                  disabled={updateTask.isPending}
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  {editedDueDate
-                    ? new Date(editedDueDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Set due date"}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <div className="flex flex-col">
-                  <DatePicker
-                    date={editedDueDate}
-                    onDateChange={setEditedDueDate}
-                  />
-                  {editedDueDate && (
-                    <div className="border-t border-[#164B49] p-2">
-                      <button
-                        onClick={() => setEditedDueDate(undefined)}
-                        className={cn(
-                          "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
-                          "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
-                          "transition-all",
-                        )}
-                      >
-                        <X className="h-3 w-3" />
-                        Clear date
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          ) : editedDueDate ? (
+          {/* Description snippet - view mode */}
+          {!isExpanded && props.task.description ? (
+            <button
+              onClick={handleEditClick}
+              disabled={updateTask.isPending}
+              className={cn(
+                "group/desc -m-1 rounded-md p-1 text-left transition-all duration-200",
+                "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+                "max-w-fit",
+              )}
+              aria-label={`Edit task description. Current value: ${props.task.description}`}
+            >
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground text-sm">
+                  {props.task.description}
+                </p>
+                <Pencil className="h-3 w-3 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
+              </div>
+            </button>
+          ) : null}
+        </div>
+
+        {/* Priority badge - collapsed row */}
+        {!isExpanded && (
+          <div
+            className={cn(
+              "z-10 transition-transform duration-300 ease-in-out",
+              "group-hover:-translate-x-32",
+            )}
+          >
+            <PriorityBadge priority={props.task.priority} variant="compact" />
+          </div>
+        )}
+
+        {/* Due Date - collapsed row */}
+        {!isExpanded && editedDueDate ? (
+          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
             <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
               <Calendar className="h-3.5 w-3.5" />
               {new Date(editedDueDate).toLocaleDateString("en-US", {
@@ -788,26 +742,12 @@ export function TaskCard(props: {
                 year: "numeric",
               })}
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
 
-      {/* Category */}
-      {isEditing || editedCategory ? (
-        <div
-          className={cn(
-            "z-10 transition-transform duration-300 ease-in-out",
-            isEditing ? "-translate-x-32" : "group-hover:-translate-x-32",
-          )}
-        >
-          {isEditing ? (
-            <CategoryTreePicker
-              categories={categories ?? []}
-              value={editedCategoryId}
-              onChange={setEditedCategoryId}
-              disabled={updateTask.isPending}
-            />
-          ) : editedCategory ? (
+        {/* Category - collapsed row */}
+        {!isExpanded && editedCategory ? (
+          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
             <div
               className="rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md"
               style={{
@@ -818,99 +758,225 @@ export function TaskCard(props: {
             >
               {editedCategory.name}
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
 
-      {/* Reminder */}
-      {isEditing || props.task.reminderAt ? (
-        <div
-          className={cn(
-            "z-10 transition-transform duration-300 ease-in-out",
-            isEditing ? "-translate-x-32" : "group-hover:-translate-x-32",
-          )}
-        >
-          {isEditing ? (
-            <ReminderPill
-              value={editedReminderAt}
-              onChange={setEditedReminderAt}
-              disabled={updateTask.isPending}
-            />
-          ) : props.task.reminderAt ? (
+        {/* Reminder - collapsed row */}
+        {!isExpanded && props.task.reminderAt ? (
+          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
             <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-400 backdrop-blur-md">
               <Bell className="h-3.5 w-3.5" />
               {formatReminder(props.task.reminderAt)}
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
 
-      {/* Save/Cancel buttons - only show when editing */}
-      {isEditing && (
-        <div className="animate-in slide-in-from-right-5 absolute inset-y-0 right-0 flex duration-300">
-          <Button
-            type="button"
-            size="icon"
-            onClick={handleSave}
-            disabled={
-              updateTask.isPending || !hasChanges || !editedTitle.trim()
-            }
-            className={cn(
-              "h-full w-16 rounded-none bg-green-500 text-white hover:bg-green-600 hover:text-white",
-              "disabled:cursor-not-allowed disabled:opacity-50",
-            )}
-            aria-label="Save changes"
-          >
-            {updateTask.isPending ? (
-              "..."
-            ) : (
-              <>
-                <Check className="h-5 w-5" />
-                <span className="sr-only">Save</span>
-              </>
-            )}
-          </Button>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            onClick={handleCancel}
-            disabled={updateTask.isPending}
-            className="h-full w-16 rounded-none bg-gray-500 text-white hover:bg-gray-600 hover:text-white"
-            aria-label="Cancel editing"
-          >
-            <X className="h-5 w-5" />
-            <span className="sr-only">Cancel</span>
-          </Button>
-        </div>
-      )}
+        {/* Hover Actions - only in collapsed non-editing state */}
+        {!isExpanded && !isEditing && (
+          <div className="absolute inset-y-0 right-0 flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-full w-16 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
+              onClick={handleEditClick}
+              aria-label="Edit task"
+            >
+              <Pencil className="h-5 w-5" />
+              <span className="sr-only">Edit</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-full w-16 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white"
+              onClick={() => deleteTask.mutate(props.task.id)}
+              disabled={deleteTask.isPending}
+              aria-label="Delete task"
+            >
+              <Trash2 className="h-5 w-5" />
+              <span className="sr-only">Delete</span>
+            </Button>
+          </div>
+        )}
+      </div>
 
-      {/* Hover Actions - hide in edit mode */}
-      {!isEditing && (
-        <div className="absolute inset-y-0 right-0 flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-full w-16 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
-            onClick={handleEditClick}
-            aria-label="Edit task"
-          >
-            <Pencil className="h-5 w-5" />
-            <span className="sr-only">Edit</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-full w-16 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white"
-            onClick={() => deleteTask.mutate(props.task.id)}
-            disabled={deleteTask.isPending}
-            aria-label="Delete task"
-          >
-            <Trash2 className="h-5 w-5" />
-            <span className="sr-only">Delete</span>
-          </Button>
+      {/* Expanded area */}
+      <div
+        className={cn(
+          "grid transition-all duration-300",
+          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-[#164B49] px-6 pb-6 pt-4">
+            {/* Description textarea / read-only */}
+            <div className="max-w-2xl">
+              {isEditing ? (
+                <textarea
+                  value={editedDescription}
+                  onChange={(e) => setEditedDescription(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") handleCancel();
+                    // Don't handle Enter in textarea — allow newlines
+                  }}
+                  placeholder="Description (optional)"
+                  rows={3}
+                  className={cn(
+                    "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                    "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                    "rounded-md px-3 py-2 text-sm",
+                  )}
+                  aria-label="Edit task description"
+                  disabled={updateTask.isPending}
+                />
+              ) : (
+                <p className="text-muted-foreground whitespace-pre-wrap text-sm">
+                  {props.task.description || "No description"}
+                </p>
+              )}
+            </div>
+
+            {/* Field controls row */}
+            {isEditing && (
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <PrioritySelectorPill
+                  value={editedPriority}
+                  onChange={setEditedPriority}
+                  disabled={updateTask.isPending}
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
+                        "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
+                        "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                      )}
+                      disabled={updateTask.isPending}
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      {editedDueDate
+                        ? new Date(editedDueDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "Set due date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="flex flex-col">
+                      <DatePicker
+                        date={editedDueDate}
+                        onDateChange={setEditedDueDate}
+                      />
+                      {editedDueDate && (
+                        <div className="border-t border-[#164B49] p-2">
+                          <button
+                            onClick={() => setEditedDueDate(undefined)}
+                            className={cn(
+                              "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                              "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
+                              "transition-all",
+                            )}
+                          >
+                            <X className="h-3 w-3" />
+                            Clear date
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <CategoryTreePicker
+                  categories={categories ?? []}
+                  value={editedCategoryId}
+                  onChange={setEditedCategoryId}
+                  disabled={updateTask.isPending}
+                />
+                <ReminderPill
+                  value={editedReminderAt}
+                  onChange={setEditedReminderAt}
+                  disabled={updateTask.isPending}
+                />
+              </div>
+            )}
+
+            {/* Read-only badges when expanded but not editing */}
+            {!isEditing && (
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <PriorityBadge
+                  priority={props.task.priority}
+                  variant="compact"
+                />
+                {props.task.dueDate && (
+                  <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {new Date(props.task.dueDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </div>
+                )}
+                {editedCategory && (
+                  <div
+                    className="rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md"
+                    style={{
+                      backgroundColor: `${editedCategory.color}60`,
+                      borderColor: `${editedCategory.color}80`,
+                      color: editedCategory.color,
+                    }}
+                  >
+                    {editedCategory.name}
+                  </div>
+                )}
+                {props.task.reminderAt && (
+                  <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-400 backdrop-blur-md">
+                    <Bell className="h-3.5 w-3.5" />
+                    {formatReminder(props.task.reminderAt)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Save/Cancel buttons inside expanded area */}
+            {isEditing && (
+              <div className="mt-4 flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleCancel}
+                  disabled={updateTask.isPending}
+                  className="text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
+                >
+                  <X className="mr-1 h-4 w-4" />
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={
+                    updateTask.isPending || !hasChanges || !editedTitle.trim()
+                  }
+                  className={cn(
+                    "bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                  )}
+                >
+                  {updateTask.isPending ? (
+                    "..."
+                  ) : (
+                    <>
+                      <Check className="mr-1 h-4 w-4" />
+                      Save
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
