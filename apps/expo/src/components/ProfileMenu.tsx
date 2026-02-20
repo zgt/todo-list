@@ -1,4 +1,3 @@
-import type { Href } from "expo-router";
 import { useEffect } from "react";
 import { Alert, Image, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
@@ -7,7 +6,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { Bell, LogOut, Music } from "lucide-react-native";
 
 import type { User } from "~/utils/auth";
@@ -20,6 +19,7 @@ interface ProfileMenuProps {
 }
 
 export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
+  const router = useRouter();
   const backdropOpacity = useSharedValue(0);
   const translateY = useSharedValue(300);
 
@@ -122,29 +122,31 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
 
           {/* Menu Items */}
           <View className="gap-2">
-            <Link href="/music" asChild>
-              <Pressable
-                onPress={onClose}
-                className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-              >
-                <Music size={20} color="#50C878" />
-                <RNText className="text-base font-medium text-[#DCE4E4]">
-                  Music Leagues
-                </RNText>
-              </Pressable>
-            </Link>
+            <Pressable
+              onPress={() => {
+                onClose();
+                router.push("/music" as never);
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Music size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                Music Leagues
+              </RNText>
+            </Pressable>
 
-            <Link href={"/settings" as Href} asChild>
-              <Pressable
-                onPress={onClose}
-                className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-              >
-                <Bell size={20} color="#50C878" />
-                <RNText className="text-base font-medium text-[#DCE4E4]">
-                  Notifications
-                </RNText>
-              </Pressable>
-            </Link>
+            <Pressable
+              onPress={() => {
+                onClose();
+                router.push("/settings" as never);
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Bell size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                Notifications
+              </RNText>
+            </Pressable>
 
             <View className="my-2 h-px bg-[#164B49]" />
 
