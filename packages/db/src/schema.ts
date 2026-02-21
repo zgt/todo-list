@@ -174,6 +174,35 @@ export const Task = pgTable(
   ],
 );
 
+export const Subtask = pgTable(
+  "subtask",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    taskId: t
+      .uuid("task_id")
+      .notNull()
+      .references(() => Task.id, { onDelete: "cascade" }),
+    title: t.varchar({ length: 500 }).notNull(),
+    completed: t.boolean().notNull().default(false),
+    sortOrder: t.integer("sort_order").notNull().default(0),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: t
+      .timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+    completedAt: t.timestamp("completed_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+  }),
+  (table) => [
+    index("subtask_task_id_sort_order_idx").on(table.taskId, table.sortOrder),
+  ],
+);
+
 // Music League Tables
 
 export const League = pgTable(
@@ -526,6 +555,25 @@ export const UpdateTaskSchema = z.object({
   deletedAt: z.date().nullable().optional(),
 });
 
+export const CreateSubtaskSchema = createInsertSchema(Subtask, {
+  title: z.string().min(1, "Title is required").max(500),
+  taskId: z.string().uuid(),
+}).omit({
+  id: true,
+  completed: true,
+  sortOrder: true,
+  createdAt: true,
+  updatedAt: true,
+  completedAt: true,
+});
+
+export const UpdateSubtaskSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().min(1).max(500).optional(),
+  completed: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
 export const CreateCategorySchema = createInsertSchema(Category, {
   name: z.string().min(1, "Name is required").max(100),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
@@ -567,10 +615,18 @@ export const categoryRelations = relations(Category, ({ one, many }) => ({
   tasks: many(Task),
 }));
 
-export const taskRelations = relations(Task, ({ one }) => ({
+export const taskRelations = relations(Task, ({ one, many }) => ({
   category: one(Category, {
     fields: [Task.categoryId],
     references: [Category.id],
+  }),
+  subtasks: many(Subtask),
+}));
+
+export const subtaskRelations = relations(Subtask, ({ one }) => ({
+  task: one(Task, {
+    fields: [Subtask.taskId],
+    references: [Task.id],
   }),
 }));
 
