@@ -66,6 +66,11 @@ interface TaskWithReminder {
   reminderSentAt?: Date | null;
 }
 
+// Server tasks include subtasks but LocalTask type doesn't
+interface TaskWithSubtasks {
+  subtasks?: { id: string; completed: boolean }[];
+}
+
 function getReminderDisplay(reminderAt: Date, reminderSentAt: Date | null) {
   const now = new Date();
   const diff = reminderAt.getTime() - now.getTime();
@@ -124,6 +129,10 @@ export function TaskCard({
   const reminderInfo = reminderAt
     ? getReminderDisplay(reminderAt, reminderSentAt)
     : null;
+  const subtasks =
+    (task as unknown as TaskWithSubtasks).subtasks ?? [];
+  const subtaskTotal = subtasks.length;
+  const subtaskDone = subtasks.filter((s) => s.completed).length;
   const progress = useSharedValue(isCompact ? 1 : 0);
 
   useEffect(() => {
@@ -244,6 +253,11 @@ export function TaskCard({
                 {task.title}
               </RNText>
               {reminderInfo && <Bell size={12} color={reminderInfo.color} />}
+              {subtaskTotal > 0 && (
+                <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
+                  {subtaskDone}/{subtaskTotal} ✓
+                </RNText>
+              )}
             </View>
             {task.description ? (
               <RNText className="text-sm text-white/50" numberOfLines={1}>
@@ -472,6 +486,11 @@ export function TaskCard({
                   {reminderInfo.label}
                 </RNText>
               </View>
+            )}
+            {subtaskTotal > 0 && (
+              <RNText style={{ fontSize: 13, color: "#8FA8A8", marginTop: 4 }}>
+                {subtaskDone}/{subtaskTotal} ✓
+              </RNText>
             )}
           </>
         )}

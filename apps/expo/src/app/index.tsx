@@ -666,12 +666,14 @@ export default function Index() {
         initialData={
           editingTask
             ? {
+                id: editingTask.id,
                 title: editingTask.title,
                 description: editingTask.description ?? "",
                 categoryId: editingTask.categoryId,
                 priority: editingTask.priority as PriorityLevel,
                 dueDate: editingTask.dueDate,
                 reminderAt: editingTask.reminderAt,
+                subtasks: editingTask.subtasks,
               }
             : undefined
         }

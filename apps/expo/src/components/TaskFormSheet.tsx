@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -10,9 +11,11 @@ import {
 } from "react-native";
 import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, Trash2, X } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
+import { trpc } from "~/utils/api";
 
 export interface TaskFormData {
   title: string;
@@ -21,6 +24,13 @@ export interface TaskFormData {
   priority: PriorityLevel;
   dueDate: Date | null;
   reminderAt: Date | null;
+}
+
+interface SubtaskData {
+  id: string;
+  title: string;
+  completed: boolean;
+  sortOrder: number;
 }
 
 interface Category {
@@ -34,7 +44,10 @@ interface TaskFormSheetProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (data: TaskFormData) => void;
-  initialData?: Partial<TaskFormData>;
+  initialData?: Partial<TaskFormData> & {
+    id?: string;
+    subtasks?: SubtaskData[];
+  };
   categories: Category[];
   isSubmitting?: boolean;
   mode: "create" | "edit";
@@ -116,6 +129,30 @@ export function TaskFormSheet({
     null,
   );
 
+  // Subtask state
+  const taskId = mode === "edit" ? initialData?.id : undefined;
+  const subtasks = initialData?.subtasks ?? [];
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
+  const newSubtaskInputRef = useRef<TextInput>(null);
+
+  // Subtask mutations
+  const queryClient = useQueryClient();
+  const invalidateTasks = useCallback(async () => {
+    await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+  }, [queryClient]);
+
+  const createSubtask = useMutation(
+    trpc.subtask.create.mutationOptions({ onSuccess: invalidateTasks }),
+  );
+  const updateSubtask = useMutation(
+    trpc.subtask.update.mutationOptions({ onSuccess: invalidateTasks }),
+  );
+  const deleteSubtask = useMutation(
+    trpc.subtask.delete.mutationOptions({ onSuccess: invalidateTasks }),
+  );
+
   // Reset form when initialData changes or sheet opens
   useEffect(() => {
     if (visible) {
@@ -130,6 +167,9 @@ export function TaskFormSheet({
       setShowReminderDatePicker(false);
       setShowReminderTimePicker(false);
       setPendingReminderDate(null);
+      setNewSubtaskTitle("");
+      setEditingSubtaskId(null);
+      setEditingSubtaskTitle("");
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [visible, initialData]);
@@ -735,6 +775,199 @@ export function TaskFormSheet({
             </View>
           )}
         </View>
+
+        {/* Subtasks (edit mode only) */}
+        {mode === "edit" && taskId && (
+          <View style={{ marginBottom: 24 }}>
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "600",
+                color: "#8FA8A8",
+                marginBottom: 8,
+              }}
+            >
+              Subtasks
+              {subtasks.length > 0 && (
+                <Text style={{ color: "#50C878", fontWeight: "400" }}>
+                  {" "}
+                  ({subtasks.filter((s) => s.completed).length}/{subtasks.length}
+                  )
+                </Text>
+              )}
+            </Text>
+
+            {/* Subtask list */}
+            {subtasks.map((subtask) => (
+              <View
+                key={subtask.id}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                  paddingVertical: 8,
+                  paddingHorizontal: 4,
+                  borderBottomWidth: 1,
+                  borderBottomColor: "#164B4930",
+                }}
+              >
+                {/* Checkbox */}
+                <Pressable
+                  onPress={() =>
+                    updateSubtask.mutate({
+                      id: subtask.id,
+                      completed: !subtask.completed,
+                    })
+                  }
+                  hitSlop={8}
+                >
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 4,
+                      borderWidth: 1.5,
+                      borderColor: subtask.completed ? "#50C878" : "#164B49",
+                      backgroundColor: subtask.completed
+                        ? "#50C878"
+                        : "transparent",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {subtask.completed && (
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: "#0A1A1A",
+                          fontWeight: "700",
+                          lineHeight: 14,
+                        }}
+                      >
+                        ✓
+                      </Text>
+                    )}
+                  </View>
+                </Pressable>
+
+                {/* Title — tap to edit inline */}
+                {editingSubtaskId === subtask.id ? (
+                  <TextInput
+                    value={editingSubtaskTitle}
+                    onChangeText={setEditingSubtaskTitle}
+                    autoFocus
+                    returnKeyType="done"
+                    onSubmitEditing={() => {
+                      const trimmed = editingSubtaskTitle.trim();
+                      if (trimmed && trimmed !== subtask.title) {
+                        updateSubtask.mutate({
+                          id: subtask.id,
+                          title: trimmed,
+                        });
+                      }
+                      setEditingSubtaskId(null);
+                    }}
+                    onBlur={() => {
+                      const trimmed = editingSubtaskTitle.trim();
+                      if (trimmed && trimmed !== subtask.title) {
+                        updateSubtask.mutate({
+                          id: subtask.id,
+                          title: trimmed,
+                        });
+                      }
+                      setEditingSubtaskId(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      fontSize: 14,
+                      color: "#DCE4E4",
+                      paddingVertical: 2,
+                      paddingHorizontal: 4,
+                      backgroundColor: "#0A1A1A",
+                      borderRadius: 4,
+                      borderWidth: 1,
+                      borderColor: "#50C878",
+                    }}
+                  />
+                ) : (
+                  <Pressable
+                    style={{ flex: 1 }}
+                    onPress={() => {
+                      setEditingSubtaskId(subtask.id);
+                      setEditingSubtaskTitle(subtask.title);
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: subtask.completed ? "#8FA8A8" : "#DCE4E4",
+                        textDecorationLine: subtask.completed
+                          ? "line-through"
+                          : "none",
+                      }}
+                    >
+                      {subtask.title}
+                    </Text>
+                  </Pressable>
+                )}
+
+                {/* Delete button */}
+                <Pressable
+                  onPress={() => deleteSubtask.mutate({ id: subtask.id })}
+                  hitSlop={8}
+                >
+                  <X size={14} color="#8FA8A8" />
+                </Pressable>
+              </View>
+            ))}
+
+            {/* Add subtask input */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 8,
+              }}
+            >
+              <TextInput
+                ref={newSubtaskInputRef}
+                value={newSubtaskTitle}
+                onChangeText={setNewSubtaskTitle}
+                placeholder="Add a subtask..."
+                placeholderTextColor="#4A6A6A"
+                returnKeyType="done"
+                onSubmitEditing={() => {
+                  const trimmed = newSubtaskTitle.trim();
+                  if (!trimmed || !taskId) return;
+                  createSubtask.mutate(
+                    { taskId, title: trimmed },
+                    {
+                      onSuccess: () => {
+                        setNewSubtaskTitle("");
+                        newSubtaskInputRef.current?.focus();
+                      },
+                    },
+                  );
+                }}
+                style={{
+                  flex: 1,
+                  backgroundColor: "#102A2A",
+                  borderWidth: 1,
+                  borderColor: "#164B49",
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  fontSize: 14,
+                  color: "#DCE4E4",
+                }}
+              />
+              {createSubtask.isPending && (
+                <ActivityIndicator size="small" color="#50C878" />
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Submit Button */}
         <Pressable
