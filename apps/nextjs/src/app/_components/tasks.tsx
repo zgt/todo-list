@@ -13,6 +13,7 @@ import {
   Check,
   ChevronRight,
   Pencil,
+  Plus,
   Trash2,
   X,
 } from "lucide-react";
@@ -489,6 +490,245 @@ export function TaskList() {
   );
 }
 
+// --- Subtask section inside expanded task card ---
+
+function SubtaskSection({
+  task,
+}: {
+  task: RouterOutputs["task"]["all"][number];
+}) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const [newTitle, setNewTitle] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const newInputRef = useRef<HTMLInputElement>(null);
+
+  const subtasks = [...task.subtasks].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+
+  const createSubtask = useMutation(
+    trpc.subtask.create.mutationOptions({
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+        const prev = queryClient.getQueryData(trpc.task.all.queryKey());
+        queryClient.setQueryData(trpc.task.all.queryKey(), (old) => {
+          if (!old) return old;
+          return old.map((t) =>
+            t.id !== task.id
+              ? t
+              : {
+                  ...t,
+                  subtasks: [
+                    ...t.subtasks,
+                    {
+                      id: crypto.randomUUID(),
+                      taskId: task.id,
+                      title: variables.title,
+                      completed: false,
+                      sortOrder: t.subtasks.length,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      completedAt: null,
+                    },
+                  ],
+                },
+          );
+        });
+        return { prev };
+      },
+      onError: (_err, _vars, context) => {
+        if (context?.prev)
+          queryClient.setQueryData(trpc.task.all.queryKey(), context.prev);
+        toast.error("Failed to add subtask");
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(trpc.task.pathFilter());
+      },
+    }),
+  );
+
+  const updateSubtask = useMutation(
+    trpc.subtask.update.mutationOptions({
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+        const prev = queryClient.getQueryData(trpc.task.all.queryKey());
+        queryClient.setQueryData(trpc.task.all.queryKey(), (old) => {
+          if (!old) return old;
+          return old.map((t) =>
+            t.id !== task.id
+              ? t
+              : {
+                  ...t,
+                  subtasks: t.subtasks.map((s) =>
+                    s.id === variables.id
+                      ? {
+                          ...s,
+                          ...variables,
+                          completedAt:
+                            variables.completed === true
+                              ? new Date()
+                              : variables.completed === false
+                                ? null
+                                : s.completedAt,
+                        }
+                      : s,
+                  ),
+                },
+          );
+        });
+        return { prev };
+      },
+      onError: (_err, _vars, context) => {
+        if (context?.prev)
+          queryClient.setQueryData(trpc.task.all.queryKey(), context.prev);
+        toast.error("Failed to update subtask");
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(trpc.task.pathFilter());
+      },
+    }),
+  );
+
+  const deleteSubtask = useMutation(
+    trpc.subtask.delete.mutationOptions({
+      onMutate: async (variables) => {
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+        const prev = queryClient.getQueryData(trpc.task.all.queryKey());
+        queryClient.setQueryData(trpc.task.all.queryKey(), (old) => {
+          if (!old) return old;
+          return old.map((t) =>
+            t.id !== task.id
+              ? t
+              : {
+                  ...t,
+                  subtasks: t.subtasks.filter(
+                    (s) => s.id !== variables.id,
+                  ),
+                },
+          );
+        });
+        return { prev };
+      },
+      onError: (_err, _vars, context) => {
+        if (context?.prev)
+          queryClient.setQueryData(trpc.task.all.queryKey(), context.prev);
+        toast.error("Failed to delete subtask");
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(trpc.task.pathFilter());
+      },
+    }),
+  );
+
+  const handleCreate = () => {
+    const title = newTitle.trim();
+    if (!title) return;
+    createSubtask.mutate({ taskId: task.id, title });
+    setNewTitle("");
+    setTimeout(() => newInputRef.current?.focus(), 0);
+  };
+
+  const handleSaveEdit = (id: string) => {
+    const title = editingTitle.trim();
+    if (!title) {
+      setEditingId(null);
+      return;
+    }
+    updateSubtask.mutate({ id, title });
+    setEditingId(null);
+  };
+
+  return (
+    <div className="mt-3 border-t border-[#164B49]/50 pt-3 pl-8">
+      <div className="flex flex-col gap-1">
+        {subtasks.map((subtask) => (
+          <div
+            key={subtask.id}
+            className="group/subtask flex items-center gap-2 rounded-md px-1 py-0.5 hover:bg-white/5"
+          >
+            <Checkbox
+              checked={subtask.completed}
+              onCheckedChange={(checked) => {
+                updateSubtask.mutate({
+                  id: subtask.id,
+                  completed: !!checked,
+                });
+              }}
+              className={cn(
+                "size-4 rounded border-2 transition-all",
+                subtask.completed
+                  ? "bg-primary border-primary text-black"
+                  : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
+              )}
+            />
+            {editingId === subtask.id ? (
+              <input
+                autoFocus
+                value={editingTitle}
+                onChange={(e) => setEditingTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSaveEdit(subtask.id);
+                  } else if (e.key === "Escape") {
+                    setEditingId(null);
+                  }
+                }}
+                onBlur={() => handleSaveEdit(subtask.id)}
+                className="min-w-0 flex-1 bg-transparent text-sm text-[#DCE4E4] outline-none"
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setEditingId(subtask.id);
+                  setEditingTitle(subtask.title);
+                }}
+                className={cn(
+                  "min-w-0 flex-1 truncate text-left text-sm transition-colors",
+                  subtask.completed
+                    ? "text-[#8FA8A8] line-through"
+                    : "text-[#DCE4E4]",
+                )}
+              >
+                {subtask.title}
+              </button>
+            )}
+            <button
+              onClick={() => deleteSubtask.mutate({ id: subtask.id })}
+              className="shrink-0 text-[#8FA8A8] opacity-0 transition-opacity hover:text-red-400 group-hover/subtask:opacity-100"
+              aria-label={`Delete subtask: ${subtask.title}`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      {/* Add subtask input */}
+      <div className="mt-1 flex items-center gap-2 px-1 py-0.5">
+        <Plus className="h-4 w-4 shrink-0 text-[#8FA8A8]" />
+        <input
+          ref={newInputRef}
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleCreate();
+            } else if (e.key === "Escape") {
+              setNewTitle("");
+              newInputRef.current?.blur();
+            }
+          }}
+          placeholder="Add a subtask..."
+          className="min-w-0 flex-1 bg-transparent text-sm text-[#DCE4E4] placeholder:text-[#8FA8A8] outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
 // --- Task card ---
 
 export function TaskCard(props: {
@@ -730,6 +970,12 @@ export function TaskCard(props: {
                 >
                   {props.task.title}
                 </h2>
+                {props.task.subtasks.length > 0 && (
+                  <span className="text-xs text-[#8FA8A8]">
+                    {props.task.subtasks.filter((s) => s.completed).length}/
+                    {props.task.subtasks.length}
+                  </span>
+                )}
                 <Pencil className="h-4 w-4 text-[#50C878]/60 opacity-0 transition-opacity group-hover/title:opacity-100" />
               </div>
             </button>
@@ -880,6 +1126,9 @@ export function TaskCard(props: {
                 </p>
               )}
             </div>
+
+            {/* Subtask section */}
+            <SubtaskSection task={props.task} />
 
             {/* Field controls row */}
             {isEditing && (
