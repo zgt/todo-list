@@ -11,7 +11,13 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Clock, Info, Sparkles } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Info,
+  Sparkles,
+} from "lucide-react-native";
 
 import type { ThemeTemplatePickerRef } from "~/components/music/ThemeTemplatePicker";
 import { GradientBackground } from "~/components/GradientBackground";
@@ -170,7 +176,11 @@ export default function CreateRound() {
                     </View>
                     {hasUnfinishedRound && (
                       <View className="mt-2 flex-row items-start gap-2 rounded-lg bg-[#FFA500]/10 p-3">
-                        <Info size={14} color="#FFA500" style={{ marginTop: 1 }} />
+                        <Info
+                          size={14}
+                          color="#FFA500"
+                          style={{ marginTop: 1 }}
+                        />
                         <Text className="flex-1 text-xs text-[#FFA500]">
                           This round will start after the current round ends
                         </Text>

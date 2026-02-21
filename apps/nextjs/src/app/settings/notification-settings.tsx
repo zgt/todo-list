@@ -41,7 +41,8 @@ export function NotificationSettings() {
   // Derived values: local override ?? server value ?? defaults
   const emailReminders = localEmail ?? prefs?.emailReminders ?? false;
   const pushReminders = localPush ?? prefs?.pushReminders ?? true;
-  const reminderOffsetMinutes = localOffset ?? prefs?.reminderOffsetMinutes ?? 15;
+  const reminderOffsetMinutes =
+    localOffset ?? prefs?.reminderOffsetMinutes ?? 15;
 
   const updatePrefs = useMutation(
     trpc.notification.updateUserPreferences.mutationOptions({
@@ -86,9 +87,7 @@ export function NotificationSettings() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-white">
-          Notification Settings
-        </h2>
+        <h2 className="text-2xl font-bold text-white">Notification Settings</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Configure how and when you receive task reminders.
         </p>
@@ -103,10 +102,7 @@ export function NotificationSettings() {
               Receive reminder notifications via email
             </p>
           </div>
-          <Switch
-            checked={emailReminders}
-            onCheckedChange={setLocalEmail}
-          />
+          <Switch checked={emailReminders} onCheckedChange={setLocalEmail} />
         </div>
 
         {/* Push Reminders */}
@@ -117,10 +113,7 @@ export function NotificationSettings() {
               Receive push notifications on your devices
             </p>
           </div>
-          <Switch
-            checked={pushReminders}
-            onCheckedChange={setLocalPush}
-          />
+          <Switch checked={pushReminders} onCheckedChange={setLocalPush} />
         </div>
 
         {/* Reminder Offset */}
@@ -152,7 +145,7 @@ export function NotificationSettings() {
       <Button
         onClick={handleSave}
         disabled={updatePrefs.isPending || !hasChanges}
-        className="bg-primary text-black hover:bg-primary/90"
+        className="bg-primary hover:bg-primary/90 text-black"
       >
         {updatePrefs.isPending ? "Saving..." : "Save Preferences"}
       </Button>

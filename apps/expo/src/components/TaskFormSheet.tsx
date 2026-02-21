@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -9,14 +8,9 @@ import {
   TextInput,
   View,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
-import {
-  Bell,
-  Calendar,
-  Trash2,
-  X,
-} from "lucide-react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Bell, Calendar, Trash2, X } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 
@@ -47,7 +41,11 @@ interface TaskFormSheetProps {
   onDelete?: () => void;
 }
 
-const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; color: string }[] = [
+const PRIORITY_OPTIONS: {
+  value: PriorityLevel;
+  label: string;
+  color: string;
+}[] = [
   { value: "low", label: "Low", color: "#8FA8A8" },
   { value: "medium", label: "Medium", color: "#E5A04D" },
   { value: "high", label: "High", color: "#ef4444" },
@@ -94,7 +92,9 @@ export function TaskFormSheet({
   const titleInputRef = useRef<TextInput>(null);
 
   const [title, setTitle] = useState(initialData?.title ?? "");
-  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [description, setDescription] = useState(
+    initialData?.description ?? "",
+  );
   const [categoryId, setCategoryId] = useState<string | null>(
     initialData?.categoryId ?? null,
   );
@@ -112,11 +112,14 @@ export function TaskFormSheet({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showReminderDatePicker, setShowReminderDatePicker] = useState(false);
   const [showReminderTimePicker, setShowReminderTimePicker] = useState(false);
-  const [pendingReminderDate, setPendingReminderDate] = useState<Date | null>(null);
+  const [pendingReminderDate, setPendingReminderDate] = useState<Date | null>(
+    null,
+  );
 
   // Reset form when initialData changes or sheet opens
   useEffect(() => {
     if (visible) {
+      /* eslint-disable react-hooks/set-state-in-effect -- intentional: resets form fields when sheet opens with new data */
       setTitle(initialData?.title ?? "");
       setDescription(initialData?.description ?? "");
       setCategoryId(initialData?.categoryId ?? null);
@@ -127,6 +130,7 @@ export function TaskFormSheet({
       setShowReminderDatePicker(false);
       setShowReminderTimePicker(false);
       setPendingReminderDate(null);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [visible, initialData]);
 
@@ -165,18 +169,14 @@ export function TaskFormSheet({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      "Delete Task",
-      "Are you sure you want to delete this task?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => onDelete?.(),
-        },
-      ],
-    );
+    Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => onDelete?.(),
+      },
+    ]);
   };
 
   const renderBackdrop = useCallback(
@@ -214,7 +214,14 @@ export function TaskFormSheet({
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
           <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
             {mode === "create" ? "New Task" : "Edit Task"}
           </Text>
@@ -225,7 +232,14 @@ export function TaskFormSheet({
 
         {/* Title */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#8FA8A8", marginBottom: 6 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "600",
+              color: "#8FA8A8",
+              marginBottom: 6,
+            }}
+          >
             Title
           </Text>
           <TextInput
@@ -249,7 +263,14 @@ export function TaskFormSheet({
 
         {/* Description */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#8FA8A8", marginBottom: 6 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "600",
+              color: "#8FA8A8",
+              marginBottom: 6,
+            }}
+          >
             Description
           </Text>
           <TextInput
@@ -275,7 +296,14 @@ export function TaskFormSheet({
 
         {/* Category */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#8FA8A8", marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "600",
+              color: "#8FA8A8",
+              marginBottom: 8,
+            }}
+          >
             Category
           </Text>
           <ScrollView
@@ -292,10 +320,18 @@ export function TaskFormSheet({
                 borderRadius: 9999,
                 borderWidth: 1.5,
                 borderColor: categoryId === null ? "#50C878" : "#164B49",
-                backgroundColor: categoryId === null ? "rgba(80, 200, 120, 0.15)" : "transparent",
+                backgroundColor:
+                  categoryId === null
+                    ? "rgba(80, 200, 120, 0.15)"
+                    : "transparent",
               }}
             >
-              <Text style={{ fontSize: 13, color: categoryId === null ? "#50C878" : "#8FA8A8" }}>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: categoryId === null ? "#50C878" : "#8FA8A8",
+                }}
+              >
                 None
               </Text>
             </Pressable>
@@ -319,7 +355,8 @@ export function TaskFormSheet({
                     color: categoryId === cat.id ? cat.color : "#8FA8A8",
                   }}
                 >
-                  {cat.icon ? `${cat.icon} ` : ""}{cat.name}
+                  {cat.icon ? `${cat.icon} ` : ""}
+                  {cat.name}
                 </Text>
               </Pressable>
             ))}
@@ -328,10 +365,26 @@ export function TaskFormSheet({
 
         {/* Priority */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#8FA8A8", marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "600",
+              color: "#8FA8A8",
+              marginBottom: 8,
+            }}
+          >
             Priority
           </Text>
-          <View style={{ flexDirection: "row", gap: 0, borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "#164B49" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              gap: 0,
+              borderRadius: 8,
+              overflow: "hidden",
+              borderWidth: 1,
+              borderColor: "#164B49",
+            }}
+          >
             {PRIORITY_OPTIONS.map((opt) => {
               const isActive = priority === opt.value;
               return (
@@ -364,11 +417,20 @@ export function TaskFormSheet({
 
         {/* Due Date */}
         <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#8FA8A8", marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "600",
+              color: "#8FA8A8",
+              marginBottom: 8,
+            }}
+          >
             Due Date
           </Text>
           {dueDate ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
               <Pressable
                 onPress={() => setShowDatePicker(true)}
                 style={{
@@ -390,7 +452,10 @@ export function TaskFormSheet({
                 </Text>
               </Pressable>
               <Pressable
-                onPress={() => { setDueDate(null); setShowDatePicker(false); }}
+                onPress={() => {
+                  setDueDate(null);
+                  setShowDatePicker(false);
+                }}
                 hitSlop={8}
                 style={{
                   width: 32,
@@ -456,7 +521,13 @@ export function TaskFormSheet({
                     marginTop: 4,
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#50C878" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: "#50C878",
+                    }}
+                  >
                     Done
                   </Text>
                 </Pressable>
@@ -467,11 +538,20 @@ export function TaskFormSheet({
 
         {/* Reminder */}
         <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: "#8FA8A8", marginBottom: 8 }}>
+          <Text
+            style={{
+              fontSize: 13,
+              fontWeight: "600",
+              color: "#8FA8A8",
+              marginBottom: 8,
+            }}
+          >
             Reminder
           </Text>
           {reminderAt ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+            >
               <Pressable
                 onPress={() => {
                   setPendingReminderDate(reminderAt);
@@ -581,7 +661,13 @@ export function TaskFormSheet({
                     marginTop: 4,
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#50C878" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: "#50C878",
+                    }}
+                  >
                     Next: Pick Time
                   </Text>
                 </Pressable>
@@ -635,7 +721,13 @@ export function TaskFormSheet({
                     marginTop: 4,
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: "600", color: "#50C878" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: "#50C878",
+                    }}
+                  >
                     Done
                   </Text>
                 </Pressable>

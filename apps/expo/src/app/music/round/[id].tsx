@@ -136,9 +136,7 @@ export default function RoundDetails() {
       <GradientBackground>
         <SafeAreaView className="flex-1 items-center justify-center">
           <Stack.Screen options={{ headerShown: false }} />
-          <Text className="mb-4 text-lg text-[#8FA8A8]">
-            Round not found
-          </Text>
+          <Text className="mb-4 text-lg text-[#8FA8A8]">Round not found</Text>
           <Pressable
             onPress={() => router.back()}
             className="rounded-lg border border-[#164B49] bg-[#102A2A] px-6 py-3"

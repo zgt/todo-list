@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -171,8 +170,8 @@ export default function MusicLeagueDashboard() {
               No leagues yet
             </Text>
             <Text className="mb-6 text-center text-sm leading-5 text-[#8FA8A8]">
-              Create a new league to play with friends, or enter an invite
-              code above to join one.
+              Create a new league to play with friends, or enter an invite code
+              above to join one.
             </Text>
             <Pressable
               onPress={() => router.push("/music/league/create" as never)}
@@ -189,7 +188,11 @@ export default function MusicLeagueDashboard() {
             data={leagues}
             keyExtractor={(item) => item.id}
             renderItem={renderLeagueCard}
-            contentContainerStyle={{ paddingTop: 4, paddingBottom: 100, flexGrow: 1 }}
+            contentContainerStyle={{
+              paddingTop: 4,
+              paddingBottom: 100,
+              flexGrow: 1,
+            }}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

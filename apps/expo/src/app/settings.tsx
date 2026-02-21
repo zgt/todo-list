@@ -58,9 +58,11 @@ export default function SettingsScreen() {
   // Reset local overrides when server data arrives
   useEffect(() => {
     if (serverPrefs) {
+      /* eslint-disable react-hooks/set-state-in-effect -- intentional: syncing server state resets optimistic overrides */
       setLocalPush(null);
       setLocalEmail(null);
       setLocalOffset(null);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [serverPrefs]);
 
@@ -148,32 +150,59 @@ export default function SettingsScreen() {
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+          }}
+        >
           <Pressable
             onPress={() => router.back()}
-            style={{ borderRadius: 999, backgroundColor: '#164B49', padding: 8 }}
+            style={{
+              borderRadius: 999,
+              backgroundColor: "#164B49",
+              padding: 8,
+            }}
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#DCE4E4' }}>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
             Notification Settings
           </Text>
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        >
           {/* Permission Status */}
           {permissionStatus !== "granted" && (
             <Pressable
               onPress={handleRequestPermission}
-              style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E5A04D', backgroundColor: '#2A2010', padding: 16 }}
+              style={{
+                marginBottom: 16,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#E5A04D",
+                backgroundColor: "#2A2010",
+                padding: 16,
+              }}
             >
               <BellOff size={20} color="#E5A04D" />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '500', color: '#E5A04D' }}>
+                <Text
+                  style={{ fontSize: 14, fontWeight: "500", color: "#E5A04D" }}
+                >
                   Notifications are disabled
                 </Text>
-                <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
+                <Text style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}>
                   Tap to enable notifications for this device
                 </Text>
               </View>
@@ -181,30 +210,57 @@ export default function SettingsScreen() {
           )}
 
           {/* Task Reminders Section */}
-          <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
+            style={{
+              marginBottom: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
             {pushReminders ? (
               <Bell size={22} color="#50C878" />
             ) : (
               <BellOff size={22} color="#8FA8A8" />
             )}
             <View>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#DCE4E4' }}>
+              <Text
+                style={{ fontSize: 18, fontWeight: "700", color: "#DCE4E4" }}
+              >
                 Task Reminders
               </Text>
-              <Text style={{ fontSize: 14, color: '#8FA8A8' }}>
+              <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
                 Get notified before tasks are due
               </Text>
             </View>
           </View>
 
-          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#164B49', backgroundColor: '#102A2A' }}>
+          <View
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#164B49",
+              backgroundColor: "#102A2A",
+            }}
+          >
             {/* Push Notifications Toggle */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#164B49', padding: 16 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottomWidth: 1,
+                borderBottomColor: "#164B49",
+                padding: 16,
+              }}
+            >
               <View style={{ flex: 1, paddingRight: 16 }}>
-                <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
+                <Text
+                  style={{ fontSize: 16, fontWeight: "500", color: "#DCE4E4" }}
+                >
                   Push Notifications
                 </Text>
-                <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
+                <Text style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}>
                   Receive push notifications on this device
                 </Text>
               </View>
@@ -217,14 +273,42 @@ export default function SettingsScreen() {
             </View>
 
             {/* Email Reminders Toggle */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: pushReminders ? 1 : 0, borderBottomColor: '#164B49', padding: 16 }}>
-              <View style={{ flex: 1, paddingRight: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <Mail size={18} color={emailReminders ? "#50C878" : "#8FA8A8"} />
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottomWidth: pushReminders ? 1 : 0,
+                borderBottomColor: "#164B49",
+                padding: 16,
+              }}
+            >
+              <View
+                style={{
+                  flex: 1,
+                  paddingRight: 16,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <Mail
+                  size={18}
+                  color={emailReminders ? "#50C878" : "#8FA8A8"}
+                />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "500",
+                      color: "#DCE4E4",
+                    }}
+                  >
                     Email Reminders
                   </Text>
-                  <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
+                  <Text
+                    style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}
+                  >
                     Receive reminder notifications via email
                   </Text>
                 </View>
@@ -240,9 +324,22 @@ export default function SettingsScreen() {
             {/* Reminder Offset Selection */}
             {pushReminders && (
               <View style={{ padding: 16 }}>
-                <View style={{ marginBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View
+                  style={{
+                    marginBottom: 12,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
                   <Clock size={16} color="#8FA8A8" />
-                  <Text style={{ fontSize: 14, fontWeight: '500', color: '#8FA8A8' }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "500",
+                      color: "#8FA8A8",
+                    }}
+                  >
                     Remind me
                   </Text>
                 </View>
@@ -255,14 +352,21 @@ export default function SettingsScreen() {
                         borderRadius: 8,
                         paddingHorizontal: 16,
                         paddingVertical: 12,
-                        backgroundColor: offsetMinutes === option.value ? 'rgba(80, 200, 120, 0.2)' : 'transparent',
+                        backgroundColor:
+                          offsetMinutes === option.value
+                            ? "rgba(80, 200, 120, 0.2)"
+                            : "transparent",
                       }}
                     >
                       <Text
                         style={{
                           fontSize: 14,
-                          fontWeight: offsetMinutes === option.value ? '600' : '400',
-                          color: offsetMinutes === option.value ? '#50C878' : '#DCE4E4',
+                          fontWeight:
+                            offsetMinutes === option.value ? "600" : "400",
+                          color:
+                            offsetMinutes === option.value
+                              ? "#50C878"
+                              : "#DCE4E4",
                         }}
                       >
                         {option.label}
@@ -275,7 +379,14 @@ export default function SettingsScreen() {
           </View>
 
           {/* Info */}
-          <Text style={{ marginTop: 16, textAlign: 'center', fontSize: 12, color: '#8FA8A8' }}>
+          <Text
+            style={{
+              marginTop: 16,
+              textAlign: "center",
+              fontSize: 12,
+              color: "#8FA8A8",
+            }}
+          >
             Music League notification preferences can be found in{"\n"}
             Music Leagues → Settings
           </Text>
@@ -419,13 +530,20 @@ function TestNotificationsSection() {
 
   return (
     <View style={{ marginTop: 32 }}>
-      <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <View
+        style={{
+          marginBottom: 16,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
         <FlaskConical size={22} color="#E5A04D" />
         <View>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: '#DCE4E4' }}>
+          <Text style={{ fontSize: 18, fontWeight: "700", color: "#DCE4E4" }}>
             Test Notifications
           </Text>
-          <Text style={{ fontSize: 14, color: '#8FA8A8' }}>
+          <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
             Tap to test each notification type
           </Text>
         </View>
@@ -438,13 +556,13 @@ function TestNotificationsSection() {
             onPress={btn.onPress}
             disabled={btn.loading}
             style={{
-              flexDirection: 'row',
-              alignItems: 'center',
+              flexDirection: "row",
+              alignItems: "center",
               gap: 12,
               borderRadius: 12,
               borderWidth: 1,
-              borderColor: '#164B49',
-              backgroundColor: '#102A2A',
+              borderColor: "#164B49",
+              backgroundColor: "#102A2A",
               padding: 16,
               opacity: btn.loading ? 0.5 : 1,
             }}
@@ -455,10 +573,12 @@ function TestNotificationsSection() {
               btn.icon
             )}
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: '#DCE4E4' }}>
+              <Text
+                style={{ fontSize: 14, fontWeight: "500", color: "#DCE4E4" }}
+              >
                 {btn.label}
               </Text>
-              <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
+              <Text style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}>
                 {btn.description}
               </Text>
             </View>

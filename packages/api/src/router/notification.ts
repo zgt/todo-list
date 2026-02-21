@@ -172,10 +172,17 @@ export const notificationRouter = {
         })
         .returning();
 
+      // prefs is guaranteed to exist after upsert with .returning()
+      const result = prefs ?? {
+        emailReminders: input.emailReminders ?? false,
+        pushReminders: input.pushReminders ?? true,
+        reminderOffsetMinutes: input.reminderOffsetMinutes ?? 15,
+      };
+
       return {
-        emailReminders: prefs!.emailReminders,
-        pushReminders: prefs!.pushReminders,
-        reminderOffsetMinutes: prefs!.reminderOffsetMinutes,
+        emailReminders: result.emailReminders,
+        pushReminders: result.pushReminders,
+        reminderOffsetMinutes: result.reminderOffsetMinutes,
       };
     }),
 } satisfies TRPCRouterRecord;

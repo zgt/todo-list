@@ -470,15 +470,12 @@ export const UserPreference = pgTable("user_preference", (t) => ({
     .$onUpdate(() => new Date()),
 }));
 
-export const userPreferenceRelations = relations(
-  UserPreference,
-  ({ one }) => ({
-    user: one(user, {
-      fields: [UserPreference.userId],
-      references: [user.id],
-    }),
+export const userPreferenceRelations = relations(UserPreference, ({ one }) => ({
+  user: one(user, {
+    fields: [UserPreference.userId],
+    references: [user.id],
   }),
-);
+}));
 
 export const ThemeTemplate = pgTable("theme_template", (t) => ({
   id: t

@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -188,7 +187,7 @@ export default function LeagueDetails() {
   const renderRoundCard = useCallback(
     ({ item }: { item: RoundItem }) => {
       const isPending = item.status === "PENDING";
-      
+
       // Color-coded status badges
       const getStatusColors = (status: string) => {
         switch (status) {
@@ -222,7 +221,13 @@ export default function LeagueDetails() {
             isPending ? { opacity: 0.6 } : undefined,
           ]}
         >
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <View style={{ flex: 1, marginRight: 12 }}>
               <Text
                 style={{

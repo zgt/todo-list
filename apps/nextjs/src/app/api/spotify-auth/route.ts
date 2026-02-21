@@ -5,12 +5,15 @@ import { env } from "~/env";
 const SCOPES = "playlist-modify-public playlist-modify-private";
 
 function getRedirectUri() {
-  const base =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
+  // eslint-disable-next-line no-restricted-properties -- Vercel system env vars, not suitable for build-time validation
+  const base = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? // eslint-disable-next-line no-restricted-properties
+      `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : // eslint-disable-next-line no-restricted-properties
+      process.env.VERCEL_URL
+      ? // eslint-disable-next-line no-restricted-properties
+        `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
   return `${base}/api/spotify-auth/callback`;
 }
 
@@ -19,7 +22,7 @@ function getRedirectUri() {
  * Redirects to Spotify authorization page.
  * Only works if SPOTIFY_CLIENT_ID is set.
  */
-export async function GET() {
+export function GET() {
   const clientId = env.SPOTIFY_CLIENT_ID;
   if (!clientId) {
     return NextResponse.json(

@@ -77,15 +77,10 @@ export async function GET(request: Request) {
           .set({ playlistUrl })
           .where(eq(Round.id, round.id));
 
-        console.log(
-          `Created playlist for round ${round.id}: ${playlistUrl}`,
-        );
+        console.log(`Created playlist for round ${round.id}: ${playlistUrl}`);
       }
     } catch (err) {
-      console.error(
-        `Failed to create playlist for round ${round.id}:`,
-        err,
-      );
+      console.error(`Failed to create playlist for round ${round.id}:`, err);
       // Don't block phase transition if playlist creation fails
     }
 
@@ -145,10 +140,7 @@ export async function GET(request: Request) {
           return result;
         };
 
-        const newSubmissionDeadline = addDays(
-          now,
-          league.submissionWindowDays,
-        );
+        const newSubmissionDeadline = addDays(now, league.submissionWindowDays);
         const newVotingDeadline = addDays(
           newSubmissionDeadline,
           league.votingWindowDays,

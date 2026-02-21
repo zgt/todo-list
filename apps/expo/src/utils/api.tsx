@@ -37,7 +37,7 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
 
         const cookies = authClient.getCookie();
         if (cookies) {
-          headers["Cookie"] = cookies;
+          headers.Cookie = cookies;
         }
         return headers;
       },
@@ -67,7 +67,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
 
           const cookies = authClient.getCookie();
           if (cookies) {
-            headers["Cookie"] = cookies;
+            headers.Cookie = cookies;
           }
           return headers;
         },

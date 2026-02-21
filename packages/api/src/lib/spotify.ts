@@ -205,21 +205,18 @@ export async function createPlaylist(
   const token = await getUserAccessToken();
 
   // Create playlist using /me/playlists (required for dev mode apps)
-  const createRes = await fetch(
-    `${API_BASE}/me/playlists`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        description,
-        public: true,
-      }),
+  const createRes = await fetch(`${API_BASE}/me/playlists`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      name,
+      description,
+      public: true,
+    }),
+  });
 
   if (!createRes.ok) {
     const errorBody = await createRes.text();
@@ -236,17 +233,14 @@ export async function createPlaylist(
   const uris = trackIds.map((id) => `spotify:track:${id}`);
   for (let i = 0; i < uris.length; i += 100) {
     const batch = uris.slice(i, i + 100);
-    const addRes = await fetch(
-      `${API_BASE}/playlists/${playlist.id}/items`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uris: batch }),
+    const addRes = await fetch(`${API_BASE}/playlists/${playlist.id}/items`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({ uris: batch }),
+    });
 
     if (!addRes.ok) {
       const errorBody = await addRes.text();

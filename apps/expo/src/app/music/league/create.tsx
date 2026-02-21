@@ -303,10 +303,7 @@ export default function CreateLeague() {
                   backgroundColor: "#50C878",
                   paddingVertical: 16,
                   marginTop: 16,
-                  opacity:
-                    createMutation.isPending || !name.trim()
-                      ? 0.5
-                      : 1,
+                  opacity: createMutation.isPending || !name.trim() ? 0.5 : 1,
                 }}
               >
                 {createMutation.isPending ? (

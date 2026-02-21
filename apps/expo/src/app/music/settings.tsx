@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Pressable,
-  RefreshControl,
-  ScrollView,
   Switch,
   Text,
   View,
@@ -49,22 +47,11 @@ const NOTIFICATION_PREFS: NotificationPref[] = [
 export default function SettingsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [refreshing, setRefreshing] = useState(false);
-  const [rippleTrigger, setRippleTrigger] = useState(0);
-  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const triggerRipple = useCallback(() => {
-    if (rippleDebounceRef.current) return;
-    setRippleTrigger((prev) => prev + 1);
-    rippleDebounceRef.current = setTimeout(() => {
-      rippleDebounceRef.current = null;
-    }, 500);
-  }, []);
+  const [rippleTrigger] = useState(0);
 
-  const {
-    data: profile,
-    isLoading,
-    refetch,
-  } = useQuery(trpc.musicLeague.getUserProfile.queryOptions());
+  const { data: profile, isLoading } = useQuery(
+    trpc.musicLeague.getUserProfile.queryOptions(),
+  );
 
   const [prefs, setPrefs] = useState({
     roundStart: true,
@@ -82,6 +69,7 @@ export default function SettingsScreen() {
         string,
         boolean
       >;
+      /* eslint-disable react-hooks/set-state-in-effect -- intentional: syncing server notification prefs to local state */
       setPrefs({
         roundStart: serverPrefs.roundStart ?? true,
         submissionReminder: serverPrefs.submissionReminder ?? true,
@@ -89,6 +77,7 @@ export default function SettingsScreen() {
         resultsAvailable: serverPrefs.resultsAvailable ?? true,
       });
       setHasChanges(false);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [profile?.notificationPreferences]);
 
@@ -119,16 +108,6 @@ export default function SettingsScreen() {
     saveMutation.mutate(prefs);
   };
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    triggerRipple();
-    try {
-      await refetch();
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch, triggerRipple]);
-
   if (isLoading) {
     return (
       <GradientBackground>
@@ -147,54 +126,93 @@ export default function SettingsScreen() {
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+          }}
+        >
           <Pressable
             onPress={() => router.back()}
-            style={{ borderRadius: 999, backgroundColor: '#164B49', padding: 8 }}
+            style={{
+              borderRadius: 999,
+              backgroundColor: "#164B49",
+              padding: 8,
+            }}
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#DCE4E4' }}>Settings</Text>
+          <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
+            Settings
+          </Text>
           <View style={{ width: 40 }} />
         </View>
 
         <View style={{ flex: 1, padding: 16 }}>
           {/* Notification Section Header */}
-          <View style={{ marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View
+            style={{
+              marginBottom: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
             {allEnabled ? (
               <Bell size={22} color="#50C878" />
             ) : (
               <BellOff size={22} color="#8FA8A8" />
             )}
             <View>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#DCE4E4' }}>
+              <Text
+                style={{ fontSize: 18, fontWeight: "700", color: "#DCE4E4" }}
+              >
                 Notifications
               </Text>
-              <Text style={{ fontSize: 14, color: '#8FA8A8' }}>
+              <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
                 Choose which notifications you receive
               </Text>
             </View>
           </View>
 
           {/* Notification Toggles */}
-          <View style={{ borderRadius: 12, borderWidth: 1, borderColor: '#164B49', backgroundColor: '#102A2A' }}>
+          <View
+            style={{
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#164B49",
+              backgroundColor: "#102A2A",
+            }}
+          >
             {NOTIFICATION_PREFS.map((pref, index) => (
               <View
                 key={pref.key}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   padding: 16,
-                  borderBottomWidth: index < NOTIFICATION_PREFS.length - 1 ? 1 : 0,
-                  borderBottomColor: '#164B49',
+                  borderBottomWidth:
+                    index < NOTIFICATION_PREFS.length - 1 ? 1 : 0,
+                  borderBottomColor: "#164B49",
                 }}
               >
                 <View style={{ flex: 1, paddingRight: 16 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '500', color: '#DCE4E4' }}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "500",
+                      color: "#DCE4E4",
+                    }}
+                  >
                     {pref.label}
                   </Text>
-                  <Text style={{ marginTop: 2, fontSize: 12, color: '#8FA8A8' }}>
+                  <Text
+                    style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}
+                  >
                     {pref.description}
                   </Text>
                 </View>
@@ -214,9 +232,9 @@ export default function SettingsScreen() {
             disabled={!hasChanges || saveMutation.isPending}
             style={{
               marginTop: 24,
-              alignItems: 'center',
+              alignItems: "center",
               borderRadius: 12,
-              backgroundColor: '#50C878',
+              backgroundColor: "#50C878",
               paddingVertical: 16,
               opacity: !hasChanges || saveMutation.isPending ? 0.5 : 1,
             }}
@@ -224,7 +242,9 @@ export default function SettingsScreen() {
             {saveMutation.isPending ? (
               <ActivityIndicator color="#0A1A1A" size="small" />
             ) : (
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#0A1A1A' }}>
+              <Text
+                style={{ fontSize: 16, fontWeight: "700", color: "#0A1A1A" }}
+              >
                 {hasChanges ? "Save Changes" : "No Changes"}
               </Text>
             )}

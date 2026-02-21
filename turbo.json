@@ -60,7 +60,8 @@
     "SPOTIFY_CLIENT_SECRET",
     "SPOTIFY_REFRESH_TOKEN",
     "CRON_SECRET",
-    "RESEND_API_KEY"
+    "RESEND_API_KEY",
+    "NEXT_PUBLIC_APP_URL"
   ],
   "globalPassThroughEnv": [
     "NODE_ENV",
@@ -68,6 +69,7 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
+    "VERCEL_PROJECT_PRODUCTION_URL",
     "npm_lifecycle_event"
   ]
 }

@@ -3,12 +3,15 @@ import { NextResponse } from "next/server";
 import { env } from "~/env";
 
 function getRedirectUri() {
-  const base =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : "http://localhost:3000";
+  // eslint-disable-next-line no-restricted-properties -- Vercel system env vars, not suitable for build-time validation
+  const base = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? // eslint-disable-next-line no-restricted-properties
+      `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : // eslint-disable-next-line no-restricted-properties
+      process.env.VERCEL_URL
+      ? // eslint-disable-next-line no-restricted-properties
+        `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
   return `${base}/api/spotify-auth/callback`;
 }
 

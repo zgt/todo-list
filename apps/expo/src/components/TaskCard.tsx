@@ -61,7 +61,10 @@ const SPRING_CONFIG = {
 };
 
 // Server tasks include reminderAt/reminderSentAt but LocalTask type doesn't
-type TaskWithReminder = { reminderAt?: Date | null; reminderSentAt?: Date | null };
+interface TaskWithReminder {
+  reminderAt?: Date | null;
+  reminderSentAt?: Date | null;
+}
 
 function getReminderDisplay(reminderAt: Date, reminderSentAt: Date | null) {
   const now = new Date();
@@ -116,8 +119,11 @@ export function TaskCard({
   onChangePriority,
 }: TaskCardProps) {
   const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
-  const reminderSentAt = (task as unknown as TaskWithReminder).reminderSentAt ?? null;
-  const reminderInfo = reminderAt ? getReminderDisplay(reminderAt, reminderSentAt) : null;
+  const reminderSentAt =
+    (task as unknown as TaskWithReminder).reminderSentAt ?? null;
+  const reminderInfo = reminderAt
+    ? getReminderDisplay(reminderAt, reminderSentAt)
+    : null;
   const progress = useSharedValue(isCompact ? 1 : 0);
 
   useEffect(() => {
@@ -225,7 +231,9 @@ export function TaskCard({
           </View>
         ) : (
           <>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+            >
               <RNText
                 className={`text-base font-semibold ${
                   task.completed ? "text-white/70 line-through" : "text-white"
@@ -235,16 +243,17 @@ export function TaskCard({
               >
                 {task.title}
               </RNText>
-              {reminderInfo && (
-                <Bell size={12} color={reminderInfo.color} />
-              )}
+              {reminderInfo && <Bell size={12} color={reminderInfo.color} />}
             </View>
             {task.description ? (
               <RNText className="text-sm text-white/50" numberOfLines={1}>
                 {task.description}
               </RNText>
             ) : reminderInfo ? (
-              <RNText style={{ fontSize: 11, color: reminderInfo.color }} numberOfLines={1}>
+              <RNText
+                style={{ fontSize: 11, color: reminderInfo.color }}
+                numberOfLines={1}
+              >
                 {reminderInfo.label}
               </RNText>
             ) : null}
@@ -450,7 +459,14 @@ export function TaskCard({
               </RNText>
             )}
             {reminderInfo && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 4,
+                }}
+              >
                 <Bell size={14} color={reminderInfo.color} />
                 <RNText style={{ fontSize: 13, color: reminderInfo.color }}>
                   {reminderInfo.label}

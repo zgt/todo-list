@@ -1,7 +1,6 @@
 import type { db as dbClient } from "@acme/db/client";
 import { and, eq, isNull, lte } from "@acme/db";
-import { PushToken, Task, UserPreference } from "@acme/db/schema";
-import { user } from "@acme/db/schema";
+import { PushToken, Task, user, UserPreference } from "@acme/db/schema";
 
 import { sendEmail } from "./email/client";
 import { taskReminderEmail } from "./email/templates/task-reminder";
@@ -29,7 +28,9 @@ const DEFAULT_PREFERENCES = {
 /**
  * Query tasks with reminders that are due to be sent.
  */
-export async function getUpcomingReminders(db: DB): Promise<UpcomingReminder[]> {
+export async function getUpcomingReminders(
+  db: DB,
+): Promise<UpcomingReminder[]> {
   const now = new Date();
 
   // Find tasks where reminder is due and hasn't been sent

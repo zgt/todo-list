@@ -214,8 +214,9 @@ export const LeagueSettingsSheet = forwardRef<
       useState(upvotePointsPerRound);
     const [editAllowDownvotes, setEditAllowDownvotes] =
       useState(allowDownvotes);
-    const [editDownvotePoints, setEditDownvotePoints] =
-      useState(downvotePointsPerRound);
+    const [editDownvotePoints, setEditDownvotePoints] = useState(
+      downvotePointsPerRound,
+    );
     const [editSubmissionWindowDays, setEditSubmissionWindowDays] =
       useState(submissionWindowDays);
     const [editVotingWindowDays, setEditVotingWindowDays] =
@@ -477,8 +478,7 @@ export const LeagueSettingsSheet = forwardRef<
                 borderRadius: 12,
                 backgroundColor: "#50C878",
                 paddingVertical: 16,
-                opacity:
-                  updateMutation.isPending || !editName.trim() ? 0.5 : 1,
+                opacity: updateMutation.isPending || !editName.trim() ? 0.5 : 1,
               }}
             >
               {updateMutation.isPending ? (

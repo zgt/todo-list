@@ -376,10 +376,7 @@ export const musicLeagueRouter = {
         // No previous round or previous is completed → start now
         startDate = new Date();
         submissionDeadline = addDays(startDate, league.submissionWindowDays);
-        votingDeadline = addDays(
-          submissionDeadline,
-          league.votingWindowDays,
-        );
+        votingDeadline = addDays(submissionDeadline, league.votingWindowDays);
         status = "SUBMISSION";
       } else {
         // Previous round is NOT completed → queue as PENDING
@@ -394,10 +391,7 @@ export const musicLeagueRouter = {
 
         startDate = lastRound.votingDeadline;
         submissionDeadline = addDays(startDate, league.submissionWindowDays);
-        votingDeadline = addDays(
-          submissionDeadline,
-          league.votingWindowDays,
-        );
+        votingDeadline = addDays(submissionDeadline, league.votingWindowDays);
         status = "PENDING";
       }
 

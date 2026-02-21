@@ -286,8 +286,8 @@ function InlineCreateTask() {
       </div>
 
       {/* Expanded area (always open for create) */}
-      <div className="border-t border-[#164B49] mx-6 mt-4" />
-      <div className="px-6 pb-6 pt-4">
+      <div className="mx-6 mt-4 border-t border-[#164B49]" />
+      <div className="px-6 pt-4 pb-6">
         {/* Title input (full width) */}
         <div className="max-w-2xl">
           <Input
@@ -853,7 +853,7 @@ export function TaskCard(props: {
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-[#164B49] px-6 pb-6 pt-4">
+          <div className="border-t border-[#164B49] px-6 pt-4 pb-6">
             {/* Description textarea / read-only */}
             <div className="max-w-2xl">
               {isEditing ? (
@@ -875,8 +875,8 @@ export function TaskCard(props: {
                   disabled={updateTask.isPending}
                 />
               ) : (
-                <p className="text-muted-foreground whitespace-pre-wrap text-sm">
-                  {props.task.description || "No description"}
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                  {props.task.description ?? "No description"}
                 </p>
               )}
             </div>

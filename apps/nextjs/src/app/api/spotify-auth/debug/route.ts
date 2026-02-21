@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 
+import { env } from "~/env";
+
 /**
  * GET /api/spotify-auth/debug
  * Shows the current refresh token's user info and scopes.
  * DELETE THIS ROUTE AFTER DEBUGGING.
  */
 export async function GET() {
-  const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-  const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN;
+  const clientId = env.SPOTIFY_CLIENT_ID;
+  const clientSecret = env.SPOTIFY_CLIENT_SECRET;
+  const refreshToken = env.SPOTIFY_REFRESH_TOKEN;
 
   if (!clientId || !clientSecret || !refreshToken) {
     return NextResponse.json({ error: "Missing env vars" }, { status: 500 });
@@ -46,7 +48,7 @@ export async function GET() {
     headers: { Authorization: `Bearer ${tokenData.access_token}` },
   });
 
-  const me = await meRes.json();
+  const me = (await meRes.json()) as Record<string, unknown>;
 
   return NextResponse.json({
     scopes: tokenData.scope,
