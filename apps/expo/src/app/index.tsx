@@ -437,6 +437,8 @@ export default function Index() {
             reminderAt: newTask.reminderAt ?? null,
             reminderSentAt: null,
             category: null,
+            listId: newTask.listId ?? null,
+            list: null,
           };
 
           const newTasks = [optimisticTask, ...previousTasks];

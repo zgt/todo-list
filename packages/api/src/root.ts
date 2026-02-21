@@ -5,6 +5,7 @@ import { notificationRouter } from "./router/notification";
 import { postRouter } from "./router/post";
 import { syncRouter } from "./router/sync";
 import { taskRouter } from "./router/task";
+import { taskListRouter } from "./router/task-list";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   sync: syncRouter,
   task: taskRouter,
+  taskList: taskListRouter,
 });
 
 // export type definition of API
