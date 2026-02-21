@@ -254,13 +254,26 @@ function InlineCreateTask() {
     titleInputRef.current?.focus();
   }, []);
 
-  // Close on click outside (but not on portal-rendered popovers)
+  // Close on click outside (but not on portal-rendered popovers/selects)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      // Ignore clicks on any Radix UI portal content (popovers, selects, dialogs, menus)
       if (
         target.closest("[data-radix-popper-content-wrapper]") ||
-        target.closest("[role='dialog']")
+        target.closest("[data-radix-select-viewport]") ||
+        target.closest("[data-radix-dismissable-layer]") ||
+        target.closest("[role='dialog']") ||
+        target.closest("[role='listbox']") ||
+        target.closest("[role='menu']")
+      ) {
+        return;
+      }
+      // Also ignore if any Radix portal content exists in the DOM
+      // (catches overlay/backdrop clicks that dismiss selects/popovers)
+      if (
+        document.querySelector("[data-radix-popper-content-wrapper]") ||
+        document.querySelector("[data-radix-select-content]")
       ) {
         return;
       }
@@ -268,8 +281,9 @@ function InlineCreateTask() {
         setIsCreating(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // Use pointerdown instead of mousedown for better Radix compatibility
+    document.addEventListener("pointerdown", handleClickOutside);
+    return () => document.removeEventListener("pointerdown", handleClickOutside);
   }, [setIsCreating]);
 
   return (
