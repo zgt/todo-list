@@ -33,6 +33,8 @@ import { useTRPC } from "~/trpc/react";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreePicker } from "./category-tree-picker";
 import { useCreateTask } from "./create-task-context";
+import { useListFilter } from "./list-filter-context";
+import { ListPickerPill } from "./list-picker-pill";
 import { PriorityBadge, PrioritySelectorPill } from "./priority";
 import { usePriorityFilter } from "./priority-filter-context";
 
@@ -193,6 +195,7 @@ function InlineCreateTask() {
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderAt, setReminderAt] = useState<Date | undefined>();
+  const [listId, setListId] = useState<string | undefined>();
   const titleInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -204,7 +207,10 @@ function InlineCreateTask() {
   const createTask = useMutation(
     trpc.task.create.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries(trpc.task.pathFilter());
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
         setIsCreating(false);
         toast.success("Task created!");
       },
@@ -230,6 +236,7 @@ function InlineCreateTask() {
       categoryId,
       priority,
       reminderAt,
+      listId,
     });
   };
 
@@ -385,6 +392,11 @@ function InlineCreateTask() {
             onChange={setReminderAt}
             disabled={createTask.isPending}
           />
+          <ListPickerPill
+            value={listId}
+            onChange={setListId}
+            disabled={createTask.isPending}
+          />
         </div>
 
         {/* Save/Cancel buttons */}
@@ -433,9 +445,22 @@ export function TaskList() {
   // Get selected category IDs from filter context
   const { effectiveCategoryIds } = useCategoryFilter();
   const { selectedPriorities } = usePriorityFilter();
+  const { selectedListId } = useListFilter();
 
-  // Filter tasks based on selected categories and priorities
+  // Filter tasks based on selected categories, priorities, and list
   const filteredTasks = tasks.filter((task) => {
+    // List filter
+    if (selectedListId === "personal" && task.listId !== null) {
+      return false;
+    }
+    if (
+      selectedListId !== null &&
+      selectedListId !== "personal" &&
+      task.listId !== selectedListId
+    ) {
+      return false;
+    }
+
     if (
       effectiveCategoryIds.length > 0 &&
       (!task.categoryId || !effectiveCategoryIds.includes(task.categoryId))
@@ -470,10 +495,10 @@ export function TaskList() {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <p className="text-xl font-semibold text-white">
-          No tasks match the selected categories
+          No tasks match the current filters
         </p>
         <p className="text-muted-foreground mt-2">
-          Try selecting different categories or clear the filter
+          Try adjusting your list, category, or priority filters
         </p>
       </div>
     );
@@ -515,6 +540,9 @@ export function TaskCard(props: {
   const [editedReminderAt, setEditedReminderAt] = useState<Date | undefined>(
     props.task.reminderAt ?? undefined,
   );
+  const [editedListId, setEditedListId] = useState<string | undefined>(
+    props.task.listId ?? undefined,
+  );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch categories for the select dropdown (only when user is logged in)
@@ -548,7 +576,10 @@ export function TaskCard(props: {
         toast.error("Failed to update task");
       },
       onSettled: async () => {
-        await queryClient.invalidateQueries(trpc.task.pathFilter());
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
       },
     }),
   );
@@ -556,7 +587,10 @@ export function TaskCard(props: {
   const deleteTask = useMutation(
     trpc.task.delete.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries(trpc.task.pathFilter());
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
         toast.success("Task deleted");
       },
     }),
@@ -576,6 +610,7 @@ export function TaskCard(props: {
     setEditedCategoryId(props.task.categoryId ?? undefined);
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setEditedReminderAt(props.task.reminderAt ?? undefined);
+    setEditedListId(props.task.listId ?? undefined);
     setIsExpanded(true);
     setIsEditing(true);
     setTimeout(() => titleInputRef.current?.focus(), 0);
@@ -603,6 +638,7 @@ export function TaskCard(props: {
         categoryId: editedCategoryId ?? null,
         priority: editedPriority,
         reminderAt: editedReminderAt ?? null,
+        listId: editedListId ?? null,
       });
       setIsEditing(false);
       setIsExpanded(false);
@@ -619,6 +655,7 @@ export function TaskCard(props: {
     setEditedCategoryId(props.task.categoryId ?? undefined);
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setEditedReminderAt(props.task.reminderAt ?? undefined);
+    setEditedListId(props.task.listId ?? undefined);
     setIsEditing(false);
     setIsExpanded(false);
   };
@@ -646,7 +683,8 @@ export function TaskCard(props: {
     editedDueDate?.getTime() !== props.task.dueDate?.getTime() ||
     editedCategoryId !== props.task.categoryId ||
     editedPriority !== (props.task.priority ?? "medium") ||
-    editedReminderAt?.getTime() !== props.task.reminderAt?.getTime();
+    editedReminderAt?.getTime() !== props.task.reminderAt?.getTime() ||
+    (editedListId ?? null) !== (props.task.listId ?? null);
 
   return (
     <div
@@ -817,6 +855,21 @@ export function TaskCard(props: {
           </div>
         ) : null}
 
+        {/* List badge - collapsed row */}
+        {!isExpanded && props.task.list ? (
+          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
+            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-[#8FA8A8] backdrop-blur-md">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor: props.task.list.color ?? "#8FA8A8",
+                }}
+              />
+              {props.task.list.name}
+            </div>
+          </div>
+        ) : null}
+
         {/* Hover Actions - only in collapsed non-editing state */}
         {!isExpanded && !isEditing && (
           <div className="absolute inset-y-0 right-0 flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
@@ -942,6 +995,11 @@ export function TaskCard(props: {
                 <ReminderPill
                   value={editedReminderAt}
                   onChange={setEditedReminderAt}
+                  disabled={updateTask.isPending}
+                />
+                <ListPickerPill
+                  value={editedListId}
+                  onChange={setEditedListId}
                   disabled={updateTask.isPending}
                 />
               </div>

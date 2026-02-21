@@ -223,9 +223,7 @@ export const TaskListMember = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: t.varchar({ length: 20 }).notNull().default("editor"),
-    invitedBy: t
-      .text("invited_by")
-      .references(() => user.id),
+    invitedBy: t.text("invited_by").references(() => user.id),
     joinedAt: t
       .timestamp("joined_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
@@ -659,7 +657,10 @@ export const UpdateCategorySchema = z.object({
 export const CreateTaskListSchema = createInsertSchema(TaskList, {
   name: z.string().min(1, "Name is required").max(200),
   description: z.string().max(2000).optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
   icon: z.string().max(50).optional(),
 }).omit({
   id: true,
@@ -714,33 +715,27 @@ export const taskListRelations = relations(TaskList, ({ one, many }) => ({
   tasks: many(Task),
 }));
 
-export const taskListMemberRelations = relations(
-  TaskListMember,
-  ({ one }) => ({
-    list: one(TaskList, {
-      fields: [TaskListMember.listId],
-      references: [TaskList.id],
-    }),
-    user: one(user, {
-      fields: [TaskListMember.userId],
-      references: [user.id],
-    }),
+export const taskListMemberRelations = relations(TaskListMember, ({ one }) => ({
+  list: one(TaskList, {
+    fields: [TaskListMember.listId],
+    references: [TaskList.id],
   }),
-);
+  user: one(user, {
+    fields: [TaskListMember.userId],
+    references: [user.id],
+  }),
+}));
 
-export const taskListInviteRelations = relations(
-  TaskListInvite,
-  ({ one }) => ({
-    list: one(TaskList, {
-      fields: [TaskListInvite.listId],
-      references: [TaskList.id],
-    }),
-    createdByUser: one(user, {
-      fields: [TaskListInvite.createdBy],
-      references: [user.id],
-    }),
+export const taskListInviteRelations = relations(TaskListInvite, ({ one }) => ({
+  list: one(TaskList, {
+    fields: [TaskListInvite.listId],
+    references: [TaskList.id],
   }),
-);
+  createdByUser: one(user, {
+    fields: [TaskListInvite.createdBy],
+    references: [user.id],
+  }),
+}));
 
 // Music League Relations
 

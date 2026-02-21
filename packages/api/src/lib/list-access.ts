@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
-import { and, eq } from "@acme/db";
 import type { db } from "@acme/db/client";
+import { and, eq } from "@acme/db";
 import { TaskList, TaskListMember } from "@acme/db/schema";
 
 const ROLE_HIERARCHY: Record<string, number> = {

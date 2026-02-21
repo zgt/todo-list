@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Music, Settings, Tag, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Home, Music, Settings, Tag, User, Users } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
@@ -15,7 +16,11 @@ import {
   SidebarMenuItem,
 } from "@acme/ui/sidebar";
 
+import { useSession } from "~/auth/client";
+import { useTRPC } from "~/trpc/react";
 import { signOut } from "./auth-actions";
+import { CreateListDialog } from "./create-list-dialog";
+import { useListFilter } from "./list-filter-context";
 import { SidebarSignInButton } from "./sidebar-signin-button";
 
 const navigation = [
@@ -83,6 +88,9 @@ export function AppSidebar({
               );
             })}
           </SidebarMenu>
+
+          {/* Lists Section */}
+          {user && <SidebarListsSection />}
 
           <div className="mt-auto pt-4">
             {user ? (
@@ -156,5 +164,106 @@ export function AppSidebar({
         </div>
       </SidebarContent>
     </Sidebar>
+  );
+}
+
+function SidebarListsSection() {
+  const trpc = useTRPC();
+  const { data: session } = useSession();
+  const { selectedListId, setSelectedListId } = useListFilter();
+
+  const { data: lists } = useQuery({
+    ...trpc.taskList.all.queryOptions(),
+    enabled: !!session?.user,
+  });
+
+  return (
+    <div className="mt-4 border-t border-white/10 pt-4">
+      <div className="mb-2 flex items-center justify-between px-2">
+        <span className="text-xs font-semibold tracking-wider text-[#8FA8A8] uppercase">
+          Lists
+        </span>
+        <CreateListDialog />
+      </div>
+
+      <SidebarMenu className="gap-1">
+        {/* All Tasks */}
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            isActive={selectedListId === null}
+            onClick={() => setSelectedListId(null)}
+            className={cn(
+              "h-9 rounded-lg px-3 text-sm transition-all duration-200",
+              selectedListId === null
+                ? "bg-primary/20 text-primary border-primary/20 border"
+                : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+            )}
+          >
+            <span className="font-medium">All Tasks</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {/* Personal */}
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            isActive={selectedListId === "personal"}
+            onClick={() => setSelectedListId("personal")}
+            className={cn(
+              "h-9 rounded-lg px-3 text-sm transition-all duration-200",
+              selectedListId === "personal"
+                ? "bg-primary/20 text-primary border-primary/20 border"
+                : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+            )}
+          >
+            <div className="flex w-full items-center gap-2.5">
+              <span className="h-2 w-2 rounded-full bg-[#8FA8A8]" />
+              <span className="flex-1 truncate font-medium">Personal</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {/* User lists */}
+        {lists?.map((list) => (
+          <SidebarMenuItem key={list.id} className="group/list">
+            <SidebarMenuButton
+              isActive={selectedListId === list.id}
+              onClick={() => setSelectedListId(list.id)}
+              className={cn(
+                "h-9 rounded-lg px-3 text-sm transition-all duration-200",
+                selectedListId === list.id
+                  ? "bg-primary/20 text-primary border-primary/20 border"
+                  : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+              )}
+            >
+              <div className="flex w-full items-center gap-2.5">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: list.color ?? "#8FA8A8" }}
+                />
+                <span className="flex-1 truncate font-medium">{list.name}</span>
+                <div className="flex items-center gap-1.5">
+                  {list.memberCount > 1 && (
+                    <Users className="h-3 w-3 text-[#8FA8A8]" />
+                  )}
+                  {list.taskCount > 0 && (
+                    <span className="min-w-[1.25rem] rounded-full bg-white/10 px-1.5 py-0.5 text-center text-[10px] font-medium text-[#8FA8A8]">
+                      {list.taskCount}
+                    </span>
+                  )}
+                  <Link
+                    href={`/lists/${list.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="rounded p-0.5 text-[#8FA8A8] opacity-0 transition-all group-hover/list:opacity-100 hover:bg-white/10 hover:text-[#DCE4E4]"
+                    aria-label={`${list.name} settings`}
+                  >
+                    <Settings className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </SidebarMenu>
+    </div>
   );
 }

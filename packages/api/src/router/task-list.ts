@@ -35,17 +35,11 @@ export const taskListRouter = {
         updatedAt: TaskList.updatedAt,
       })
       .from(TaskList)
-      .leftJoin(
-        TaskListMember,
-        eq(TaskList.id, TaskListMember.listId),
-      )
+      .leftJoin(TaskListMember, eq(TaskList.id, TaskListMember.listId))
       .where(
         and(
           isNull(TaskList.deletedAt),
-          or(
-            eq(TaskList.ownerId, userId),
-            eq(TaskListMember.userId, userId),
-          ),
+          or(eq(TaskList.ownerId, userId), eq(TaskListMember.userId, userId)),
         ),
       );
 
@@ -70,10 +64,7 @@ export const taskListRouter = {
         })
         .from(Task)
         .where(
-          and(
-            sql`${Task.listId} = ANY(${listIds})`,
-            isNull(Task.deletedAt),
-          ),
+          and(sql`${Task.listId} = ANY(${listIds})`, isNull(Task.deletedAt)),
         )
         .groupBy(Task.listId),
     ]);
@@ -81,9 +72,7 @@ export const taskListRouter = {
     const memberCountMap = new Map(
       memberCounts.map((r) => [r.listId, r.count]),
     );
-    const taskCountMap = new Map(
-      taskCounts.map((r) => [r.listId, r.count]),
-    );
+    const taskCountMap = new Map(taskCounts.map((r) => [r.listId, r.count]));
 
     return lists.map((list) => ({
       ...list,
@@ -416,7 +405,8 @@ export const taskListRouter = {
       if (list.ownerId === userId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Owners cannot leave their own list. Delete or transfer ownership instead.",
+          message:
+            "Owners cannot leave their own list. Delete or transfer ownership instead.",
         });
       }
 
