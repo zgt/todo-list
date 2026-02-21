@@ -25,7 +25,10 @@ import { PrioritySelector } from "./PrioritySelector";
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface TaskCardProps {
-  task: LocalTask & { category?: { name: string; color: string } | null };
+  task: LocalTask & {
+    category?: { name: string; color: string } | null;
+    list?: { id: string; name: string; color: string | null } | null;
+  };
   isCompact: boolean;
   onToggle: () => void;
   onDelete: () => void;
@@ -244,6 +247,30 @@ export function TaskCard({
                 {task.title}
               </RNText>
               {reminderInfo && <Bell size={12} color={reminderInfo.color} />}
+              {task.list && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 3,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: task.list.color ?? "#50C878",
+                    }}
+                  />
+                  <RNText
+                    style={{ fontSize: 11, color: "#8FA8A8" }}
+                    numberOfLines={1}
+                  >
+                    {task.list.name}
+                  </RNText>
+                </View>
+              )}
             </View>
             {task.description ? (
               <RNText className="text-sm text-white/50" numberOfLines={1}>
@@ -395,6 +422,25 @@ export function TaskCard({
                     month: "short",
                     day: "numeric",
                   }).format(task.dueDate)}
+                </RNText>
+              </View>
+            )}
+            {task.list && (
+              <View
+                style={[
+                  styles.miniPill,
+                  {
+                    backgroundColor: `${task.list.color ?? "#50C878"}20`,
+                    borderColor: task.list.color ?? "#50C878",
+                  },
+                ]}
+              >
+                <RNText
+                  style={{ color: "#8FA8A8" }}
+                  className="text-xs font-medium"
+                  numberOfLines={1}
+                >
+                  {task.list.name}
                 </RNText>
               </View>
             )}

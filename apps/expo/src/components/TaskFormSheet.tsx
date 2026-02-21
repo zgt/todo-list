@@ -18,6 +18,7 @@ export interface TaskFormData {
   title: string;
   description: string;
   categoryId: string | null;
+  listId: string | null;
   priority: PriorityLevel;
   dueDate: Date | null;
   reminderAt: Date | null;
@@ -30,12 +31,19 @@ interface Category {
   icon: string | null;
 }
 
+interface TaskList {
+  id: string;
+  name: string;
+  color: string | null;
+}
+
 interface TaskFormSheetProps {
   visible: boolean;
   onClose: () => void;
   onSubmit: (data: TaskFormData) => void;
   initialData?: Partial<TaskFormData>;
   categories: Category[];
+  lists?: TaskList[];
   isSubmitting?: boolean;
   mode: "create" | "edit";
   onDelete?: () => void;
@@ -84,6 +92,7 @@ export function TaskFormSheet({
   onSubmit,
   initialData,
   categories,
+  lists,
   isSubmitting,
   mode,
   onDelete,
@@ -97,6 +106,9 @@ export function TaskFormSheet({
   );
   const [categoryId, setCategoryId] = useState<string | null>(
     initialData?.categoryId ?? null,
+  );
+  const [listId, setListId] = useState<string | null>(
+    initialData?.listId ?? null,
   );
   const [priority, setPriority] = useState<PriorityLevel>(
     initialData?.priority ?? "medium",
@@ -123,6 +135,7 @@ export function TaskFormSheet({
       setTitle(initialData?.title ?? "");
       setDescription(initialData?.description ?? "");
       setCategoryId(initialData?.categoryId ?? null);
+      setListId(initialData?.listId ?? null);
       setPriority(initialData?.priority ?? "medium");
       setDueDate(initialData?.dueDate ?? null);
       setReminderAt(initialData?.reminderAt ?? null);
@@ -162,6 +175,7 @@ export function TaskFormSheet({
       title: title.trim(),
       description: description.trim(),
       categoryId,
+      listId,
       priority,
       dueDate,
       reminderAt,
@@ -362,6 +376,94 @@ export function TaskFormSheet({
             ))}
           </ScrollView>
         </View>
+
+        {/* List */}
+        {lists && lists.length > 0 && (
+          <View style={{ marginBottom: 16 }}>
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "600",
+                color: "#8FA8A8",
+                marginBottom: 8,
+              }}
+            >
+              List
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8 }}
+            >
+              <Pressable
+                onPress={() => setListId(null)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 9999,
+                  borderWidth: 1.5,
+                  borderColor: listId === null ? "#50C878" : "#164B49",
+                  backgroundColor:
+                    listId === null
+                      ? "rgba(80, 200, 120, 0.15)"
+                      : "transparent",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 13,
+                    color: listId === null ? "#50C878" : "#8FA8A8",
+                  }}
+                >
+                  Personal
+                </Text>
+              </Pressable>
+              {lists.map((list) => (
+                <Pressable
+                  key={list.id}
+                  onPress={() => setListId(list.id)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    paddingHorizontal: 14,
+                    paddingVertical: 8,
+                    borderRadius: 9999,
+                    borderWidth: 1.5,
+                    borderColor:
+                      listId === list.id
+                        ? (list.color ?? "#50C878")
+                        : "#164B49",
+                    backgroundColor:
+                      listId === list.id
+                        ? `${list.color ?? "#50C878"}25`
+                        : "transparent",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: list.color ?? "#50C878",
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      color:
+                        listId === list.id
+                          ? (list.color ?? "#50C878")
+                          : "#8FA8A8",
+                    }}
+                  >
+                    {list.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Priority */}
         <View style={{ marginBottom: 16 }}>

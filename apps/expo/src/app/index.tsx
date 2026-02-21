@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   Text as RNText,
+  ScrollView,
   View,
 } from "react-native";
 import Animated from "react-native-reanimated";
@@ -101,6 +102,10 @@ export default function Index() {
     [],
   );
 
+  const [selectedListFilter, setSelectedListFilter] = useState<string | null>(
+    null,
+  );
+
   // Sheet state
   const [createSheetVisible, setCreateSheetVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
@@ -121,6 +126,13 @@ export default function Index() {
   // Fetch categories for the form sheet
   const { data: categories } = useQuery(
     trpc.category.all.queryOptions(undefined, {
+      enabled: !!session,
+    }),
+  );
+
+  // Fetch lists for the form sheet and filter
+  const { data: lists } = useQuery(
+    trpc.taskList.all.queryOptions(undefined, {
       enabled: !!session,
     }),
   );
@@ -231,8 +243,14 @@ export default function Index() {
       );
     }
 
+    if (selectedListFilter === "personal") {
+      result = result.filter((task) => !task.listId);
+    } else if (selectedListFilter) {
+      result = result.filter((task) => task.listId === selectedListFilter);
+    }
+
     return result;
-  }, [tasks, effectiveCategoryIds, selectedPriorities]);
+  }, [tasks, effectiveCategoryIds, selectedPriorities, selectedListFilter]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
@@ -481,6 +499,7 @@ export default function Index() {
       dueDate: data.dueDate ?? undefined,
       priority: data.priority ?? "medium",
       reminderAt: data.reminderAt ?? undefined,
+      listId: data.listId ?? undefined,
     });
 
     setCreateSheetVisible(false);
@@ -509,6 +528,7 @@ export default function Index() {
       dueDate: data.dueDate,
       priority: data.priority ?? "medium",
       reminderAt: data.reminderAt,
+      listId: data.listId,
     });
 
     setEditingTask(null);
@@ -584,6 +604,107 @@ export default function Index() {
           className="flex-1 px-4"
           style={{ minHeight: Dimensions.get("window").height * 0.75 }}
         >
+          {/* List Filter */}
+          {lists && lists.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 6, paddingBottom: 10 }}
+            >
+              <Pressable
+                onPress={() => setSelectedListFilter(null)}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 5,
+                  borderRadius: 9999,
+                  borderWidth: 1,
+                  borderColor:
+                    selectedListFilter === null ? "#50C878" : "#164B49",
+                  backgroundColor:
+                    selectedListFilter === null
+                      ? "rgba(80, 200, 120, 0.15)"
+                      : "transparent",
+                }}
+              >
+                <RNText
+                  style={{
+                    fontSize: 12,
+                    color: selectedListFilter === null ? "#50C878" : "#8FA8A8",
+                  }}
+                >
+                  All
+                </RNText>
+              </Pressable>
+              <Pressable
+                onPress={() => setSelectedListFilter("personal")}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 5,
+                  borderRadius: 9999,
+                  borderWidth: 1,
+                  borderColor:
+                    selectedListFilter === "personal" ? "#50C878" : "#164B49",
+                  backgroundColor:
+                    selectedListFilter === "personal"
+                      ? "rgba(80, 200, 120, 0.15)"
+                      : "transparent",
+                }}
+              >
+                <RNText
+                  style={{
+                    fontSize: 12,
+                    color:
+                      selectedListFilter === "personal" ? "#50C878" : "#8FA8A8",
+                  }}
+                >
+                  Personal
+                </RNText>
+              </Pressable>
+              {lists.map((list) => (
+                <Pressable
+                  key={list.id}
+                  onPress={() => setSelectedListFilter(list.id)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                    paddingHorizontal: 12,
+                    paddingVertical: 5,
+                    borderRadius: 9999,
+                    borderWidth: 1,
+                    borderColor:
+                      selectedListFilter === list.id
+                        ? (list.color ?? "#50C878")
+                        : "#164B49",
+                    backgroundColor:
+                      selectedListFilter === list.id
+                        ? `${list.color ?? "#50C878"}25`
+                        : "transparent",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: list.color ?? "#50C878",
+                    }}
+                  />
+                  <RNText
+                    style={{
+                      fontSize: 12,
+                      color:
+                        selectedListFilter === list.id
+                          ? (list.color ?? "#50C878")
+                          : "#8FA8A8",
+                    }}
+                  >
+                    {list.name}
+                  </RNText>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
           {filteredTasks.length > 0 ? (
             viewMode === "stack" ? (
               <SwipeableCardStack
@@ -611,7 +732,7 @@ export default function Index() {
               <RNText className="text-muted-foreground text-center italic">
                 {tasks.length === 0
                   ? "No tasks yet. Tap + to create one!"
-                  : "No tasks in this category."}
+                  : "No matching tasks."}
               </RNText>
             </View>
           )}
@@ -655,6 +776,11 @@ export default function Index() {
         onClose={() => setCreateSheetVisible(false)}
         onSubmit={handleCreateSubmit}
         categories={sheetCategories}
+        lists={(lists ?? []).map((l) => ({
+          id: l.id,
+          name: l.name,
+          color: l.color,
+        }))}
         isSubmitting={createMutation.isPending}
         mode="create"
       />
@@ -673,10 +799,16 @@ export default function Index() {
                 priority: editingTask.priority as PriorityLevel,
                 dueDate: editingTask.dueDate,
                 reminderAt: editingTask.reminderAt,
+                listId: editingTask.listId,
               }
             : undefined
         }
         categories={sheetCategories}
+        lists={(lists ?? []).map((l) => ({
+          id: l.id,
+          name: l.name,
+          color: l.color,
+        }))}
         isSubmitting={updateMutation.isPending}
         mode="edit"
         onDelete={handleEditDelete}
