@@ -11,6 +11,25 @@ import {
 
 import { protectedProcedure } from "../trpc";
 
+function serializeSubtaskDates<
+  T extends {
+    createdAt: unknown;
+    updatedAt: unknown;
+    completedAt: unknown;
+  },
+>(subtask: T) {
+  return {
+    ...subtask,
+    createdAt: new Date(subtask.createdAt as string | number | Date),
+    updatedAt: subtask.updatedAt
+      ? new Date(subtask.updatedAt as string | number | Date)
+      : null,
+    completedAt: subtask.completedAt
+      ? new Date(subtask.completedAt as string | number | Date)
+      : null,
+  };
+}
+
 function serializeTaskDates<
   T extends {
     createdAt: unknown;
@@ -22,6 +41,7 @@ function serializeTaskDates<
     lastSyncedAt: unknown;
     reminderAt: unknown;
     reminderSentAt: unknown;
+    subtasks?: { createdAt: unknown; updatedAt: unknown; completedAt: unknown }[];
   },
 >(task: T) {
   return {
@@ -51,6 +71,7 @@ function serializeTaskDates<
     reminderSentAt: task.reminderSentAt
       ? new Date(task.reminderSentAt as string | number | Date)
       : null,
+    subtasks: task.subtasks?.map(serializeSubtaskDates),
   };
 }
 
@@ -65,7 +86,7 @@ export const taskRouter = {
       ),
       orderBy: [desc(Task.createdAt)],
       limit: 100,
-      with: { category: true },
+      with: { category: true, subtasks: true },
     });
 
     return tasks.map(serializeTaskDates);
@@ -81,7 +102,7 @@ export const taskRouter = {
           eq(Task.userId, ctx.session.user.id),
           isNull(Task.deletedAt),
         ),
-        with: { category: true },
+        with: { category: true, subtasks: true },
       });
 
       if (!task) return null;
