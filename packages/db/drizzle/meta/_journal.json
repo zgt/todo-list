@@ -8,6 +8,13 @@
       "when": 1771608279862,
       "tag": "0000_past_revanche",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771642412618,
+      "tag": "0001_magenta_master_chief",
+      "breakpoints": true
     }
   ]
 }
