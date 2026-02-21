@@ -7,7 +7,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
-import { Bell, LogOut, Music } from "lucide-react-native";
+import { Bell, LogOut, Music, Users } from "lucide-react-native";
 
 import type { User } from "~/utils/auth";
 import { authClient } from "~/utils/auth";
@@ -122,6 +122,19 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
 
           {/* Menu Items */}
           <View className="gap-2">
+            <Pressable
+              onPress={() => {
+                onClose();
+                router.push("/lists" as never);
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Users size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                My Lists
+              </RNText>
+            </Pressable>
+
             <Pressable
               onPress={() => {
                 onClose();

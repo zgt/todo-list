@@ -1,5 +1,11 @@
 import { relations, sql } from "drizzle-orm";
-import { check, index, pgEnum, pgTable } from "drizzle-orm/pg-core";
+import {
+  check,
+  index,
+  pgEnum,
+  pgTable,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -100,6 +106,32 @@ export const Category = pgTable(
   ],
 );
 
+export const TaskList = pgTable(
+  "task_list",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    name: t.varchar({ length: 200 }).notNull(),
+    description: t.text(),
+    color: t.varchar({ length: 7 }),
+    icon: t.varchar({ length: 50 }),
+    ownerId: t
+      .text("owner_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    isDefault: t.boolean("is_default").notNull().default(false),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: t
+      .timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+    deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
+  }),
+  (table) => [index("task_list_owner_id_idx").on(table.ownerId)],
+);
+
 export const Task = pgTable(
   "task",
   (t) => ({
@@ -111,6 +143,9 @@ export const Task = pgTable(
     categoryId: t
       .uuid("category_id")
       .references(() => Category.id, { onDelete: "set null" }),
+    listId: t
+      .uuid("list_id")
+      .references(() => TaskList.id, { onDelete: "set null" }),
     title: t.varchar({ length: 500 }).notNull(),
     description: t.text(),
     completed: t.boolean().notNull().default(false),
@@ -161,6 +196,7 @@ export const Task = pgTable(
     ),
     index("task_user_id_archived_at_idx").on(table.userId, table.archivedAt),
     index("task_category_id_idx").on(table.categoryId),
+    index("task_list_id_idx").on(table.listId),
     index("task_user_id_priority_completed_idx").on(
       table.userId,
       table.priority,
@@ -200,6 +236,67 @@ export const Subtask = pgTable(
   }),
   (table) => [
     index("subtask_task_id_sort_order_idx").on(table.taskId, table.sortOrder),
+  ],
+);
+
+export const TaskListMember = pgTable(
+  "task_list_member",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    listId: t
+      .uuid("list_id")
+      .notNull()
+      .references(() => TaskList.id, { onDelete: "cascade" }),
+    userId: t
+      .text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: t.varchar({ length: 20 }).notNull().default("editor"),
+    invitedBy: t.text("invited_by").references(() => user.id),
+    joinedAt: t
+      .timestamp("joined_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: t
+      .timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .$onUpdate(() => new Date()),
+  }),
+  (table) => [
+    uniqueIndex("task_list_member_list_user_unique").on(
+      table.listId,
+      table.userId,
+    ),
+    index("task_list_member_user_id_idx").on(table.userId),
+  ],
+);
+
+export const TaskListInvite = pgTable(
+  "task_list_invite",
+  (t) => ({
+    id: t.uuid().notNull().primaryKey().defaultRandom(),
+    listId: t
+      .uuid("list_id")
+      .notNull()
+      .references(() => TaskList.id, { onDelete: "cascade" }),
+    inviteCode: t.varchar("invite_code", { length: 20 }).notNull().unique(),
+    role: t.varchar({ length: 20 }).notNull().default("editor"),
+    maxUses: t.integer("max_uses"),
+    useCount: t.integer("use_count").notNull().default(0),
+    expiresAt: t.timestamp("expires_at", { withTimezone: true, mode: "date" }),
+    createdBy: t
+      .text("created_by")
+      .notNull()
+      .references(() => user.id),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    deletedAt: t.timestamp("deleted_at", { withTimezone: true, mode: "date" }),
+  }),
+  (table) => [
+    index("task_list_invite_code_idx").on(table.inviteCode),
+    index("task_list_invite_list_id_idx").on(table.listId),
   ],
 );
 
@@ -522,6 +619,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).optional(),
   categoryId: z.string().uuid().optional(),
+  listId: z.string().uuid().optional(),
   dueDate: z.date().optional(),
   priority: TaskPriority.optional().default("medium"),
   reminderAt: z.date().optional(),
@@ -545,6 +643,7 @@ export const UpdateTaskSchema = z.object({
   description: z.string().max(5000).optional(),
   completed: z.boolean().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  listId: z.string().uuid().nullable().optional(),
   dueDate: z.date().nullable().optional(),
   priority: TaskPriority.nullable().optional(),
   orderIndex: z.number().int().optional(),
@@ -603,6 +702,35 @@ export const UpdateCategorySchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
 });
 
+export const CreateTaskListSchema = createInsertSchema(TaskList, {
+  name: z.string().min(1, "Name is required").max(200),
+  description: z.string().max(2000).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .optional(),
+  icon: z.string().max(50).optional(),
+}).omit({
+  id: true,
+  ownerId: true,
+  isDefault: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+export const UpdateTaskListSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(200).optional(),
+  description: z.string().max(2000).nullable().optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/)
+    .nullable()
+    .optional(),
+  icon: z.string().max(50).nullable().optional(),
+});
+
 export const categoryRelations = relations(Category, ({ one, many }) => ({
   parent: one(Category, {
     fields: [Category.parentId],
@@ -621,12 +749,47 @@ export const taskRelations = relations(Task, ({ one, many }) => ({
     references: [Category.id],
   }),
   subtasks: many(Subtask),
+  list: one(TaskList, {
+    fields: [Task.listId],
+    references: [TaskList.id],
+  }),
 }));
 
 export const subtaskRelations = relations(Subtask, ({ one }) => ({
   task: one(Task, {
     fields: [Subtask.taskId],
     references: [Task.id],
+  }),
+}));
+
+export const taskListRelations = relations(TaskList, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [TaskList.ownerId],
+    references: [user.id],
+  }),
+  members: many(TaskListMember),
+  tasks: many(Task),
+}));
+
+export const taskListMemberRelations = relations(TaskListMember, ({ one }) => ({
+  list: one(TaskList, {
+    fields: [TaskListMember.listId],
+    references: [TaskList.id],
+  }),
+  user: one(user, {
+    fields: [TaskListMember.userId],
+    references: [user.id],
+  }),
+}));
+
+export const taskListInviteRelations = relations(TaskListInvite, ({ one }) => ({
+  list: one(TaskList, {
+    fields: [TaskListInvite.listId],
+    references: [TaskList.id],
+  }),
+  createdByUser: one(user, {
+    fields: [TaskListInvite.createdBy],
+    references: [user.id],
   }),
 }));
 

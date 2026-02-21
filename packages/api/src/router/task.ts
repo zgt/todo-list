@@ -1,14 +1,17 @@
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, asc, desc, eq, isNull, sql } from "@acme/db";
+import { and, asc, desc, eq, inArray, isNull, or, sql } from "@acme/db";
 import {
   CreateTaskSchema,
   Task,
+  TaskListMember,
   TaskPriority,
   UpdateTaskSchema,
 } from "@acme/db/schema";
 
+import { assertListAccess } from "../lib/list-access";
 import { protectedProcedure } from "../trpc";
 
 function serializeSubtaskDates<
@@ -79,18 +82,38 @@ function serializeTaskDates<
   };
 }
 
+/** Get all list IDs the user is a member of */
+async function getMemberListIds(
+  db: Parameters<typeof assertListAccess>[0],
+  userId: string,
+): Promise<string[]> {
+  const memberships = await db.query.TaskListMember.findMany({
+    where: eq(TaskListMember.userId, userId),
+    columns: { listId: true },
+  });
+  return memberships.map((m) => m.listId);
+}
+
 export const taskRouter = {
-  // Get all non-deleted tasks for current user
+  // Get all non-deleted tasks for current user (personal + shared lists)
   all: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const memberListIds = await getMemberListIds(ctx.db, userId);
+
     const tasks = await ctx.db.query.Task.findMany({
       where: and(
-        eq(Task.userId, ctx.session.user.id),
         isNull(Task.deletedAt),
         isNull(Task.archivedAt),
+        memberListIds.length > 0
+          ? or(
+              and(eq(Task.userId, userId), isNull(Task.listId)),
+              inArray(Task.listId, memberListIds),
+            )
+          : eq(Task.userId, userId),
       ),
       orderBy: [desc(Task.createdAt)],
       limit: 100,
-      with: { category: true, subtasks: true },
+      with: { category: true, subtasks: true, list: true },
     });
 
     return tasks.map(serializeTaskDates);
@@ -101,15 +124,22 @@ export const taskRouter = {
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const task = await ctx.db.query.Task.findFirst({
-        where: and(
-          eq(Task.id, input.id),
-          eq(Task.userId, ctx.session.user.id),
-          isNull(Task.deletedAt),
-        ),
-        with: { category: true, subtasks: true },
+        where: and(eq(Task.id, input.id), isNull(Task.deletedAt)),
+        with: { category: true, subtasks: true, list: true },
       });
 
       if (!task) return null;
+
+      // Verify access: own task or member of the task's list
+      const userId = ctx.session.user.id;
+      if (task.userId !== userId) {
+        if (!task.listId) return null;
+        try {
+          await assertListAccess(ctx.db, userId, task.listId, "viewer");
+        } catch {
+          return null;
+        }
+      }
 
       return serializeTaskDates(task);
     }),
@@ -199,6 +229,16 @@ export const taskRouter = {
   create: protectedProcedure
     .input(CreateTaskSchema)
     .mutation(async ({ ctx, input }) => {
+      // If assigning to a list, verify editor access
+      if (input.listId) {
+        await assertListAccess(
+          ctx.db,
+          ctx.session.user.id,
+          input.listId,
+          "editor",
+        );
+      }
+
       const [task] = await ctx.db
         .insert(Task)
         .values({
@@ -209,7 +249,10 @@ export const taskRouter = {
         .returning();
 
       if (!task) {
-        throw new Error("Failed to create task");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create task",
+        });
       }
 
       return serializeTaskDates(task);
@@ -220,6 +263,39 @@ export const taskRouter = {
     .input(UpdateTaskSchema)
     .mutation(async ({ ctx, input }) => {
       const { id, ...updates } = input;
+      const userId = ctx.session.user.id;
+
+      // Fetch existing task to check access
+      const existing = await ctx.db.query.Task.findFirst({
+        where: and(eq(Task.id, id), isNull(Task.deletedAt)),
+        columns: { userId: true, listId: true },
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Task not found",
+        });
+      }
+
+      // If the task belongs to a list, verify editor access
+      if (existing.listId) {
+        await assertListAccess(ctx.db, userId, existing.listId, "editor");
+      } else if (existing.userId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not authorized to update this task",
+        });
+      }
+
+      // If moving to a new list, verify access to the target list
+      if (
+        updates.listId !== undefined &&
+        updates.listId !== null &&
+        updates.listId !== existing.listId
+      ) {
+        await assertListAccess(ctx.db, userId, updates.listId, "editor");
+      }
 
       // Build update object
       const updateData: Record<string, unknown> = {
@@ -243,11 +319,14 @@ export const taskRouter = {
       const [task] = await ctx.db
         .update(Task)
         .set(updateData)
-        .where(and(eq(Task.id, id), eq(Task.userId, ctx.session.user.id)))
+        .where(eq(Task.id, id))
         .returning();
 
       if (!task) {
-        throw new Error("Task not found or update failed");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Task not found or update failed",
+        });
       }
 
       return serializeTaskDates(task);
@@ -257,22 +336,40 @@ export const taskRouter = {
   delete: protectedProcedure
     .input(z.uuid())
     .mutation(async ({ ctx, input }) => {
-      try {
-        const newDate = new Date();
-        await ctx.db
-          .update(Task)
-          .set({
-            deletedAt: newDate,
-            lastSyncedAt: newDate,
-          })
-          .where(and(eq(Task.id, input), eq(Task.userId, ctx.session.user.id)));
+      const userId = ctx.session.user.id;
 
-        return { success: true };
-      } catch (error) {
-        console.error("Failed to delete task:", error);
-        throw new Error(
-          `Failed to delete task: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+      // Fetch existing task to check access
+      const existing = await ctx.db.query.Task.findFirst({
+        where: and(eq(Task.id, input), isNull(Task.deletedAt)),
+        columns: { userId: true, listId: true },
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Task not found",
+        });
       }
+
+      // If the task belongs to a list, verify editor access
+      if (existing.listId) {
+        await assertListAccess(ctx.db, userId, existing.listId, "editor");
+      } else if (existing.userId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not authorized to delete this task",
+        });
+      }
+
+      const newDate = new Date();
+      await ctx.db
+        .update(Task)
+        .set({
+          deletedAt: newDate,
+          lastSyncedAt: newDate,
+        })
+        .where(eq(Task.id, input));
+
+      return { success: true };
     }),
 } satisfies TRPCRouterRecord;

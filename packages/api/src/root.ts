@@ -6,6 +6,7 @@ import { postRouter } from "./router/post";
 import { subtaskRouter } from "./router/subtask";
 import { syncRouter } from "./router/sync";
 import { taskRouter } from "./router/task";
+import { taskListRouter } from "./router/task-list";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   subtask: subtaskRouter,
   sync: syncRouter,
   task: taskRouter,
+  taskList: taskListRouter,
 });
 
 // export type definition of API
