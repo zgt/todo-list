@@ -92,7 +92,7 @@ export const subtaskRouter = {
         with: { task: true },
       });
 
-      if (!existing || existing.task.userId !== ctx.session.user.id) {
+      if (existing?.task.userId !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Subtask not found or access denied",
@@ -133,7 +133,7 @@ export const subtaskRouter = {
         with: { task: true },
       });
 
-      if (!existing || existing.task.userId !== ctx.session.user.id) {
+      if (existing?.task.userId !== ctx.session.user.id) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Subtask not found or access denied",

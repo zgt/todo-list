@@ -504,9 +504,7 @@ function SubtaskSection({
   const [editingTitle, setEditingTitle] = useState("");
   const newInputRef = useRef<HTMLInputElement>(null);
 
-  const subtasks = [...task.subtasks].sort(
-    (a, b) => a.sortOrder - b.sortOrder,
-  );
+  const subtasks = [...task.subtasks].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const createSubtask = useMutation(
     trpc.subtask.create.mutationOptions({
@@ -603,9 +601,7 @@ function SubtaskSection({
               ? t
               : {
                   ...t,
-                  subtasks: t.subtasks.filter(
-                    (s) => s.id !== variables.id,
-                  ),
+                  subtasks: t.subtasks.filter((s) => s.id !== variables.id),
                 },
           );
         });
@@ -697,7 +693,7 @@ function SubtaskSection({
             )}
             <button
               onClick={() => deleteSubtask.mutate({ id: subtask.id })}
-              className="shrink-0 text-[#8FA8A8] opacity-0 transition-opacity hover:text-red-400 group-hover/subtask:opacity-100"
+              className="shrink-0 text-[#8FA8A8] opacity-0 transition-opacity group-hover/subtask:opacity-100 hover:text-red-400"
               aria-label={`Delete subtask: ${subtask.title}`}
             >
               <X className="h-3.5 w-3.5" />
@@ -722,7 +718,7 @@ function SubtaskSection({
             }
           }}
           placeholder="Add a subtask..."
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#DCE4E4] placeholder:text-[#8FA8A8] outline-none"
+          className="min-w-0 flex-1 bg-transparent text-sm text-[#DCE4E4] outline-none placeholder:text-[#8FA8A8]"
         />
       </div>
     </div>

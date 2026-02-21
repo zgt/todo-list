@@ -791,8 +791,8 @@ export function TaskFormSheet({
               {subtasks.length > 0 && (
                 <Text style={{ color: "#50C878", fontWeight: "400" }}>
                   {" "}
-                  ({subtasks.filter((s) => s.completed).length}/{subtasks.length}
-                  )
+                  ({subtasks.filter((s) => s.completed).length}/
+                  {subtasks.length})
                 </Text>
               )}
             </Text>

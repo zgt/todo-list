@@ -41,7 +41,11 @@ function serializeTaskDates<
     lastSyncedAt: unknown;
     reminderAt: unknown;
     reminderSentAt: unknown;
-    subtasks?: { createdAt: unknown; updatedAt: unknown; completedAt: unknown }[];
+    subtasks?: {
+      createdAt: unknown;
+      updatedAt: unknown;
+      completedAt: unknown;
+    }[];
   },
 >(task: T) {
   return {

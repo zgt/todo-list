@@ -129,8 +129,7 @@ export function TaskCard({
   const reminderInfo = reminderAt
     ? getReminderDisplay(reminderAt, reminderSentAt)
     : null;
-  const subtasks =
-    (task as unknown as TaskWithSubtasks).subtasks ?? [];
+  const subtasks = (task as unknown as TaskWithSubtasks).subtasks ?? [];
   const subtaskTotal = subtasks.length;
   const subtaskDone = subtasks.filter((s) => s.completed).length;
   const progress = useSharedValue(isCompact ? 1 : 0);
