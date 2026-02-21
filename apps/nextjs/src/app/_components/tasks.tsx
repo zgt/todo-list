@@ -280,7 +280,7 @@ function InlineCreateTask() {
         "glass-card border-primary/50 shadow-glow bg-primary/5",
       )}
     >
-      {/* Top row with checkbox spacer and chevron */}
+      {/* Top row with checkbox spacer, chevron, and inline title input */}
       <div className="flex flex-row items-center gap-4 p-6 pb-0">
         {/* Spacer for checkbox alignment */}
         <div className="size-6 shrink-0" />
@@ -290,30 +290,29 @@ function InlineCreateTask() {
           <ChevronRight className="h-4 w-4 rotate-90 transition-transform duration-300" />
         </div>
 
-        <h2 className="text-lg font-medium text-white/50">New task</h2>
-      </div>
-
-      {/* Expanded area (always open for create) */}
-      <div className="mx-6 mt-4 border-t border-[#164B49]" />
-      <div className="px-6 pt-4 pb-6">
-        {/* Title input (full width) */}
-        <div className="max-w-2xl">
+        {/* Inline title input */}
+        <div className="grow">
           <Input
             ref={titleInputRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Task title"
+            placeholder="New task..."
             className={cn(
               "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
               "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
               "rounded-md px-3 py-1.5 text-lg font-medium",
+              "max-w-md",
             )}
             aria-label="New task title"
             disabled={createTask.isPending}
           />
         </div>
+      </div>
 
+      {/* Expanded area (always open for create) */}
+      <div className="mx-6 mt-4 border-t border-[#164B49]" />
+      <div className="px-6 pt-4 pb-6">
         {/* Description textarea */}
         <div className="mt-3 max-w-2xl">
           <textarea
