@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, eq, isNull, or, sql } from "@acme/db";
+import { and, eq, inArray, isNull, or, sql } from "@acme/db";
 import {
   CreateTaskListSchema,
   Task,
@@ -55,7 +55,7 @@ export const taskListRouter = {
           count: sql<number>`count(*)::int`,
         })
         .from(TaskListMember)
-        .where(sql`${TaskListMember.listId} = ANY(${listIds})`)
+        .where(inArray(TaskListMember.listId, listIds))
         .groupBy(TaskListMember.listId),
       ctx.db
         .select({
@@ -64,7 +64,7 @@ export const taskListRouter = {
         })
         .from(Task)
         .where(
-          and(sql`${Task.listId} = ANY(${listIds})`, isNull(Task.deletedAt)),
+          and(inArray(Task.listId, listIds), isNull(Task.deletedAt)),
         )
         .groupBy(Task.listId),
     ]);
