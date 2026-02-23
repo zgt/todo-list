@@ -247,10 +247,10 @@ export function TaskCard({
             >
               <RNText
                 className={`text-base font-semibold ${
-                  task.completed ? "text-white/70 line-through" : "text-white"
+                  task.completed ? "line-through" : ""
                 }`}
                 numberOfLines={1}
-                style={{ flex: 1 }}
+                style={{ flex: 1, color: task.completed ? "#8FA8A8" : "#DCE4E4" }}
               >
                 {task.title}
               </RNText>
@@ -506,9 +506,8 @@ export function TaskCard({
         ) : (
           <>
             <RNText
-              className={`text-4xl leading-tight font-bold ${
-                task.completed ? "text-white/70" : "text-white"
-              }`}
+              className="text-4xl leading-tight font-bold"
+              style={{ color: task.completed ? "#8FA8A8" : "#DCE4E4" }}
             >
               {task.title}
             </RNText>

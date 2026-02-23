@@ -610,7 +610,12 @@ export default function Index() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 6, paddingBottom: 10 }}
+              style={{ flexGrow: 0 }}
+              contentContainerStyle={{
+                gap: 6,
+                paddingBottom: 10,
+                paddingLeft: 10,
+              }}
             >
               <Pressable
                 onPress={() => setSelectedListFilter(null)}
