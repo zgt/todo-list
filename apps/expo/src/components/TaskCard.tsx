@@ -262,9 +262,9 @@ export function TaskCard({
 
   // Compact layout (row)
   const renderCompactLayout = () => (
-    <View>
+    <View style={{ flex: 1, justifyContent: 'center' }}>
       <Pressable onPress={handleCardPress}>
-        <View className="flex-row items-center gap-3 px-4 py-4">
+        <View className="flex-row items-center gap-3 px-4 py-3">
           {/* Left: Checkbox */}
           <Pressable onPress={isEditing ? handleSave : onToggle}>
             <View
