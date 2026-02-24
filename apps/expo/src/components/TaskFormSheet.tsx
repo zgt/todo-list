@@ -25,6 +25,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, Plus, Trash2, X } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
+import { CategoryWheelPicker } from "./CategoryWheelPicker";
 import { trpc } from "~/utils/api";
 
 export interface TaskFormData {
@@ -44,13 +45,6 @@ interface SubtaskData {
   sortOrder: number;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-  icon: string | null;
-}
-
 interface TaskList {
   id: string;
   name: string;
@@ -64,7 +58,6 @@ interface TaskFormSheetProps {
     id?: string;
     subtasks?: SubtaskData[];
   };
-  categories: Category[];
   lists?: TaskList[];
   isSubmitting?: boolean;
   mode: "create" | "edit";
@@ -116,7 +109,6 @@ export function TaskFormSheet({
   onClose,
   onSubmit,
   initialData,
-  categories,
   lists,
   isSubmitting,
   mode,
@@ -328,58 +320,10 @@ export function TaskFormSheet({
           {/* Category */}
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Category</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pillRow}
-            >
-              <Pressable
-                onPress={() => setCategoryId(null)}
-                style={[
-                  styles.pill,
-                  categoryId === null
-                    ? styles.pillActiveGreen
-                    : styles.pillInactive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    { color: categoryId === null ? "#50C878" : "#8FA8A8" },
-                  ]}
-                >
-                  None
-                </Text>
-              </Pressable>
-              {categories.map((cat) => {
-                const isActive = categoryId === cat.id;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    onPress={() => setCategoryId(cat.id)}
-                    style={[
-                      styles.pill,
-                      isActive
-                        ? {
-                            borderColor: cat.color,
-                            backgroundColor: `${cat.color}25`,
-                          }
-                        : styles.pillInactive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.pillText,
-                        { color: isActive ? cat.color : "#8FA8A8" },
-                      ]}
-                    >
-                      {cat.icon ? `${cat.icon} ` : ""}
-                      {cat.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+            <CategoryWheelPicker
+              selectedCategoryId={categoryId}
+              onCategoryChange={setCategoryId}
+            />
           </View>
 
           {/* List */}

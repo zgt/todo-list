@@ -120,13 +120,6 @@ export default function Index() {
     }),
   );
 
-  // Fetch categories for the form sheet
-  const { data: categories } = useQuery(
-    trpc.category.all.queryOptions(undefined, {
-      enabled: !!session,
-    }),
-  );
-
   // Fetch lists for the form sheet and filter
   const { data: lists } = useQuery(
     trpc.taskList.all.queryOptions(undefined, {
@@ -582,13 +575,6 @@ export default function Index() {
     );
   }
 
-  const sheetCategories = (categories ?? []).map((c) => ({
-    id: c.id,
-    name: c.name,
-    color: c.color,
-    icon: c.icon,
-  }));
-
   return (
     <GradientBackground rippleTrigger={rippleTrigger}>
       <SafeAreaView className="flex-1" edges={["top"]}>
@@ -709,6 +695,7 @@ export default function Index() {
           {filteredTasks.length > 0 ? (
             viewMode === "stack" ? (
               <SwipeableCardStack
+                key="stack"
                 isCompact={true}
                 tasks={filteredTasks}
                 onToggle={handleToggle}
@@ -719,6 +706,7 @@ export default function Index() {
               />
             ) : (
               <SwipeableCardStack
+                key="list"
                 tasks={filteredTasks}
                 isCompact={false}
                 onToggle={handleToggle}
@@ -763,7 +751,6 @@ export default function Index() {
           <TaskFormSheet
             mode="create"
             onSubmit={handleCreateSubmit}
-            categories={sheetCategories}
             lists={(lists ?? []).map((l) => ({
               id: l.id,
               name: l.name,
@@ -795,7 +782,6 @@ export default function Index() {
                 }
               : undefined
           }
-          categories={sheetCategories}
           lists={(lists ?? []).map((l) => ({
             id: l.id,
             name: l.name,

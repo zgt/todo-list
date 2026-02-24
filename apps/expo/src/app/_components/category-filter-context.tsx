@@ -66,12 +66,19 @@ export function CategoryFilterProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const FALLBACK: CategoryFilterContextType = {
+  selectedCategoryIds: [],
+  setSelectedCategoryIds: () => {},
+  effectiveCategoryIds: [],
+};
+
 export function useCategoryFilter() {
   const context = useContext(CategoryFilterContext);
   if (!context) {
-    throw new Error(
-      "useCategoryFilter must be used within CategoryFilterProvider",
-    );
+    // Allow usage outside the provider (e.g. bottom sheet modals)
+    // by returning a no-op fallback. Filter-mode consumers need the
+    // provider; select-mode consumers (CategoryWheelPicker) don't.
+    return FALLBACK;
   }
   return context;
 }
