@@ -96,6 +96,7 @@ function getReminderDisplay(reminderAt: Date, reminderSentAt: Date | null) {
     color = "#50C878"; // accent green
   } else {
     label = new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -250,7 +251,10 @@ export function TaskCard({
                   task.completed ? "line-through" : ""
                 }`}
                 numberOfLines={1}
-                style={{ flex: 1, color: task.completed ? "#8FA8A8" : "#DCE4E4" }}
+                style={{
+                  flex: 1,
+                  color: task.completed ? "#8FA8A8" : "#DCE4E4",
+                }}
               >
                 {task.title}
               </RNText>
@@ -336,6 +340,7 @@ export function TaskCard({
             <View style={styles.compactPillDate}>
               <RNText className="text-xs" style={styles.dateText}>
                 {new Intl.DateTimeFormat("en-US", {
+                  weekday: "short",
                   month: "short",
                   day: "numeric",
                 }).format(task.dueDate)}
@@ -432,6 +437,7 @@ export function TaskCard({
               <View style={styles.miniPillDate}>
                 <RNText className="text-xs font-medium" style={styles.dateText}>
                   {new Intl.DateTimeFormat("en-US", {
+                    weekday: "short",
                     month: "short",
                     day: "numeric",
                   }).format(task.dueDate)}

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
@@ -9,10 +10,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
+import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Calendar, Trash2, X } from "lucide-react-native";
+import { Bell, Calendar, Plus, Trash2, X } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import { trpc } from "~/utils/api";
@@ -48,8 +49,7 @@ interface TaskList {
 }
 
 interface TaskFormSheetProps {
-  visible: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onSubmit: (data: TaskFormData) => void;
   initialData?: Partial<TaskFormData> & {
     id?: string;
@@ -60,6 +60,8 @@ interface TaskFormSheetProps {
   isSubmitting?: boolean;
   mode: "create" | "edit";
   onDelete?: () => void;
+  /** For edit mode: controlled open state (e.g. !!editingTask) */
+  isOpen?: boolean;
 }
 
 const PRIORITY_OPTIONS: {
@@ -84,6 +86,7 @@ function formatDate(date: Date): string {
   if (diffDays === 1) return "Tomorrow";
 
   return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
     month: "short",
     day: "numeric",
     year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
@@ -92,6 +95,7 @@ function formatDate(date: Date): string {
 
 function formatDateTime(date: Date): string {
   return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -100,7 +104,6 @@ function formatDateTime(date: Date): string {
 }
 
 export function TaskFormSheet({
-  visible,
   onClose,
   onSubmit,
   initialData,
@@ -109,9 +112,12 @@ export function TaskFormSheet({
   isSubmitting,
   mode,
   onDelete,
+  isOpen,
 }: TaskFormSheetProps) {
-  const sheetRef = useRef<BottomSheet>(null);
+  console.log("[TaskFormSheet] render — mode:", mode, "isOpen:", isOpen);
+  const sheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
+  const snapPoints = useMemo(() => ["85%"], []);
 
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(
@@ -165,49 +171,49 @@ export function TaskFormSheet({
     trpc.subtask.delete.mutationOptions({ onSuccess: invalidateTasks }),
   );
 
-  // Reset form when initialData changes or sheet opens
-  useEffect(() => {
-    if (visible) {
-      /* eslint-disable react-hooks/set-state-in-effect -- intentional: resets form fields when sheet opens with new data */
-      setTitle(initialData?.title ?? "");
-      setDescription(initialData?.description ?? "");
-      setCategoryId(initialData?.categoryId ?? null);
-      setListId(initialData?.listId ?? null);
-      setPriority(initialData?.priority ?? "medium");
-      setDueDate(initialData?.dueDate ?? null);
-      setReminderAt(initialData?.reminderAt ?? null);
-      setShowDatePicker(false);
-      setShowReminderDatePicker(false);
-      setShowReminderTimePicker(false);
-      setPendingReminderDate(null);
-      setNewSubtaskTitle("");
-      setEditingSubtaskId(null);
-      setEditingSubtaskTitle("");
-      /* eslint-enable react-hooks/set-state-in-effect */
-    }
-  }, [visible, initialData]);
+  const resetForm = useCallback(() => {
+    setTitle(initialData?.title ?? "");
+    setDescription(initialData?.description ?? "");
+    setCategoryId(initialData?.categoryId ?? null);
+    setListId(initialData?.listId ?? null);
+    setPriority(initialData?.priority ?? "medium");
+    setDueDate(initialData?.dueDate ?? null);
+    setReminderAt(initialData?.reminderAt ?? null);
+    setShowDatePicker(false);
+    setShowReminderDatePicker(false);
+    setShowReminderTimePicker(false);
+    setPendingReminderDate(null);
+    setNewSubtaskTitle("");
+    setEditingSubtaskId(null);
+    setEditingSubtaskTitle("");
+  }, [initialData]);
 
-  // Open/close the sheet
+  // For edit mode: controlled by isOpen prop
+  // Form state is reset via key prop on the component (parent passes key={editingTask?.id})
+  // Only run when isOpen is explicitly provided (edit mode), not for create mode where it's undefined
   useEffect(() => {
-    if (visible) {
-      sheetRef.current?.expand();
-      // Auto-focus title in create mode
-      if (mode === "create") {
-        setTimeout(() => titleInputRef.current?.focus(), 400);
-      }
+    if (isOpen === undefined) return;
+    if (isOpen) {
+      sheetRef.current?.present();
     } else {
-      sheetRef.current?.close();
+      sheetRef.current?.dismiss();
     }
-  }, [visible, mode]);
+  }, [isOpen]);
 
-  const handleSheetChange = useCallback(
-    (index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    },
-    [onClose],
-  );
+  // For create mode: trigger opens the sheet (matches CategoryFilter pattern)
+  const handleOpenSheet = useCallback(() => {
+    console.log("[TaskFormSheet] handleOpenSheet called");
+    console.log("[TaskFormSheet] sheetRef.current:", sheetRef.current);
+    Keyboard.dismiss();
+    sheetRef.current?.present();
+    console.log("[TaskFormSheet] present() called");
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    console.log("[TaskFormSheet] handleDismiss called");
+    resetForm();
+    onClose?.();
+  }, [resetForm, onClose]);
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -220,6 +226,8 @@ export function TaskFormSheet({
       dueDate,
       reminderAt,
     });
+    // Dismiss sheet after submit — onClose will be called via handleSheetChange
+    sheetRef.current?.dismiss();
   };
 
   const handleDelete = () => {
@@ -240,7 +248,6 @@ export function TaskFormSheet({
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={0.6}
-        pressBehavior="close"
       />
     ),
     [],
@@ -249,19 +256,39 @@ export function TaskFormSheet({
   const canSubmit = title.trim().length > 0 && !isSubmitting;
 
   return (
-    <BottomSheet
-      ref={sheetRef}
-      index={visible ? 0 : -1}
-      snapPoints={["85%"]}
-      enablePanDownToClose
-      onChange={handleSheetChange}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: "#0A1A1A" }}
-      handleIndicatorStyle={{ backgroundColor: "#164B49", width: 40 }}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
-    >
+    <>
+      {mode === "create" && (
+        <Pressable
+          onPress={() => { console.log("[TaskFormSheet] FAB pressed"); handleOpenSheet(); }}
+        >
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: "#50C878",
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: "rgba(255, 255, 255, 0.2)",
+            }}
+          >
+            <Plus size={32} color="#0A1A1A" />
+          </View>
+        </Pressable>
+      )}
+      <BottomSheetModal
+        ref={sheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        onDismiss={handleDismiss}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: "#0A1A1A" }}
+        handleIndicatorStyle={{ backgroundColor: "#164B49", width: 40 }}
+      >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
@@ -279,7 +306,7 @@ export function TaskFormSheet({
           <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
             {mode === "create" ? "New Task" : "Edit Task"}
           </Text>
-          <Pressable onPress={onClose} hitSlop={12}>
+          <Pressable onPress={() => sheetRef.current?.dismiss()} hitSlop={12}>
             <X size={24} color="#8FA8A8" />
           </Pressable>
         </View>
@@ -1122,6 +1149,7 @@ export function TaskFormSheet({
           </Pressable>
         )}
       </ScrollView>
-    </BottomSheet>
+    </BottomSheetModal>
+    </>
   );
 }

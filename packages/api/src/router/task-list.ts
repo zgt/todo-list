@@ -63,9 +63,7 @@ export const taskListRouter = {
           count: sql<number>`count(*)::int`,
         })
         .from(Task)
-        .where(
-          and(inArray(Task.listId, listIds), isNull(Task.deletedAt)),
-        )
+        .where(and(inArray(Task.listId, listIds), isNull(Task.deletedAt)))
         .groupBy(Task.listId),
     ]);
 

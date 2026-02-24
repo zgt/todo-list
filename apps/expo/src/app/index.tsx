@@ -28,7 +28,6 @@ import {
   rescheduleAllReminders,
   scheduleTaskReminder,
 } from "~/utils/notifications";
-import { FAB } from "../components/FAB";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
@@ -106,8 +105,6 @@ export default function Index() {
     null,
   );
 
-  // Sheet state
-  const [createSheetVisible, setCreateSheetVisible] = useState(false);
   const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
 
   const queryClient = useQueryClient();
@@ -503,8 +500,6 @@ export default function Index() {
       listId: data.listId ?? undefined,
     });
 
-    setCreateSheetVisible(false);
-
     // Schedule reminder if set
     if (data.reminderAt) {
       // Use the task title for the notification; the actual task ID comes from the server
@@ -765,8 +760,50 @@ export default function Index() {
               setViewMode((v) => (v === "stack" ? "list" : "stack"))
             }
           />
-          <FAB onPress={() => setCreateSheetVisible(true)} />
+          <TaskFormSheet
+            mode="create"
+            onSubmit={handleCreateSubmit}
+            categories={sheetCategories}
+            lists={(lists ?? []).map((l) => ({
+              id: l.id,
+              name: l.name,
+              color: l.color,
+            }))}
+            isSubmitting={createMutation.isPending}
+          />
         </View>
+
+        {/* Edit Task Sheet — controlled by editingTask state */}
+        <TaskFormSheet
+          key={editingTask?.id ?? "edit-sheet"}
+          mode="edit"
+          isOpen={!!editingTask}
+          onClose={() => setEditingTask(null)}
+          onSubmit={handleEditSubmit}
+          initialData={
+            editingTask
+              ? {
+                  id: editingTask.id,
+                  title: editingTask.title,
+                  description: editingTask.description ?? "",
+                  categoryId: editingTask.categoryId,
+                  priority: editingTask.priority as PriorityLevel,
+                  dueDate: editingTask.dueDate,
+                  reminderAt: editingTask.reminderAt,
+                  subtasks: editingTask.subtasks,
+                  listId: editingTask.listId,
+                }
+              : undefined
+          }
+          categories={sheetCategories}
+          lists={(lists ?? []).map((l) => ({
+            id: l.id,
+            name: l.name,
+            color: l.color,
+          }))}
+          isSubmitting={updateMutation.isPending}
+          onDelete={handleEditDelete}
+        />
       </SafeAreaView>
 
       {/* Profile Menu */}
@@ -774,52 +811,6 @@ export default function Index() {
         visible={showProfileMenu}
         onClose={() => setShowProfileMenu(false)}
         user={session.user}
-      />
-
-      {/* Create Task Sheet */}
-      <TaskFormSheet
-        visible={createSheetVisible}
-        onClose={() => setCreateSheetVisible(false)}
-        onSubmit={handleCreateSubmit}
-        categories={sheetCategories}
-        lists={(lists ?? []).map((l) => ({
-          id: l.id,
-          name: l.name,
-          color: l.color,
-        }))}
-        isSubmitting={createMutation.isPending}
-        mode="create"
-      />
-
-      {/* Edit Task Sheet */}
-      <TaskFormSheet
-        visible={editingTask !== null}
-        onClose={() => setEditingTask(null)}
-        onSubmit={handleEditSubmit}
-        initialData={
-          editingTask
-            ? {
-                id: editingTask.id,
-                title: editingTask.title,
-                description: editingTask.description ?? "",
-                categoryId: editingTask.categoryId,
-                priority: editingTask.priority as PriorityLevel,
-                dueDate: editingTask.dueDate,
-                reminderAt: editingTask.reminderAt,
-                subtasks: editingTask.subtasks,
-                listId: editingTask.listId,
-              }
-            : undefined
-        }
-        categories={sheetCategories}
-        lists={(lists ?? []).map((l) => ({
-          id: l.id,
-          name: l.name,
-          color: l.color,
-        }))}
-        isSubmitting={updateMutation.isPending}
-        mode="edit"
-        onDelete={handleEditDelete}
       />
     </GradientBackground>
   );

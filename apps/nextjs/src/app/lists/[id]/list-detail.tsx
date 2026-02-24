@@ -151,9 +151,7 @@ export function ListDetail() {
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-white">{list.name}</h1>
             {list.description && (
-              <p className="mt-1 text-sm text-[#8FA8A8]">
-                {list.description}
-              </p>
+              <p className="mt-1 text-sm text-[#8FA8A8]">{list.description}</p>
             )}
           </div>
         </div>
@@ -263,9 +261,7 @@ export function ListDetail() {
         <div className="glass-card rounded-2xl border border-white/10 p-6">
           <div className="mb-4 flex items-center gap-2">
             <LinkIcon className="h-5 w-5 text-[#50C878]" />
-            <h2 className="text-lg font-semibold text-white">
-              Invite People
-            </h2>
+            <h2 className="text-lg font-semibold text-white">Invite People</h2>
           </div>
 
           {inviteCode ? (
@@ -318,9 +314,7 @@ export function ListDetail() {
 
       {/* Danger Zone */}
       <div className="glass-card rounded-2xl border border-red-500/20 p-6">
-        <h2 className="mb-4 text-lg font-semibold text-red-400">
-          Danger Zone
-        </h2>
+        <h2 className="mb-4 text-lg font-semibold text-red-400">Danger Zone</h2>
 
         {isOwner ? (
           <AlertDialog>
@@ -341,8 +335,7 @@ export function ListDetail() {
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   This will permanently delete this list. Tasks in this list
-                  will be moved back to personal. This action cannot be
-                  undone.
+                  will be moved back to personal. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

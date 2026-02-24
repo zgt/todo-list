@@ -12,16 +12,25 @@ export function GradientBackground({
   return (
     <View style={styles.container}>
       {/* Base background */}
-      <View style={[StyleSheet.absoluteFill, styles.baseGradient]} />
+      <View
+        style={[StyleSheet.absoluteFill, styles.baseGradient]}
+        pointerEvents="none"
+      />
 
       {/* Dot pattern overlay */}
       <DotBackground trigger={rippleTrigger} />
 
       {/* Aurora effects (subtle overlays) */}
-      <View style={[StyleSheet.absoluteFill, styles.auroraTop]} />
-      <View style={[StyleSheet.absoluteFill, styles.auroraBottom]} />
+      <View
+        style={[StyleSheet.absoluteFill, styles.auroraTop]}
+        pointerEvents="none"
+      />
+      <View
+        style={[StyleSheet.absoluteFill, styles.auroraBottom]}
+        pointerEvents="none"
+      />
 
-      {children}
+      <View style={{ flex: 1, zIndex: 1 }}>{children}</View>
     </View>
   );
 }

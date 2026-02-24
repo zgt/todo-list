@@ -79,6 +79,7 @@ function formatReminder(
   if (days < 7) return `in ${days}d`;
   return (
     reminderAt.toLocaleDateString("en-US", {
+      weekday: "short",
       month: "short",
       day: "numeric",
     }) +
@@ -283,7 +284,8 @@ function InlineCreateTask() {
     };
     // Use pointerdown instead of mousedown for better Radix compatibility
     document.addEventListener("pointerdown", handleClickOutside);
-    return () => document.removeEventListener("pointerdown", handleClickOutside);
+    return () =>
+      document.removeEventListener("pointerdown", handleClickOutside);
   }, [setIsCreating]);
 
   return (
@@ -367,6 +369,7 @@ function InlineCreateTask() {
                 <Calendar className="h-3.5 w-3.5" />
                 {dueDate
                   ? new Date(dueDate).toLocaleDateString("en-US", {
+                      weekday: "short",
                       month: "short",
                       day: "numeric",
                       year: "numeric",
@@ -1068,6 +1071,7 @@ export function TaskCard(props: {
             <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
               <Calendar className="h-3.5 w-3.5" />
               {new Date(editedDueDate).toLocaleDateString("en-US", {
+                weekday: "short",
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -1213,6 +1217,7 @@ export function TaskCard(props: {
                       <Calendar className="h-3.5 w-3.5" />
                       {editedDueDate
                         ? new Date(editedDueDate).toLocaleDateString("en-US", {
+                            weekday: "short",
                             month: "short",
                             day: "numeric",
                             year: "numeric",
@@ -1274,6 +1279,7 @@ export function TaskCard(props: {
                   <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
                     <Calendar className="h-3.5 w-3.5" />
                     {new Date(props.task.dueDate).toLocaleDateString("en-US", {
+                      weekday: "short",
                       month: "short",
                       day: "numeric",
                       year: "numeric",
