@@ -262,7 +262,7 @@ export function TaskCard({
 
   // Compact layout (row)
   const renderCompactLayout = () => (
-    <View className="flex-1">
+    <View>
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center gap-3 px-4 py-4">
           {/* Left: Checkbox */}
@@ -706,7 +706,7 @@ export function TaskCard({
 
   return (
     <Animated.View
-      style={[styles.container, containerStyle, getBackgroundStyle()]}
+      style={[styles.container, containerStyle, getBackgroundStyle(), isExpanded && isCompact && { overflow: 'visible' }]}
     >
       <View
         style={[
