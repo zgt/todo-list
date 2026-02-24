@@ -226,8 +226,7 @@ export function TaskCard({
     const borderRadius = interpolate(progress.value, [0, 1], [16, 12]);
 
     return {
-      height: isCompact && isExpanded ? undefined : baseHeight,
-      minHeight: isCompact && isExpanded ? COMPACT_HEIGHT : undefined,
+      height: isCompact ? undefined : baseHeight,
       borderRadius,
     };
   });
