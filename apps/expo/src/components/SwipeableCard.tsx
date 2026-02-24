@@ -162,7 +162,7 @@ export function SwipeableCard({
     let targetOpacity: number;
 
     if (isCompact) {
-      targetY = yOffset ?? index * (80 + 12); // Use yOffset or fallback to Height + Gap
+      targetY = yOffset ?? index * (92 + 6); // Use yOffset or fallback to Height + Gap
       targetScale = 1;
       targetOpacity = 1;
     } else {
@@ -489,7 +489,7 @@ export function SwipeableCard({
     const expandedExtra = isExpanded && isCompact && subtaskCount > 0
       ? subtaskCount * 36 + 12  // 36px per subtask row + 12px padding
       : 0;
-    const targetHeight = isCompact ? 80 + expandedExtra : SCREEN_HEIGHT * 0.65;
+    const targetHeight = isCompact ? 92 + expandedExtra : SCREEN_HEIGHT * 0.65;
 
     return {
       transform: [

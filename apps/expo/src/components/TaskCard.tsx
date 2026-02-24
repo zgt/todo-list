@@ -71,7 +71,7 @@ interface TaskCardProps {
 }
 
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
-const COMPACT_HEIGHT = 80;
+const COMPACT_HEIGHT = 92;
 
 const SPRING_CONFIG = {
   damping: 400,

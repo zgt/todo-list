@@ -77,7 +77,7 @@ export function SwipeableCardStack({
   useEffect(() => {
     if (isCompact && scrollViewRef.current) {
       scrollViewRef.current.scrollTo({
-        y: currentIndex * 92,
+        y: currentIndex * 98,
         animated: true,
       });
     }
@@ -229,8 +229,8 @@ export function SwipeableCardStack({
       const task = displayTasks[i];
       const subtaskCount = (task as any).subtasks?.length ?? 0;
       const isExp = expandedTaskId === task.id && subtaskCount > 0;
-      const cardHeight = isExp ? 80 + subtaskCount * 36 + 12 : 80;
-      y += cardHeight + 12; // card height + gap
+      const cardHeight = isExp ? 92 + subtaskCount * 36 + 12 : 92;
+      y += cardHeight + 6; // card height + gap
     }
     return offsets;
   }, [displayTasks, expandedTaskId, isCompact]);
