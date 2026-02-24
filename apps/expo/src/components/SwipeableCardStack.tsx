@@ -255,7 +255,7 @@ export function SwipeableCardStack({
       contentContainerStyle={{
         alignItems: "center",
         justifyContent: isCompact ? "flex-start" : "center",
-        marginTop: isCompact ? 0 : -60,
+        marginTop: isCompact ? 0 : -10,
         minHeight: totalContentHeight,
         paddingTop: isCompact ? 0 : 0,
       }}
