@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -21,7 +20,7 @@ import {
   BottomSheetScrollView,
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, Plus, Trash2, X } from "lucide-react-native";
 
@@ -667,130 +666,50 @@ export function TaskFormSheet({
         </BottomSheetScrollView>
       </BSModal>
 
-      {/* Due Date Picker Modal */}
-      <Modal
-        visible={showDatePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setShowDatePicker(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>Select Due Date</Text>
-            <View style={styles.modalPickerWrapper}>
-              <DateTimePicker
-                value={dueDate ?? new Date()}
-                mode="date"
-                display="spinner"
-                minimumDate={new Date()}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    setDueDate(selectedDate);
-                  }
-                }}
-                themeVariant="light"
-                accentColor="#50C878"
-              />
-            </View>
-            <Pressable
-              onPress={() => setShowDatePicker(false)}
-              style={styles.modalDoneButton}
-            >
-              <Text style={styles.modalDoneText}>Done</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* Due Date Picker */}
+      <DateTimePickerModal
+        isVisible={showDatePicker}
+        mode="date"
+        date={dueDate ?? new Date()}
+        minimumDate={new Date()}
+        onConfirm={(date) => {
+          setDueDate(date);
+          setShowDatePicker(false);
+        }}
+        onCancel={() => setShowDatePicker(false)}
+      />
 
-      {/* Reminder Date Picker Modal */}
-      <Modal
-        visible={showReminderDatePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowReminderDatePicker(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setShowReminderDatePicker(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>Select Reminder Date</Text>
-            <View style={styles.modalPickerWrapper}>
-              <DateTimePicker
-                value={pendingReminderDate ?? new Date()}
-                mode="date"
-                display="spinner"
-                minimumDate={new Date()}
-                onChange={(_, selectedDate) => {
-                  if (selectedDate) {
-                    setPendingReminderDate(selectedDate);
-                  }
-                }}
-                themeVariant="light"
-                accentColor="#50C878"
-              />
-            </View>
-            <Pressable
-              onPress={() => {
-                setShowReminderDatePicker(false);
-                setShowReminderTimePicker(true);
-              }}
-              style={styles.modalDoneButton}
-            >
-              <Text style={styles.modalDoneText}>Next: Pick Time</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* Reminder Date Picker */}
+      <DateTimePickerModal
+        isVisible={showReminderDatePicker}
+        mode="date"
+        date={pendingReminderDate ?? new Date()}
+        minimumDate={new Date()}
+        onConfirm={(date) => {
+          setPendingReminderDate(date);
+          setShowReminderDatePicker(false);
+          setShowReminderTimePicker(true);
+        }}
+        onCancel={() => setShowReminderDatePicker(false)}
+      />
 
-      {/* Reminder Time Picker Modal */}
-      <Modal
-        visible={showReminderTimePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowReminderTimePicker(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setShowReminderTimePicker(false)}
-        >
-          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>Select Reminder Time</Text>
-            <View style={styles.modalPickerWrapper}>
-              <DateTimePicker
-                value={pendingReminderDate ?? new Date()}
-                mode="time"
-                display="spinner"
-                onChange={(_, selectedTime) => {
-                  if (selectedTime && pendingReminderDate) {
-                    const combined = new Date(pendingReminderDate);
-                    combined.setHours(selectedTime.getHours());
-                    combined.setMinutes(selectedTime.getMinutes());
-                    setPendingReminderDate(combined);
-                  }
-                }}
-                themeVariant="light"
-                accentColor="#50C878"
-              />
-            </View>
-            <Pressable
-              onPress={() => {
-                setShowReminderTimePicker(false);
-                if (pendingReminderDate) {
-                  setReminderAt(pendingReminderDate);
-                  setPendingReminderDate(null);
-                }
-              }}
-              style={styles.modalDoneButton}
-            >
-              <Text style={styles.modalDoneText}>Done</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* Reminder Time Picker */}
+      <DateTimePickerModal
+        isVisible={showReminderTimePicker}
+        mode="time"
+        date={pendingReminderDate ?? new Date()}
+        onConfirm={(selectedTime) => {
+          if (pendingReminderDate) {
+            const combined = new Date(pendingReminderDate);
+            combined.setHours(selectedTime.getHours());
+            combined.setMinutes(selectedTime.getMinutes());
+            setReminderAt(combined);
+            setPendingReminderDate(null);
+          }
+          setShowReminderTimePicker(false);
+        }}
+        onCancel={() => setShowReminderTimePicker(false)}
+      />
     </>
   );
 }
@@ -945,44 +864,6 @@ const styles = StyleSheet.create({
   addDateText: {
     fontSize: 14,
     color: "#8FA8A8",
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "flex-end",
-  },
-  modalCard: {
-    backgroundColor: "#0A1A1A",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderWidth: 1,
-    borderColor: "#164B49",
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 32,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#DCE4E4",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  modalPickerWrapper: {
-    height: 216,
-    backgroundColor: "red",
-    marginBottom: 16,
-  },
-  modalDoneButton: {
-    backgroundColor: "#50C878",
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  modalDoneText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0A1A1A",
   },
   subtaskCount: {
     color: "#50C878",
