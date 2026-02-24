@@ -262,7 +262,7 @@ export function TaskCard({
 
   // Compact layout (row)
   const renderCompactLayout = () => (
-    <View style={{ flex: 1, justifyContent: 'center' }}>
+    <View style={isExpanded ? { flex: 1 } : { flex: 1, justifyContent: 'center' }}>
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center gap-3 px-4 py-3">
           {/* Left: Checkbox */}

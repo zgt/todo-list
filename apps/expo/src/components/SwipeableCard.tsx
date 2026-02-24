@@ -162,7 +162,7 @@ export function SwipeableCard({
     let targetOpacity: number;
 
     if (isCompact) {
-      targetY = yOffset ?? index * (92 + 2); // Use yOffset or fallback to Height + Gap
+      targetY = yOffset ?? index * (92 + 4); // Use yOffset or fallback to Height + Gap
       targetScale = 1;
       targetOpacity = 1;
     } else {
