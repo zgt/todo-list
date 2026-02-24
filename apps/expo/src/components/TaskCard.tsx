@@ -733,7 +733,7 @@ export function TaskCard({
       <View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: "rgba(10, 26, 26, 0.7)" },
+          { backgroundColor: "rgba(10, 26, 26, 0.7)", borderRadius: 12 },
         ]}
       />
       {isCompact ? renderCompactLayout() : renderCardLayout()}
@@ -860,9 +860,9 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     paddingLeft: 32,
     paddingRight: 16,
-    backgroundColor: "rgba(16, 42, 42, 0.3)",
     borderTopWidth: 1,
     borderTopColor: "rgba(22, 75, 73, 0.5)",
+    backgroundColor: "red",
   },
   subtaskRowCompact: {
     flexDirection: "row",
