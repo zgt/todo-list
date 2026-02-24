@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -6,6 +6,8 @@ import {
   StyleSheet,
   Text,
   View,
+} from "react-native";
+import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from "react-native";
@@ -21,10 +23,9 @@ const ITEM_HEIGHT = 44;
 const VISIBLE_ITEMS = 5;
 const PICKER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 
-// Generate arrays for hours (1-12), minutes (00-59), and periods (AM/PM)
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
-const PERIODS = ["AM", "PM"];
+const PERIODS = ["AM", "PM"] as const;
 
 export function CustomTimePicker({
   isVisible,
@@ -32,218 +33,169 @@ export function CustomTimePicker({
   onConfirm,
   onCancel,
 }: CustomTimePickerProps) {
-  // Convert 24-hour time to 12-hour format
-  const getInitialHour = (date: Date) => {
-    const hour24 = date.getHours();
-    if (hour24 === 0) return 12;
-    if (hour24 > 12) return hour24 - 12;
-    return hour24;
+  const getInitialHour = (d: Date) => {
+    const h = d.getHours();
+    if (h === 0) return 12;
+    if (h > 12) return h - 12;
+    return h;
   };
-
-  const getInitialPeriod = (date: Date) => {
-    return date.getHours() >= 12 ? "PM" : "AM";
-  };
+  const getInitialPeriod = (d: Date) => (d.getHours() >= 12 ? "PM" : "AM");
 
   const [selectedHour, setSelectedHour] = useState(getInitialHour(date));
   const [selectedMinute, setSelectedMinute] = useState(date.getMinutes());
   const [selectedPeriod, setSelectedPeriod] = useState(getInitialPeriod(date));
 
-  const hourScrollRef = useRef<ScrollView>(null);
-  const minuteScrollRef = useRef<ScrollView>(null);
-  const periodScrollRef = useRef<ScrollView>(null);
+  const hourRef = useRef<ScrollView>(null);
+  const minuteRef = useRef<ScrollView>(null);
+  const periodRef = useRef<ScrollView>(null);
+  const programmatic = useRef(false);
 
-  // Track if we're programmatically scrolling to prevent feedback loops
-  const isScrollingProgrammatically = useRef(false);
-
-  // Update internal state when modal opens
   useEffect(() => {
     if (isVisible) {
-      const hour = getInitialHour(date);
-      const minute = date.getMinutes();
-      const period = getInitialPeriod(date);
+      const h = getInitialHour(date);
+      const m = date.getMinutes();
+      const p = getInitialPeriod(date);
+      setSelectedHour(h);
+      setSelectedMinute(m);
+      setSelectedPeriod(p);
 
-      setSelectedHour(hour);
-      setSelectedMinute(minute);
-      setSelectedPeriod(period);
-
-      // Scroll to initial positions after a short delay
       setTimeout(() => {
-        isScrollingProgrammatically.current = true;
-        hourScrollRef.current?.scrollTo({
-          y: (hour - 1) * ITEM_HEIGHT,
-          animated: false,
-        });
-        minuteScrollRef.current?.scrollTo({
-          y: minute * ITEM_HEIGHT,
-          animated: false,
-        });
-        periodScrollRef.current?.scrollTo({
-          y: (period === "PM" ? 1 : 0) * ITEM_HEIGHT,
-          animated: false,
-        });
-        setTimeout(() => {
-          isScrollingProgrammatically.current = false;
-        }, 100);
+        programmatic.current = true;
+        hourRef.current?.scrollTo({ y: (h - 1) * ITEM_HEIGHT, animated: false });
+        minuteRef.current?.scrollTo({ y: m * ITEM_HEIGHT, animated: false });
+        periodRef.current?.scrollTo({ y: (p === "PM" ? 1 : 0) * ITEM_HEIGHT, animated: false });
+        setTimeout(() => { programmatic.current = false; }, 100);
       }, 100);
     }
   }, [isVisible, date]);
 
-  const handleHourScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (isScrollingProgrammatically.current) return;
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    const hour = HOURS[index];
-    if (hour !== undefined) {
-      setSelectedHour(hour);
-    }
-  };
+  const getIndexFromScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    return Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+  }, []);
 
-  const handleMinuteScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
-    if (isScrollingProgrammatically.current) return;
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    const minute = MINUTES[index];
-    if (minute !== undefined) {
-      setSelectedMinute(minute);
-    }
-  };
+  // Update selection live during scroll
+  const handleHourScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (programmatic.current) return;
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const h = HOURS[idx];
+    if (h !== undefined) setSelectedHour(h);
+  }, []);
 
-  const handlePeriodScroll = (
-    event: NativeSyntheticEvent<NativeScrollEvent>,
-  ) => {
-    if (isScrollingProgrammatically.current) return;
-    const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / ITEM_HEIGHT);
-    const period = PERIODS[index];
-    if (period !== undefined) {
-      setSelectedPeriod(period);
-    }
-  };
+  const handleMinuteScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (programmatic.current) return;
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const m = MINUTES[idx];
+    if (m !== undefined) setSelectedMinute(m);
+  }, []);
+
+  const handlePeriodScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (programmatic.current) return;
+    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+    const p = PERIODS[idx];
+    if (p !== undefined) setSelectedPeriod(p);
+  }, []);
 
   const handleConfirm = () => {
-    // Convert 12-hour time to 24-hour
     let hour24 = selectedHour;
-    if (selectedPeriod === "AM" && selectedHour === 12) {
-      hour24 = 0;
-    } else if (selectedPeriod === "PM" && selectedHour !== 12) {
-      hour24 = selectedHour + 12;
-    }
+    if (selectedPeriod === "AM" && selectedHour === 12) hour24 = 0;
+    else if (selectedPeriod === "PM" && selectedHour !== 12) hour24 = selectedHour + 12;
 
     const newDate = new Date(date);
     newDate.setHours(hour24);
     newDate.setMinutes(selectedMinute);
     newDate.setSeconds(0);
     newDate.setMilliseconds(0);
-
     onConfirm(newDate);
   };
 
-  const renderPickerColumn = (
-    items: (number | string)[],
+  const scrollToIndex = (ref: React.RefObject<ScrollView>, index: number) => {
+    ref.current?.scrollTo({ y: index * ITEM_HEIGHT, animated: true });
+  };
+
+  const renderColumn = (
+    items: readonly (number | string)[],
     selectedValue: number | string,
     scrollRef: React.RefObject<ScrollView>,
-    onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void,
+    onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void,
+    onTap: (index: number) => void,
     formatValue?: (value: number | string) => string,
-  ) => {
-    return (
-      <View style={styles.pickerColumn}>
-        <ScrollView
-          ref={scrollRef}
-          showsVerticalScrollIndicator={false}
-          snapToInterval={ITEM_HEIGHT}
-          decelerationRate="fast"
-          scrollEnabled={true}
-          nestedScrollEnabled={true}
-          onMomentumScrollEnd={onScroll}
-          contentContainerStyle={styles.pickerContent}
-          style={styles.pickerScroll}
-        >
-          {items.map((item) => {
-            const isSelected = item === selectedValue;
-            const displayValue = formatValue ? formatValue(item) : String(item);
-
-            return (
-              <View key={item} style={styles.pickerItem}>
-                <Text
-                  style={[
-                    styles.pickerItemText,
-                    isSelected && styles.pickerItemTextSelected,
-                  ]}
-                >
-                  {displayValue}
-                </Text>
-              </View>
-            );
-          })}
-        </ScrollView>
-      </View>
-    );
-  };
+  ) => (
+    <View style={styles.pickerColumn}>
+      <ScrollView
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_HEIGHT}
+        decelerationRate="fast"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        onMomentumScrollEnd={onScroll}
+        contentContainerStyle={styles.pickerContent}
+        style={styles.pickerScroll}
+      >
+        {items.map((item, index) => {
+          const isSelected = item === selectedValue;
+          const display = formatValue ? formatValue(item) : String(item);
+          return (
+            <Pressable
+              key={item}
+              onPress={() => onTap(index)}
+              style={styles.pickerItem}
+            >
+              <Text
+                style={[
+                  styles.pickerItemText,
+                  isSelected && styles.pickerItemTextSelected,
+                ]}
+              >
+                {display}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
 
   if (!isVisible) return null;
 
   return (
-    <Modal
-      visible={isVisible}
-      transparent
-      animationType="fade"
-      onRequestClose={onCancel}
-    >
+    <Modal visible transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.backdrop}>
-        {/* Backdrop tap area - only the dark overlay above the card */}
         <Pressable style={styles.backdropTouchable} onPress={onCancel} />
-        
-        {/* Card - plain View, no Pressable wrapper */}
+
         <View style={styles.card}>
           <Text style={styles.title}>Select Time</Text>
 
           <View style={styles.pickerContainer}>
-            {/* Selection indicator stripe */}
-            <View style={styles.selectionStripe} />
+            {/* Green selection stripe */}
+            <View style={styles.selectionStripe} pointerEvents="none" />
 
-            {/* Hour column */}
-            {renderPickerColumn(HOURS, selectedHour, hourScrollRef, handleHourScroll)}
+            {renderColumn(HOURS, selectedHour, hourRef, handleHourScroll, (i) => {
+              const h = HOURS[i];
+              if (h !== undefined) { setSelectedHour(h); scrollToIndex(hourRef, i); }
+            })}
 
-            {/* Minute column */}
-            {renderPickerColumn(
-              MINUTES,
-              selectedMinute,
-              minuteScrollRef,
-              handleMinuteScroll,
-              (value) => String(value).padStart(2, "0"),
-            )}
+            {renderColumn(MINUTES, selectedMinute, minuteRef, handleMinuteScroll, (i) => {
+              const m = MINUTES[i];
+              if (m !== undefined) { setSelectedMinute(m); scrollToIndex(minuteRef, i); }
+            }, (v) => String(v).padStart(2, "0"))}
 
-            {/* AM/PM column */}
-            {renderPickerColumn(
-              PERIODS,
-              selectedPeriod,
-              periodScrollRef,
-              handlePeriodScroll,
-            )}
+            {renderColumn(PERIODS, selectedPeriod, periodRef, handlePeriodScroll, (i) => {
+              const p = PERIODS[i];
+              if (p !== undefined) { setSelectedPeriod(p); scrollToIndex(periodRef, i); }
+            })}
           </View>
 
-          {/* Action buttons */}
           <View style={styles.actions}>
             <Pressable
               onPress={onCancel}
-              style={({ pressed }) => [
-                styles.button,
-                styles.cancelButton,
-                { opacity: pressed ? 0.7 : 1 },
-              ]}
+              style={({ pressed }) => [styles.button, styles.cancelButton, { opacity: pressed ? 0.7 : 1 }]}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </Pressable>
-
             <Pressable
               onPress={handleConfirm}
-              style={({ pressed }) => [
-                styles.button,
-                styles.confirmButton,
-                { opacity: pressed ? 0.8 : 1 },
-              ]}
+              style={({ pressed }) => [styles.button, styles.confirmButton, { opacity: pressed ? 0.8 : 1 }]}
             >
               <Text style={styles.confirmButtonText}>Confirm</Text>
             </Pressable>
@@ -294,7 +246,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#50C878",
-    zIndex: -1,
+    zIndex: 1,
   },
   pickerColumn: {
     flex: 1,
@@ -303,7 +255,7 @@ const styles = StyleSheet.create({
     height: PICKER_HEIGHT,
   },
   pickerContent: {
-    paddingVertical: ITEM_HEIGHT * 2, // Padding to center the selection
+    paddingVertical: ITEM_HEIGHT * 2,
   },
   pickerItem: {
     height: ITEM_HEIGHT,
