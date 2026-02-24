@@ -191,8 +191,12 @@ export function CustomTimePicker({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.backdrop} onPress={onCancel}>
-        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+      <View style={styles.backdrop}>
+        {/* Backdrop tap area - only the dark overlay above the card */}
+        <Pressable style={styles.backdropTouchable} onPress={onCancel} />
+        
+        {/* Card - plain View, no Pressable wrapper */}
+        <View style={styles.card}>
           <Text style={styles.title}>Select Time</Text>
 
           <View style={styles.pickerContainer}>
@@ -244,8 +248,8 @@ export function CustomTimePicker({
               <Text style={styles.confirmButtonText}>Confirm</Text>
             </Pressable>
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -255,6 +259,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "flex-end",
+  },
+  backdropTouchable: {
+    flex: 1,
   },
   card: {
     backgroundColor: "#0F2626",
