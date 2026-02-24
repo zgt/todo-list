@@ -154,6 +154,8 @@ export function CustomTimePicker({
           showsVerticalScrollIndicator={false}
           snapToInterval={ITEM_HEIGHT}
           decelerationRate="fast"
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
           onMomentumScrollEnd={onScroll}
           contentContainerStyle={styles.pickerContent}
           style={styles.pickerScroll}

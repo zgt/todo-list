@@ -124,7 +124,14 @@ export function CustomDatePicker({
     calendarDays.push(day);
   }
 
-  // Group into weeks
+  // Pad to fill the last week (ensure each week has exactly 7 cells)
+  const totalCells = calendarDays.length;
+  const cellsNeeded = Math.ceil(totalCells / 7) * 7;
+  for (let i = totalCells; i < cellsNeeded; i++) {
+    calendarDays.push(null);
+  }
+
+  // Group into weeks (now each week will have exactly 7 cells)
   const weeks: (number | null)[][] = [];
   for (let i = 0; i < calendarDays.length; i += 7) {
     weeks.push(calendarDays.slice(i, i + 7));
