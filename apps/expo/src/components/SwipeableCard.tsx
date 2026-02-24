@@ -283,24 +283,26 @@ export function SwipeableCard({
             if (deletePending) {
               // Cancel delete mode
               runOnJS(onCancelDelete)();
-            } else if (isEditing) {
-              // Save the edit
-              runOnJS(handleSwipeSave)();
-            } else {
-              // Start edit mode
-              runOnJS(onEditStart)();
+            } else if (task.completed) {
+              // Uncomplete the task
+              runOnJS(onToggle)();
+            } else if (onTaskPress) {
+              // Open bottom sheet edit form (only for uncompleted tasks)
+              runOnJS(onTaskPress)();
             }
           } else {
-            // Left swipe
-            if (isEditing) {
-              // Cancel edit mode
-              runOnJS(onCancelEdit)();
-            } else if (deletePending) {
-              // Actually delete
-              runOnJS(onDelete)();
+            // Left swipe — mirrors card view swipe-up behavior
+            if (task.completed) {
+              if (deletePending) {
+                // Third left swipe — actually delete
+                runOnJS(onDelete)();
+              } else {
+                // Second left swipe — enter delete pending
+                runOnJS(onDeletePending)();
+              }
             } else {
-              // Enter delete pending mode
-              runOnJS(onDeletePending)();
+              // First left swipe — complete the task
+              runOnJS(onComplete)();
             }
           }
         }
@@ -345,17 +347,15 @@ export function SwipeableCard({
           (event.translationY > 0 && velocityY > SWIPE_VELOCITY)
         ) {
           // Down swipe
-          if (isEditing) {
-            // Edit mode: Swipe down to CANCEL
-            runOnJS(onCancelEdit)();
-            translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-            translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-          } else if (deletePending) {
+          if (deletePending) {
             // Cancel delete mode
             runOnJS(onCancelDelete)();
-          } else {
-            // Edit mode start
-            runOnJS(onEditStart)();
+          } else if (task.completed) {
+            // Uncomplete the task
+            runOnJS(onToggle)();
+          } else if (onTaskPress) {
+            // Open bottom sheet edit form (only for uncompleted tasks)
+            runOnJS(onTaskPress)();
           }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -430,13 +430,7 @@ export function SwipeableCard({
     panGesture.activeOffsetX([-15, 15]).failOffsetY([-15, 15]);
   }
 
-  const tapGesture = Gesture.Tap().onEnd(() => {
-    if (onTaskPress && !isEditing && !deletePending) {
-      runOnJS(onTaskPress)();
-    }
-  });
-
-  const composedGesture = Gesture.Race(panGesture, tapGesture);
+  const composedGesture = panGesture;
 
   const cardStyle = useAnimatedStyle(() => {
     if (index === -1 && !isCompact) {
@@ -532,6 +526,8 @@ export function SwipeableCard({
           translationX={translateX}
           translationY={translateY}
           deletePending={deletePending}
+          isCompact={isCompact}
+          taskCompleted={task.completed}
         />
       </Animated.View>
     </GestureDetector>

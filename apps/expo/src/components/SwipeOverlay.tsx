@@ -6,7 +6,7 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { Check, Edit3, Trash2, X } from "lucide-react-native";
+import { Check, Edit3, Undo2, Trash2, X } from "lucide-react-native";
 
 export type SwipeDirection = "up" | "down" | "left" | "right" | null;
 
@@ -15,6 +15,8 @@ interface SwipeOverlayProps {
   translationX: SharedValue<number>;
   translationY: SharedValue<number>;
   deletePending: boolean;
+  isCompact?: boolean;
+  taskCompleted?: boolean;
 }
 
 interface DirectionConfig {
@@ -59,6 +61,8 @@ export function SwipeOverlay({
   translationX,
   translationY,
   deletePending,
+  isCompact,
+  taskCompleted,
 }: SwipeOverlayProps) {
   const overlayStyle = useAnimatedStyle(() => {
     const currentDirection = direction.value;
@@ -86,18 +90,35 @@ export function SwipeOverlay({
       return { opacity: 0 };
     }
 
-    // Override config for 'up' direction if deletePending is true
-    if (currentDirection === "up" && deletePending) {
-      return {
-        backgroundColor: "rgba(239, 68, 68, 0.1)", // Red background
-      };
+    // Override for delete pending states
+    if (deletePending) {
+      if (currentDirection === "up" || (currentDirection === "left" && isCompact)) {
+        return { backgroundColor: "rgba(239, 68, 68, 0.1)" };
+      }
+      if (currentDirection === "down") {
+        return { backgroundColor: "rgba(107, 114, 128, 0.1)" };
+      }
     }
 
-    // Override config for 'down' direction if deletePending is true
-    if (currentDirection === "down" && deletePending) {
-      return {
-        backgroundColor: "rgba(107, 114, 128, 0.1)", // Gray background
-      };
+    // Compact left swipe: use complete color when task not completed
+    if (isCompact && currentDirection === "left" && !taskCompleted) {
+      return { backgroundColor: "rgba(80, 200, 120, 0.1)" };
+    }
+    // Compact left swipe on completed task: use delete color
+    if (isCompact && currentDirection === "left" && taskCompleted) {
+      return { backgroundColor: "rgba(239, 68, 68, 0.1)" };
+    }
+    // Compact right swipe: uncomplete (completed task) or edit (uncompleted)
+    if (isCompact && currentDirection === "right") {
+      if (taskCompleted) {
+        return { backgroundColor: "rgba(229, 160, 77, 0.1)" };
+      }
+      return { backgroundColor: "rgba(59, 130, 246, 0.1)" };
+    }
+
+    // Card down swipe: uncomplete (completed task) or edit (uncompleted)
+    if (currentDirection === "down" && taskCompleted) {
+      return { backgroundColor: "rgba(229, 160, 77, 0.1)" };
     }
 
     const config = directionConfigs[currentDirection];
@@ -136,7 +157,7 @@ export function SwipeOverlay({
           },
         ]}
       >
-        <OverlayContent direction={direction} deletePending={deletePending} />
+        <OverlayContent direction={direction} deletePending={deletePending} isCompact={isCompact} taskCompleted={taskCompleted} />
       </Animated.View>
     </Animated.View>
   );
@@ -145,9 +166,13 @@ export function SwipeOverlay({
 const OverlayContent = React.memo(function OverlayContent({
   direction,
   deletePending,
+  isCompact,
+  taskCompleted,
 }: {
   direction: SharedValue<SwipeDirection>;
   deletePending: boolean;
+  isCompact?: boolean;
+  taskCompleted?: boolean;
 }) {
   const upStyle = useAnimatedStyle(() => ({
     opacity: direction.value === "up" ? 1 : 0,
@@ -200,6 +225,11 @@ const OverlayContent = React.memo(function OverlayContent({
             <X size={48} color="#9ca3af" strokeWidth={3} />
             <RNText style={[textStyle, { color: "#9ca3af" }]}>Cancel</RNText>
           </>
+        ) : taskCompleted ? (
+          <>
+            <Undo2 size={48} color="#E5A04D" strokeWidth={2.5} />
+            <RNText style={[textStyle, { color: "#E5A04D" }]}>Undo</RNText>
+          </>
         ) : (
           <>
             <Edit3 size={48} color="#3B82F6" strokeWidth={2.5} />
@@ -214,8 +244,29 @@ const OverlayContent = React.memo(function OverlayContent({
           { position: "absolute", alignItems: "center", gap: 12 },
         ]}
       >
-        <Check size={48} color="#8FA8A8" strokeWidth={3} />
-        <RNText style={[textStyle, { color: "#8FA8A8" }]}>Next</RNText>
+        {isCompact ? (
+          deletePending ? (
+            <>
+              <Trash2 size={48} color="#ef4444" strokeWidth={3} />
+              <RNText style={[textStyle, { color: "#ef4444" }]}>Delete</RNText>
+            </>
+          ) : taskCompleted ? (
+            <>
+              <Trash2 size={48} color="#ef4444" strokeWidth={3} />
+              <RNText style={[textStyle, { color: "#ef4444" }]}>Delete?</RNText>
+            </>
+          ) : (
+            <>
+              <Check size={48} color="#50C878" strokeWidth={3} />
+              <RNText style={[textStyle, { color: "#50C878" }]}>Complete</RNText>
+            </>
+          )
+        ) : (
+          <>
+            <Check size={48} color="#8FA8A8" strokeWidth={3} />
+            <RNText style={[textStyle, { color: "#8FA8A8" }]}>Next</RNText>
+          </>
+        )}
       </Animated.View>
 
       <Animated.View
@@ -224,8 +275,24 @@ const OverlayContent = React.memo(function OverlayContent({
           { position: "absolute", alignItems: "center", gap: 12 },
         ]}
       >
-        <Check size={48} color="#8FA8A8" strokeWidth={3} />
-        <RNText style={[textStyle, { color: "#8FA8A8" }]}>Previous</RNText>
+        {isCompact ? (
+          taskCompleted ? (
+            <>
+              <Undo2 size={48} color="#E5A04D" strokeWidth={2.5} />
+              <RNText style={[textStyle, { color: "#E5A04D" }]}>Undo</RNText>
+            </>
+          ) : (
+            <>
+              <Edit3 size={48} color="#3B82F6" strokeWidth={2.5} />
+              <RNText style={[textStyle, { color: "#3B82F6" }]}>Edit</RNText>
+            </>
+          )
+        ) : (
+          <>
+            <Check size={48} color="#8FA8A8" strokeWidth={3} />
+            <RNText style={[textStyle, { color: "#8FA8A8" }]}>Previous</RNText>
+          </>
+        )}
       </Animated.View>
     </>
   );
