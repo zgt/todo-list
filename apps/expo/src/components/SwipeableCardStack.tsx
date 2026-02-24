@@ -254,7 +254,8 @@ export function SwipeableCardStack({
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={{
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: isCompact ? "flex-start" : "center",
+        marginTop: isCompact ? 0 : -60,
         minHeight: totalContentHeight,
         paddingTop: isCompact ? 0 : 0,
       }}
