@@ -27,7 +27,6 @@ import { authClient } from "~/utils/auth";
 import {
   cancelTaskReminder,
   rescheduleAllReminders,
-  scheduleTaskReminder,
 } from "~/utils/notifications";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
@@ -552,17 +551,8 @@ export default function Index() {
       listId: data.listId ?? undefined,
     });
 
-    // Schedule reminder if set
-    if (data.reminderAt) {
-      // Use the task title for the notification; the actual task ID comes from the server
-      // but we schedule optimistically with a temp approach — rescheduleAllReminders on
-      // next mount will fix any ID mismatch
-      void scheduleTaskReminder(
-        `temp-create-${Date.now()}`,
-        data.title,
-        data.reminderAt,
-      );
-    }
+    // Reminder scheduling is handled by the rescheduleAllReminders useEffect
+    // when serverTasks updates after query invalidation
   };
 
   const handleEditSubmit = async (data: TaskFormData) => {
@@ -581,12 +571,8 @@ export default function Index() {
 
     setEditingTask(null);
 
-    // Schedule or cancel reminder
-    if (data.reminderAt) {
-      void scheduleTaskReminder(editingTask.id, data.title, data.reminderAt);
-    } else {
-      void cancelTaskReminder(editingTask.id);
-    }
+    // Reminder scheduling/cancellation is handled by the rescheduleAllReminders
+    // useEffect when serverTasks updates after query invalidation
   };
 
   const handleEditDelete = async () => {

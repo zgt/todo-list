@@ -27,7 +27,7 @@ import {
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Calendar, Plus, Trash2, X } from "lucide-react-native";
+import { Bell, Calendar, Check, Plus, Trash2, X } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import { CategoryWheelPicker } from "./CategoryWheelPicker";
@@ -177,11 +177,16 @@ export function TaskFormSheet({
 
   // Subtask state
   const taskId = mode === "edit" ? initialData?.id : undefined;
-  const subtasks = initialData?.subtasks ?? [];
+  const [subtasks, setSubtasks] = useState(initialData?.subtasks ?? []);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
   const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
   const newSubtaskInputRef = useRef<TextInput>(null);
+
+  // Keep subtasks in sync when initialData changes (e.g. from query refetch)
+  useEffect(() => {
+    setSubtasks(initialData?.subtasks ?? []);
+  }, [initialData?.subtasks]);
 
   // Subtask mutations
   const queryClient = useQueryClient();
@@ -199,6 +204,24 @@ export function TaskFormSheet({
     trpc.subtask.delete.mutationOptions({ onSuccess: invalidateTasks }),
   );
 
+  const handleAddSubtask = useCallback(() => {
+    const trimmed = newSubtaskTitle.trim();
+    if (!trimmed || !taskId) return;
+    createSubtask.mutate(
+      { taskId, title: trimmed },
+      {
+        onSuccess: (newSubtask) => {
+          setSubtasks((prev) => [
+            ...prev,
+            { id: newSubtask.id, title: trimmed, completed: false },
+          ]);
+          setNewSubtaskTitle("");
+          newSubtaskInputRef.current?.focus();
+        },
+      },
+    );
+  }, [newSubtaskTitle, taskId, createSubtask]);
+
   const resetForm = useCallback(() => {
     setTitle(initialData?.title ?? "");
     setDescription(initialData?.description ?? "");
@@ -211,6 +234,7 @@ export function TaskFormSheet({
     setShowReminderDatePicker(false);
     setShowReminderTimePicker(false);
     setPendingReminderDate(null);
+    setSubtasks(initialData?.subtasks ?? []);
     setNewSubtaskTitle("");
     setEditingSubtaskId(null);
     setEditingSubtaskTitle("");
@@ -554,12 +578,20 @@ export function TaskFormSheet({
                 <View key={subtask.id} style={styles.subtaskRow}>
                   {/* Checkbox */}
                   <Pressable
-                    onPress={() =>
+                    onPress={() => {
+                      const newCompleted = !subtask.completed;
+                      setSubtasks((prev) =>
+                        prev.map((s) =>
+                          s.id === subtask.id
+                            ? { ...s, completed: newCompleted }
+                            : s,
+                        ),
+                      );
                       updateSubtask.mutate({
                         id: subtask.id,
-                        completed: !subtask.completed,
-                      })
-                    }
+                        completed: newCompleted,
+                      });
+                    }}
                     hitSlop={8}
                   >
                     <View
@@ -586,6 +618,13 @@ export function TaskFormSheet({
                       onSubmitEditing={() => {
                         const trimmed = editingSubtaskTitle.trim();
                         if (trimmed && trimmed !== subtask.title) {
+                          setSubtasks((prev) =>
+                            prev.map((s) =>
+                              s.id === subtask.id
+                                ? { ...s, title: trimmed }
+                                : s,
+                            ),
+                          );
                           updateSubtask.mutate({
                             id: subtask.id,
                             title: trimmed,
@@ -596,6 +635,13 @@ export function TaskFormSheet({
                       onBlur={() => {
                         const trimmed = editingSubtaskTitle.trim();
                         if (trimmed && trimmed !== subtask.title) {
+                          setSubtasks((prev) =>
+                            prev.map((s) =>
+                              s.id === subtask.id
+                                ? { ...s, title: trimmed }
+                                : s,
+                            ),
+                          );
                           updateSubtask.mutate({
                             id: subtask.id,
                             title: trimmed,
@@ -626,7 +672,12 @@ export function TaskFormSheet({
 
                   {/* Delete button */}
                   <Pressable
-                    onPress={() => deleteSubtask.mutate({ id: subtask.id })}
+                    onPress={() => {
+                      setSubtasks((prev) =>
+                        prev.filter((s) => s.id !== subtask.id),
+                      );
+                      deleteSubtask.mutate({ id: subtask.id });
+                    }}
                     hitSlop={8}
                   >
                     <X size={14} color="#8FA8A8" />
@@ -648,23 +699,21 @@ export function TaskFormSheet({
                       scrollViewRef.current?.scrollToEnd?.({ animated: true });
                     }, 300);
                   }}
-                  onSubmitEditing={() => {
-                    const trimmed = newSubtaskTitle.trim();
-                    if (!trimmed || !taskId) return;
-                    createSubtask.mutate(
-                      { taskId, title: trimmed },
-                      {
-                        onSuccess: () => {
-                          setNewSubtaskTitle("");
-                          newSubtaskInputRef.current?.focus();
-                        },
-                      },
-                    );
-                  }}
+                  onSubmitEditing={handleAddSubtask}
                   style={styles.addSubtaskInput}
                 />
-                {createSubtask.isPending && (
+                {createSubtask.isPending ? (
                   <ActivityIndicator size="small" color="#50C878" />
+                ) : (
+                  newSubtaskTitle.trim().length > 0 && (
+                    <Pressable
+                      onPress={handleAddSubtask}
+                      style={styles.addSubtaskButton}
+                      hitSlop={8}
+                    >
+                      <Check size={16} color="#0A1A1A" strokeWidth={3} />
+                    </Pressable>
+                  )
                 )}
               </View>
             </View>
@@ -976,6 +1025,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#DCE4E4",
     fontWeight: "500",
+  },
+  addSubtaskButton: {
+    backgroundColor: "#50C878",
+    borderRadius: 8,
+    padding: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   submitButton: {
     backgroundColor: "#50C878",

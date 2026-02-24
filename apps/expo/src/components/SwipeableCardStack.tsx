@@ -256,7 +256,8 @@ export function SwipeableCardStack({
         alignItems: "center",
         justifyContent: isCompact ? "flex-start" : "center",
         minHeight: totalContentHeight,
-        paddingTop: isCompact ? 60 : 0, // Add top padding for list
+        paddingTop: isCompact ? 0 : 60, // Add top padding for list
+        backgroundColor: "red",
       }}
       style={{
         flex: 1,
