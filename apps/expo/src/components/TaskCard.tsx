@@ -18,6 +18,13 @@ import Animated, {
 } from "react-native-reanimated";
 import { Bell, Check, Save, Trash2 } from "lucide-react-native";
 
+import type { PriorityLevel } from "./priority-config";
+import type { LocalTask } from "~/db/client";
+import { CategoryWheelPicker } from "./CategoryWheelPicker";
+import { DatePickerPill } from "./DatePickerPill";
+import { PriorityBadge } from "./PriorityBadge";
+import { PrioritySelector } from "./PrioritySelector";
+
 // Enable LayoutAnimation on Android
 if (
   Platform.OS === "android" &&
@@ -25,13 +32,6 @@ if (
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
-
-import type { PriorityLevel } from "./priority-config";
-import type { LocalTask } from "~/db/client";
-import { CategoryWheelPicker } from "./CategoryWheelPicker";
-import { DatePickerPill } from "./DatePickerPill";
-import { PriorityBadge } from "./PriorityBadge";
-import { PrioritySelector } from "./PrioritySelector";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -161,7 +161,7 @@ export function TaskCard({
   const subtaskTotal = subtasks.length;
   const subtaskDone = subtasks.filter((s) => s.completed).length;
   const progress = useSharedValue(isCompact ? 1 : 0);
-  
+
   // Double-tap detection for compact mode
   const lastTapRef = useRef(0);
   const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -228,7 +228,6 @@ export function TaskCard({
     return {
       height: isCompact ? undefined : baseHeight,
       minHeight: isCompact ? COMPACT_HEIGHT : undefined,
-      flex: isCompact ? 1 : undefined,
       borderRadius,
     };
   });
@@ -263,7 +262,13 @@ export function TaskCard({
 
   // Compact layout (row)
   const renderCompactLayout = () => (
-    <View style={isExpanded ? { flex: 1 } : { flex: 1, justifyContent: 'center' }}>
+    <View
+      style={
+        isExpanded
+          ? { flex: 1, justifyContent: "center" }
+          : { flex: 1, justifyContent: "center" }
+      }
+    >
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center gap-3 px-4 py-3">
           {/* Left: Checkbox */}
@@ -324,7 +329,9 @@ export function TaskCard({
                   >
                     {task.title}
                   </RNText>
-                  {reminderInfo && <Bell size={12} color={reminderInfo.color} />}
+                  {reminderInfo && (
+                    <Bell size={12} color={reminderInfo.color} />
+                  )}
                   {subtaskTotal > 0 && (
                     <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
                       {subtaskDone}/{subtaskTotal} ✓
@@ -378,7 +385,11 @@ export function TaskCard({
                 value={priority}
                 onChange={onChangePriority}
                 trigger={
-                  <PriorityBadge priority={priority} size="sm" showLabel={false} />
+                  <PriorityBadge
+                    priority={priority}
+                    size="sm"
+                    showLabel={false}
+                  />
                 }
               />
               <CategoryWheelPicker
@@ -399,7 +410,11 @@ export function TaskCard({
                   onSave({ priority: p });
                 }}
                 trigger={
-                  <PriorityBadge priority={priority} size="sm" showLabel={false} />
+                  <PriorityBadge
+                    priority={priority}
+                    size="sm"
+                    showLabel={false}
+                  />
                 }
               />
               {task.dueDate && (
@@ -707,7 +722,12 @@ export function TaskCard({
 
   return (
     <Animated.View
-      style={[styles.container, containerStyle, getBackgroundStyle(), isExpanded && isCompact && { overflow: 'visible' }]}
+      style={[
+        styles.container,
+        containerStyle,
+        getBackgroundStyle(),
+        isExpanded && isCompact && { overflow: "visible" },
+      ]}
     >
       <View
         style={[
