@@ -458,22 +458,24 @@ export function TaskFormSheet({
             )}
             {showDatePicker && (
               <View style={styles.pickerContainer}>
-                <DateTimePicker
-                  value={dueDate ?? new Date()}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "inline" : "default"}
-                  minimumDate={new Date()}
-                  onChange={(_, selectedDate) => {
-                    if (Platform.OS === "android") {
-                      setShowDatePicker(false);
-                    }
-                    if (selectedDate) {
-                      setDueDate(selectedDate);
-                    }
-                  }}
-                  themeVariant="dark"
-                  accentColor="#50C878"
-                />
+                <View style={styles.datePickerWrapper}>
+                  <DateTimePicker
+                    value={dueDate ?? new Date()}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "inline" : "default"}
+                    minimumDate={new Date()}
+                    onChange={(_, selectedDate) => {
+                      if (Platform.OS === "android") {
+                        setShowDatePicker(false);
+                      }
+                      if (selectedDate) {
+                        setDueDate(selectedDate);
+                      }
+                    }}
+                    themeVariant="dark"
+                    accentColor="#50C878"
+                  />
+                </View>
                 {Platform.OS === "ios" && (
                   <Pressable
                     onPress={() => setShowDatePicker(false)}
@@ -535,26 +537,28 @@ export function TaskFormSheet({
             {showReminderDatePicker && (
               <View style={styles.pickerContainer}>
                 <Text style={styles.pickerLabel}>Pick date:</Text>
-                <DateTimePicker
-                  value={pendingReminderDate ?? new Date()}
-                  mode="date"
-                  display={Platform.OS === "ios" ? "inline" : "default"}
-                  minimumDate={new Date()}
-                  onChange={(_, selectedDate) => {
-                    if (Platform.OS === "android") {
-                      setShowReminderDatePicker(false);
+                <View style={styles.datePickerWrapper}>
+                  <DateTimePicker
+                    value={pendingReminderDate ?? new Date()}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "inline" : "default"}
+                    minimumDate={new Date()}
+                    onChange={(_, selectedDate) => {
+                      if (Platform.OS === "android") {
+                        setShowReminderDatePicker(false);
+                        if (selectedDate) {
+                          setPendingReminderDate(selectedDate);
+                          setShowReminderTimePicker(true);
+                        }
+                      }
                       if (selectedDate) {
                         setPendingReminderDate(selectedDate);
-                        setShowReminderTimePicker(true);
                       }
-                    }
-                    if (selectedDate) {
-                      setPendingReminderDate(selectedDate);
-                    }
-                  }}
-                  themeVariant="dark"
-                  accentColor="#50C878"
-                />
+                    }}
+                    themeVariant="dark"
+                    accentColor="#50C878"
+                  />
+                </View>
                 {Platform.OS === "ios" && (
                   <Pressable
                     onPress={() => {
@@ -573,31 +577,33 @@ export function TaskFormSheet({
             {showReminderTimePicker && (
               <View style={styles.pickerContainer}>
                 <Text style={styles.pickerLabel}>Pick time:</Text>
-                <DateTimePicker
-                  value={pendingReminderDate ?? new Date()}
-                  mode="time"
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  onChange={(_, selectedTime) => {
-                    if (Platform.OS === "android") {
-                      setShowReminderTimePicker(false);
+                <View style={styles.timePickerWrapper}>
+                  <DateTimePicker
+                    value={pendingReminderDate ?? new Date()}
+                    mode="time"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={(_, selectedTime) => {
+                      if (Platform.OS === "android") {
+                        setShowReminderTimePicker(false);
+                        if (selectedTime && pendingReminderDate) {
+                          const combined = new Date(pendingReminderDate);
+                          combined.setHours(selectedTime.getHours());
+                          combined.setMinutes(selectedTime.getMinutes());
+                          setReminderAt(combined);
+                          setPendingReminderDate(null);
+                        }
+                      }
                       if (selectedTime && pendingReminderDate) {
                         const combined = new Date(pendingReminderDate);
                         combined.setHours(selectedTime.getHours());
                         combined.setMinutes(selectedTime.getMinutes());
-                        setReminderAt(combined);
-                        setPendingReminderDate(null);
+                        setPendingReminderDate(combined);
                       }
-                    }
-                    if (selectedTime && pendingReminderDate) {
-                      const combined = new Date(pendingReminderDate);
-                      combined.setHours(selectedTime.getHours());
-                      combined.setMinutes(selectedTime.getMinutes());
-                      setPendingReminderDate(combined);
-                    }
-                  }}
-                  themeVariant="dark"
-                  accentColor="#50C878"
-                />
+                    }}
+                    themeVariant="dark"
+                    accentColor="#50C878"
+                  />
+                </View>
                 {Platform.OS === "ios" && (
                   <Pressable
                     onPress={() => {
@@ -939,6 +945,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#8FA8A8",
     marginBottom: 4,
+  },
+  datePickerWrapper: {
+    height: 340,
+    overflow: "hidden",
+  },
+  timePickerWrapper: {
+    height: 200,
+    overflow: "hidden",
   },
   pickerDoneButton: {
     alignSelf: "flex-end",
