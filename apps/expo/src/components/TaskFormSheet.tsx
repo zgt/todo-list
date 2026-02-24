@@ -458,11 +458,11 @@ export function TaskFormSheet({
             )}
             {showDatePicker && (
               <View style={styles.pickerContainer}>
-                <View style={styles.datePickerWrapper}>
+                <View style={styles.timePickerWrapper}>
                   <DateTimePicker
                     value={dueDate ?? new Date()}
                     mode="date"
-                    display={Platform.OS === "ios" ? "inline" : "default"}
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
                     minimumDate={new Date()}
                     onChange={(_, selectedDate) => {
                       if (Platform.OS === "android") {
@@ -537,11 +537,11 @@ export function TaskFormSheet({
             {showReminderDatePicker && (
               <View style={styles.pickerContainer}>
                 <Text style={styles.pickerLabel}>Pick date:</Text>
-                <View style={styles.datePickerWrapper}>
+                <View style={styles.timePickerWrapper}>
                   <DateTimePicker
                     value={pendingReminderDate ?? new Date()}
                     mode="date"
-                    display={Platform.OS === "ios" ? "inline" : "default"}
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
                     minimumDate={new Date()}
                     onChange={(_, selectedDate) => {
                       if (Platform.OS === "android") {
@@ -945,10 +945,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#8FA8A8",
     marginBottom: 4,
-  },
-  datePickerWrapper: {
-    height: 340,
-    overflow: "hidden",
   },
   timePickerWrapper: {
     height: 200,
