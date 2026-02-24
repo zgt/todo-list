@@ -691,7 +691,7 @@ export function TaskFormSheet({
                     setDueDate(selectedDate);
                   }
                 }}
-                themeVariant="dark"
+                themeVariant="light"
                 accentColor="#50C878"
               />
             </View>
@@ -729,7 +729,7 @@ export function TaskFormSheet({
                     setPendingReminderDate(selectedDate);
                   }
                 }}
-                themeVariant="dark"
+                themeVariant="light"
                 accentColor="#50C878"
               />
             </View>
@@ -772,7 +772,7 @@ export function TaskFormSheet({
                     setPendingReminderDate(combined);
                   }
                 }}
-                themeVariant="dark"
+                themeVariant="light"
                 accentColor="#50C878"
               />
             </View>
@@ -969,8 +969,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   modalPickerWrapper: {
-    height: 200,
-    overflow: "hidden",
+    height: 216,
+    backgroundColor: "red",
     marginBottom: 16,
   },
   modalDoneButton: {
