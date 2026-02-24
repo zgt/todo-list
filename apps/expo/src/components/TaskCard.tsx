@@ -228,6 +228,7 @@ export function TaskCard({
     return {
       height: isCompact ? undefined : baseHeight,
       minHeight: isCompact ? COMPACT_HEIGHT : undefined,
+      flex: isCompact && isExpanded ? 1 : undefined,
       borderRadius,
     };
   });
