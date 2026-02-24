@@ -229,7 +229,7 @@ export function SwipeableCardStack({
       const task = displayTasks[i];
       const subtaskCount = (task as any).subtasks?.length ?? 0;
       const isExp = expandedTaskId === task.id && subtaskCount > 0;
-      const cardHeight = isExp ? 92 + subtaskCount * 36 + 12 : 92;
+      const cardHeight = isExp ? 92 + subtaskCount * 32 + 4 : 92;
       y += cardHeight + 4; // card height + gap
     }
     return offsets;
