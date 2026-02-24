@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  FadeInUp,
+  FadeOutUp,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
@@ -178,8 +180,8 @@ export function TaskCard({
         clearTimeout(singleTapTimeoutRef.current);
         singleTapTimeoutRef.current = null;
       }
-      // Only toggle if there are subtasks
-      if (subtaskTotal > 0) {
+      // Toggle expand if there are subtasks or a description
+      if (subtaskTotal > 0 || task.description) {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         onToggleExpand();
       }
@@ -319,7 +321,7 @@ export function TaskCard({
                   style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
                 >
                   <RNText
-                    className={`text-base font-semibold ${
+                    className={`text-xl font-bold ${
                       task.completed ? "line-through" : ""
                     }`}
                     numberOfLines={1}
@@ -363,18 +365,14 @@ export function TaskCard({
                     </View>
                   )}
                 </View>
-                {task.description ? (
-                  <RNText className="text-sm text-white/50" numberOfLines={1}>
-                    {task.description}
-                  </RNText>
-                ) : reminderInfo ? (
+                {reminderInfo && (
                   <RNText
                     style={{ fontSize: 11, color: reminderInfo.color }}
                     numberOfLines={1}
                   >
                     {reminderInfo.label}
                   </RNText>
-                ) : null}
+                )}
               </>
             )}
           </View>
@@ -453,41 +451,56 @@ export function TaskCard({
         </View>
       </Pressable>
 
-      {/* Expanded subtasks section */}
-      {isExpanded && subtaskTotal > 0 && onSubtaskToggle && (
-        <View style={styles.expandedSubtasksContainer}>
-          {subtasks.map((subtask, index) => (
-            <View key={subtask.id}>
-              {index > 0 && <View style={styles.subtaskSeparator} />}
-              <Pressable
-                onPress={() => onSubtaskToggle(subtask.id, !subtask.completed)}
-                style={styles.subtaskRowCompact}
-              >
-                <View
-                  style={[
-                    styles.subtaskCheckboxCompact,
-                    subtask.completed
-                      ? styles.subtaskCheckboxChecked
-                      : styles.subtaskCheckboxUnchecked,
-                  ]}
-                >
-                  {subtask.completed && (
-                    <RNText style={styles.subtaskCheckmark}>✓</RNText>
-                  )}
+      {/* Expanded description and subtasks section */}
+      {isExpanded && (task.description || subtaskTotal > 0) && (
+        <Animated.View
+          entering={FadeInUp.duration(50).springify().damping(180)}
+          exiting={FadeOutUp.duration(150)}
+          style={styles.expandedSubtasksContainer}
+        >
+          {task.description && (
+            <RNText style={styles.expandedDescription}>
+              {task.description}
+            </RNText>
+          )}
+          {subtaskTotal > 0 && onSubtaskToggle && (
+            <View style={task.description ? { marginTop: 8 } : undefined}>
+              {subtasks.map((subtask, index) => (
+                <View key={subtask.id}>
+                  {index > 0 && <View style={styles.subtaskSeparator} />}
+                  <Pressable
+                    onPress={() =>
+                      onSubtaskToggle(subtask.id, !subtask.completed)
+                    }
+                    style={styles.subtaskRowCompact}
+                  >
+                    <View
+                      style={[
+                        styles.subtaskCheckboxCompact,
+                        subtask.completed
+                          ? styles.subtaskCheckboxChecked
+                          : styles.subtaskCheckboxUnchecked,
+                      ]}
+                    >
+                      {subtask.completed && (
+                        <RNText style={styles.subtaskCheckmark}>✓</RNText>
+                      )}
+                    </View>
+                    <RNText
+                      style={[
+                        styles.subtaskTitleCompact,
+                        subtask.completed && styles.subtaskTitleCompleted,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {subtask.title}
+                    </RNText>
+                  </Pressable>
                 </View>
-                <RNText
-                  style={[
-                    styles.subtaskTitleCompact,
-                    subtask.completed && styles.subtaskTitleCompleted,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {subtask.title}
-                </RNText>
-              </Pressable>
+              ))}
             </View>
-          ))}
-        </View>
+          )}
+        </Animated.View>
       )}
     </View>
   );
@@ -633,8 +646,12 @@ export function TaskCard({
         ) : (
           <>
             <RNText
-              className="text-4xl leading-tight font-bold"
-              style={{ color: task.completed ? "#8FA8A8" : "#DCE4E4" }}
+              style={{
+                fontSize: 36,
+                lineHeight: 40,
+                fontWeight: "800",
+                color: task.completed ? "#8FA8A8" : "#DCE4E4",
+              }}
             >
               {task.title}
             </RNText>
@@ -746,7 +763,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 9,
     shadowRadius: 16,
     elevation: 4,
   },
@@ -862,7 +879,11 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     borderTopWidth: 1,
     borderTopColor: "rgba(22, 75, 73, 0.5)",
-    backgroundColor: "red",
+  },
+  expandedDescription: {
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.5)",
+    lineHeight: 18,
   },
   subtaskRowCompact: {
     flexDirection: "row",
