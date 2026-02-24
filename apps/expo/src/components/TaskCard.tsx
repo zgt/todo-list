@@ -227,6 +227,7 @@ export function TaskCard({
 
     return {
       height: isCompact ? undefined : baseHeight,
+      minHeight: isCompact ? COMPACT_HEIGHT : undefined,
       borderRadius,
     };
   });
