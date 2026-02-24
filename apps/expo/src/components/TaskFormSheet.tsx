@@ -1,3 +1,7 @@
+import type {
+  BottomSheetBackdropProps,
+  BottomSheetModal,
+} from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -6,11 +10,16 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { BottomSheetBackdrop, BottomSheetModal } from "@gorhom/bottom-sheet";
+import {
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+  BottomSheetModal as BSModal,
+} from "@gorhom/bottom-sheet";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, Plus, Trash2, X } from "lucide-react-native";
@@ -114,8 +123,7 @@ export function TaskFormSheet({
   onDelete,
   isOpen,
 }: TaskFormSheetProps) {
-  console.log("[TaskFormSheet] render — mode:", mode, "isOpen:", isOpen);
-  const sheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
   const snapPoints = useMemo(() => ["85%"], []);
 
@@ -189,28 +197,22 @@ export function TaskFormSheet({
   }, [initialData]);
 
   // For edit mode: controlled by isOpen prop
-  // Form state is reset via key prop on the component (parent passes key={editingTask?.id})
-  // Only run when isOpen is explicitly provided (edit mode), not for create mode where it's undefined
   useEffect(() => {
     if (isOpen === undefined) return;
     if (isOpen) {
-      sheetRef.current?.present();
+      bottomSheetRef.current?.present();
     } else {
-      sheetRef.current?.dismiss();
+      bottomSheetRef.current?.dismiss();
     }
   }, [isOpen]);
 
-  // For create mode: trigger opens the sheet (matches CategoryFilter pattern)
+  // For create mode: trigger opens the sheet
   const handleOpenSheet = useCallback(() => {
-    console.log("[TaskFormSheet] handleOpenSheet called");
-    console.log("[TaskFormSheet] sheetRef.current:", sheetRef.current);
     Keyboard.dismiss();
-    sheetRef.current?.present();
-    console.log("[TaskFormSheet] present() called");
+    bottomSheetRef.current?.present();
   }, []);
 
   const handleDismiss = useCallback(() => {
-    console.log("[TaskFormSheet] handleDismiss called");
     resetForm();
     onClose?.();
   }, [resetForm, onClose]);
@@ -226,8 +228,7 @@ export function TaskFormSheet({
       dueDate,
       reminderAt,
     });
-    // Dismiss sheet after submit — onClose will be called via handleSheetChange
-    sheetRef.current?.dismiss();
+    bottomSheetRef.current?.dismiss();
   };
 
   const handleDelete = () => {
@@ -242,7 +243,7 @@ export function TaskFormSheet({
   };
 
   const renderBackdrop = useCallback(
-    (props: React.ComponentProps<typeof BottomSheetBackdrop>) => (
+    (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
@@ -257,28 +258,18 @@ export function TaskFormSheet({
 
   return (
     <>
+      {/* FAB trigger for create mode */}
       {mode === "create" && (
-        <Pressable
-          onPress={() => { console.log("[TaskFormSheet] FAB pressed"); handleOpenSheet(); }}
-        >
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: "#50C878",
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1,
-              borderColor: "rgba(255, 255, 255, 0.2)",
-            }}
-          >
+        <Pressable onPress={handleOpenSheet}>
+          <View style={styles.fab}>
             <Plus size={32} color="#0A1A1A" />
           </View>
         </Pressable>
       )}
-      <BottomSheetModal
-        ref={sheetRef}
+
+      {/* Bottom Sheet */}
+      <BSModal
+        ref={bottomSheetRef}
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
@@ -286,870 +277,843 @@ export function TaskFormSheet({
         keyboardBlurBehavior="restore"
         onDismiss={handleDismiss}
         backdropComponent={renderBackdrop}
-        backgroundStyle={{ backgroundColor: "#0A1A1A" }}
-        handleIndicatorStyle={{ backgroundColor: "#164B49", width: 40 }}
+        backgroundStyle={styles.sheetBackground}
+        handleIndicatorStyle={styles.handleIndicator}
       >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-          }}
+        <BottomSheetScrollView
+          style={styles.contentContainer}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
-            {mode === "create" ? "New Task" : "Edit Task"}
-          </Text>
-          <Pressable onPress={() => sheetRef.current?.dismiss()} hitSlop={12}>
-            <X size={24} color="#8FA8A8" />
-          </Pressable>
-        </View>
-
-        {/* Title */}
-        <View style={{ marginBottom: 16 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#8FA8A8",
-              marginBottom: 6,
-            }}
-          >
-            Title
-          </Text>
-          <TextInput
-            ref={titleInputRef}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="What needs to be done?"
-            placeholderTextColor="#4A6A6A"
-            style={{
-              backgroundColor: "#102A2A",
-              borderWidth: 1,
-              borderColor: "#164B49",
-              borderRadius: 8,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              fontSize: 16,
-              color: "#DCE4E4",
-            }}
-          />
-        </View>
-
-        {/* Description */}
-        <View style={{ marginBottom: 16 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#8FA8A8",
-              marginBottom: 6,
-            }}
-          >
-            Description
-          </Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Add details..."
-            placeholderTextColor="#4A6A6A"
-            multiline
-            textAlignVertical="top"
-            style={{
-              backgroundColor: "#102A2A",
-              borderWidth: 1,
-              borderColor: "#164B49",
-              borderRadius: 8,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              fontSize: 15,
-              color: "#DCE4E4",
-              minHeight: 80,
-            }}
-          />
-        </View>
-
-        {/* Category */}
-        <View style={{ marginBottom: 16 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#8FA8A8",
-              marginBottom: 8,
-            }}
-          >
-            Category
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8 }}
-          >
-            {/* None option */}
-            <Pressable
-              onPress={() => setCategoryId(null)}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                borderRadius: 9999,
-                borderWidth: 1.5,
-                borderColor: categoryId === null ? "#50C878" : "#164B49",
-                backgroundColor:
-                  categoryId === null
-                    ? "rgba(80, 200, 120, 0.15)"
-                    : "transparent",
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: categoryId === null ? "#50C878" : "#8FA8A8",
-                }}
-              >
-                None
-              </Text>
-            </Pressable>
-            {categories.map((cat) => (
-              <Pressable
-                key={cat.id}
-                onPress={() => setCategoryId(cat.id)}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 9999,
-                  borderWidth: 1.5,
-                  borderColor: categoryId === cat.id ? cat.color : "#164B49",
-                  backgroundColor:
-                    categoryId === cat.id ? `${cat.color}25` : "transparent",
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: categoryId === cat.id ? cat.color : "#8FA8A8",
-                  }}
-                >
-                  {cat.icon ? `${cat.icon} ` : ""}
-                  {cat.name}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* List */}
-        {lists && lists.length > 0 && (
-          <View style={{ marginBottom: 16 }}>
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "600",
-                color: "#8FA8A8",
-                marginBottom: 8,
-              }}
-            >
-              List
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>
+              {mode === "create" ? "New Task" : "Edit Task"}
             </Text>
+            <Pressable
+              onPress={() => bottomSheetRef.current?.dismiss()}
+              hitSlop={12}
+            >
+              <X size={24} color="#8FA8A8" />
+            </Pressable>
+          </View>
+
+          {/* Title */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Title</Text>
+            <TextInput
+              ref={titleInputRef}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="What needs to be done?"
+              placeholderTextColor="#4A6A6A"
+              style={styles.input}
+            />
+          </View>
+
+          {/* Description */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Add details..."
+              placeholderTextColor="#4A6A6A"
+              multiline
+              textAlignVertical="top"
+              style={[styles.input, styles.textArea]}
+            />
+          </View>
+
+          {/* Category */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Category</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8 }}
+              contentContainerStyle={styles.pillRow}
             >
               <Pressable
-                onPress={() => setListId(null)}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 9999,
-                  borderWidth: 1.5,
-                  borderColor: listId === null ? "#50C878" : "#164B49",
-                  backgroundColor:
-                    listId === null
-                      ? "rgba(80, 200, 120, 0.15)"
-                      : "transparent",
-                }}
+                onPress={() => setCategoryId(null)}
+                style={[
+                  styles.pill,
+                  categoryId === null
+                    ? styles.pillActiveGreen
+                    : styles.pillInactive,
+                ]}
               >
                 <Text
-                  style={{
-                    fontSize: 13,
-                    color: listId === null ? "#50C878" : "#8FA8A8",
-                  }}
+                  style={[
+                    styles.pillText,
+                    { color: categoryId === null ? "#50C878" : "#8FA8A8" },
+                  ]}
                 >
-                  Personal
+                  None
                 </Text>
               </Pressable>
-              {lists.map((list) => (
-                <Pressable
-                  key={list.id}
-                  onPress={() => setListId(list.id)}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 6,
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    borderRadius: 9999,
-                    borderWidth: 1.5,
-                    borderColor:
-                      listId === list.id
-                        ? (list.color ?? "#50C878")
-                        : "#164B49",
-                    backgroundColor:
-                      listId === list.id
-                        ? `${list.color ?? "#50C878"}25`
-                        : "transparent",
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 4,
-                      backgroundColor: list.color ?? "#50C878",
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color:
-                        listId === list.id
-                          ? (list.color ?? "#50C878")
-                          : "#8FA8A8",
-                    }}
+              {categories.map((cat) => {
+                const isActive = categoryId === cat.id;
+                return (
+                  <Pressable
+                    key={cat.id}
+                    onPress={() => setCategoryId(cat.id)}
+                    style={[
+                      styles.pill,
+                      isActive
+                        ? {
+                            borderColor: cat.color,
+                            backgroundColor: `${cat.color}25`,
+                          }
+                        : styles.pillInactive,
+                    ]}
                   >
-                    {list.name}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={[
+                        styles.pillText,
+                        { color: isActive ? cat.color : "#8FA8A8" },
+                      ]}
+                    >
+                      {cat.icon ? `${cat.icon} ` : ""}
+                      {cat.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </View>
-        )}
 
-        {/* Priority */}
-        <View style={{ marginBottom: 16 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#8FA8A8",
-              marginBottom: 8,
-            }}
-          >
-            Priority
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              gap: 0,
-              borderRadius: 8,
-              overflow: "hidden",
-              borderWidth: 1,
-              borderColor: "#164B49",
-            }}
-          >
-            {PRIORITY_OPTIONS.map((opt) => {
-              const isActive = priority === opt.value;
-              return (
+          {/* List */}
+          {lists && lists.length > 0 && (
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>List</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.pillRow}
+              >
                 <Pressable
-                  key={opt.value}
-                  onPress={() => setPriority(opt.value)}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 10,
-                    alignItems: "center",
-                    backgroundColor: isActive ? `${opt.color}25` : "#102A2A",
-                    borderRightWidth: opt.value !== "high" ? 1 : 0,
-                    borderColor: "#164B49",
-                  }}
+                  onPress={() => setListId(null)}
+                  style={[
+                    styles.pill,
+                    listId === null
+                      ? styles.pillActiveGreen
+                      : styles.pillInactive,
+                  ]}
                 >
                   <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: isActive ? "700" : "500",
-                      color: isActive ? opt.color : "#8FA8A8",
-                    }}
+                    style={[
+                      styles.pillText,
+                      { color: listId === null ? "#50C878" : "#8FA8A8" },
+                    ]}
                   >
-                    {opt.label}
+                    Personal
                   </Text>
                 </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Due Date */}
-        <View style={{ marginBottom: 16 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#8FA8A8",
-              marginBottom: 8,
-            }}
-          >
-            Due Date
-          </Text>
-          {dueDate ? (
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
-            >
-              <Pressable
-                onPress={() => setShowDatePicker(true)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  backgroundColor: "#102A2A",
-                  borderWidth: 1,
-                  borderColor: "#164B49",
-                  borderRadius: 8,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  flex: 1,
-                }}
-              >
-                <Calendar size={16} color="#50C878" />
-                <Text style={{ fontSize: 14, color: "#DCE4E4" }}>
-                  {formatDate(dueDate)}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setDueDate(null);
-                  setShowDatePicker(false);
-                }}
-                hitSlop={8}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(239, 68, 68, 0.15)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <X size={16} color="#ef4444" />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              onPress={() => {
-                setDueDate(new Date());
-                setShowDatePicker(true);
-              }}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                backgroundColor: "#102A2A",
-                borderWidth: 1,
-                borderColor: "#164B49",
-                borderRadius: 8,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Calendar size={16} color="#8FA8A8" />
-              <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
-                Add due date
-              </Text>
-            </Pressable>
-          )}
-          {showDatePicker && (
-            <View style={{ marginTop: 8 }}>
-              <DateTimePicker
-                value={dueDate ?? new Date()}
-                mode="date"
-                display={Platform.OS === "ios" ? "inline" : "default"}
-                minimumDate={new Date()}
-                onChange={(_, selectedDate) => {
-                  if (Platform.OS === "android") {
-                    setShowDatePicker(false);
-                  }
-                  if (selectedDate) {
-                    setDueDate(selectedDate);
-                  }
-                }}
-                themeVariant="dark"
-                accentColor="#50C878"
-              />
-              {Platform.OS === "ios" && (
-                <Pressable
-                  onPress={() => setShowDatePicker(false)}
-                  style={{
-                    alignSelf: "flex-end",
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    marginTop: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "600",
-                      color: "#50C878",
-                    }}
-                  >
-                    Done
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* Reminder */}
-        <View style={{ marginBottom: 24 }}>
-          <Text
-            style={{
-              fontSize: 13,
-              fontWeight: "600",
-              color: "#8FA8A8",
-              marginBottom: 8,
-            }}
-          >
-            Reminder
-          </Text>
-          {reminderAt ? (
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
-            >
-              <Pressable
-                onPress={() => {
-                  setPendingReminderDate(reminderAt);
-                  setShowReminderDatePicker(true);
-                }}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  backgroundColor: "#102A2A",
-                  borderWidth: 1,
-                  borderColor: "#164B49",
-                  borderRadius: 8,
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  flex: 1,
-                }}
-              >
-                <Bell size={16} color="#50C878" />
-                <Text style={{ fontSize: 14, color: "#DCE4E4" }}>
-                  {formatDateTime(reminderAt)}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setReminderAt(null);
-                  setShowReminderDatePicker(false);
-                  setShowReminderTimePicker(false);
-                }}
-                hitSlop={8}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  backgroundColor: "rgba(239, 68, 68, 0.15)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <X size={16} color="#ef4444" />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable
-              onPress={() => {
-                const defaultReminder = dueDate
-                  ? new Date(dueDate.getTime() - 30 * 60 * 1000)
-                  : new Date(Date.now() + 60 * 60 * 1000);
-                setPendingReminderDate(defaultReminder);
-                setShowReminderDatePicker(true);
-              }}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                backgroundColor: "#102A2A",
-                borderWidth: 1,
-                borderColor: "#164B49",
-                borderRadius: 8,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
-              }}
-            >
-              <Bell size={16} color="#8FA8A8" />
-              <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
-                Add reminder
-              </Text>
-            </Pressable>
-          )}
-
-          {/* Reminder - two-step picker: date first, then time */}
-          {showReminderDatePicker && (
-            <View style={{ marginTop: 8 }}>
-              <Text style={{ fontSize: 12, color: "#8FA8A8", marginBottom: 4 }}>
-                Pick date:
-              </Text>
-              <DateTimePicker
-                value={pendingReminderDate ?? new Date()}
-                mode="date"
-                display={Platform.OS === "ios" ? "inline" : "default"}
-                minimumDate={new Date()}
-                onChange={(_, selectedDate) => {
-                  if (Platform.OS === "android") {
-                    setShowReminderDatePicker(false);
-                    if (selectedDate) {
-                      setPendingReminderDate(selectedDate);
-                      setShowReminderTimePicker(true);
-                    }
-                  }
-                  if (selectedDate) {
-                    setPendingReminderDate(selectedDate);
-                  }
-                }}
-                themeVariant="dark"
-                accentColor="#50C878"
-              />
-              {Platform.OS === "ios" && (
-                <Pressable
-                  onPress={() => {
-                    setShowReminderDatePicker(false);
-                    setShowReminderTimePicker(true);
-                  }}
-                  style={{
-                    alignSelf: "flex-end",
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    marginTop: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "600",
-                      color: "#50C878",
-                    }}
-                  >
-                    Next: Pick Time
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-
-          {showReminderTimePicker && (
-            <View style={{ marginTop: 8 }}>
-              <Text style={{ fontSize: 12, color: "#8FA8A8", marginBottom: 4 }}>
-                Pick time:
-              </Text>
-              <DateTimePicker
-                value={pendingReminderDate ?? new Date()}
-                mode="time"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={(_, selectedTime) => {
-                  if (Platform.OS === "android") {
-                    setShowReminderTimePicker(false);
-                    if (selectedTime && pendingReminderDate) {
-                      const combined = new Date(pendingReminderDate);
-                      combined.setHours(selectedTime.getHours());
-                      combined.setMinutes(selectedTime.getMinutes());
-                      setReminderAt(combined);
-                      setPendingReminderDate(null);
-                    }
-                  }
-                  if (selectedTime && pendingReminderDate) {
-                    const combined = new Date(pendingReminderDate);
-                    combined.setHours(selectedTime.getHours());
-                    combined.setMinutes(selectedTime.getMinutes());
-                    setPendingReminderDate(combined);
-                  }
-                }}
-                themeVariant="dark"
-                accentColor="#50C878"
-              />
-              {Platform.OS === "ios" && (
-                <Pressable
-                  onPress={() => {
-                    setShowReminderTimePicker(false);
-                    if (pendingReminderDate) {
-                      setReminderAt(pendingReminderDate);
-                      setPendingReminderDate(null);
-                    }
-                  }}
-                  style={{
-                    alignSelf: "flex-end",
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    marginTop: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "600",
-                      color: "#50C878",
-                    }}
-                  >
-                    Done
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* Subtasks (edit mode only) */}
-        {mode === "edit" && taskId && (
-          <View style={{ marginBottom: 24 }}>
-            <Text
-              style={{
-                fontSize: 13,
-                fontWeight: "600",
-                color: "#8FA8A8",
-                marginBottom: 8,
-              }}
-            >
-              Subtasks
-              {subtasks.length > 0 && (
-                <Text style={{ color: "#50C878", fontWeight: "400" }}>
-                  {" "}
-                  ({subtasks.filter((s) => s.completed).length}/
-                  {subtasks.length})
-                </Text>
-              )}
-            </Text>
-
-            {/* Subtask list */}
-            {subtasks.map((subtask) => (
-              <View
-                key={subtask.id}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 10,
-                  paddingVertical: 8,
-                  paddingHorizontal: 4,
-                  borderBottomWidth: 1,
-                  borderBottomColor: "#164B4930",
-                }}
-              >
-                {/* Checkbox */}
-                <Pressable
-                  onPress={() =>
-                    updateSubtask.mutate({
-                      id: subtask.id,
-                      completed: !subtask.completed,
-                    })
-                  }
-                  hitSlop={8}
-                >
-                  <View
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 4,
-                      borderWidth: 1.5,
-                      borderColor: subtask.completed ? "#50C878" : "#164B49",
-                      backgroundColor: subtask.completed
-                        ? "#50C878"
-                        : "transparent",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {subtask.completed && (
+                {lists.map((list) => {
+                  const isActive = listId === list.id;
+                  const color = list.color ?? "#50C878";
+                  return (
+                    <Pressable
+                      key={list.id}
+                      onPress={() => setListId(list.id)}
+                      style={[
+                        styles.pill,
+                        styles.listPill,
+                        isActive
+                          ? { borderColor: color, backgroundColor: `${color}25` }
+                          : styles.pillInactive,
+                      ]}
+                    >
+                      <View
+                        style={[styles.listDot, { backgroundColor: color }]}
+                      />
                       <Text
-                        style={{
-                          fontSize: 12,
-                          color: "#0A1A1A",
-                          fontWeight: "700",
-                          lineHeight: 14,
-                        }}
+                        style={[
+                          styles.pillText,
+                          { color: isActive ? color : "#8FA8A8" },
+                        ]}
                       >
-                        ✓
+                        {list.name}
                       </Text>
-                    )}
-                  </View>
-                </Pressable>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
 
-                {/* Title — tap to edit inline */}
-                {editingSubtaskId === subtask.id ? (
-                  <TextInput
-                    value={editingSubtaskTitle}
-                    onChangeText={setEditingSubtaskTitle}
-                    autoFocus
-                    returnKeyType="done"
-                    onSubmitEditing={() => {
-                      const trimmed = editingSubtaskTitle.trim();
-                      if (trimmed && trimmed !== subtask.title) {
-                        updateSubtask.mutate({
-                          id: subtask.id,
-                          title: trimmed,
-                        });
-                      }
-                      setEditingSubtaskId(null);
-                    }}
-                    onBlur={() => {
-                      const trimmed = editingSubtaskTitle.trim();
-                      if (trimmed && trimmed !== subtask.title) {
-                        updateSubtask.mutate({
-                          id: subtask.id,
-                          title: trimmed,
-                        });
-                      }
-                      setEditingSubtaskId(null);
-                    }}
-                    style={{
-                      flex: 1,
-                      fontSize: 14,
-                      color: "#DCE4E4",
-                      paddingVertical: 2,
-                      paddingHorizontal: 4,
-                      backgroundColor: "#0A1A1A",
-                      borderRadius: 4,
-                      borderWidth: 1,
-                      borderColor: "#50C878",
-                    }}
-                  />
-                ) : (
+          {/* Priority */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Priority</Text>
+            <View style={styles.priorityRow}>
+              {PRIORITY_OPTIONS.map((opt) => {
+                const isActive = priority === opt.value;
+                return (
                   <Pressable
-                    style={{ flex: 1 }}
-                    onPress={() => {
-                      setEditingSubtaskId(subtask.id);
-                      setEditingSubtaskTitle(subtask.title);
-                    }}
+                    key={opt.value}
+                    onPress={() => setPriority(opt.value)}
+                    style={[
+                      styles.priorityButton,
+                      {
+                        backgroundColor: isActive
+                          ? `${opt.color}25`
+                          : "#102A2A",
+                        borderRightWidth: opt.value !== "high" ? 1 : 0,
+                      },
+                    ]}
                   >
                     <Text
                       style={{
                         fontSize: 14,
-                        color: subtask.completed ? "#8FA8A8" : "#DCE4E4",
-                        textDecorationLine: subtask.completed
-                          ? "line-through"
-                          : "none",
+                        fontWeight: isActive ? "700" : "500",
+                        color: isActive ? opt.color : "#8FA8A8",
                       }}
                     >
-                      {subtask.title}
+                      {opt.label}
                     </Text>
                   </Pressable>
-                )}
-
-                {/* Delete button */}
-                <Pressable
-                  onPress={() => deleteSubtask.mutate({ id: subtask.id })}
-                  hitSlop={8}
-                >
-                  <X size={14} color="#8FA8A8" />
-                </Pressable>
-              </View>
-            ))}
-
-            {/* Add subtask input */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                marginTop: 8,
-              }}
-            >
-              <TextInput
-                ref={newSubtaskInputRef}
-                value={newSubtaskTitle}
-                onChangeText={setNewSubtaskTitle}
-                placeholder="Add a subtask..."
-                placeholderTextColor="#4A6A6A"
-                returnKeyType="done"
-                onSubmitEditing={() => {
-                  const trimmed = newSubtaskTitle.trim();
-                  if (!trimmed || !taskId) return;
-                  createSubtask.mutate(
-                    { taskId, title: trimmed },
-                    {
-                      onSuccess: () => {
-                        setNewSubtaskTitle("");
-                        newSubtaskInputRef.current?.focus();
-                      },
-                    },
-                  );
-                }}
-                style={{
-                  flex: 1,
-                  backgroundColor: "#102A2A",
-                  borderWidth: 1,
-                  borderColor: "#164B49",
-                  borderRadius: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  fontSize: 14,
-                  color: "#DCE4E4",
-                }}
-              />
-              {createSubtask.isPending && (
-                <ActivityIndicator size="small" color="#50C878" />
-              )}
+                );
+              })}
             </View>
           </View>
-        )}
 
-        {/* Submit Button */}
-        <Pressable
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-          style={{
-            backgroundColor: canSubmit ? "#50C878" : "#164B49",
-            borderRadius: 10,
-            paddingVertical: 14,
-            alignItems: "center",
-            marginBottom: mode === "edit" ? 12 : 0,
-            opacity: canSubmit ? 1 : 0.5,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: canSubmit ? "#0A1A1A" : "#8FA8A8",
-            }}
-          >
-            {isSubmitting
-              ? "Saving..."
-              : mode === "create"
-                ? "Create Task"
-                : "Save Changes"}
-          </Text>
-        </Pressable>
+          {/* Due Date */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Due Date</Text>
+            {dueDate ? (
+              <View style={styles.dateRow}>
+                <Pressable
+                  onPress={() => setShowDatePicker(true)}
+                  style={styles.dateButton}
+                >
+                  <Calendar size={16} color="#50C878" />
+                  <Text style={styles.dateText}>{formatDate(dueDate)}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setDueDate(null);
+                    setShowDatePicker(false);
+                  }}
+                  hitSlop={8}
+                  style={styles.clearDateButton}
+                >
+                  <X size={16} color="#ef4444" />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  setDueDate(new Date());
+                  setShowDatePicker(true);
+                }}
+                style={styles.addDateButton}
+              >
+                <Calendar size={16} color="#8FA8A8" />
+                <Text style={styles.addDateText}>Add due date</Text>
+              </Pressable>
+            )}
+            {showDatePicker && (
+              <View style={styles.pickerContainer}>
+                <DateTimePicker
+                  value={dueDate ?? new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "inline" : "default"}
+                  minimumDate={new Date()}
+                  onChange={(_, selectedDate) => {
+                    if (Platform.OS === "android") {
+                      setShowDatePicker(false);
+                    }
+                    if (selectedDate) {
+                      setDueDate(selectedDate);
+                    }
+                  }}
+                  themeVariant="dark"
+                  accentColor="#50C878"
+                />
+                {Platform.OS === "ios" && (
+                  <Pressable
+                    onPress={() => setShowDatePicker(false)}
+                    style={styles.pickerDoneButton}
+                  >
+                    <Text style={styles.pickerDoneText}>Done</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
 
-        {/* Delete Button (edit mode only) */}
-        {mode === "edit" && onDelete && (
+          {/* Reminder */}
+          <View style={styles.fieldContainerLarge}>
+            <Text style={styles.label}>Reminder</Text>
+            {reminderAt ? (
+              <View style={styles.dateRow}>
+                <Pressable
+                  onPress={() => {
+                    setPendingReminderDate(reminderAt);
+                    setShowReminderDatePicker(true);
+                  }}
+                  style={styles.dateButton}
+                >
+                  <Bell size={16} color="#50C878" />
+                  <Text style={styles.dateText}>
+                    {formatDateTime(reminderAt)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setReminderAt(null);
+                    setShowReminderDatePicker(false);
+                    setShowReminderTimePicker(false);
+                  }}
+                  hitSlop={8}
+                  style={styles.clearDateButton}
+                >
+                  <X size={16} color="#ef4444" />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  const defaultReminder = dueDate
+                    ? new Date(dueDate.getTime() - 30 * 60 * 1000)
+                    : new Date(Date.now() + 60 * 60 * 1000);
+                  setPendingReminderDate(defaultReminder);
+                  setShowReminderDatePicker(true);
+                }}
+                style={styles.addDateButton}
+              >
+                <Bell size={16} color="#8FA8A8" />
+                <Text style={styles.addDateText}>Add reminder</Text>
+              </Pressable>
+            )}
+
+            {/* Reminder date picker */}
+            {showReminderDatePicker && (
+              <View style={styles.pickerContainer}>
+                <Text style={styles.pickerLabel}>Pick date:</Text>
+                <DateTimePicker
+                  value={pendingReminderDate ?? new Date()}
+                  mode="date"
+                  display={Platform.OS === "ios" ? "inline" : "default"}
+                  minimumDate={new Date()}
+                  onChange={(_, selectedDate) => {
+                    if (Platform.OS === "android") {
+                      setShowReminderDatePicker(false);
+                      if (selectedDate) {
+                        setPendingReminderDate(selectedDate);
+                        setShowReminderTimePicker(true);
+                      }
+                    }
+                    if (selectedDate) {
+                      setPendingReminderDate(selectedDate);
+                    }
+                  }}
+                  themeVariant="dark"
+                  accentColor="#50C878"
+                />
+                {Platform.OS === "ios" && (
+                  <Pressable
+                    onPress={() => {
+                      setShowReminderDatePicker(false);
+                      setShowReminderTimePicker(true);
+                    }}
+                    style={styles.pickerDoneButton}
+                  >
+                    <Text style={styles.pickerDoneText}>Next: Pick Time</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+
+            {/* Reminder time picker */}
+            {showReminderTimePicker && (
+              <View style={styles.pickerContainer}>
+                <Text style={styles.pickerLabel}>Pick time:</Text>
+                <DateTimePicker
+                  value={pendingReminderDate ?? new Date()}
+                  mode="time"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={(_, selectedTime) => {
+                    if (Platform.OS === "android") {
+                      setShowReminderTimePicker(false);
+                      if (selectedTime && pendingReminderDate) {
+                        const combined = new Date(pendingReminderDate);
+                        combined.setHours(selectedTime.getHours());
+                        combined.setMinutes(selectedTime.getMinutes());
+                        setReminderAt(combined);
+                        setPendingReminderDate(null);
+                      }
+                    }
+                    if (selectedTime && pendingReminderDate) {
+                      const combined = new Date(pendingReminderDate);
+                      combined.setHours(selectedTime.getHours());
+                      combined.setMinutes(selectedTime.getMinutes());
+                      setPendingReminderDate(combined);
+                    }
+                  }}
+                  themeVariant="dark"
+                  accentColor="#50C878"
+                />
+                {Platform.OS === "ios" && (
+                  <Pressable
+                    onPress={() => {
+                      setShowReminderTimePicker(false);
+                      if (pendingReminderDate) {
+                        setReminderAt(pendingReminderDate);
+                        setPendingReminderDate(null);
+                      }
+                    }}
+                    style={styles.pickerDoneButton}
+                  >
+                    <Text style={styles.pickerDoneText}>Done</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+
+          {/* Subtasks (edit mode only) */}
+          {mode === "edit" && taskId && (
+            <View style={styles.fieldContainerLarge}>
+              <Text style={styles.label}>
+                Subtasks
+                {subtasks.length > 0 && (
+                  <Text style={styles.subtaskCount}>
+                    {" "}
+                    ({subtasks.filter((s) => s.completed).length}/
+                    {subtasks.length})
+                  </Text>
+                )}
+              </Text>
+
+              {subtasks.map((subtask) => (
+                <View key={subtask.id} style={styles.subtaskRow}>
+                  {/* Checkbox */}
+                  <Pressable
+                    onPress={() =>
+                      updateSubtask.mutate({
+                        id: subtask.id,
+                        completed: !subtask.completed,
+                      })
+                    }
+                    hitSlop={8}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        subtask.completed
+                          ? styles.checkboxChecked
+                          : styles.checkboxUnchecked,
+                      ]}
+                    >
+                      {subtask.completed && (
+                        <Text style={styles.checkmark}>✓</Text>
+                      )}
+                    </View>
+                  </Pressable>
+
+                  {/* Title — tap to edit inline */}
+                  {editingSubtaskId === subtask.id ? (
+                    <TextInput
+                      value={editingSubtaskTitle}
+                      onChangeText={setEditingSubtaskTitle}
+                      autoFocus
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        const trimmed = editingSubtaskTitle.trim();
+                        if (trimmed && trimmed !== subtask.title) {
+                          updateSubtask.mutate({
+                            id: subtask.id,
+                            title: trimmed,
+                          });
+                        }
+                        setEditingSubtaskId(null);
+                      }}
+                      onBlur={() => {
+                        const trimmed = editingSubtaskTitle.trim();
+                        if (trimmed && trimmed !== subtask.title) {
+                          updateSubtask.mutate({
+                            id: subtask.id,
+                            title: trimmed,
+                          });
+                        }
+                        setEditingSubtaskId(null);
+                      }}
+                      style={styles.subtaskEditInput}
+                    />
+                  ) : (
+                    <Pressable
+                      style={styles.subtaskTitlePressable}
+                      onPress={() => {
+                        setEditingSubtaskId(subtask.id);
+                        setEditingSubtaskTitle(subtask.title);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.subtaskTitle,
+                          subtask.completed && styles.subtaskTitleCompleted,
+                        ]}
+                      >
+                        {subtask.title}
+                      </Text>
+                    </Pressable>
+                  )}
+
+                  {/* Delete button */}
+                  <Pressable
+                    onPress={() => deleteSubtask.mutate({ id: subtask.id })}
+                    hitSlop={8}
+                  >
+                    <X size={14} color="#8FA8A8" />
+                  </Pressable>
+                </View>
+              ))}
+
+              {/* Add subtask input */}
+              <View style={styles.addSubtaskRow}>
+                <TextInput
+                  ref={newSubtaskInputRef}
+                  value={newSubtaskTitle}
+                  onChangeText={setNewSubtaskTitle}
+                  placeholder="Add a subtask..."
+                  placeholderTextColor="#4A6A6A"
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    const trimmed = newSubtaskTitle.trim();
+                    if (!trimmed || !taskId) return;
+                    createSubtask.mutate(
+                      { taskId, title: trimmed },
+                      {
+                        onSuccess: () => {
+                          setNewSubtaskTitle("");
+                          newSubtaskInputRef.current?.focus();
+                        },
+                      },
+                    );
+                  }}
+                  style={styles.addSubtaskInput}
+                />
+                {createSubtask.isPending && (
+                  <ActivityIndicator size="small" color="#50C878" />
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Submit Button */}
           <Pressable
-            onPress={handleDelete}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              borderWidth: 1,
-              borderColor: "rgba(239, 68, 68, 0.3)",
-              borderRadius: 10,
-              paddingVertical: 14,
-            }}
+            onPress={handleSubmit}
+            disabled={!canSubmit}
+            style={[
+              styles.submitButton,
+              !canSubmit && styles.submitButtonDisabled,
+            ]}
           >
-            <Trash2 size={18} color="#ef4444" />
-            <Text style={{ fontSize: 16, fontWeight: "600", color: "#ef4444" }}>
-              Delete Task
+            <Text
+              style={[
+                styles.submitButtonText,
+                !canSubmit && styles.submitButtonTextDisabled,
+              ]}
+            >
+              {isSubmitting
+                ? "Saving..."
+                : mode === "create"
+                  ? "Create Task"
+                  : "Save Changes"}
             </Text>
           </Pressable>
-        )}
-      </ScrollView>
-    </BottomSheetModal>
+
+          {/* Delete Button (edit mode only) */}
+          {mode === "edit" && onDelete && (
+            <Pressable onPress={handleDelete} style={styles.deleteButton}>
+              <Trash2 size={18} color="#ef4444" />
+              <Text style={styles.deleteButtonText}>Delete Task</Text>
+            </Pressable>
+          )}
+        </BottomSheetScrollView>
+      </BSModal>
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  fab: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#50C878",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  sheetBackground: {
+    backgroundColor: "#0A1A1A",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  handleIndicator: {
+    backgroundColor: "#164B49",
+    width: 40,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#DCE4E4",
+  },
+  fieldContainer: {
+    marginBottom: 16,
+  },
+  fieldContainerLarge: {
+    marginBottom: 24,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#8FA8A8",
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: "#102A2A",
+    borderWidth: 1,
+    borderColor: "#164B49",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#DCE4E4",
+  },
+  textArea: {
+    fontSize: 15,
+    minHeight: 80,
+  },
+  pillRow: {
+    gap: 8,
+  },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    borderWidth: 1.5,
+  },
+  pillActiveGreen: {
+    borderColor: "#50C878",
+    backgroundColor: "rgba(80, 200, 120, 0.15)",
+  },
+  pillInactive: {
+    borderColor: "#164B49",
+    backgroundColor: "transparent",
+  },
+  pillText: {
+    fontSize: 13,
+  },
+  listPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  listDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  priorityRow: {
+    flexDirection: "row",
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#164B49",
+  },
+  priorityButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderColor: "#164B49",
+  },
+  dateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#102A2A",
+    borderWidth: 1,
+    borderColor: "#164B49",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flex: 1,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#DCE4E4",
+  },
+  clearDateButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addDateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#102A2A",
+    borderWidth: 1,
+    borderColor: "#164B49",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  addDateText: {
+    fontSize: 14,
+    color: "#8FA8A8",
+  },
+  pickerContainer: {
+    marginTop: 8,
+  },
+  pickerLabel: {
+    fontSize: 12,
+    color: "#8FA8A8",
+    marginBottom: 4,
+  },
+  pickerDoneButton: {
+    alignSelf: "flex-end",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  pickerDoneText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#50C878",
+  },
+  subtaskCount: {
+    color: "#50C878",
+    fontWeight: "400",
+  },
+  subtaskRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#164B4930",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxChecked: {
+    borderColor: "#50C878",
+    backgroundColor: "#50C878",
+  },
+  checkboxUnchecked: {
+    borderColor: "#164B49",
+    backgroundColor: "transparent",
+  },
+  checkmark: {
+    fontSize: 12,
+    color: "#0A1A1A",
+    fontWeight: "700",
+    lineHeight: 14,
+  },
+  subtaskEditInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#DCE4E4",
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    backgroundColor: "#0A1A1A",
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#50C878",
+  },
+  subtaskTitlePressable: {
+    flex: 1,
+  },
+  subtaskTitle: {
+    fontSize: 14,
+    color: "#DCE4E4",
+  },
+  subtaskTitleCompleted: {
+    color: "#8FA8A8",
+    textDecorationLine: "line-through",
+  },
+  addSubtaskRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+  },
+  addSubtaskInput: {
+    flex: 1,
+    backgroundColor: "#102A2A",
+    borderWidth: 1,
+    borderColor: "#164B49",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: "#DCE4E4",
+  },
+  submitButton: {
+    backgroundColor: "#50C878",
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  submitButtonDisabled: {
+    backgroundColor: "#164B49",
+    opacity: 0.5,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0A1A1A",
+  },
+  submitButtonTextDisabled: {
+    color: "#8FA8A8",
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.3)",
+    borderRadius: 10,
+    paddingVertical: 14,
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#ef4444",
+  },
+});
