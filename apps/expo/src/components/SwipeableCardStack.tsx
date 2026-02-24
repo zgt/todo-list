@@ -218,6 +218,35 @@ export function SwipeableCardStack({
   const currentSkipIds = skipAnimationIds.current;
   // Reset after capturing
   skipAnimationIds.current = new Set();
+
+  // Calculate Y positions accounting for expansion in compact mode
+  const yOffsets = React.useMemo(() => {
+    if (!isCompact) return [];
+    const offsets: number[] = [];
+    let y = 0;
+    for (let i = 0; i < displayTasks.length; i++) {
+      offsets.push(y);
+      const task = displayTasks[i];
+      const subtaskCount = (task as any).subtasks?.length ?? 0;
+      const isExp = expandedTaskId === task.id && subtaskCount > 0;
+      const cardHeight = isExp ? 80 + subtaskCount * 36 + 12 : 80;
+      y += cardHeight + 12; // card height + gap
+    }
+    return offsets;
+  }, [displayTasks, expandedTaskId, isCompact]);
+
+  // Calculate total height for scroll content
+  const totalContentHeight = React.useMemo(() => {
+    if (!isCompact) return SCREEN_HEIGHT * 0.75;
+    const lastOffset = yOffsets[yOffsets.length - 1] ?? 0;
+    const lastTask = displayTasks[displayTasks.length - 1];
+    if (!lastTask) return 200;
+    const lastSubtaskCount = (lastTask as any).subtasks?.length ?? 0;
+    const lastIsExp = expandedTaskId === lastTask.id && lastSubtaskCount > 0;
+    const lastCardHeight = lastIsExp ? 80 + lastSubtaskCount * 36 + 12 : 80;
+    return lastOffset + lastCardHeight + 200; // last card + padding
+  }, [yOffsets, displayTasks, expandedTaskId, isCompact]);
+
   return (
     <Animated.ScrollView
       ref={scrollViewRef}
@@ -226,9 +255,7 @@ export function SwipeableCardStack({
       contentContainerStyle={{
         alignItems: "center",
         justifyContent: isCompact ? "flex-start" : "center",
-        minHeight: isCompact
-          ? displayTasks.length * 92 + 200
-          : SCREEN_HEIGHT * 0.75,
+        minHeight: totalContentHeight,
         paddingTop: isCompact ? 60 : 0, // Add top padding for list
       }}
       style={{
@@ -254,6 +281,7 @@ export function SwipeableCardStack({
             deletePending={deletePendingId === task.id}
             isEditing={editingId === task.id}
             isExpanded={expandedTaskId === task.id}
+            yOffset={isCompact ? yOffsets[mapIndex] : undefined}
             onToggle={() => onToggle(task.id, !task.completed)}
             onComplete={() => handleComplete(task.id)}
             onDelete={() => handleDelete(task.id)}

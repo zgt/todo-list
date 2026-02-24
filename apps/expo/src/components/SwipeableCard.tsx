@@ -36,6 +36,7 @@ interface SwipeableCardProps {
   canGoPrevious: boolean;
   swipeProgress: SharedValue<number>;
   deletePending: boolean;
+  yOffset?: number;
   onToggle: () => void;
   onComplete: () => void;
   onDelete: () => void;
@@ -72,6 +73,7 @@ export function SwipeableCard({
   canGoPrevious,
   swipeProgress,
   deletePending,
+  yOffset,
   onToggle,
   onComplete,
   onDelete,
@@ -160,7 +162,7 @@ export function SwipeableCard({
     let targetOpacity: number;
 
     if (isCompact) {
-      targetY = index * (80 + 12); // Height + Gap
+      targetY = yOffset ?? index * (80 + 12); // Use yOffset or fallback to Height + Gap
       targetScale = 1;
       targetOpacity = 1;
     } else {
@@ -195,6 +197,7 @@ export function SwipeableCard({
     stackScale,
     stackOpacity,
     isCompact,
+    yOffset,
   ]);
 
   const panGesture = Gesture.Pan()
@@ -482,7 +485,11 @@ export function SwipeableCard({
       : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
 
     const targetWidth = isCompact ? SCREEN_WIDTH * 0.95 : SCREEN_WIDTH * 0.85;
-    const targetHeight = isCompact ? 80 : SCREEN_HEIGHT * 0.65;
+    const subtaskCount = (task as any).subtasks?.length ?? 0;
+    const expandedExtra = isExpanded && isCompact && subtaskCount > 0
+      ? subtaskCount * 36 + 12  // 36px per subtask row + 12px padding
+      : 0;
+    const targetHeight = isCompact ? 80 + expandedExtra : SCREEN_HEIGHT * 0.65;
 
     return {
       transform: [
