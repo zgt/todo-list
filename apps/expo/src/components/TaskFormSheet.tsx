@@ -2,7 +2,13 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -119,6 +125,27 @@ export function TaskFormSheet({
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
   const snapPoints = useMemo(() => ["85%"], []);
+  const scrollViewRef = useRef<any>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(
@@ -274,8 +301,12 @@ export function TaskFormSheet({
         handleIndicatorStyle={styles.handleIndicator}
       >
         <BottomSheetScrollView
+          ref={scrollViewRef}
           style={styles.contentContainer}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
@@ -612,6 +643,11 @@ export function TaskFormSheet({
                   placeholder="Add a subtask..."
                   placeholderTextColor="#4A6A6A"
                   returnKeyType="done"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd?.({ animated: true });
+                    }, 300);
+                  }}
                   onSubmitEditing={() => {
                     const trimmed = newSubtaskTitle.trim();
                     if (!trimmed || !taskId) return;
