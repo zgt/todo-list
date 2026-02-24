@@ -670,6 +670,7 @@ export function TaskFormSheet({
       <DateTimePickerModal
         isVisible={showDatePicker}
         mode="date"
+        display="spinner"
         date={dueDate ?? new Date()}
         minimumDate={new Date()}
         onConfirm={(date) => {
@@ -677,12 +678,14 @@ export function TaskFormSheet({
           setShowDatePicker(false);
         }}
         onCancel={() => setShowDatePicker(false)}
+        pickerComponentStyleIOS={{ height: 260 }}
       />
 
       {/* Reminder Date Picker */}
       <DateTimePickerModal
         isVisible={showReminderDatePicker}
         mode="date"
+        display="spinner"
         date={pendingReminderDate ?? new Date()}
         minimumDate={new Date()}
         onConfirm={(date) => {
@@ -691,13 +694,16 @@ export function TaskFormSheet({
           setShowReminderTimePicker(true);
         }}
         onCancel={() => setShowReminderDatePicker(false)}
+        pickerComponentStyleIOS={{ height: 260 }}
       />
 
       {/* Reminder Time Picker */}
       <DateTimePickerModal
         isVisible={showReminderTimePicker}
         mode="time"
+        display="spinner"
         date={pendingReminderDate ?? new Date()}
+        pickerComponentStyleIOS={{ height: 260 }}
         onConfirm={(selectedTime) => {
           if (pendingReminderDate) {
             const combined = new Date(pendingReminderDate);
