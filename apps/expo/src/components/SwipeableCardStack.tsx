@@ -8,7 +8,6 @@ import Animated, { useSharedValue } from "react-native-reanimated";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
-import { SubtaskListItem } from "./SubtaskListItem";
 import { SwipeableCard } from "./SwipeableCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -57,6 +56,7 @@ export function SwipeableCardStack({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
   const skipAnimationIds = useRef<Set<string>>(new Set());
   const scrollViewRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
@@ -163,6 +163,10 @@ export function SwipeableCardStack({
     setEditingId(null);
   };
 
+  const handleToggleExpand = (taskId: string) => {
+    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
+  };
+
   const resortWithTarget = (targetDirection: "next" | "prev") => {
     const prev = sortedTasksRef.current;
     // The task we want to land on after navigation
@@ -214,18 +218,6 @@ export function SwipeableCardStack({
   const currentSkipIds = skipAnimationIds.current;
   // Reset after capturing
   skipAnimationIds.current = new Set();
-  // Type guard to check if task has subtasks
-  const taskWithSubtasks = (
-    task: LocalTask,
-  ): task is LocalTask & {
-    subtasks?: Array<{
-      id: string;
-      title: string;
-      completed: boolean;
-      sortOrder: number;
-    }>;
-  } => true;
-
   return (
     <Animated.ScrollView
       ref={scrollViewRef}
@@ -246,62 +238,43 @@ export function SwipeableCardStack({
     >
       {displayTasks.map((task, mapIndex) => {
         const relativeIndex = mapIndex - baseIndexOffset;
-        const typedTask = task as LocalTask & {
-          subtasks?: Array<{
-            id: string;
-            title: string;
-            completed: boolean;
-            sortOrder: number;
-          }>;
-        };
-        const subtasks = typedTask.subtasks ?? [];
 
         return (
-          <React.Fragment key={task.id}>
-            <SwipeableCard
-              task={task}
-              isCompact={isCompact}
-              index={relativeIndex}
-              totalCards={displayTasks.length}
-              isTopCard={relativeIndex === 0}
-              skipStackAnimation={currentSkipIds.has(task.id)}
-              canGoNext={currentIndex < sortedTasks.length - 1}
-              canGoPrevious={currentIndex > 0}
-              swipeProgress={swipeProgress}
-              deletePending={deletePendingId === task.id}
-              isEditing={editingId === task.id}
-              onToggle={() => onToggle(task.id, !task.completed)}
-              onComplete={() => handleComplete(task.id)}
-              onDelete={() => handleDelete(task.id)}
-              onDeletePending={() => setDeletePendingId(task.id)}
-              onCancelDelete={() => setDeletePendingId(null)}
-              onEditStart={() => handleEditStart(task.id)}
-              onSave={(
-                updates: Partial<{
-                  title: string;
-                  description: string;
-                  categoryId: string | null;
-                  dueDate: Date | null;
-                }>,
-              ) => handleSave(task.id, updates)}
-              onCancelEdit={handleCancelEdit}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
-              onSubtaskToggle={onSubtaskToggle}
-            />
-            {/* Render subtasks in list view (compact mode) */}
-            {isCompact &&
-              subtasks.length > 0 &&
-              onSubtaskToggle &&
-              subtasks.map((subtask) => (
-                <SubtaskListItem
-                  key={subtask.id}
-                  subtask={subtask}
-                  onToggle={onSubtaskToggle}
-                />
-              ))}
-          </React.Fragment>
+          <SwipeableCard
+            key={task.id}
+            task={task}
+            isCompact={isCompact}
+            index={relativeIndex}
+            totalCards={displayTasks.length}
+            isTopCard={relativeIndex === 0}
+            skipStackAnimation={currentSkipIds.has(task.id)}
+            canGoNext={currentIndex < sortedTasks.length - 1}
+            canGoPrevious={currentIndex > 0}
+            swipeProgress={swipeProgress}
+            deletePending={deletePendingId === task.id}
+            isEditing={editingId === task.id}
+            isExpanded={expandedTaskId === task.id}
+            onToggle={() => onToggle(task.id, !task.completed)}
+            onComplete={() => handleComplete(task.id)}
+            onDelete={() => handleDelete(task.id)}
+            onDeletePending={() => setDeletePendingId(task.id)}
+            onCancelDelete={() => setDeletePendingId(null)}
+            onEditStart={() => handleEditStart(task.id)}
+            onSave={(
+              updates: Partial<{
+                title: string;
+                description: string;
+                categoryId: string | null;
+                dueDate: Date | null;
+              }>,
+            ) => handleSave(task.id, updates)}
+            onCancelEdit={handleCancelEdit}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+            onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
+            onSubtaskToggle={onSubtaskToggle}
+            onToggleExpand={() => handleToggleExpand(task.id)}
+          />
         );
       })}
     </Animated.ScrollView>
