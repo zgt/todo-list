@@ -2,12 +2,13 @@
    to implement a deferred sort pattern: task order only updates on navigation or add/remove,
    not on completion toggling, preventing cards from jumping away mid-interaction. */
 import type { ComponentRef } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
+import { SubtaskListItem } from "./SubtaskListItem";
 import { SwipeableCard } from "./SwipeableCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -38,6 +39,7 @@ interface SwipeableCardStackProps {
   autoEditId?: string | null;
   onCancelEdit?: (id: string) => void;
   onTaskPress?: (id: string) => void;
+  onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
 }
 
 export function SwipeableCardStack({
@@ -50,6 +52,7 @@ export function SwipeableCardStack({
   autoEditId,
   onCancelEdit,
   onTaskPress,
+  onSubtaskToggle,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
@@ -211,6 +214,18 @@ export function SwipeableCardStack({
   const currentSkipIds = skipAnimationIds.current;
   // Reset after capturing
   skipAnimationIds.current = new Set();
+  // Type guard to check if task has subtasks
+  const taskWithSubtasks = (
+    task: LocalTask,
+  ): task is LocalTask & {
+    subtasks?: Array<{
+      id: string;
+      title: string;
+      completed: boolean;
+      sortOrder: number;
+    }>;
+  } => true;
+
   return (
     <Animated.ScrollView
       ref={scrollViewRef}
@@ -231,39 +246,62 @@ export function SwipeableCardStack({
     >
       {displayTasks.map((task, mapIndex) => {
         const relativeIndex = mapIndex - baseIndexOffset;
+        const typedTask = task as LocalTask & {
+          subtasks?: Array<{
+            id: string;
+            title: string;
+            completed: boolean;
+            sortOrder: number;
+          }>;
+        };
+        const subtasks = typedTask.subtasks ?? [];
+
         return (
-          <SwipeableCard
-            key={task.id}
-            task={task}
-            isCompact={isCompact}
-            index={relativeIndex}
-            totalCards={displayTasks.length}
-            isTopCard={relativeIndex === 0}
-            skipStackAnimation={currentSkipIds.has(task.id)}
-            canGoNext={currentIndex < sortedTasks.length - 1}
-            canGoPrevious={currentIndex > 0}
-            swipeProgress={swipeProgress}
-            deletePending={deletePendingId === task.id}
-            isEditing={editingId === task.id}
-            onToggle={() => onToggle(task.id, !task.completed)}
-            onComplete={() => handleComplete(task.id)}
-            onDelete={() => handleDelete(task.id)}
-            onDeletePending={() => setDeletePendingId(task.id)}
-            onCancelDelete={() => setDeletePendingId(null)}
-            onEditStart={() => handleEditStart(task.id)}
-            onSave={(
-              updates: Partial<{
-                title: string;
-                description: string;
-                categoryId: string | null;
-                dueDate: Date | null;
-              }>,
-            ) => handleSave(task.id, updates)}
-            onCancelEdit={handleCancelEdit}
-            onNext={handleNext}
-            onPrevious={handlePrevious}
-            onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
-          />
+          <React.Fragment key={task.id}>
+            <SwipeableCard
+              task={task}
+              isCompact={isCompact}
+              index={relativeIndex}
+              totalCards={displayTasks.length}
+              isTopCard={relativeIndex === 0}
+              skipStackAnimation={currentSkipIds.has(task.id)}
+              canGoNext={currentIndex < sortedTasks.length - 1}
+              canGoPrevious={currentIndex > 0}
+              swipeProgress={swipeProgress}
+              deletePending={deletePendingId === task.id}
+              isEditing={editingId === task.id}
+              onToggle={() => onToggle(task.id, !task.completed)}
+              onComplete={() => handleComplete(task.id)}
+              onDelete={() => handleDelete(task.id)}
+              onDeletePending={() => setDeletePendingId(task.id)}
+              onCancelDelete={() => setDeletePendingId(null)}
+              onEditStart={() => handleEditStart(task.id)}
+              onSave={(
+                updates: Partial<{
+                  title: string;
+                  description: string;
+                  categoryId: string | null;
+                  dueDate: Date | null;
+                }>,
+              ) => handleSave(task.id, updates)}
+              onCancelEdit={handleCancelEdit}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
+              onSubtaskToggle={onSubtaskToggle}
+            />
+            {/* Render subtasks in list view (compact mode) */}
+            {isCompact &&
+              subtasks.length > 0 &&
+              onSubtaskToggle &&
+              subtasks.map((subtask) => (
+                <SubtaskListItem
+                  key={subtask.id}
+                  subtask={subtask}
+                  onToggle={onSubtaskToggle}
+                />
+              ))}
+          </React.Fragment>
         );
       })}
     </Animated.ScrollView>

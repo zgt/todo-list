@@ -57,6 +57,7 @@ interface SwipeableCardProps {
   onNext: () => void;
   onPrevious: () => void;
   onTaskPress?: () => void;
+  onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
 }
 
 export function SwipeableCard({
@@ -82,6 +83,7 @@ export function SwipeableCard({
   onNext,
   onPrevious,
   onTaskPress,
+  onSubtaskToggle,
 }: SwipeableCardProps) {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -520,6 +522,7 @@ export function SwipeableCard({
           onChangeDueDate={setDueDate}
           priority={priority}
           onChangePriority={setPriority}
+          onSubtaskToggle={onSubtaskToggle}
         />
         <SwipeOverlay
           direction={direction}

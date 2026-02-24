@@ -53,6 +53,7 @@ interface TaskCardProps {
   onChangeDueDate: (date: Date | null) => void;
   priority: PriorityLevel;
   onChangePriority: (priority: PriorityLevel) => void;
+  onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
 }
 
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
@@ -71,7 +72,12 @@ interface TaskWithReminder {
 
 // Server tasks include subtasks but LocalTask type doesn't
 interface TaskWithSubtasks {
-  subtasks?: { id: string; completed: boolean }[];
+  subtasks?: Array<{
+    id: string;
+    title: string;
+    completed: boolean;
+    sortOrder: number;
+  }>;
 }
 
 function getReminderDisplay(reminderAt: Date, reminderSentAt: Date | null) {
@@ -126,6 +132,7 @@ export function TaskCard({
   onChangeDueDate,
   priority,
   onChangePriority,
+  onSubtaskToggle,
 }: TaskCardProps) {
   const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
   const reminderSentAt =
@@ -537,10 +544,47 @@ export function TaskCard({
                 </RNText>
               </View>
             )}
-            {subtaskTotal > 0 && (
-              <RNText style={{ fontSize: 13, color: "#8FA8A8", marginTop: 4 }}>
-                {subtaskDone}/{subtaskTotal} ✓
-              </RNText>
+
+            {/* Subtasks in card view */}
+            {subtaskTotal > 0 && onSubtaskToggle && (
+              <View style={styles.subtasksContainer}>
+                {subtasks.slice(0, 4).map((subtask) => (
+                  <Pressable
+                    key={subtask.id}
+                    onPress={() =>
+                      onSubtaskToggle(subtask.id, !subtask.completed)
+                    }
+                    style={styles.subtaskRowCard}
+                  >
+                    <View
+                      style={[
+                        styles.subtaskCheckbox,
+                        subtask.completed
+                          ? styles.subtaskCheckboxChecked
+                          : styles.subtaskCheckboxUnchecked,
+                      ]}
+                    >
+                      {subtask.completed && (
+                        <RNText style={styles.subtaskCheckmark}>✓</RNText>
+                      )}
+                    </View>
+                    <RNText
+                      style={[
+                        styles.subtaskTitle,
+                        subtask.completed && styles.subtaskTitleCompleted,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {subtask.title}
+                    </RNText>
+                  </Pressable>
+                ))}
+                {subtaskTotal > 4 && (
+                  <RNText style={styles.moreSubtasks}>
+                    +{subtaskTotal - 4} more
+                  </RNText>
+                )}
+              </View>
             )}
           </>
         )}
@@ -644,5 +688,52 @@ const styles = StyleSheet.create({
   },
   dateText: {
     color: "#8FA8A8",
+  },
+  subtasksContainer: {
+    marginTop: 12,
+    gap: 6,
+  },
+  subtaskRowCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 4,
+  },
+  subtaskCheckbox: {
+    width: 16,
+    height: 16,
+    borderRadius: 3,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  subtaskCheckboxChecked: {
+    borderColor: "#50C878",
+    backgroundColor: "#50C878",
+  },
+  subtaskCheckboxUnchecked: {
+    borderColor: "#8FA8A8",
+    backgroundColor: "transparent",
+  },
+  subtaskCheckmark: {
+    fontSize: 10,
+    color: "#0A1A1A",
+    fontWeight: "700",
+    lineHeight: 12,
+  },
+  subtaskTitle: {
+    flex: 1,
+    fontSize: 14,
+    color: "#DCE4E4",
+  },
+  subtaskTitleCompleted: {
+    color: "#8FA8A8",
+    textDecorationLine: "line-through",
+  },
+  moreSubtasks: {
+    fontSize: 12,
+    color: "#8FA8A8",
+    fontStyle: "italic",
+    marginLeft: 24,
   },
 });

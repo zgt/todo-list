@@ -20,6 +20,7 @@ import type { AppRouter, RouterOutputs } from "@acme/api";
 import type { PriorityLevel } from "../components/priority-config";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
+import { SubtaskListItem } from "~/components/SubtaskListItem";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
@@ -412,6 +413,64 @@ export default function Index() {
     void cancelTaskReminder(id);
   };
 
+  // tRPC mutation for toggling subtask completion
+  const subtaskUpdateMutation = useMutation(
+    trpc.subtask.update.mutationOptions({
+      onMutate: async (updatedSubtask) => {
+        triggerRipple();
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
+
+        if (previousTasks) {
+          queryClient.setQueryData<RouterOutputs["task"]["all"]>(
+            trpc.task.all.queryKey(),
+            previousTasks.map((task) => ({
+              ...task,
+              subtasks: task.subtasks.map((subtask) =>
+                subtask.id === updatedSubtask.id
+                  ? {
+                      ...subtask,
+                      completed: updatedSubtask.completed ?? subtask.completed,
+                      updatedAt: new Date(),
+                    }
+                  : subtask,
+              ),
+            })),
+          );
+        }
+
+        return { previousTasks };
+      },
+      onError: (
+        error: TRPCClientErrorLike<AppRouter>,
+        _updatedSubtask,
+        context,
+      ) => {
+        if (context?.previousTasks) {
+          queryClient.setQueryData(
+            trpc.task.all.queryKey(),
+            context.previousTasks,
+          );
+        }
+        console.error("Failed to toggle subtask:", error);
+        Alert.alert(
+          "Failed to update subtask",
+          "Your subtask couldn't be updated. Please try again.",
+        );
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+      },
+    }),
+  );
+
+  const handleSubtaskToggle = async (subtaskId: string, completed: boolean) => {
+    await subtaskUpdateMutation.mutateAsync({ id: subtaskId, completed });
+  };
+
   // tRPC mutation for creating task with optimistic update
   const createMutation = useMutation(
     trpc.task.create.mutationOptions({
@@ -693,29 +752,17 @@ export default function Index() {
             </ScrollView>
           )}
           {filteredTasks.length > 0 ? (
-            viewMode === "stack" ? (
-              <SwipeableCardStack
-                key="stack"
-                isCompact={true}
-                tasks={filteredTasks}
-                onToggle={handleToggle}
-                onComplete={(id) => handleToggle(id, true)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onTaskPress={handleTaskPress}
-              />
-            ) : (
-              <SwipeableCardStack
-                key="list"
-                tasks={filteredTasks}
-                isCompact={false}
-                onToggle={handleToggle}
-                onComplete={(id) => handleToggle(id, true)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                onTaskPress={handleTaskPress}
-              />
-            )
+            <SwipeableCardStack
+              key={viewMode}
+              isCompact={viewMode === "stack"}
+              tasks={filteredTasks}
+              onToggle={handleToggle}
+              onComplete={(id) => handleToggle(id, true)}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              onTaskPress={handleTaskPress}
+              onSubtaskToggle={handleSubtaskToggle}
+            />
           ) : (
             <View className="mt-10 items-center">
               <RNText className="text-muted-foreground text-center italic">
