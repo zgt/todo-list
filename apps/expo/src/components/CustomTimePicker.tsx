@@ -1,3 +1,4 @@
+import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Modal,
@@ -6,10 +7,6 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import type {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
 } from "react-native";
 
 interface CustomTimePickerProps {
@@ -61,44 +58,58 @@ export function CustomTimePicker({
 
       setTimeout(() => {
         programmatic.current = true;
-        hourRef.current?.scrollTo({ y: (h - 1) * ITEM_HEIGHT, animated: false });
+        hourRef.current?.scrollTo({
+          y: (h - 1) * ITEM_HEIGHT,
+          animated: false,
+        });
         minuteRef.current?.scrollTo({ y: m * ITEM_HEIGHT, animated: false });
-        periodRef.current?.scrollTo({ y: (p === "PM" ? 1 : 0) * ITEM_HEIGHT, animated: false });
-        setTimeout(() => { programmatic.current = false; }, 100);
+        periodRef.current?.scrollTo({
+          y: (p === "PM" ? 1 : 0) * ITEM_HEIGHT,
+          animated: false,
+        });
+        setTimeout(() => {
+          programmatic.current = false;
+        }, 100);
       }, 100);
     }
   }, [isVisible, date]);
 
-  const getIndexFromScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    return Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
-  }, []);
-
   // Update selection live during scroll
-  const handleHourScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (programmatic.current) return;
-    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
-    const h = HOURS[idx];
-    if (h !== undefined) setSelectedHour(h);
-  }, []);
+  const handleHourScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (programmatic.current) return;
+      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+      const h = HOURS[idx];
+      if (h !== undefined) setSelectedHour(h);
+    },
+    [],
+  );
 
-  const handleMinuteScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (programmatic.current) return;
-    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
-    const m = MINUTES[idx];
-    if (m !== undefined) setSelectedMinute(m);
-  }, []);
+  const handleMinuteScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (programmatic.current) return;
+      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+      const m = MINUTES[idx];
+      if (m !== undefined) setSelectedMinute(m);
+    },
+    [],
+  );
 
-  const handlePeriodScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (programmatic.current) return;
-    const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
-    const p = PERIODS[idx];
-    if (p !== undefined) setSelectedPeriod(p);
-  }, []);
+  const handlePeriodScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (programmatic.current) return;
+      const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
+      const p = PERIODS[idx];
+      if (p !== undefined) setSelectedPeriod(p);
+    },
+    [],
+  );
 
   const handleConfirm = () => {
     let hour24 = selectedHour;
     if (selectedPeriod === "AM" && selectedHour === 12) hour24 = 0;
-    else if (selectedPeriod === "PM" && selectedHour !== 12) hour24 = selectedHour + 12;
+    else if (selectedPeriod === "PM" && selectedHour !== 12)
+      hour24 = selectedHour + 12;
 
     const newDate = new Date(date);
     newDate.setHours(hour24);
@@ -108,14 +119,17 @@ export function CustomTimePicker({
     onConfirm(newDate);
   };
 
-  const scrollToIndex = (ref: React.RefObject<ScrollView>, index: number) => {
+  const scrollToIndex = (
+    ref: React.RefObject<ScrollView | null>,
+    index: number,
+  ) => {
     ref.current?.scrollTo({ y: index * ITEM_HEIGHT, animated: true });
   };
 
   const renderColumn = (
     items: readonly (number | string)[],
     selectedValue: number | string,
-    scrollRef: React.RefObject<ScrollView>,
+    scrollRef: React.RefObject<ScrollView | null>,
     onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void,
     onTap: (index: number) => void,
     formatValue?: (value: number | string) => string,
@@ -166,36 +180,74 @@ export function CustomTimePicker({
         <View style={styles.card}>
           <Text style={styles.title}>Select Time</Text>
 
+          {/* eslint-disable react-hooks/refs -- refs are only accessed in onPress callbacks, not during render */}
           <View style={styles.pickerContainer}>
             {/* Green selection stripe */}
             <View style={styles.selectionStripe} pointerEvents="none" />
 
-            {renderColumn(HOURS, selectedHour, hourRef, handleHourScroll, (i) => {
-              const h = HOURS[i];
-              if (h !== undefined) { setSelectedHour(h); scrollToIndex(hourRef, i); }
-            })}
+            {renderColumn(
+              HOURS,
+              selectedHour,
+              hourRef,
+              handleHourScroll,
+              (i) => {
+                const h = HOURS[i];
+                if (h !== undefined) {
+                  setSelectedHour(h);
+                  scrollToIndex(hourRef, i);
+                }
+              },
+            )}
 
-            {renderColumn(MINUTES, selectedMinute, minuteRef, handleMinuteScroll, (i) => {
-              const m = MINUTES[i];
-              if (m !== undefined) { setSelectedMinute(m); scrollToIndex(minuteRef, i); }
-            }, (v) => String(v).padStart(2, "0"))}
+            {renderColumn(
+              MINUTES,
+              selectedMinute,
+              minuteRef,
+              handleMinuteScroll,
+              (i) => {
+                const m = MINUTES[i];
+                if (m !== undefined) {
+                  setSelectedMinute(m);
+                  scrollToIndex(minuteRef, i);
+                }
+              },
+              (v) => String(v).padStart(2, "0"),
+            )}
 
-            {renderColumn(PERIODS, selectedPeriod, periodRef, handlePeriodScroll, (i) => {
-              const p = PERIODS[i];
-              if (p !== undefined) { setSelectedPeriod(p); scrollToIndex(periodRef, i); }
-            })}
+            {renderColumn(
+              PERIODS,
+              selectedPeriod,
+              periodRef,
+              handlePeriodScroll,
+              (i) => {
+                const p = PERIODS[i];
+                if (p !== undefined) {
+                  setSelectedPeriod(p);
+                  scrollToIndex(periodRef, i);
+                }
+              },
+            )}
           </View>
+          {/* eslint-enable react-hooks/refs */}
 
           <View style={styles.actions}>
             <Pressable
               onPress={onCancel}
-              style={({ pressed }) => [styles.button, styles.cancelButton, { opacity: pressed ? 0.7 : 1 }]}
+              style={({ pressed }) => [
+                styles.button,
+                styles.cancelButton,
+                { opacity: pressed ? 0.7 : 1 },
+              ]}
             >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </Pressable>
             <Pressable
               onPress={handleConfirm}
-              style={({ pressed }) => [styles.button, styles.confirmButton, { opacity: pressed ? 0.8 : 1 }]}
+              style={({ pressed }) => [
+                styles.button,
+                styles.confirmButton,
+                { opacity: pressed ? 0.8 : 1 },
+              ]}
             >
               <Text style={styles.confirmButtonText}>Confirm</Text>
             </Pressable>

@@ -124,6 +124,45 @@ export function SwipeableCardStack({
 
   const sortedTasks = sortedTasksRef.current;
 
+  // Show previous card (if exists), current card, and next 2 cards for stacking effect
+  const startIndex = Math.max(0, currentIndex - 1);
+  const displayTasks = isCompact
+    ? sortedTasks
+    : sortedTasks.slice(startIndex, currentIndex + 4);
+  const baseIndexOffset = isCompact ? 0 : currentIndex - startIndex;
+  const currentSkipIds = skipAnimationIds.current;
+  // Reset after capturing
+  skipAnimationIds.current = new Set();
+
+  // Calculate Y positions accounting for expansion in compact mode
+  const yOffsets = React.useMemo(() => {
+    if (!isCompact) return [];
+    const offsets: number[] = [];
+    let y = 0;
+    for (const task of displayTasks) {
+      offsets.push(y);
+      const subtaskCount =
+        (task as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
+      const isExp = expandedTaskId === task.id && subtaskCount > 0;
+      const cardHeight = isExp ? 92 + subtaskCount * 32 + 4 : 92;
+      y += cardHeight + 4; // card height + gap
+    }
+    return offsets;
+  }, [displayTasks, expandedTaskId, isCompact]);
+
+  // Calculate total height for scroll content
+  const totalContentHeight = React.useMemo(() => {
+    if (!isCompact) return SCREEN_HEIGHT * 0.75;
+    const lastOffset = yOffsets[yOffsets.length - 1] ?? 0;
+    const lastTask = displayTasks[displayTasks.length - 1];
+    if (!lastTask) return 200;
+    const lastSubtaskCount =
+      (lastTask as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
+    const lastIsExp = expandedTaskId === lastTask.id && lastSubtaskCount > 0;
+    const lastCardHeight = lastIsExp ? 80 + lastSubtaskCount * 36 + 12 : 80;
+    return lastOffset + lastCardHeight + 200; // last card + padding
+  }, [yOffsets, displayTasks, expandedTaskId, isCompact]);
+
   if (sortedTasks.length === 0) {
     return null;
   }
@@ -208,44 +247,6 @@ export function SwipeableCardStack({
       setCurrentIndex(newIndex);
     }
   };
-
-  // Show previous card (if exists), current card, and next 2 cards for stacking effect
-  const startIndex = Math.max(0, currentIndex - 1);
-  const displayTasks = isCompact
-    ? sortedTasks
-    : sortedTasks.slice(startIndex, currentIndex + 4);
-  const baseIndexOffset = isCompact ? 0 : currentIndex - startIndex; // Offset to calculate relative index
-  const currentSkipIds = skipAnimationIds.current;
-  // Reset after capturing
-  skipAnimationIds.current = new Set();
-
-  // Calculate Y positions accounting for expansion in compact mode
-  const yOffsets = React.useMemo(() => {
-    if (!isCompact) return [];
-    const offsets: number[] = [];
-    let y = 0;
-    for (let i = 0; i < displayTasks.length; i++) {
-      offsets.push(y);
-      const task = displayTasks[i];
-      const subtaskCount = (task as any).subtasks?.length ?? 0;
-      const isExp = expandedTaskId === task.id && subtaskCount > 0;
-      const cardHeight = isExp ? 92 + subtaskCount * 32 + 4 : 92;
-      y += cardHeight + 4; // card height + gap
-    }
-    return offsets;
-  }, [displayTasks, expandedTaskId, isCompact]);
-
-  // Calculate total height for scroll content
-  const totalContentHeight = React.useMemo(() => {
-    if (!isCompact) return SCREEN_HEIGHT * 0.75;
-    const lastOffset = yOffsets[yOffsets.length - 1] ?? 0;
-    const lastTask = displayTasks[displayTasks.length - 1];
-    if (!lastTask) return 200;
-    const lastSubtaskCount = (lastTask as any).subtasks?.length ?? 0;
-    const lastIsExp = expandedTaskId === lastTask.id && lastSubtaskCount > 0;
-    const lastCardHeight = lastIsExp ? 80 + lastSubtaskCount * 36 + 12 : 80;
-    return lastOffset + lastCardHeight + 200; // last card + padding
-  }, [yOffsets, displayTasks, expandedTaskId, isCompact]);
 
   return (
     <Animated.ScrollView

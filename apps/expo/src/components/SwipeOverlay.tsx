@@ -6,7 +6,7 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { Check, Edit3, Undo2, Trash2, X } from "lucide-react-native";
+import { Check, Edit3, Trash2, Undo2, X } from "lucide-react-native";
 
 export type SwipeDirection = "up" | "down" | "left" | "right" | null;
 
@@ -92,7 +92,10 @@ export function SwipeOverlay({
 
     // Override for delete pending states
     if (deletePending) {
-      if (currentDirection === "up" || (currentDirection === "left" && isCompact)) {
+      if (
+        currentDirection === "up" ||
+        (currentDirection === "left" && isCompact)
+      ) {
         return { backgroundColor: "rgba(239, 68, 68, 0.1)" };
       }
       if (currentDirection === "down") {
@@ -157,7 +160,12 @@ export function SwipeOverlay({
           },
         ]}
       >
-        <OverlayContent direction={direction} deletePending={deletePending} isCompact={isCompact} taskCompleted={taskCompleted} />
+        <OverlayContent
+          direction={direction}
+          deletePending={deletePending}
+          isCompact={isCompact}
+          taskCompleted={taskCompleted}
+        />
       </Animated.View>
     </Animated.View>
   );
@@ -258,7 +266,9 @@ const OverlayContent = React.memo(function OverlayContent({
           ) : (
             <>
               <Check size={48} color="#50C878" strokeWidth={3} />
-              <RNText style={[textStyle, { color: "#50C878" }]}>Complete</RNText>
+              <RNText style={[textStyle, { color: "#50C878" }]}>
+                Complete
+              </RNText>
             </>
           )
         ) : (

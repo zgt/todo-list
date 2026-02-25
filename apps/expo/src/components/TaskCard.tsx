@@ -88,12 +88,12 @@ interface TaskWithReminder {
 
 // Server tasks include subtasks but LocalTask type doesn't
 interface TaskWithSubtasks {
-  subtasks?: Array<{
+  subtasks?: {
     id: string;
     title: string;
     completed: boolean;
     sortOrder: number;
-  }>;
+  }[];
 }
 
 function getReminderDisplay(reminderAt: Date, reminderSentAt: Date | null) {
@@ -460,7 +460,7 @@ export function TaskCard({
       </Pressable>
 
       {/* Expanded description and subtasks section */}
-      {isExpanded && (task.description || subtaskTotal > 0) && (
+      {isExpanded && (!!task.description || subtaskTotal > 0) && (
         <Animated.View
           entering={FadeInUp.duration(50).springify().damping(180)}
           exiting={FadeOutUp.duration(150)}

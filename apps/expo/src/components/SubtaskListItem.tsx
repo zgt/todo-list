@@ -36,10 +36,7 @@ export function SubtaskListItem({ subtask, onToggle }: SubtaskListItemProps) {
 
       {/* Title */}
       <Text
-        style={[
-          styles.title,
-          subtask.completed && styles.titleCompleted,
-        ]}
+        style={[styles.title, subtask.completed && styles.titleCompleted]}
         numberOfLines={1}
       >
         {subtask.title}

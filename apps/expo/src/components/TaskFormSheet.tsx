@@ -2,13 +2,7 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -30,10 +24,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Calendar, Check, Plus, Trash2, X } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
+import { trpc } from "~/utils/api";
 import { CategoryWheelPicker } from "./CategoryWheelPicker";
 import { CustomDatePicker } from "./CustomDatePicker";
 import { CustomTimePicker } from "./CustomTimePicker";
-import { trpc } from "~/utils/api";
 
 export interface TaskFormData {
   title: string;
@@ -125,7 +119,7 @@ export function TaskFormSheet({
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
   const snapPoints = useMemo(() => ["85%"], []);
-  const scrollViewRef = useRef<any>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -177,16 +171,22 @@ export function TaskFormSheet({
 
   // Subtask state
   const taskId = mode === "edit" ? initialData?.id : undefined;
-  const [subtasks, setSubtasks] = useState(initialData?.subtasks ?? []);
+  const [subtasks, setSubtasks] = useState<SubtaskData[]>(
+    initialData?.subtasks ?? [],
+  );
+  const [prevInitialSubtasks, setPrevInitialSubtasks] = useState(
+    initialData?.subtasks,
+  );
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
   const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
   const newSubtaskInputRef = useRef<TextInput>(null);
 
   // Keep subtasks in sync when initialData changes (e.g. from query refetch)
-  useEffect(() => {
+  if (initialData?.subtasks !== prevInitialSubtasks) {
+    setPrevInitialSubtasks(initialData?.subtasks);
     setSubtasks(initialData?.subtasks ?? []);
-  }, [initialData?.subtasks]);
+  }
 
   // Subtask mutations
   const queryClient = useQueryClient();
@@ -213,7 +213,12 @@ export function TaskFormSheet({
         onSuccess: (newSubtask) => {
           setSubtasks((prev) => [
             ...prev,
-            { id: newSubtask.id, title: trimmed, completed: false },
+            {
+              id: newSubtask.id,
+              title: trimmed,
+              completed: false,
+              sortOrder: prev.length,
+            },
           ]);
           setNewSubtaskTitle("");
           newSubtaskInputRef.current?.focus();
@@ -420,7 +425,10 @@ export function TaskFormSheet({
                         styles.pill,
                         styles.listPill,
                         isActive
-                          ? { borderColor: color, backgroundColor: `${color}25` }
+                          ? {
+                              borderColor: color,
+                              backgroundColor: `${color}25`,
+                            }
                           : styles.pillInactive,
                       ]}
                     >
@@ -696,7 +704,7 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd?.({ animated: true });
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
                     }, 300);
                   }}
                   onSubmitEditing={handleAddSubtask}

@@ -68,6 +68,7 @@ export function CategoryFilterProvider({ children }: { children: ReactNode }) {
 
 const FALLBACK: CategoryFilterContextType = {
   selectedCategoryIds: [],
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   setSelectedCategoryIds: () => {},
   effectiveCategoryIds: [],
 };

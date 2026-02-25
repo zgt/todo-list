@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -58,15 +58,19 @@ export function CustomDatePicker({
   const [selectedDate, setSelectedDate] = useState(date);
   const [viewMonth, setViewMonth] = useState(date.getMonth());
   const [viewYear, setViewYear] = useState(date.getFullYear());
+  const [prevDate, setPrevDate] = useState(date);
+  const [prevVisible, setPrevVisible] = useState(isVisible);
 
-  // Update internal state when prop changes
-  useEffect(() => {
-    if (isVisible) {
-      setSelectedDate(date);
-      setViewMonth(date.getMonth());
-      setViewYear(date.getFullYear());
-    }
-  }, [isVisible, date]);
+  // Update internal state when prop changes (render-time adjustment)
+  if (isVisible && (date !== prevDate || isVisible !== prevVisible)) {
+    setPrevDate(date);
+    setPrevVisible(isVisible);
+    setSelectedDate(date);
+    setViewMonth(date.getMonth());
+    setViewYear(date.getFullYear());
+  } else if (isVisible !== prevVisible) {
+    setPrevVisible(isVisible);
+  }
 
   const handlePrevMonth = () => {
     if (viewMonth === 0) {
@@ -88,7 +92,7 @@ export function CustomDatePicker({
 
   const handleDayPress = (day: number) => {
     const newDate = new Date(viewYear, viewMonth, day);
-    
+
     // Check if before minimum date
     if (minimumDate && isBeforeDay(newDate, minimumDate)) {
       return;
@@ -113,12 +117,12 @@ export function CustomDatePicker({
   const today = new Date();
 
   const calendarDays: (number | null)[] = [];
-  
+
   // Add empty cells for days before the 1st
   for (let i = 0; i < firstDayOfMonth; i++) {
     calendarDays.push(null);
   }
-  
+
   // Add days of the month
   for (let day = 1; day <= daysInMonth; day++) {
     calendarDays.push(day);
@@ -196,7 +200,9 @@ export function CustomDatePicker({
               <View key={weekIndex} style={styles.weekRow}>
                 {week.map((day, dayIndex) => {
                   if (day === null) {
-                    return <View key={`empty-${dayIndex}`} style={styles.dayCell} />;
+                    return (
+                      <View key={`empty-${dayIndex}`} style={styles.dayCell} />
+                    );
                   }
 
                   const dayDate = new Date(viewYear, viewMonth, day);

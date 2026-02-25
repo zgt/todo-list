@@ -79,9 +79,9 @@ export function SwipeableCard({
   onDelete,
   onDeletePending,
   onCancelDelete,
-  onEditStart,
+  onEditStart: _onEditStart,
   onSave,
-  onCancelEdit,
+  onCancelEdit: _onCancelEdit,
   isEditing,
   skipStackAnimation,
   onNext,
@@ -485,10 +485,12 @@ export function SwipeableCard({
       : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
 
     const targetWidth = isCompact ? SCREEN_WIDTH * 0.95 : SCREEN_WIDTH * 0.85;
-    const subtaskCount = (task as any).subtasks?.length ?? 0;
-    const expandedExtra = isExpanded && isCompact && subtaskCount > 0
-      ? subtaskCount * 32 + 4  // 36px per subtask row + 12px padding
-      : 0;
+    const subtaskCount =
+      (task as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
+    const expandedExtra =
+      isExpanded && isCompact && subtaskCount > 0
+        ? subtaskCount * 32 + 4 // 36px per subtask row + 12px padding
+        : 0;
     const targetHeight = isCompact ? 92 + expandedExtra : SCREEN_HEIGHT * 0.65;
 
     return {

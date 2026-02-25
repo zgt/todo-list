@@ -20,7 +20,6 @@ import type { AppRouter, RouterOutputs } from "@acme/api";
 import type { PriorityLevel } from "../components/priority-config";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
-import { SubtaskListItem } from "~/components/SubtaskListItem";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
