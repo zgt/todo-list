@@ -156,9 +156,10 @@ export function TaskCard({
   const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
   const reminderSentAt =
     (task as unknown as TaskWithReminder).reminderSentAt ?? null;
-  const reminderInfo = reminderAt
-    ? getReminderDisplay(reminderAt, reminderSentAt)
-    : null;
+  const reminderInfo =
+    reminderAt && !task.completed
+      ? getReminderDisplay(reminderAt, reminderSentAt)
+      : null;
   const subtasks = (task as unknown as TaskWithSubtasks).subtasks ?? [];
   const subtaskTotal = subtasks.length;
   const subtaskDone = subtasks.filter((s) => s.completed).length;
@@ -295,7 +296,7 @@ export function TaskCard({
             </View>
           </Pressable>
 
-          {/* Middle: Title and Description */}
+          {/* Middle: Title and metadata */}
           <View className="flex-1 justify-center">
             {isEditing ? (
               <View className="gap-1">
@@ -317,23 +318,42 @@ export function TaskCard({
               </View>
             ) : (
               <>
-                <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                <RNText
+                  className={`text-xl font-extrabold ${
+                    task.completed ? "line-through" : ""
+                  }`}
+                  numberOfLines={1}
+                  style={{
+                    color: task.completed ? "#8FA8A8" : "#DCE4E4",
+                  }}
                 >
-                  <RNText
-                    className={`text-xl font-bold ${
-                      task.completed ? "line-through" : ""
-                    }`}
-                    numberOfLines={1}
-                    style={{
-                      flex: 1,
-                      color: task.completed ? "#8FA8A8" : "#DCE4E4",
-                    }}
-                  >
-                    {task.title}
-                  </RNText>
+                  {task.title}
+                </RNText>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    marginTop: 3,
+                    flexWrap: "wrap",
+                    rowGap: 4,
+                  }}
+                >
                   {reminderInfo && (
-                    <Bell size={12} color={reminderInfo.color} />
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 2,
+                      }}
+                    >
+                      <Bell size={10} color={reminderInfo.color} />
+                      <RNText
+                        style={{ fontSize: 11, color: reminderInfo.color }}
+                      >
+                        {reminderInfo.label}
+                      </RNText>
+                    </View>
                   )}
                   {subtaskTotal > 0 && (
                     <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
@@ -350,8 +370,8 @@ export function TaskCard({
                     >
                       <View
                         style={{
-                          width: 6,
-                          height: 6,
+                          width: 5,
+                          height: 5,
                           borderRadius: 3,
                           backgroundColor: task.list.color ?? "#50C878",
                         }}
@@ -364,21 +384,56 @@ export function TaskCard({
                       </RNText>
                     </View>
                   )}
+                  <PrioritySelector
+                    value={priority}
+                    onChange={(p) => {
+                      onChangePriority(p);
+                      onSave({ priority: p });
+                    }}
+                    trigger={
+                      <PriorityBadge
+                        priority={priority}
+                        size="sm"
+                        showLabel={false}
+                      />
+                    }
+                  />
+                  {task.dueDate && (
+                    <View style={styles.compactPillDate}>
+                      <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
+                        {new Intl.DateTimeFormat("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        }).format(task.dueDate)}
+                      </RNText>
+                    </View>
+                  )}
+                  {task.category && (
+                    <View
+                      style={[
+                        styles.compactPill,
+                        {
+                          backgroundColor: `${task.category.color}20`,
+                          borderColor: task.category.color,
+                        },
+                      ]}
+                    >
+                      <RNText
+                        style={{ color: "#8FA8A8", fontSize: 11 }}
+                        numberOfLines={1}
+                      >
+                        {task.category.name}
+                      </RNText>
+                    </View>
+                  )}
                 </View>
-                {reminderInfo && (
-                  <RNText
-                    style={{ fontSize: 11, color: reminderInfo.color }}
-                    numberOfLines={1}
-                  >
-                    {reminderInfo.label}
-                  </RNText>
-                )}
               </>
             )}
           </View>
 
-          {/* Right: Category and Due Date Pills */}
-          {isEditing ? (
+          {/* Right: editing pills only */}
+          {isEditing && (
             <View className="flex-row items-center gap-1">
               <PrioritySelector
                 value={priority}
@@ -399,53 +454,6 @@ export function TaskCard({
                 selectedDate={dueDate}
                 onDateChange={onChangeDueDate}
               />
-            </View>
-          ) : (
-            <View className="flex-row items-center gap-1">
-              <PrioritySelector
-                value={priority}
-                onChange={(p) => {
-                  onChangePriority(p);
-                  onSave({ priority: p });
-                }}
-                trigger={
-                  <PriorityBadge
-                    priority={priority}
-                    size="sm"
-                    showLabel={false}
-                  />
-                }
-              />
-              {task.dueDate && (
-                <View style={styles.compactPillDate}>
-                  <RNText className="text-xs" style={styles.dateText}>
-                    {new Intl.DateTimeFormat("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    }).format(task.dueDate)}
-                  </RNText>
-                </View>
-              )}
-              {task.category && (
-                <View
-                  style={[
-                    styles.compactPill,
-                    {
-                      backgroundColor: `${task.category.color}20`,
-                      borderColor: task.category.color,
-                    },
-                  ]}
-                >
-                  <RNText
-                    style={{ color: "#8FA8A8" }}
-                    className="text-xs"
-                    numberOfLines={1}
-                  >
-                    {task.category.name}
-                  </RNText>
-                </View>
-              )}
             </View>
           )}
         </View>
@@ -808,19 +816,18 @@ const styles = StyleSheet.create({
     borderColor: "rgba(143, 168, 168, 0.4)",
   },
   compactPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
     borderRadius: 9999,
-    borderWidth: 1.5,
-    maxWidth: 80,
+    borderWidth: 1,
   },
   compactPillDate: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
     borderRadius: 9999,
-    borderWidth: 1.5,
-    backgroundColor: "rgba(143, 168, 168, 0.15)",
-    borderColor: "rgba(143, 168, 168, 0.4)",
+    borderWidth: 1,
+    backgroundColor: "rgba(143, 168, 168, 0.1)",
+    borderColor: "rgba(143, 168, 168, 0.3)",
   },
   dateText: {
     color: "#8FA8A8",
