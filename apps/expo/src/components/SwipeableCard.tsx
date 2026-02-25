@@ -1,5 +1,5 @@
 import type { SharedValue } from "react-native-reanimated";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Dimensions } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -42,7 +42,6 @@ interface SwipeableCardProps {
   onDelete: () => void;
   onDeletePending: () => void;
   onCancelDelete: () => void;
-  onEditStart: () => void;
   onSave: (
     updates: Partial<{
       title: string;
@@ -52,8 +51,6 @@ interface SwipeableCardProps {
       priority: PriorityLevel;
     }>,
   ) => void;
-  onCancelEdit: () => void;
-  isEditing: boolean;
   skipStackAnimation: boolean;
   onNext: () => void;
   onPrevious: () => void;
@@ -79,10 +76,7 @@ export function SwipeableCard({
   onDelete,
   onDeletePending,
   onCancelDelete,
-  onEditStart: _onEditStart,
   onSave,
-  onCancelEdit: _onCancelEdit,
-  isEditing,
   skipStackAnimation,
   onNext,
   onPrevious,
@@ -95,44 +89,14 @@ export function SwipeableCard({
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(1);
   const direction = useSharedValue<SwipeDirection>(null);
-  const [title, setTitle] = useState(task.title);
-  const [description, setDescription] = useState(task.description ?? "");
-  const [categoryId, setCategoryId] = useState<string | null>(
-    task.categoryId ?? null,
-  );
-  const [dueDate, setDueDate] = useState<Date | null>(task.dueDate ?? null);
   const [priority, setPriority] = useState<PriorityLevel>(
-    (task.priority as PriorityLevel) ?? null,
+    (task.priority as PriorityLevel) ?? "medium",
   );
 
-  // Reset local state when task changes or edit mode ends
+  // Reset priority when task changes
   useEffect(() => {
-    if (!isEditing) {
-      setTitle(task.title);
-      setDescription(task.description ?? "");
-      setCategoryId(task.categoryId ?? null);
-      setDueDate(task.dueDate ?? null);
-      setPriority((task.priority as PriorityLevel) ?? null);
-    }
-  }, [
-    task.title,
-    task.description,
-    task.categoryId,
-    task.dueDate,
-    task.priority,
-    isEditing,
-  ]);
-
-  // Handler for saving from gesture - captures current state values
-  const handleSwipeSave = useCallback(() => {
-    onSave({
-      title: title.trim(),
-      description: description.trim(),
-      categoryId,
-      dueDate,
-      priority,
-    });
-  }, [onSave, title, description, categoryId, dueDate, priority]);
+    setPriority((task.priority as PriorityLevel) ?? "medium");
+  }, [task.priority]);
 
   // Animated values for stacking effect
   const startX = useSharedValue(0);
@@ -201,7 +165,6 @@ export function SwipeableCard({
   ]);
 
   const panGesture = Gesture.Pan()
-    // .enabled(!isEditing) // Enable gestures during edit for save/cancel actions
     .onStart(() => {
       startX.value = translateX.value;
       startY.value = translateY.value;
@@ -331,12 +294,7 @@ export function SwipeableCard({
           (event.translationY < 0 && velocityY > SWIPE_VELOCITY)
         ) {
           // Up swipe logic
-          if (isEditing) {
-            // Edit mode: Swipe up to SAVE
-            runOnJS(handleSwipeSave)();
-            translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-            translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
-          } else if (task.completed) {
+          if (task.completed) {
             // If task is completed, handle delete logic
             if (deletePending) {
               // Second swipe - actually delete
@@ -523,16 +481,7 @@ export function SwipeableCard({
           onToggle={onToggle}
           onDelete={onDelete}
           deletePending={deletePending}
-          isEditing={isEditing}
           onSave={onSave}
-          title={title}
-          description={description}
-          onChangeTitle={setTitle}
-          onChangeDescription={setDescription}
-          categoryId={categoryId}
-          dueDate={dueDate}
-          onChangeCategoryId={setCategoryId}
-          onChangeDueDate={setDueDate}
           priority={priority}
           onChangePriority={setPriority}
           onSubtaskToggle={onSubtaskToggle}

@@ -6,7 +6,6 @@ import {
   Pressable,
   Text as RNText,
   StyleSheet,
-  TextInput,
   UIManager,
   View,
 } from "react-native";
@@ -18,12 +17,10 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { Bell, Check, Save, Trash2 } from "lucide-react-native";
+import { Bell, Check, Trash2 } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
-import { CategoryWheelPicker } from "./CategoryWheelPicker";
-import { DatePickerPill } from "./DatePickerPill";
 import { PriorityBadge } from "./PriorityBadge";
 import { PrioritySelector } from "./PrioritySelector";
 
@@ -46,7 +43,6 @@ interface TaskCardProps {
   onToggle: () => void;
   onDelete: () => void;
   deletePending: boolean;
-  isEditing: boolean;
   onSave: (
     updates: Partial<{
       title: string;
@@ -56,14 +52,6 @@ interface TaskCardProps {
       priority: PriorityLevel;
     }>,
   ) => void;
-  title: string;
-  description: string;
-  onChangeTitle: (text: string) => void;
-  onChangeDescription: (text: string) => void;
-  categoryId: string | null;
-  dueDate: Date | null;
-  onChangeCategoryId: (categoryId: string | null) => void;
-  onChangeDueDate: (date: Date | null) => void;
   priority: PriorityLevel;
   onChangePriority: (priority: PriorityLevel) => void;
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
@@ -136,16 +124,7 @@ export function TaskCard({
   onToggle,
   onDelete,
   deletePending,
-  isEditing,
   onSave,
-  title,
-  description,
-  onChangeTitle,
-  onChangeDescription,
-  categoryId,
-  dueDate,
-  onChangeCategoryId,
-  onChangeDueDate,
   priority,
   onChangePriority,
   onSubtaskToggle,
@@ -205,18 +184,6 @@ export function TaskCard({
     progress.value = withSpring(isCompact ? 1 : 0, SPRING_CONFIG);
   }, [isCompact, progress]);
 
-  const handleSave = () => {
-    if (title.trim()) {
-      onSave({
-        title: title.trim(),
-        description: description.trim(),
-        categoryId,
-        dueDate,
-        priority,
-      });
-    }
-  };
-
   // Animated container style
   const containerStyle = useAnimatedStyle(() => {
     // When expanded in compact mode, use auto height
@@ -239,7 +206,6 @@ export function TaskCard({
   // Get background style based on state
   const getBackgroundStyle = () => {
     if (deletePending) return styles.cardDeletePending;
-    if (isEditing) return styles.cardEditing;
     if (task.completed) return styles.cardCompleted;
 
     // High priority accent
@@ -276,168 +242,94 @@ export function TaskCard({
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center gap-3 px-4 py-3">
           {/* Left: Checkbox */}
-          <Pressable onPress={isEditing ? handleSave : onToggle}>
+          <Pressable onPress={onToggle}>
             <View
               className={`h-7 w-7 items-center justify-center rounded-full border-2 ${
-                isEditing
+                task.completed
                   ? "bg-primary border-primary"
-                  : task.completed
-                    ? "bg-primary border-primary"
-                    : "border-white/30"
+                  : "border-white/30"
               }`}
             >
-              {isEditing ? (
-                <Save size={14} color="#0A1A1A" strokeWidth={3} />
-              ) : (
-                task.completed && (
-                  <Check size={16} color="#0A1A1A" strokeWidth={3} />
-                )
+              {task.completed && (
+                <Check size={16} color="#0A1A1A" strokeWidth={3} />
               )}
             </View>
           </Pressable>
 
           {/* Middle: Title and metadata */}
           <View className="flex-1 justify-center">
-            {isEditing ? (
-              <View className="gap-1">
-                <TextInput
-                  value={title}
-                  onChangeText={onChangeTitle}
-                  className="border-b border-white/30 bg-transparent py-1 text-base font-semibold text-white"
-                  placeholder="Task Title"
-                  autoFocus
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                />
-                <TextInput
-                  value={description}
-                  onChangeText={onChangeDescription}
-                  className="bg-transparent py-1 text-sm text-white/70"
-                  placeholder="Description"
-                  placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                />
-              </View>
-            ) : (
-              <>
-                <RNText
-                  className={`text-xl font-extrabold ${
-                    task.completed ? "line-through" : ""
-                  }`}
-                  numberOfLines={1}
-                  style={{
-                    color: task.completed ? "#8FA8A8" : "#DCE4E4",
-                  }}
-                >
-                  {task.title}
-                </RNText>
+            <RNText
+              className={`text-xl font-extrabold ${
+                task.completed ? "line-through" : ""
+              }`}
+              numberOfLines={1}
+              style={{
+                color: task.completed ? "#8FA8A8" : "#DCE4E4",
+              }}
+            >
+              {task.title}
+            </RNText>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 3,
+                flexWrap: "wrap",
+                rowGap: 4,
+              }}
+            >
+              {reminderInfo && (
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: 6,
-                    marginTop: 3,
-                    flexWrap: "wrap",
-                    rowGap: 4,
+                    gap: 2,
                   }}
                 >
-                  {reminderInfo && (
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 2,
-                      }}
-                    >
-                      <Bell size={10} color={reminderInfo.color} />
-                      <RNText
-                        style={{ fontSize: 11, color: reminderInfo.color }}
-                      >
-                        {reminderInfo.label}
-                      </RNText>
-                    </View>
-                  )}
-                  {subtaskTotal > 0 && (
-                    <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
-                      {subtaskDone}/{subtaskTotal} ✓
-                    </RNText>
-                  )}
-                  {task.list && (
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 3,
-                      }}
-                    >
-                      <View
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: 3,
-                          backgroundColor: task.list.color ?? "#50C878",
-                        }}
-                      />
-                      <RNText
-                        style={{ fontSize: 11, color: "#8FA8A8" }}
-                        numberOfLines={1}
-                      >
-                        {task.list.name}
-                      </RNText>
-                    </View>
-                  )}
-                  <PrioritySelector
-                    value={priority}
-                    onChange={(p) => {
-                      onChangePriority(p);
-                      onSave({ priority: p });
-                    }}
-                    trigger={
-                      <PriorityBadge
-                        priority={priority}
-                        size="sm"
-                        showLabel={false}
-                      />
-                    }
-                  />
-                  {task.dueDate && (
-                    <View style={styles.compactPillDate}>
-                      <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
-                        {new Intl.DateTimeFormat("en-US", {
-                          weekday: "short",
-                          month: "short",
-                          day: "numeric",
-                        }).format(task.dueDate)}
-                      </RNText>
-                    </View>
-                  )}
-                  {task.category && (
-                    <View
-                      style={[
-                        styles.compactPill,
-                        {
-                          backgroundColor: `${task.category.color}20`,
-                          borderColor: task.category.color,
-                        },
-                      ]}
-                    >
-                      <RNText
-                        style={{ color: "#8FA8A8", fontSize: 11 }}
-                        numberOfLines={1}
-                      >
-                        {task.category.name}
-                      </RNText>
-                    </View>
-                  )}
+                  <Bell size={10} color={reminderInfo.color} />
+                  <RNText
+                    style={{ fontSize: 11, color: reminderInfo.color }}
+                  >
+                    {reminderInfo.label}
+                  </RNText>
                 </View>
-              </>
-            )}
-          </View>
-
-          {/* Right: editing pills only */}
-          {isEditing && (
-            <View className="flex-row items-center gap-1">
+              )}
+              {subtaskTotal > 0 && (
+                <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
+                  {subtaskDone}/{subtaskTotal} ✓
+                </RNText>
+              )}
+              {task.list && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 3,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: 3,
+                      backgroundColor: task.list.color ?? "#50C878",
+                    }}
+                  />
+                  <RNText
+                    style={{ fontSize: 11, color: "#8FA8A8" }}
+                    numberOfLines={1}
+                  >
+                    {task.list.name}
+                  </RNText>
+                </View>
+              )}
               <PrioritySelector
                 value={priority}
-                onChange={onChangePriority}
+                onChange={(p) => {
+                  onChangePriority(p);
+                  onSave({ priority: p });
+                }}
                 trigger={
                   <PriorityBadge
                     priority={priority}
@@ -446,16 +338,38 @@ export function TaskCard({
                   />
                 }
               />
-              <CategoryWheelPicker
-                selectedCategoryId={categoryId}
-                onCategoryChange={onChangeCategoryId}
-              />
-              <DatePickerPill
-                selectedDate={dueDate}
-                onDateChange={onChangeDueDate}
-              />
+              {task.dueDate && (
+                <View style={styles.compactPillDate}>
+                  <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
+                    {new Intl.DateTimeFormat("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    }).format(task.dueDate)}
+                  </RNText>
+                </View>
+              )}
+              {task.category && (
+                <View
+                  style={[
+                    styles.compactPill,
+                    {
+                      backgroundColor: `${task.category.color}20`,
+                      borderColor: task.category.color,
+                    },
+                  ]}
+                >
+                  <RNText
+                    style={{ color: "#8FA8A8", fontSize: 11 }}
+                    numberOfLines={1}
+                  >
+                    {task.category.name}
+                  </RNText>
+                </View>
+              )}
             </View>
-          )}
+          </View>
+
         </View>
       </Pressable>
 
@@ -518,112 +432,82 @@ export function TaskCard({
     <View className="h-full flex-col justify-between p-6">
       {/* Top Row: Category and Due Date vs Checkbox */}
       <View className="w-full flex-row items-start justify-between">
-        {isEditing ? (
-          <View className="flex-row items-center gap-2">
-            <PrioritySelector
-              value={priority}
-              onChange={onChangePriority}
-              trigger={
-                <PriorityBadge
-                  priority={priority}
-                  size="sm"
-                  showLabel={false}
-                />
-              }
-            />
-            <CategoryWheelPicker
-              selectedCategoryId={categoryId}
-              onCategoryChange={onChangeCategoryId}
-            />
-            <DatePickerPill
-              selectedDate={dueDate}
-              onDateChange={onChangeDueDate}
-            />
-          </View>
-        ) : (
-          <View className="flex-row items-center gap-2">
-            <PrioritySelector
-              value={priority}
-              onChange={(p) => {
-                onChangePriority(p);
-                onSave({ priority: p });
-              }}
-              trigger={
-                <PriorityBadge
-                  priority={priority}
-                  size="sm"
-                  showLabel={false}
-                />
-              }
-            />
-            {task.category && (
-              <View
-                style={[
-                  styles.miniPill,
-                  {
-                    backgroundColor: `${task.category.color}20`,
-                    borderColor: task.category.color,
-                  },
-                ]}
+        <View className="flex-row items-center gap-2">
+          <PrioritySelector
+            value={priority}
+            onChange={(p) => {
+              onChangePriority(p);
+              onSave({ priority: p });
+            }}
+            trigger={
+              <PriorityBadge
+                priority={priority}
+                size="sm"
+                showLabel={false}
+              />
+            }
+          />
+          {task.category && (
+            <View
+              style={[
+                styles.miniPill,
+                {
+                  backgroundColor: `${task.category.color}20`,
+                  borderColor: task.category.color,
+                },
+              ]}
+            >
+              <RNText
+                style={{ color: "#8FA8A8" }}
+                className="text-xs font-medium"
+                numberOfLines={1}
               >
-                <RNText
-                  style={{ color: "#8FA8A8" }}
-                  className="text-xs font-medium"
-                  numberOfLines={1}
-                >
-                  {task.category.name}
-                </RNText>
-              </View>
-            )}
-            {task.dueDate && (
-              <View style={styles.miniPillDate}>
-                <RNText className="text-xs font-medium" style={styles.dateText}>
-                  {new Intl.DateTimeFormat("en-US", {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                  }).format(task.dueDate)}
-                </RNText>
-              </View>
-            )}
-            {task.list && (
-              <View
-                style={[
-                  styles.miniPill,
-                  {
-                    backgroundColor: `${task.list.color ?? "#50C878"}20`,
-                    borderColor: task.list.color ?? "#50C878",
-                  },
-                ]}
+                {task.category.name}
+              </RNText>
+            </View>
+          )}
+          {task.dueDate && (
+            <View style={styles.miniPillDate}>
+              <RNText className="text-xs font-medium" style={styles.dateText}>
+                {new Intl.DateTimeFormat("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                }).format(task.dueDate)}
+              </RNText>
+            </View>
+          )}
+          {task.list && (
+            <View
+              style={[
+                styles.miniPill,
+                {
+                  backgroundColor: `${task.list.color ?? "#50C878"}20`,
+                  borderColor: task.list.color ?? "#50C878",
+                },
+              ]}
+            >
+              <RNText
+                style={{ color: "#8FA8A8" }}
+                className="text-xs font-medium"
+                numberOfLines={1}
               >
-                <RNText
-                  style={{ color: "#8FA8A8" }}
-                  className="text-xs font-medium"
-                  numberOfLines={1}
-                >
-                  {task.list.name}
-                </RNText>
-              </View>
-            )}
-          </View>
-        )}
+                {task.list.name}
+              </RNText>
+            </View>
+          )}
+        </View>
 
-        <Pressable onPress={isEditing ? handleSave : onToggle}>
+        <Pressable onPress={onToggle}>
           <View
             className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
-              isEditing
+              task.completed
                 ? "bg-primary border-primary"
-                : task.completed
-                  ? "bg-primary border-primary"
-                  : "border-white/30"
+                : "border-white/30"
             }`}
           >
-            {isEditing ? (
-              <Save size={18} color="#0A1A1A" strokeWidth={3} />
-            ) : (
-              task.completed && (
-                <Check size={20} color="#0A1A1A" strokeWidth={3} />
-              )
+            {task.completed && (
+              <Check size={20} color="#0A1A1A" strokeWidth={3} />
             )}
           </View>
         </Pressable>
@@ -631,101 +515,77 @@ export function TaskCard({
 
       {/* Middle: Title and Description */}
       <View className="flex-1 justify-center gap-2">
-        {isEditing ? (
-          <>
-            <TextInput
-              value={title}
-              onChangeText={onChangeTitle}
-              className="mb-2 border-b-2 border-white/50 bg-black/20 p-2 text-4xl leading-tight font-bold text-white"
-              placeholder="Task Title"
-              autoFocus
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-            />
-            <TextInput
-              value={description}
-              onChangeText={onChangeDescription}
-              className="border-b-2 border-white/50 bg-black/20 p-2 text-lg leading-relaxed text-white/90"
-              placeholder="Description (optional)"
-              placeholderTextColor="rgba(255, 255, 255, 0.4)"
-              multiline
-              textAlignVertical="top"
-            />
-          </>
-        ) : (
-          <>
-            <RNText
-              style={{
-                fontSize: 36,
-                lineHeight: 40,
-                fontWeight: "800",
-                color: task.completed ? "#8FA8A8" : "#DCE4E4",
-              }}
-            >
-              {task.title}
+        <RNText
+          style={{
+            fontSize: 36,
+            lineHeight: 40,
+            fontWeight: "800",
+            color: task.completed ? "#8FA8A8" : "#DCE4E4",
+          }}
+        >
+          {task.title}
+        </RNText>
+        {task.description && (
+          <RNText className="text-lg leading-relaxed text-white/60">
+            {task.description}
+          </RNText>
+        )}
+        {reminderInfo && (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 4,
+            }}
+          >
+            <Bell size={14} color={reminderInfo.color} />
+            <RNText style={{ fontSize: 13, color: reminderInfo.color }}>
+              {reminderInfo.label}
             </RNText>
-            {task.description && (
-              <RNText className="text-lg leading-relaxed text-white/60">
-                {task.description}
+          </View>
+        )}
+
+        {/* Subtasks in card view */}
+        {subtaskTotal > 0 && onSubtaskToggle && (
+          <View style={styles.subtasksContainer}>
+            {subtasks.slice(0, 4).map((subtask) => (
+              <Pressable
+                key={subtask.id}
+                onPress={() =>
+                  onSubtaskToggle(subtask.id, !subtask.completed)
+                }
+                style={styles.subtaskRowCard}
+              >
+                <View
+                  style={[
+                    styles.subtaskCheckbox,
+                    subtask.completed
+                      ? styles.subtaskCheckboxChecked
+                      : styles.subtaskCheckboxUnchecked,
+                  ]}
+                >
+                  {subtask.completed && (
+                    <RNText style={styles.subtaskCheckmark}>✓</RNText>
+                  )}
+                </View>
+                <RNText
+                  style={[
+                    styles.subtaskTitle,
+                    subtask.completed && styles.subtaskTitleCompleted,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {subtask.title}
+                </RNText>
+              </Pressable>
+            ))}
+            {subtaskTotal > 4 && (
+              <RNText style={styles.moreSubtasks}>
+                +{subtaskTotal - 4} more
               </RNText>
             )}
-            {reminderInfo && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 6,
-                  marginTop: 4,
-                }}
-              >
-                <Bell size={14} color={reminderInfo.color} />
-                <RNText style={{ fontSize: 13, color: reminderInfo.color }}>
-                  {reminderInfo.label}
-                </RNText>
-              </View>
-            )}
-
-            {/* Subtasks in card view */}
-            {subtaskTotal > 0 && onSubtaskToggle && (
-              <View style={styles.subtasksContainer}>
-                {subtasks.slice(0, 4).map((subtask) => (
-                  <Pressable
-                    key={subtask.id}
-                    onPress={() =>
-                      onSubtaskToggle(subtask.id, !subtask.completed)
-                    }
-                    style={styles.subtaskRowCard}
-                  >
-                    <View
-                      style={[
-                        styles.subtaskCheckbox,
-                        subtask.completed
-                          ? styles.subtaskCheckboxChecked
-                          : styles.subtaskCheckboxUnchecked,
-                      ]}
-                    >
-                      {subtask.completed && (
-                        <RNText style={styles.subtaskCheckmark}>✓</RNText>
-                      )}
-                    </View>
-                    <RNText
-                      style={[
-                        styles.subtaskTitle,
-                        subtask.completed && styles.subtaskTitleCompleted,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {subtask.title}
-                    </RNText>
-                  </Pressable>
-                ))}
-                {subtaskTotal > 4 && (
-                  <RNText style={styles.moreSubtasks}>
-                    +{subtaskTotal - 4} more
-                  </RNText>
-                )}
-              </View>
-            )}
-          </>
+          </View>
         )}
       </View>
 
@@ -792,13 +652,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(239, 68, 68, 0.6)",
     backgroundColor: "rgba(239, 68, 68, 0.1)",
     shadowColor: "#ef4444",
-    shadowOpacity: 0.2,
-  },
-  cardEditing: {
-    borderWidth: 2,
-    borderColor: "rgba(249, 115, 22, 0.6)",
-    backgroundColor: "rgba(249, 115, 22, 0.1)",
-    shadowColor: "#f97316",
     shadowOpacity: 0.2,
   },
   miniPill: {

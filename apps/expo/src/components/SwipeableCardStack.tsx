@@ -35,8 +35,6 @@ interface SwipeableCardStackProps {
       priority: PriorityLevel;
     }>,
   ) => void;
-  autoEditId?: string | null;
-  onCancelEdit?: (id: string) => void;
   onTaskPress?: (id: string) => void;
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
 }
@@ -48,30 +46,15 @@ export function SwipeableCardStack({
   onDelete,
   onUpdate,
   isCompact,
-  autoEditId,
-  onCancelEdit,
   onTaskPress,
   onSubtaskToggle,
 }: SwipeableCardStackProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
   const skipAnimationIds = useRef<Set<string>>(new Set());
   const scrollViewRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
-
-  // Auto-enter edit mode if requested
-  useEffect(() => {
-    if (autoEditId) {
-      setEditingId(autoEditId);
-      // If we're not compact, we might want to ensure the card is visible/focused,
-      // but if it's prepended, it should be at index 0 which is default.
-      if (!isCompact) {
-        setCurrentIndex(0);
-      }
-    }
-  }, [autoEditId, isCompact]);
 
   // Scroll to current card when switching to compact mode
   useEffect(() => {
@@ -177,10 +160,6 @@ export function SwipeableCardStack({
     setDeletePendingId(null);
   };
 
-  const handleEditStart = (taskId: string) => {
-    setEditingId(taskId);
-  };
-
   const handleSave = (
     taskId: string,
     updates: Partial<{
@@ -192,14 +171,6 @@ export function SwipeableCardStack({
     }>,
   ) => {
     onUpdate(taskId, updates);
-    setEditingId(null);
-  };
-
-  const handleCancelEdit = () => {
-    if (editingId && onCancelEdit) {
-      onCancelEdit(editingId);
-    }
-    setEditingId(null);
   };
 
   const handleToggleExpand = (taskId: string) => {
@@ -281,7 +252,6 @@ export function SwipeableCardStack({
             canGoPrevious={currentIndex > 0}
             swipeProgress={swipeProgress}
             deletePending={deletePendingId === task.id}
-            isEditing={editingId === task.id}
             isExpanded={expandedTaskId === task.id}
             yOffset={isCompact ? yOffsets[mapIndex] : undefined}
             onToggle={() => onToggle(task.id, !task.completed)}
@@ -289,7 +259,6 @@ export function SwipeableCardStack({
             onDelete={() => handleDelete(task.id)}
             onDeletePending={() => setDeletePendingId(task.id)}
             onCancelDelete={() => setDeletePendingId(null)}
-            onEditStart={() => handleEditStart(task.id)}
             onSave={(
               updates: Partial<{
                 title: string;
@@ -298,7 +267,6 @@ export function SwipeableCardStack({
                 dueDate: Date | null;
               }>,
             ) => handleSave(task.id, updates)}
-            onCancelEdit={handleCancelEdit}
             onNext={handleNext}
             onPrevious={handlePrevious}
             onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
