@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Music, Settings, Tag, User, Users } from "lucide-react";
+import { Home, Music, Settings, Tag, User, Users, X } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
@@ -14,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@acme/ui/sidebar";
 
 import { useSession } from "~/auth/client";
@@ -52,16 +53,38 @@ export function AppSidebar({
   user?: { name?: string | null; email?: string | null; image?: string | null };
 }) {
   const pathname = usePathname();
+  const { open, setOpen, isMobile } = useSidebar();
 
   return (
-    <Sidebar
-      collapsible="offcanvas"
-      variant="floating"
-      className="border-none bg-transparent"
-    >
-      <SidebarContent className="bg-transparent p-0">
-        <div className="glass-panel flex h-full flex-col rounded-3xl p-4">
-          <SidebarMenu className="gap-2">
+    <>
+      {/* Mobile backdrop */}
+      {isMobile && open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity md:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <Sidebar
+        collapsible="offcanvas"
+        variant="floating"
+        className="border-none bg-transparent"
+      >
+        <SidebarContent className="bg-transparent p-0">
+          <div className="glass-panel flex h-full flex-col rounded-2xl p-3 sm:rounded-3xl sm:p-4 md:p-4">
+            {/* Mobile close button */}
+            {isMobile && (
+              <button
+                onClick={() => setOpen(false)}
+                className="mb-4 ml-auto flex size-10 items-center justify-center rounded-xl bg-white/5 text-white transition-colors hover:bg-white/10 md:hidden"
+                aria-label="Close sidebar"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+
+            <SidebarMenu className="gap-2">
             {navigation.map((item) => {
               const isActive =
                 pathname === item.href ||
