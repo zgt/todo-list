@@ -57,15 +57,6 @@ export function AppSidebar({
 
   return (
     <>
-      {/* Mobile backdrop */}
-      {isMobile && open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity md:hidden"
-          onClick={() => setOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
       <Sidebar
         collapsible="offcanvas"
         variant="floating"
@@ -73,17 +64,6 @@ export function AppSidebar({
       >
         <SidebarContent className="bg-transparent p-0">
           <div className="glass-panel flex h-full flex-col rounded-2xl p-3 sm:rounded-3xl sm:p-4 md:p-4">
-            {/* Mobile close button */}
-            {isMobile && (
-              <button
-                onClick={() => setOpen(false)}
-                className="mb-4 ml-auto flex size-10 items-center justify-center rounded-xl bg-white/5 text-white transition-colors hover:bg-white/10 md:hidden"
-                aria-label="Close sidebar"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
-
             <SidebarMenu className="gap-2">
             {navigation.map((item) => {
               const isActive =
