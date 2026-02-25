@@ -187,6 +187,7 @@ export function AppSidebar({
         </div>
       </SidebarContent>
     </Sidebar>
+    </>
   );
 }
 
