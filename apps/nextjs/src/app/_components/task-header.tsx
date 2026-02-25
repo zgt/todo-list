@@ -13,6 +13,7 @@ import { toast } from "@acme/ui/toast";
 import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { useCreateTask } from "./create-task-context";
+import { ListFilter } from "./list-filter";
 import { PriorityFilter } from "./priority-filter";
 
 export function TaskHeader() {
@@ -49,6 +50,11 @@ export function TaskHeader() {
         {/* Priority Filter */}
         <div className="shrink-0">
           <PriorityFilter />
+        </div>
+
+        {/* List Filter */}
+        <div className="shrink-0">
+          <ListFilter />
         </div>
       </div>
 

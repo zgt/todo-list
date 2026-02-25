@@ -111,7 +111,12 @@ export const taskRouter = {
             )
           : eq(Task.userId, userId),
       ),
-      orderBy: [desc(Task.createdAt)],
+      orderBy: [
+        asc(
+          sql`CASE ${Task.priority} WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END`,
+        ),
+        desc(Task.createdAt),
+      ],
       limit: 100,
       with: { category: true, subtasks: true, list: true },
     });
