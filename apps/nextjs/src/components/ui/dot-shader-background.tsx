@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { shaderMaterial, useTrailTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
-import { useTheme } from "next-themes";
 import * as THREE from "three";
 
 const DotMaterial = shaderMaterial(
@@ -130,35 +129,9 @@ const DotMaterial = shaderMaterial(
 function Scene() {
   const size = useThree((s) => s.size);
   const viewport = useThree((s) => s.viewport);
-  const { theme } = useTheme();
-
   const rotation = 0;
   const gridSize = 250;
 
-  const getThemeColors = () => {
-    switch (theme) {
-      case "dark":
-        return {
-          dotColor: "#4ade80", // Green-400 from styles.css
-          bgColor: "#000000", // Ignored due to transparency
-          dotOpacity: 0.3, // Increased opacity for visibility
-        };
-      case "light":
-        return {
-          dotColor: "#e1e1e1",
-          bgColor: "#F4F5F5",
-          dotOpacity: 0.15,
-        };
-      default:
-        return {
-          dotColor: "#4ade80",
-          bgColor: "#000000",
-          dotOpacity: 0.3,
-        };
-    }
-  };
-
-  const themeColors = getThemeColors();
   const isMutating = useIsMutating();
   const isFetching = useIsFetching();
 
@@ -197,18 +170,14 @@ function Scene() {
   };
 
   useEffect(() => {
-    dotMaterial.uniforms.dotColor.value.setHex(
-      parseInt(themeColors.dotColor.replace("#", ""), 16),
-    );
-    dotMaterial.uniforms.bgColor.value.setHex(
-      parseInt(themeColors.bgColor.replace("#", ""), 16),
-    );
+    dotMaterial.uniforms.dotColor.value.setHex(0x4ade80);
+    dotMaterial.uniforms.bgColor.value.setHex(0x000000);
     // eslint-disable-next-line react-hooks/immutability
-    dotMaterial.uniforms.dotOpacity.value = themeColors.dotOpacity;
+    dotMaterial.uniforms.dotOpacity.value = 0.3;
     // eslint-disable-next-line react-hooks/immutability
     dotMaterial.transparent = true;
     dotMaterial.needsUpdate = true;
-  }, [theme, dotMaterial, themeColors]);
+  }, [dotMaterial]);
 
   const manualRippleTimeRemaining = useRef(0);
   const prevIsMutating = useRef(0);
