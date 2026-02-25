@@ -35,21 +35,25 @@ export function TaskHeader() {
   };
 
   return (
-    <header className="flex items-center justify-between gap-4 pr-6">
+    <header className="flex items-center justify-between gap-2 sm:gap-4 pr-2 sm:pr-6">
       {/* Left side - Mobile trigger and Category Filter */}
-      <div className="flex items-center gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 overflow-x-auto">
         {/* Sidebar trigger */}
-        <SidebarTrigger />
+        <SidebarTrigger className="shrink-0" />
 
         {/* Category Filter */}
-        <CategoryFilter />
+        <div className="shrink-0">
+          <CategoryFilter />
+        </div>
 
         {/* Priority Filter */}
-        <PriorityFilter />
+        <div className="shrink-0">
+          <PriorityFilter />
+        </div>
       </div>
 
       {/* Right side controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         {/* Search input */}
         <div className="relative hidden lg:block">
           <div className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
@@ -68,21 +72,21 @@ export function TaskHeader() {
           size="icon"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="bg-surface/50 size-12 rounded-full backdrop-blur-sm transition-opacity disabled:opacity-60"
+          className="bg-surface/50 size-9 sm:size-12 rounded-full backdrop-blur-sm transition-opacity disabled:opacity-60"
         >
           <RefreshCw
-            className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
+            className={`h-4 w-4 sm:h-5 sm:w-5 ${isRefreshing ? "animate-spin" : ""}`}
           />
         </Button>
 
         {/* New Task button */}
         <Button
           size="lg"
-          className="bg-primary shadow-glow hover:shadow-glowHover gap-2 rounded-full px-4 lg:px-6"
+          className="bg-primary shadow-glow hover:shadow-glowHover gap-1 sm:gap-2 rounded-full px-3 sm:px-4 lg:px-6 text-sm sm:text-base"
           onClick={() => setIsCreating(true)}
         >
           <span className="hidden font-semibold lg:inline">New Task</span>
-          <PlusIcon className="h-5 w-5" />
+          <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </div>
     </header>

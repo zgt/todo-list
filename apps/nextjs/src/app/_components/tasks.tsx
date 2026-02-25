@@ -297,17 +297,17 @@ function InlineCreateTask() {
       )}
     >
       {/* Top row with checkbox spacer, chevron, and inline title input */}
-      <div className="flex flex-row items-center gap-4 p-6 pb-0">
+      <div className="flex flex-row items-center gap-2 p-3 pb-0 sm:gap-4 sm:p-6 sm:pb-0">
         {/* Spacer for checkbox alignment */}
-        <div className="size-6 shrink-0" />
+        <div className="size-4 sm:size-6 shrink-0" />
 
         {/* Chevron in expanded position */}
         <div className="shrink-0 text-[#8FA8A8]">
-          <ChevronRight className="h-4 w-4 rotate-90 transition-transform duration-300" />
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 rotate-90 transition-transform duration-300" />
         </div>
 
         {/* Inline title input */}
-        <div className="grow">
+        <div className="min-w-0 grow">
           <Input
             ref={titleInputRef}
             value={title}
@@ -317,8 +317,8 @@ function InlineCreateTask() {
             className={cn(
               "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
               "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-              "rounded-md px-3 py-1.5 text-lg font-medium",
-              "max-w-md",
+              "rounded-md px-2 py-1 sm:px-3 sm:py-1.5 text-sm sm:text-lg font-medium",
+              "w-full sm:max-w-md",
             )}
             aria-label="New task title"
             disabled={createTask.isPending}
@@ -327,8 +327,8 @@ function InlineCreateTask() {
       </div>
 
       {/* Expanded area (always open for create) */}
-      <div className="mx-6 mt-4 border-t border-[#164B49]" />
-      <div className="px-6 pt-4 pb-6">
+      <div className="mx-3 mt-3 border-t border-[#164B49] sm:mx-6 sm:mt-4" />
+      <div className="px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
         {/* Description textarea */}
         <div className="mt-3 max-w-2xl">
           <textarea
@@ -350,7 +350,7 @@ function InlineCreateTask() {
         </div>
 
         {/* Field controls row */}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
           <PrioritySelectorPill
             value={priority}
             onChange={setPriority}
@@ -417,7 +417,7 @@ function InlineCreateTask() {
         </div>
 
         {/* Save/Cancel buttons */}
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-3 sm:mt-4 flex justify-end gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -941,20 +941,20 @@ export function TaskCard(props: {
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl transition-all duration-300",
+        "group relative overflow-hidden rounded-xl sm:rounded-2xl transition-all duration-300",
         props.task.completed
           ? "glass-card border-primary/50 shadow-glow bg-primary/5"
           : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
       )}
     >
       {/* Collapsed row */}
-      <div className="flex flex-row items-center gap-4 p-6">
+      <div className="flex flex-row items-center gap-2 p-3 sm:gap-4 sm:p-6">
         <Checkbox
           checked={props.task.completed}
           onCheckedChange={handleToggleComplete}
           disabled={updateTask.isPending || isEditing}
           className={cn(
-            "size-6 rounded-full border-2 transition-all",
+            "size-4 sm:size-6 rounded-full border-2 transition-all shrink-0",
             props.task.completed
               ? "bg-primary border-primary text-black"
               : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
@@ -975,13 +975,13 @@ export function TaskCard(props: {
         >
           <ChevronRight
             className={cn(
-              "h-4 w-4 transition-transform duration-300",
+              "h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300",
               isExpanded && "rotate-90",
             )}
           />
         </button>
 
-        <div className="grow space-y-2">
+        <div className="min-w-0 grow space-y-1 sm:space-y-2">
           {/* Title - inline editable */}
           {isEditing ? (
             <Input
@@ -993,8 +993,8 @@ export function TaskCard(props: {
               className={cn(
                 "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
                 "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-                "rounded-md px-3 py-1.5 text-lg font-medium",
-                "max-w-md",
+                "rounded-md px-2 py-1 sm:px-3 sm:py-1.5 text-sm sm:text-lg font-medium",
+                "max-w-full sm:max-w-md",
               )}
               aria-label="Edit task title"
               disabled={updateTask.isPending}
@@ -1007,26 +1007,26 @@ export function TaskCard(props: {
                 "group/title -m-1 rounded-md p-1 text-left transition-all duration-200",
                 "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                "max-w-fit",
+                "w-full",
               )}
               aria-label={`Edit task title. Current value: ${props.task.title}`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <h2
                   className={cn(
-                    "text-lg font-medium transition-colors",
+                    "text-sm sm:text-lg font-medium transition-colors truncate",
                     props.task.completed ? "text-white/70" : "text-white",
                   )}
                 >
                   {props.task.title}
                 </h2>
                 {props.task.subtasks.length > 0 && (
-                  <span className="text-xs text-[#8FA8A8]">
+                  <span className="shrink-0 text-xs text-[#8FA8A8]">
                     {props.task.subtasks.filter((s) => s.completed).length}/
                     {props.task.subtasks.length}
                   </span>
                 )}
-                <Pencil className="h-4 w-4 text-[#50C878]/60 opacity-0 transition-opacity group-hover/title:opacity-100" />
+                <Pencil className="hidden sm:block h-4 w-4 text-[#50C878]/60 opacity-0 transition-opacity group-hover/title:opacity-100" />
               </div>
             </button>
           )}
@@ -1039,52 +1039,60 @@ export function TaskCard(props: {
                 "group/desc -m-1 rounded-md p-1 text-left transition-all duration-200",
                 "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                "max-w-fit",
+                "hidden sm:block w-full",
               )}
               aria-label={`Edit task description. Current value: ${props.task.description}`}
             >
               <div className="flex items-center gap-2">
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm truncate">
                   {props.task.description}
                 </p>
-                <Pencil className="h-3 w-3 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
+                <Pencil className="shrink-0 h-3 w-3 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
               </div>
             </button>
           ) : null}
         </div>
 
-        {/* Priority badge - collapsed row */}
+        {/* Priority badge - collapsed row - hidden on mobile, show on hover on desktop */}
         {!isExpanded && (
           <div
             className={cn(
-              "z-10 transition-transform duration-300 ease-in-out",
-              "group-hover:-translate-x-32",
+              "z-10 transition-transform duration-300 ease-in-out shrink-0",
+              "hidden sm:block sm:group-hover:-translate-x-32",
             )}
           >
             <PriorityBadge priority={props.task.priority} variant="compact" />
           </div>
         )}
 
-        {/* Due Date - collapsed row */}
+        {/* Due Date - collapsed row - hidden on mobile */}
         {!isExpanded && editedDueDate ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
-            <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
-              <Calendar className="h-3.5 w-3.5" />
-              {new Date(editedDueDate).toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
+            <div className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
+              <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden lg:inline">
+                {new Date(editedDueDate).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+              <span className="lg:hidden">
+                {new Date(editedDueDate).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
             </div>
           </div>
         ) : null}
 
-        {/* Category - collapsed row */}
+        {/* Category - collapsed row - hidden on mobile */}
         {!isExpanded && editedCategory ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
             <div
-              className="rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md"
+              className="rounded-full border px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium backdrop-blur-md truncate max-w-[100px] sm:max-w-none"
               style={{
                 backgroundColor: `${editedCategory.color}60`,
                 borderColor: `${editedCategory.color}80`,
@@ -1096,61 +1104,65 @@ export function TaskCard(props: {
           </div>
         ) : null}
 
-        {/* Reminder - collapsed row */}
+        {/* Reminder - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.reminderAt ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
             <div
               className={cn(
-                "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+                "flex items-center gap-1.5 sm:gap-2 rounded-full border px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium backdrop-blur-md",
                 getReminderBadgeClasses(
                   props.task.reminderAt,
                   props.task.reminderSentAt,
                 ),
               )}
             >
-              <Bell className="h-3.5 w-3.5" />
-              {formatReminder(props.task.reminderAt, props.task.reminderSentAt)}
+              <Bell className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">
+                {formatReminder(props.task.reminderAt, props.task.reminderSentAt)}
+              </span>
             </div>
           </div>
         ) : null}
 
-        {/* List badge - collapsed row */}
+        {/* List badge - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.list ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out group-hover:-translate-x-32">
-            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-[#8FA8A8] backdrop-blur-md">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
+            <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-[#8FA8A8] backdrop-blur-md">
               <span
-                className="h-2 w-2 rounded-full"
+                className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0"
                 style={{
                   backgroundColor: props.task.list.color ?? "#8FA8A8",
                 }}
               />
-              {props.task.list.name}
+              <span className="truncate max-w-[80px] sm:max-w-none">
+                {props.task.list.name}
+              </span>
             </div>
           </div>
         ) : null}
 
-        {/* Hover Actions - only in collapsed non-editing state */}
+        {/* Hover Actions - only in collapsed non-editing state - hidden on mobile */}
         {!isExpanded && !isEditing && (
-          <div className="absolute inset-y-0 right-0 flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+          <div className="absolute inset-y-0 right-0 hidden sm:flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
             <Button
               variant="ghost"
               size="icon"
-              className="h-full w-16 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
+              className="h-full w-12 sm:w-16 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
               onClick={handleEditClick}
               aria-label="Edit task"
             >
-              <Pencil className="h-5 w-5" />
+              <Pencil className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="sr-only">Edit</span>
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-full w-16 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white"
+              className="h-full w-12 sm:w-16 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white"
               onClick={() => deleteTask.mutate(props.task.id)}
               disabled={deleteTask.isPending}
               aria-label="Delete task"
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="sr-only">Delete</span>
             </Button>
           </div>
@@ -1165,7 +1177,7 @@ export function TaskCard(props: {
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-[#164B49] px-6 pt-4 pb-6">
+          <div className="border-t border-[#164B49] px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
             {/* Description textarea / read-only */}
             <div className="max-w-2xl">
               {isEditing ? (
@@ -1198,7 +1210,7 @@ export function TaskCard(props: {
 
             {/* Field controls row */}
             {isEditing && (
-              <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
                 <PrioritySelectorPill
                   value={editedPriority}
                   onChange={setEditedPriority}
@@ -1270,7 +1282,7 @@ export function TaskCard(props: {
 
             {/* Read-only badges when expanded but not editing */}
             {!isEditing && (
-              <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
                 <PriorityBadge
                   priority={props.task.priority}
                   variant="compact"
@@ -1320,7 +1332,7 @@ export function TaskCard(props: {
 
             {/* Save/Cancel buttons inside expanded area */}
             {isEditing && (
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="mt-3 sm:mt-4 flex justify-end gap-2">
                 <Button
                   type="button"
                   variant="ghost"
