@@ -92,8 +92,8 @@ export function AppSidebar({
             })}
           </SidebarMenu>
 
-          {/* Lists Section */}
-          {user && <SidebarListsSection />}
+          {/* Lists Section - only on home page */}
+          {user && pathname === "/" && <SidebarListsSection />}
 
           <div className="mt-auto pt-4">
             {user ? (
