@@ -17,10 +17,9 @@ export default function JoinLeague() {
     isLoading,
     error,
   } = useQuery(
-    trpc.musicLeague.getLeagueByInviteCode.queryOptions(
-      { inviteCode },
-      { enabled: !!inviteCode },
-    ),
+    trpc.musicLeague.getLeagueByInviteCode.queryOptions({
+      inviteCode: String(inviteCode),
+    }),
   );
 
   const joinMutation = useMutation(
