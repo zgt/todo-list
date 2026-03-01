@@ -1,8 +1,8 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, eq } from "@acme/db";
-import { PushToken, UserPreference } from "@acme/db/schema";
+import { and, eq, sql } from "@acme/db";
+import { PushToken, user, UserPreference } from "@acme/db/schema";
 
 import { sendPushToUser } from "../lib/push";
 import { protectedProcedure } from "../trpc";
@@ -134,6 +134,32 @@ export const notificationRouter = {
       reminderOffsetMinutes: prefs.reminderOffsetMinutes,
     };
   }),
+
+  /** Get the current user's shared list notification preference */
+  getSharedListNotificationPref: protectedProcedure.query(async ({ ctx }) => {
+    const dbUser = await ctx.db.query.user.findFirst({
+      where: eq(user.id, ctx.session.user.id),
+      columns: { notificationPreferences: true },
+    });
+    const prefs = dbUser?.notificationPreferences as Record<
+      string,
+      boolean
+    > | null;
+    return { sharedListActivity: prefs?.sharedListActivity !== false };
+  }),
+
+  /** Update the current user's shared list notification preference */
+  updateSharedListNotificationPref: protectedProcedure
+    .input(z.object({ sharedListActivity: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(user)
+        .set({
+          notificationPreferences: sql`coalesce(${user.notificationPreferences}, '{}'::jsonb) || ${JSON.stringify(input)}::jsonb`,
+        })
+        .where(eq(user.id, ctx.session.user.id));
+      return { success: true };
+    }),
 
   /** Upsert the current user's notification preferences */
   updateUserPreferences: protectedProcedure

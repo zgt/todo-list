@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, eq, inArray } from "@acme/db";
+import { and, eq, inArray, sql } from "@acme/db";
 import {
   Comment,
   League,
@@ -147,9 +147,12 @@ export const musicLeagueRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Merge with existing preferences to preserve keys from other features
       await ctx.db
         .update(user)
-        .set({ notificationPreferences: input })
+        .set({
+          notificationPreferences: sql`coalesce(${user.notificationPreferences}, '{}'::jsonb) || ${JSON.stringify(input)}::jsonb`,
+        })
         .where(eq(user.id, ctx.session.user.id));
       return { success: true };
     }),
