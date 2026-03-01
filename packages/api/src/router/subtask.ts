@@ -10,19 +10,33 @@ import {
   UpdateSubtaskSchema,
 } from "@acme/db/schema";
 
+import { assertListAccess } from "../lib/list-access";
 import { protectedProcedure } from "../trpc";
+
+/** Verify user owns the task or has access via shared list membership. */
+async function assertTaskAccess(
+  db: Parameters<typeof assertListAccess>[0],
+  userId: string,
+  task: { userId: string; listId: string | null },
+  minRole: "viewer" | "editor" | "owner",
+): Promise<void> {
+  if (task.userId === userId) return;
+  if (!task.listId) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Subtask not found or access denied",
+    });
+  }
+  await assertListAccess(db, userId, task.listId, minRole);
+}
 
 export const subtaskRouter = {
   // Get all subtasks for a task
   byTaskId: protectedProcedure
     .input(z.object({ taskId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      // Verify task ownership
       const task = await ctx.db.query.Task.findFirst({
-        where: and(
-          eq(Task.id, input.taskId),
-          eq(Task.userId, ctx.session.user.id),
-        ),
+        where: eq(Task.id, input.taskId),
       });
 
       if (!task) {
@@ -31,6 +45,8 @@ export const subtaskRouter = {
           message: "Task not found or access denied",
         });
       }
+
+      await assertTaskAccess(ctx.db, ctx.session.user.id, task, "viewer");
 
       return ctx.db.query.Subtask.findMany({
         where: eq(Subtask.taskId, input.taskId),
@@ -42,12 +58,8 @@ export const subtaskRouter = {
   create: protectedProcedure
     .input(CreateSubtaskSchema)
     .mutation(async ({ ctx, input }) => {
-      // Verify task ownership
       const task = await ctx.db.query.Task.findFirst({
-        where: and(
-          eq(Task.id, input.taskId),
-          eq(Task.userId, ctx.session.user.id),
-        ),
+        where: eq(Task.id, input.taskId),
       });
 
       if (!task) {
@@ -56,6 +68,8 @@ export const subtaskRouter = {
           message: "Task not found or access denied",
         });
       }
+
+      await assertTaskAccess(ctx.db, ctx.session.user.id, task, "editor");
 
       // Get max sortOrder for this task
       const [maxResult] = await ctx.db
@@ -86,18 +100,19 @@ export const subtaskRouter = {
     .mutation(async ({ ctx, input }) => {
       const { id, ...updates } = input;
 
-      // Verify ownership via join: subtask → task → check userId
       const existing = await ctx.db.query.Subtask.findFirst({
         where: eq(Subtask.id, id),
         with: { task: true },
       });
 
-      if (existing?.task.userId !== ctx.session.user.id) {
+      if (!existing) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Subtask not found or access denied",
         });
       }
+
+      await assertTaskAccess(ctx.db, ctx.session.user.id, existing.task, "editor");
 
       const updateData: Record<string, unknown> = { ...updates };
 
@@ -127,18 +142,19 @@ export const subtaskRouter = {
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
-      // Verify ownership via join
       const existing = await ctx.db.query.Subtask.findFirst({
         where: eq(Subtask.id, input.id),
         with: { task: true },
       });
 
-      if (existing?.task.userId !== ctx.session.user.id) {
+      if (!existing) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Subtask not found or access denied",
         });
       }
+
+      await assertTaskAccess(ctx.db, ctx.session.user.id, existing.task, "editor");
 
       await ctx.db.delete(Subtask).where(eq(Subtask.id, input.id));
 
@@ -154,12 +170,8 @@ export const subtaskRouter = {
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify task ownership
       const task = await ctx.db.query.Task.findFirst({
-        where: and(
-          eq(Task.id, input.taskId),
-          eq(Task.userId, ctx.session.user.id),
-        ),
+        where: eq(Task.id, input.taskId),
       });
 
       if (!task) {
@@ -168,6 +180,8 @@ export const subtaskRouter = {
           message: "Task not found or access denied",
         });
       }
+
+      await assertTaskAccess(ctx.db, ctx.session.user.id, task, "editor");
 
       // Update each subtask's sortOrder in a transaction
       await ctx.db.transaction(async (tx) => {
