@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Keyboard,
   Pressable,
   Text as RNText,
   TextInput,
@@ -32,6 +33,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
   const queryClient = useQueryClient();
   const backdropOpacity = useSharedValue(0);
   const translateY = useSharedValue(300);
+  const keyboardOffset = useSharedValue(0);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(user.name);
@@ -78,12 +80,27 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
     }
   }, [visible, backdropOpacity, translateY, user.name]);
 
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardWillShow", (e) => {
+      keyboardOffset.value = withTiming(-e.endCoordinates.height * 0.35, { duration: 250 });
+    });
+    const hideSub = Keyboard.addListener("keyboardWillHide", () => {
+      keyboardOffset.value = withTiming(0, { duration: 250 });
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [keyboardOffset]);
+
   const backdropAnimatedStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
   }));
 
   const sheetAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
+    transform: [
+      { translateY: translateY.value + keyboardOffset.value },
+    ],
   }));
 
   const handleSignOut = async () => {
@@ -159,7 +176,8 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                     maxLength={50}
                     returnKeyType="done"
                     autoFocus
-                    className="flex-1 rounded-md border border-[#21716C] bg-[#0A1A1A] px-3 py-2 text-lg text-[#DCE4E4]"
+                    className="flex-1 rounded-2xl border border-[#21716C] bg-[#0A1A1A] px-3 text-[#DCE4E4]"
+                    style={{ paddingVertical: 10, fontSize: 18, height: 48, textAlignVertical: "center" }}
                     placeholderTextColor="#8FA8A8"
                     placeholder="Display name"
                     editable={!updateNameMutation.isPending}
@@ -167,7 +185,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                   <Pressable
                     onPress={handleSaveName}
                     disabled={updateNameMutation.isPending}
-                    className="rounded-md bg-[#50C878] p-2 active:bg-[#388E3C]"
+                    className="rounded-2xl bg-[#50C878] p-2 active:bg-[#388E3C]"
                   >
                     <Check size={18} color="#0A1A1A" />
                   </Pressable>

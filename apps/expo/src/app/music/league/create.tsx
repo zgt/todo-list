@@ -31,7 +31,7 @@ function NumberStepper({
   label: string;
 }) {
   return (
-    <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
+    <View className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
       <Text className="text-base font-medium text-[#DCE4E4]">{label}</Text>
       <View className="flex-row items-center gap-3">
         <Pressable
@@ -154,7 +154,7 @@ export default function CreateLeague() {
                   placeholder="e.g. Friday Vibes"
                   placeholderTextColor="#8FA8A8"
                   maxLength={100}
-                  className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
+                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]" style={{ fontSize: 16, height: 48, textAlignVertical: "center" }}
                 />
               </View>
 
@@ -172,7 +172,7 @@ export default function CreateLeague() {
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
-                  className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
+                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]" style={{ fontSize: 16, minHeight: 80, paddingVertical: 12, textAlignVertical: "top" }}
                 />
               </View>
 
@@ -264,7 +264,7 @@ export default function CreateLeague() {
                 />
 
                 {/* Allow Downvotes Toggle */}
-                <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
+                <View className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 py-3">
                   <View className="flex-1">
                     <Text className="text-base font-medium text-[#DCE4E4]">
                       Allow downvotes

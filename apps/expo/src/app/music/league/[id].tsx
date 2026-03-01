@@ -21,7 +21,9 @@ import {
   Trophy,
 } from "lucide-react-native";
 
+import type { CreateRoundSheetRef } from "~/components/music/CreateRoundSheet";
 import type { LeagueSettingsSheetRef } from "~/components/music/LeagueSettingsSheet";
+import { CreateRoundSheet } from "~/components/music/CreateRoundSheet";
 import { GradientBackground } from "~/components/GradientBackground";
 import { LeagueSettingsSheet } from "~/components/music/LeagueSettingsSheet";
 import { LeagueStandingsTable } from "~/components/music/LeagueStandingsTable";
@@ -41,6 +43,7 @@ export default function LeagueDetails() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const settingsSheetRef = useRef<LeagueSettingsSheetRef>(null);
+  const createRoundRef = useRef<CreateRoundSheetRef>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [rippleTrigger, setRippleTrigger] = useState(0);
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -396,9 +399,7 @@ export default function LeagueDetails() {
               {/* Admin: Create Round Button */}
               {isAdmin && (
                 <Pressable
-                  onPress={() =>
-                    router.push(`/music/round/create?leagueId=${id}` as never)
-                  }
+                  onPress={() => createRoundRef.current?.present()}
                   className="mb-4 flex-row items-center justify-center gap-2 rounded-2xl bg-[#50C878] py-3 active:bg-[#66D99A]"
                 >
                   <Plus size={20} color="#0A1A1A" strokeWidth={3} />
@@ -531,6 +532,9 @@ export default function LeagueDetails() {
             </View>
           }
         />
+
+        {/* Create Round Bottom Sheet */}
+        {isAdmin && <CreateRoundSheet ref={createRoundRef} leagueId={id} />}
 
         {/* Settings Bottom Sheet */}
         {isAdmin && (

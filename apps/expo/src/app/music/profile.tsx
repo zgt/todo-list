@@ -100,7 +100,7 @@ export default function ProfileScreen() {
   ];
 
   const renderStatCard = ({ item }: { item: StatCard }) => (
-    <View className="flex-1 rounded-xl border border-[#164B49] bg-[#102A2A] p-4">
+    <View className="flex-1 rounded-2xl border border-[#164B49] bg-[#102A2A] p-4">
       <View className="mb-2">{item.icon}</View>
       <Text className="text-2xl font-bold text-[#DCE4E4]">{item.value}</Text>
       <Text className="text-xs text-[#8FA8A8]">{item.label}</Text>
@@ -178,7 +178,7 @@ export default function ProfileScreen() {
                   <Text className="mb-3 text-lg font-bold text-[#DCE4E4]">
                     Best Submission
                   </Text>
-                  <View className="rounded-xl border border-[#FFD700]/30 bg-[#FFD700]/5 p-4">
+                  <View className="rounded-2xl border border-[#FFD700]/30 bg-[#FFD700]/5 p-4">
                     <View className="flex-row items-center gap-4">
                       {profile.bestSubmission.albumArtUrl ? (
                         <Image
@@ -221,7 +221,7 @@ export default function ProfileScreen() {
               {/* Settings Link */}
               <Pressable
                 onPress={() => router.push("/music/settings" as never)}
-                className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
+                className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
               >
                 <View className="flex-row items-center gap-3">
                   <Bell size={20} color="#8FA8A8" />

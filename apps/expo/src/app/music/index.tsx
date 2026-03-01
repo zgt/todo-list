@@ -13,11 +13,14 @@ import { Stack, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Music, Plus, Search, User } from "lucide-react-native";
 
+import type { CreateLeagueSheetRef } from "~/components/music/CreateLeagueSheet";
+import { CreateLeagueSheet } from "~/components/music/CreateLeagueSheet";
 import { trpc } from "~/utils/api";
 import { GradientBackground } from "../../components/GradientBackground";
 
 export default function MusicLeagueDashboard() {
   const router = useRouter();
+  const createLeagueRef = useRef<CreateLeagueSheetRef>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [rippleTrigger, setRippleTrigger] = useState(0);
@@ -124,7 +127,7 @@ export default function MusicLeagueDashboard() {
               <User size={18} color="#DCE4E4" />
             </Pressable>
             <Pressable
-              onPress={() => router.push("/music/league/create" as never)}
+              onPress={() => createLeagueRef.current?.present()}
               className="flex-row items-center gap-1.5 rounded-full bg-[#50C878] px-4 py-2 active:bg-[#66D99A]"
             >
               <Plus size={18} color="#0A1A1A" strokeWidth={3} />
@@ -174,7 +177,7 @@ export default function MusicLeagueDashboard() {
               above to join one.
             </Text>
             <Pressable
-              onPress={() => router.push("/music/league/create" as never)}
+              onPress={() => createLeagueRef.current?.present()}
               className="flex-row items-center gap-2 rounded-2xl bg-[#50C878] px-6 py-3 active:bg-[#66D99A]"
             >
               <Plus size={20} color="#0A1A1A" strokeWidth={3} />
@@ -202,6 +205,7 @@ export default function MusicLeagueDashboard() {
             }
           />
         )}
+        <CreateLeagueSheet ref={createLeagueRef} />
       </SafeAreaView>
     </GradientBackground>
   );

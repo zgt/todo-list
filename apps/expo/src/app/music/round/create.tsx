@@ -119,14 +119,14 @@ export default function CreateRound() {
                   placeholder="e.g. Songs That Define You"
                   placeholderTextColor="#8FA8A8"
                   maxLength={200}
-                  className="rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
+                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]" style={{ fontSize: 16, height: 48, textAlignVertical: "center" }}
                 />
               </View>
 
               {/* Browse Themes Button */}
               <Pressable
                 onPress={() => themePickerRef.current?.present()}
-                className="mb-4 flex-row items-center justify-center gap-2 rounded-xl border border-[#164B49] bg-[#102A2A] py-3 active:bg-[#164B49]"
+                className="mb-4 flex-row items-center justify-center gap-2 rounded-2xl border border-[#164B49] bg-[#102A2A] py-3 active:bg-[#164B49]"
               >
                 <Sparkles size={18} color="#50C878" />
                 <Text className="font-semibold text-[#50C878]">
@@ -148,12 +148,12 @@ export default function CreateRound() {
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
-                  className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#102A2A] px-4 py-3 text-base text-[#DCE4E4]"
+                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]" style={{ fontSize: 16, minHeight: 80, paddingVertical: 12, textAlignVertical: "top" }}
                 />
               </View>
 
               {/* League Defaults Summary */}
-              <View className="mb-6 rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 p-4">
+              <View className="mb-6 rounded-2xl border border-[#164B49] bg-[#0A1A1A]/60 p-4">
                 <Text className="mb-3 text-sm font-bold text-[#DCE4E4]">
                   Round Schedule
                 </Text>

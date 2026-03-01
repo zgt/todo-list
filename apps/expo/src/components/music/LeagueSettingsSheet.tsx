@@ -64,7 +64,7 @@ function SettingsStepper({
   label: string;
 }) {
   return (
-    <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3">
+    <View className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3">
       <Text className="text-base font-medium text-[#DCE4E4]">{label}</Text>
       <View className="flex-row items-center gap-3">
         <Pressable
@@ -345,7 +345,8 @@ export const LeagueSettingsSheet = forwardRef<
                 placeholder="League name"
                 placeholderTextColor="#8FA8A8"
                 maxLength={100}
-                className="rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3 text-base text-[#DCE4E4]"
+                className="rounded-2xl border border-[#164B49] bg-[#0A1A1A] px-4 text-[#DCE4E4]"
+                style={{ fontSize: 16, height: 48, textAlignVertical: "center" }}
               />
             </View>
 
@@ -362,8 +363,8 @@ export const LeagueSettingsSheet = forwardRef<
                 maxLength={500}
                 multiline
                 numberOfLines={3}
-                textAlignVertical="top"
-                className="min-h-[80px] rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3 text-base text-[#DCE4E4]"
+                className="rounded-2xl border border-[#164B49] bg-[#0A1A1A] px-4 text-[#DCE4E4]"
+                style={{ fontSize: 16, minHeight: 80, paddingVertical: 12, textAlignVertical: "top" }}
               />
             </View>
 
@@ -454,7 +455,7 @@ export const LeagueSettingsSheet = forwardRef<
                 max={20}
               />
 
-              <View className="flex-row items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3">
+              <View className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#0A1A1A] px-4 py-3">
                 <View className="flex-1">
                   <Text className="text-base font-medium text-[#DCE4E4]">
                     Allow downvotes
@@ -488,7 +489,7 @@ export const LeagueSettingsSheet = forwardRef<
               disabled={updateMutation.isPending || !editName.trim()}
               style={{
                 alignItems: "center",
-                borderRadius: 12,
+                borderRadius: 16,
                 backgroundColor: "#50C878",
                 paddingVertical: 16,
                 opacity: updateMutation.isPending || !editName.trim() ? 0.5 : 1,
@@ -513,7 +514,7 @@ export const LeagueSettingsSheet = forwardRef<
             {isOwner && onDeleteLeague && (
               <Pressable
                 onPress={() => setDeleteModalVisible(true)}
-                className="mt-6 flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
+                className="mt-6 flex-row items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
               >
                 <Trash2 size={18} color="#ef4444" />
                 <Text className="font-semibold text-red-400">
