@@ -2,6 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
+import type { db as DbType } from "@acme/db/client";
 import {
   and,
   arrayContains,
@@ -9,14 +10,17 @@ import {
   desc,
   eq,
   inArray,
+  isNotNull,
   isNull,
   ne,
+  or,
   sql,
 } from "@acme/db";
 import {
   Category,
   CreateCategorySchema,
   Task,
+  TaskListMember,
   UpdateCategorySchema,
 } from "@acme/db/schema";
 
@@ -34,13 +38,49 @@ function serializeCategory<
   };
 }
 
+/** Get category IDs used by tasks in lists the user has access to */
+async function getSharedCategoryIds(
+  database: typeof DbType,
+  userId: string,
+): Promise<string[]> {
+  const memberships = await database.query.TaskListMember.findMany({
+    where: eq(TaskListMember.userId, userId),
+    columns: { listId: true },
+  });
+  const listIds = memberships.map((m) => m.listId);
+  if (listIds.length === 0) return [];
+
+  const rows = await database
+    .selectDistinct({ categoryId: Task.categoryId })
+    .from(Task)
+    .where(
+      and(
+        inArray(Task.listId, listIds),
+        isNotNull(Task.categoryId),
+        isNull(Task.deletedAt),
+      ),
+    );
+
+  return rows
+    .map((r) => r.categoryId)
+    .filter((id): id is string => id !== null);
+}
+
 export const categoryRouter = {
-  // Get all non-deleted categories for current user
+  // Get all non-deleted categories for current user (+ shared via lists)
   all: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const sharedCategoryIds = await getSharedCategoryIds(ctx.db, userId);
+
     const categories = await ctx.db.query.Category.findMany({
       where: and(
-        eq(Category.userId, ctx.session.user.id),
         isNull(Category.deletedAt),
+        sharedCategoryIds.length > 0
+          ? or(
+              eq(Category.userId, userId),
+              inArray(Category.id, sharedCategoryIds),
+            )
+          : eq(Category.userId, userId),
       ),
       orderBy: [
         asc(Category.depth),
@@ -59,10 +99,18 @@ export const categoryRouter = {
 
   // Get category tree (roots with nested children)
   tree: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const sharedCategoryIds = await getSharedCategoryIds(ctx.db, userId);
+
     const categories = await ctx.db.query.Category.findMany({
       where: and(
-        eq(Category.userId, ctx.session.user.id),
         isNull(Category.deletedAt),
+        sharedCategoryIds.length > 0
+          ? or(
+              eq(Category.userId, userId),
+              inArray(Category.id, sharedCategoryIds),
+            )
+          : eq(Category.userId, userId),
       ),
       orderBy: [asc(Category.sortOrder), desc(Category.createdAt)],
     });
@@ -108,11 +156,19 @@ export const categoryRouter = {
   byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const sharedCategoryIds = await getSharedCategoryIds(ctx.db, userId);
+
       const category = await ctx.db.query.Category.findFirst({
         where: and(
           eq(Category.id, input.id),
-          eq(Category.userId, ctx.session.user.id),
           isNull(Category.deletedAt),
+          sharedCategoryIds.length > 0
+            ? or(
+                eq(Category.userId, userId),
+                inArray(Category.id, sharedCategoryIds),
+              )
+            : eq(Category.userId, userId),
         ),
       });
 
@@ -123,7 +179,7 @@ export const categoryRouter = {
         const ancestors = await ctx.db.query.Category.findMany({
           where: and(
             inArray(Category.id, category.path),
-            eq(Category.userId, ctx.session.user.id),
+            isNull(Category.deletedAt),
           ),
           columns: { id: true, name: true },
         });
@@ -146,17 +202,31 @@ export const categoryRouter = {
       }),
     )
     .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
       let categoryId = input.id;
 
       if (!categoryId && input.taskId) {
         const task = await ctx.db.query.Task.findFirst({
-          where: and(
-            eq(Task.id, input.taskId),
-            eq(Task.userId, ctx.session.user.id),
-          ),
-          columns: { categoryId: true },
+          where: and(eq(Task.id, input.taskId), isNull(Task.deletedAt)),
+          columns: { categoryId: true, userId: true, listId: true },
         });
-        categoryId = task?.categoryId ?? undefined;
+        // Allow if own task or task is in a shared list
+        if (task) {
+          if (task.userId === userId) {
+            categoryId = task.categoryId ?? undefined;
+          } else if (task.listId) {
+            const membership = await ctx.db.query.TaskListMember.findFirst({
+              where: and(
+                eq(TaskListMember.listId, task.listId),
+                eq(TaskListMember.userId, userId),
+              ),
+              columns: { listId: true },
+            });
+            if (membership) {
+              categoryId = task.categoryId ?? undefined;
+            }
+          }
+        }
       }
 
       if (!categoryId) return [];
@@ -164,7 +234,6 @@ export const categoryRouter = {
       const category = await ctx.db.query.Category.findFirst({
         where: and(
           eq(Category.id, categoryId),
-          eq(Category.userId, ctx.session.user.id),
           isNull(Category.deletedAt),
         ),
       });
@@ -187,7 +256,7 @@ export const categoryRouter = {
       const ancestors = await ctx.db.query.Category.findMany({
         where: and(
           inArray(Category.id, ancestorIds),
-          eq(Category.userId, ctx.session.user.id),
+          isNull(Category.deletedAt),
         ),
         columns: { id: true, name: true, color: true, icon: true },
       });
