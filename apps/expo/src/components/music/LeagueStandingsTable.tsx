@@ -1,4 +1,6 @@
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
+
+import { UserAvatar } from "~/components/UserAvatar";
 
 interface StandingEntry {
   user: {
@@ -80,18 +82,11 @@ export function LeagueStandingsTable({
 
             {/* Player */}
             <View className="flex-1 flex-row items-center gap-2">
-              {entry.user.image ? (
-                <Image
-                  source={{ uri: entry.user.image }}
-                  className="h-7 w-7 rounded-full"
-                />
-              ) : (
-                <View className="h-7 w-7 items-center justify-center rounded-full bg-[#164B49]">
-                  <Text className="text-xs font-bold text-[#DCE4E4]">
-                    {(entry.user.name ?? "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <UserAvatar
+                name={entry.user.name}
+                image={entry.user.image}
+                size={28}
+              />
               <Text
                 className={`text-sm font-medium ${
                   isCurrentUser ? "text-[#50C878]" : "text-[#DCE4E4]"
