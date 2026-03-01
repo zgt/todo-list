@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Alert, Image, Pressable, Text as RNText, View } from "react-native";
+import { Alert, Pressable, Text as RNText, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -9,6 +9,7 @@ import Animated, {
 import { useRouter } from "expo-router";
 import { Bell, LogOut, Music, Users } from "lucide-react-native";
 
+import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/utils/auth";
 import { authClient } from "~/utils/auth";
 
@@ -98,16 +99,8 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
         <View className="w-full rounded-t-3xl border-t border-[#164B49] bg-[#102A2A] p-6 shadow-2xl">
           {/* Profile Section */}
           <View className="mb-6 flex-row items-center gap-4">
-            <View className="h-16 w-16 overflow-hidden rounded-full border-2 border-[#164B49]">
-              {user.image ? (
-                <Image source={{ uri: user.image }} className="h-full w-full" />
-              ) : (
-                <View className="h-full w-full items-center justify-center bg-[#0A1A1A]">
-                  <RNText className="text-2xl font-bold text-[#DCE4E4]">
-                    {user.name ? user.name.charAt(0) : "?"}
-                  </RNText>
-                </View>
-              )}
+            <View className="overflow-hidden rounded-full border-2 border-[#164B49]">
+              <UserAvatar name={user.name} image={user.image} size={64} />
             </View>
 
             <View className="flex-1">

@@ -1,16 +1,11 @@
-import {
-  Image,
-  Pressable,
-  Text as RNText,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
 
+import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/utils/auth";
 
 interface ProfileButtonProps {
@@ -26,14 +21,6 @@ const styles = StyleSheet.create({
     height: AVATAR_SIZE,
     overflow: "hidden",
     borderRadius: AVATAR_SIZE / 2,
-  },
-  image: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-  },
-  placeholder: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
   },
 });
 
@@ -69,22 +56,7 @@ export function ProfileButton({ user, onPress }: ProfileButtonProps) {
         style={[styles.container, animatedStyle]}
         className="border-2 border-white/20"
       >
-        {user.image ? (
-          <Image
-            source={{ uri: user.image }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            className="bg-muted items-center justify-center"
-            style={styles.placeholder}
-          >
-            <RNText className="text-muted-foreground font-bold">
-              {user.name ? user.name.charAt(0) : "?"}
-            </RNText>
-          </View>
-        )}
+        <UserAvatar name={user.name} image={user.image} size={AVATAR_SIZE} />
       </Animated.View>
     </Pressable>
   );

@@ -37,6 +37,7 @@ import {
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
+import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -1388,29 +1389,11 @@ function PodiumCard({
                 marginTop: 4,
               }}
             >
-              {submission.submitter.image ? (
-                <Image
-                  source={{ uri: submission.submitter.image }}
-                  style={{ width: 16, height: 16, borderRadius: 8 }}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: 8,
-                    backgroundColor: "#1A3A3A",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{ color: "#8FA8A8", fontSize: 8, fontWeight: "700" }}
-                  >
-                    {(submission.submitter.name ?? "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <UserAvatar
+                name={submission.submitter.name}
+                image={submission.submitter.image}
+                size={16}
+              />
               <Text
                 style={{ marginLeft: 4, fontSize: 12, color: "#8FA8A8" }}
                 numberOfLines={1}
@@ -1608,29 +1591,11 @@ function VoteCommentDetails({
               style={{ flexDirection: "row", alignItems: "center" }}
             >
               {/* Voter avatar */}
-              {vote.voter?.image ? (
-                <Image
-                  source={{ uri: vote.voter.image }}
-                  style={{ width: 20, height: 20, borderRadius: 10 }}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 10,
-                    backgroundColor: "#1A3A3A",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{ color: "#8FA8A8", fontSize: 9, fontWeight: "700" }}
-                  >
-                    {(vote.voter?.name ?? "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <UserAvatar
+                name={vote.voter?.name}
+                image={vote.voter?.image}
+                size={20}
+              />
               <Text
                 style={{
                   marginLeft: 6,
@@ -1993,33 +1958,11 @@ function MemberStatusBoard({
               style={{ flexDirection: "row", alignItems: "center" }}
             >
               {/* Avatar */}
-              {member.image ? (
-                <Image
-                  source={{ uri: member.image }}
-                  style={{ width: 32, height: 32, borderRadius: 16 }}
-                />
-              ) : (
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    backgroundColor: "#1A3A3A",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#8FA8A8",
-                      fontSize: 13,
-                      fontWeight: "700",
-                    }}
-                  >
-                    {(member.name ?? "?")[0]?.toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <UserAvatar
+                name={member.name}
+                image={member.image}
+                size={32}
+              />
 
               {/* Name */}
               <Text

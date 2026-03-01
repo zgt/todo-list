@@ -7,6 +7,8 @@ import {
   Text,
   View,
 } from "react-native";
+
+import { UserAvatar } from "~/components/UserAvatar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -137,18 +139,11 @@ export default function ProfileScreen() {
             <View className="px-4 pb-8">
               {/* User Avatar & Name */}
               <View className="mb-6 items-center">
-                {session?.user.image ? (
-                  <Image
-                    source={{ uri: session.user.image }}
-                    style={{ width: 80, height: 80, borderRadius: 40 }}
-                  />
-                ) : (
-                  <View className="h-20 w-20 items-center justify-center rounded-full bg-[#164B49]">
-                    <Text className="text-2xl font-bold text-[#50C878]">
-                      {(session?.user.name ?? "?")[0]?.toUpperCase()}
-                    </Text>
-                  </View>
-                )}
+                <UserAvatar
+                  name={session?.user.name}
+                  image={session?.user.image}
+                  size={80}
+                />
                 <Text className="mt-3 text-xl font-bold text-[#DCE4E4]">
                   {session?.user.name ?? "User"}
                 </Text>
