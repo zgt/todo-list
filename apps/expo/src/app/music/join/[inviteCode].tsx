@@ -63,31 +63,74 @@ export default function JoinLeague() {
   if (error || !league) {
     return (
       <GradientBackground>
-        <SafeAreaView className="flex-1" edges={["top"]}>
+        <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
           <Stack.Screen options={{ headerShown: false }} />
 
-          <View className="flex-row items-center px-4 py-4">
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+            }}
+          >
             <Pressable
               onPress={() => router.back()}
-              className="rounded-full bg-[#164B49] p-2"
+              style={{
+                borderRadius: 9999,
+                backgroundColor: "#164B49",
+                padding: 8,
+              }}
             >
               <ArrowLeft color="#DCE4E4" size={24} />
             </Pressable>
           </View>
 
-          <View className="flex-1 items-center justify-center px-8">
-            <Text className="mb-2 text-center text-xl font-bold text-[#DCE4E4]">
+          <View
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: 32,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "700",
+                color: "#DCE4E4",
+                textAlign: "center",
+                marginBottom: 8,
+              }}
+            >
               League not found
             </Text>
-            <Text className="mb-6 text-center text-sm text-[#8FA8A8]">
+            <Text
+              style={{
+                fontSize: 14,
+                color: "#8FA8A8",
+                textAlign: "center",
+                marginBottom: 24,
+              }}
+            >
               The invite code "{inviteCode}" doesn't match any league. Check the
               code and try again.
             </Text>
             <Pressable
               onPress={() => router.back()}
-              className="rounded-xl bg-[#164B49] px-6 py-3 active:bg-[#21716C]"
+              style={{
+                borderRadius: 12,
+                backgroundColor: "#164B49",
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+              }}
             >
-              <Text className="font-semibold text-[#DCE4E4]">
+              <Text
+                style={{
+                  fontWeight: "600",
+                  color: "#DCE4E4",
+                }}
+              >
                 Back to Dashboard
               </Text>
             </Pressable>
@@ -99,45 +142,107 @@ export default function JoinLeague() {
 
   return (
     <GradientBackground>
-      <SafeAreaView className="flex-1" edges={["top"]}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View className="flex-row items-center px-4 py-4">
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 16,
+            paddingVertical: 16,
+          }}
+        >
           <Pressable
             onPress={() => router.back()}
-            className="rounded-full bg-[#164B49] p-2"
+            style={{
+              borderRadius: 9999,
+              backgroundColor: "#164B49",
+              padding: 8,
+            }}
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
         </View>
 
         {/* League Preview */}
-        <View className="flex-1 justify-center px-6">
-          <View className="rounded-2xl border border-[#164B49] bg-[#102A2A] p-6">
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          <View
+            style={{
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: "#164B49",
+              backgroundColor: "#102A2A",
+              padding: 24,
+            }}
+          >
             {/* Invite badge */}
-            <View className="mb-4 self-start rounded-full bg-[#50C878]/20 px-3 py-1">
-              <Text className="text-xs font-bold text-[#50C878] uppercase">
+            <View
+              style={{
+                alignSelf: "flex-start",
+                borderRadius: 9999,
+                backgroundColor: "rgba(80, 200, 120, 0.2)",
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "700",
+                  color: "#50C878",
+                  textTransform: "uppercase",
+                }}
+              >
                 You're invited
               </Text>
             </View>
 
             {/* League name */}
-            <Text className="mb-2 text-2xl font-bold text-[#DCE4E4]">
+            <Text
+              style={{
+                fontSize: 24,
+                fontWeight: "700",
+                color: "#DCE4E4",
+                marginBottom: 8,
+              }}
+            >
               {league.name}
             </Text>
 
             {/* Description */}
             {league.description && (
-              <Text className="mb-4 text-sm leading-5 text-[#8FA8A8]">
+              <Text
+                style={{
+                  fontSize: 14,
+                  lineHeight: 20,
+                  color: "#8FA8A8",
+                  marginBottom: 16,
+                }}
+              >
                 {league.description}
               </Text>
             )}
 
             {/* Member count */}
-            <View className="mb-6 flex-row items-center gap-2">
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 24,
+              }}
+            >
               <Users size={16} color="#8FA8A8" />
-              <Text className="text-sm text-[#8FA8A8]">
+              <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
                 {league.memberCount}
                 {league.maxMembers ? ` / ${league.maxMembers}` : ""} members
               </Text>
@@ -147,13 +252,24 @@ export default function JoinLeague() {
             <Pressable
               onPress={handleJoin}
               disabled={joinMutation.isPending}
-              className="items-center rounded-xl bg-[#50C878] py-4 active:bg-[#66D99A]"
-              style={joinMutation.isPending ? { opacity: 0.5 } : undefined}
+              style={{
+                alignItems: "center",
+                borderRadius: 12,
+                backgroundColor: "#50C878",
+                paddingVertical: 16,
+                opacity: joinMutation.isPending ? 0.5 : 1,
+              }}
             >
               {joinMutation.isPending ? (
                 <ActivityIndicator color="#0A1A1A" />
               ) : (
-                <Text className="text-lg font-bold text-[#0A1A1A]">
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "700",
+                    color: "#0A1A1A",
+                  }}
+                >
                   Join League
                 </Text>
               )}
