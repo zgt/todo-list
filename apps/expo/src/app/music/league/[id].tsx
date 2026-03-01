@@ -432,7 +432,9 @@ export default function LeagueDetails() {
               <Text className="mt-8 mb-4 text-xl font-bold text-[#DCE4E4]">
                 Members
               </Text>
-              <View className="flex-row flex-wrap gap-2">
+              <View
+                style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
+              >
                 {league.members.map(
                   (member: {
                     id: string;
@@ -442,25 +444,38 @@ export default function LeagueDetails() {
                   }) => (
                     <View
                       key={member.id}
-                      className={`flex-row items-center gap-2 rounded-full px-3 py-1 ${
-                        member.userId === currentUserId
-                          ? "border border-[#50C878]/40 bg-[#50C878]/20"
-                          : "bg-[#164B49]"
-                      }`}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                        borderRadius: 9999,
+                        paddingHorizontal: 14,
+                        paddingVertical: 6,
+                        ...(member.userId === currentUserId
+                          ? {
+                              borderWidth: 1,
+                              borderColor: "rgba(80, 200, 120, 0.4)",
+                              backgroundColor: "rgba(80, 200, 120, 0.2)",
+                            }
+                          : {
+                              backgroundColor: "#164B49",
+                            }),
+                      }}
                     >
                       <Text
-                        className={`text-sm font-medium ${
-                          member.userId === currentUserId
-                            ? "text-[#50C878]"
-                            : "text-[#DCE4E4]"
-                        }`}
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "500",
+                          color:
+                            member.userId === currentUserId
+                              ? "#50C878"
+                              : "#DCE4E4",
+                        }}
                       >
                         {member.user.name ?? "Unknown"}
                       </Text>
                       {member.role === "OWNER" && (
-                        <Text className="text-xs font-bold text-[#50C878]">
-                          👑
-                        </Text>
+                        <Text style={{ fontSize: 12 }}>👑</Text>
                       )}
                     </View>
                   ),
@@ -469,19 +484,33 @@ export default function LeagueDetails() {
 
               {/* Actions */}
               {!isOwner && (
-                <View className="mt-8">
+                <View style={{ marginTop: 32 }}>
                   <Pressable
                     onPress={handleLeaveLeague}
                     disabled={leaveLeagueMutation.isPending}
-                    className="flex-row items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-3 active:bg-red-500/20"
-                    style={
-                      leaveLeagueMutation.isPending
-                        ? { opacity: 0.5 }
-                        : undefined
-                    }
+                    style={({ pressed }) => ({
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: "rgba(239, 68, 68, 0.3)",
+                      backgroundColor: pressed
+                        ? "rgba(239, 68, 68, 0.2)"
+                        : "rgba(239, 68, 68, 0.1)",
+                      paddingVertical: 14,
+                      opacity: leaveLeagueMutation.isPending ? 0.5 : 1,
+                    })}
                   >
                     <LogOut size={18} color="#ef4444" />
-                    <Text className="font-semibold text-red-400">
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "600",
+                        color: "#f87171",
+                      }}
+                    >
                       Leave League
                     </Text>
                   </Pressable>
