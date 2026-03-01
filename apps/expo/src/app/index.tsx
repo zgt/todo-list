@@ -425,9 +425,8 @@ export default function Index() {
         if (previousTasks) {
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
             trpc.task.all.queryKey(),
-            previousTasks.map((task) => ({
-              ...task,
-              subtasks: task.subtasks.map((subtask) =>
+            previousTasks.map((task) => {
+              const updatedSubtasks = task.subtasks.map((subtask) =>
                 subtask.id === updatedSubtask.id
                   ? {
                       ...subtask,
@@ -435,8 +434,22 @@ export default function Index() {
                       updatedAt: new Date(),
                     }
                   : subtask,
-              ),
-            })),
+              );
+              // Auto-complete/un-complete parent based on subtask states
+              const allCompleted =
+                updatedSubtasks.length > 0 &&
+                updatedSubtasks.every((s) => s.completed);
+              return {
+                ...task,
+                subtasks: updatedSubtasks,
+                completed: allCompleted,
+                completedAt: allCompleted
+                  ? (task.completedAt ?? new Date())
+                  : updatedSubtask.completed === false
+                    ? null
+                    : task.completedAt,
+              };
+            }),
           );
         }
 
