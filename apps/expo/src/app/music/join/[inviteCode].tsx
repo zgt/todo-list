@@ -1,13 +1,17 @@
-import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Users } from "lucide-react-native";
+import { Users, X } from "lucide-react-native";
 
-import { GradientBackground } from "~/components/GradientBackground";
 import { trpc } from "~/utils/api";
 
-export default function JoinLeague() {
+export default function JoinLeagueModal() {
   const { inviteCode } = useLocalSearchParams<{ inviteCode: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -32,7 +36,6 @@ export default function JoinLeague() {
       },
       onError: (error) => {
         if (error.message.includes("already a member")) {
-          // Redirect to the league if already a member
           if (league) {
             router.replace(`/music/league/${league.id}` as never);
           }
@@ -43,240 +46,213 @@ export default function JoinLeague() {
     }),
   );
 
+  const dismiss = () => router.back();
+
   const handleJoin = () => {
     if (!inviteCode) return;
     joinMutation.mutate({ inviteCode });
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <GradientBackground>
-        <SafeAreaView style={{ flex: 1 }}>
-          <Stack.Screen options={{ headerShown: false }} />
-        </SafeAreaView>
-      </GradientBackground>
-    );
-  }
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={{ alignItems: "center", paddingVertical: 40 }}>
+          <ActivityIndicator color="#50C878" size="large" />
+        </View>
+      );
+    }
 
-  // Error / not found state
-  if (error || !league) {
-    return (
-      <GradientBackground>
-        <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-          <Stack.Screen options={{ headerShown: false }} />
-
-          <View
+    if (error || !league) {
+      return (
+        <>
+          <Text
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 16,
-              paddingVertical: 16,
+              fontSize: 18,
+              fontWeight: "700",
+              color: "#DCE4E4",
+              textAlign: "center",
+              marginBottom: 8,
             }}
           >
-            <Pressable
-              onPress={() => router.back()}
-              style={{
-                borderRadius: 9999,
-                backgroundColor: "#164B49",
-                padding: 8,
-              }}
-            >
-              <ArrowLeft color="#DCE4E4" size={24} />
-            </Pressable>
-          </View>
-
-          <View
+            League not found
+          </Text>
+          <Text
             style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              paddingHorizontal: 32,
+              fontSize: 14,
+              color: "#8FA8A8",
+              textAlign: "center",
+              lineHeight: 20,
+              marginBottom: 20,
             }}
           >
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "700",
-                color: "#DCE4E4",
-                textAlign: "center",
-                marginBottom: 8,
-              }}
-            >
-              League not found
+            The invite code "{inviteCode}" doesn't match any league. Check the
+            code and try again.
+          </Text>
+          <Pressable
+            onPress={dismiss}
+            style={{
+              alignItems: "center",
+              borderRadius: 12,
+              backgroundColor: "#164B49",
+              paddingVertical: 14,
+            }}
+          >
+            <Text style={{ fontWeight: "600", color: "#DCE4E4", fontSize: 16 }}>
+              Dismiss
             </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#8FA8A8",
-                textAlign: "center",
-                marginBottom: 24,
-              }}
-            >
-              The invite code "{inviteCode}" doesn't match any league. Check the
-              code and try again.
-            </Text>
-            <Pressable
-              onPress={() => router.back()}
-              style={{
-                borderRadius: 12,
-                backgroundColor: "#164B49",
-                paddingHorizontal: 24,
-                paddingVertical: 12,
-              }}
-            >
-              <Text
-                style={{
-                  fontWeight: "600",
-                  color: "#DCE4E4",
-                }}
-              >
-                Back to Dashboard
-              </Text>
-            </Pressable>
-          </View>
-        </SafeAreaView>
-      </GradientBackground>
-    );
-  }
+          </Pressable>
+        </>
+      );
+    }
 
-  return (
-    <GradientBackground>
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <Stack.Screen options={{ headerShown: false }} />
+    return (
+      <>
+        {/* Invite badge */}
+        <View
+          style={{
+            alignSelf: "flex-start",
+            borderRadius: 9999,
+            backgroundColor: "rgba(80, 200, 120, 0.2)",
+            paddingHorizontal: 12,
+            paddingVertical: 4,
+            marginBottom: 16,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: "700",
+              color: "#50C878",
+              textTransform: "uppercase",
+            }}
+          >
+            You're invited
+          </Text>
+        </View>
 
-        {/* Header */}
+        {/* League name */}
+        <Text
+          style={{
+            fontSize: 24,
+            fontWeight: "700",
+            color: "#DCE4E4",
+            marginBottom: 8,
+          }}
+        >
+          {league.name}
+        </Text>
+
+        {/* Description */}
+        {league.description && (
+          <Text
+            style={{
+              fontSize: 14,
+              lineHeight: 20,
+              color: "#8FA8A8",
+              marginBottom: 16,
+            }}
+          >
+            {league.description}
+          </Text>
+        )}
+
+        {/* Member count */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            paddingHorizontal: 16,
-            paddingVertical: 16,
+            gap: 8,
+            marginBottom: 24,
           }}
         >
-          <Pressable
-            onPress={() => router.back()}
-            style={{
-              borderRadius: 9999,
-              backgroundColor: "#164B49",
-              padding: 8,
-            }}
-          >
-            <ArrowLeft color="#DCE4E4" size={24} />
-          </Pressable>
+          <Users size={16} color="#8FA8A8" />
+          <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
+            {league.memberCount}
+            {league.maxMembers ? ` / ${league.maxMembers}` : ""} members
+          </Text>
         </View>
 
-        {/* League Preview */}
-        <View
+        {/* Join button */}
+        <Pressable
+          onPress={handleJoin}
+          disabled={joinMutation.isPending}
           style={{
-            flex: 1,
-            justifyContent: "center",
-            paddingHorizontal: 24,
+            alignItems: "center",
+            borderRadius: 12,
+            backgroundColor: "#50C878",
+            paddingVertical: 16,
+            opacity: joinMutation.isPending ? 0.5 : 1,
           }}
         >
-          <View
-            style={{
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: "#164B49",
-              backgroundColor: "#102A2A",
-              padding: 24,
-            }}
-          >
-            {/* Invite badge */}
-            <View
-              style={{
-                alignSelf: "flex-start",
-                borderRadius: 9999,
-                backgroundColor: "rgba(80, 200, 120, 0.2)",
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-                marginBottom: 16,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "700",
-                  color: "#50C878",
-                  textTransform: "uppercase",
-                }}
-              >
-                You're invited
-              </Text>
-            </View>
-
-            {/* League name */}
+          {joinMutation.isPending ? (
+            <ActivityIndicator color="#0A1A1A" />
+          ) : (
             <Text
               style={{
-                fontSize: 24,
+                fontSize: 18,
                 fontWeight: "700",
-                color: "#DCE4E4",
-                marginBottom: 8,
+                color: "#0A1A1A",
               }}
             >
-              {league.name}
+              Join League
             </Text>
+          )}
+        </Pressable>
+      </>
+    );
+  };
 
-            {/* Description */}
-            {league.description && (
-              <Text
-                style={{
-                  fontSize: 14,
-                  lineHeight: 20,
-                  color: "#8FA8A8",
-                  marginBottom: 16,
-                }}
-              >
-                {league.description}
-              </Text>
-            )}
+  return (
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
+      {/* Backdrop — tap to dismiss */}
+      <Pressable
+        onPress={dismiss}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.6)",
+        }}
+      />
 
-            {/* Member count */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 24,
-              }}
-            >
-              <Users size={16} color="#8FA8A8" />
-              <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
-                {league.memberCount}
-                {league.maxMembers ? ` / ${league.maxMembers}` : ""} members
-              </Text>
-            </View>
+      {/* Centered modal card */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          paddingHorizontal: 24,
+        }}
+      >
+        <View
+          style={{
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: "#164B49",
+            backgroundColor: "#102A2A",
+            padding: 24,
+          }}
+        >
+          {/* Close button */}
+          <Pressable
+            onPress={dismiss}
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              borderRadius: 9999,
+              backgroundColor: "#164B49",
+              padding: 6,
+              zIndex: 1,
+            }}
+          >
+            <X color="#8FA8A8" size={18} />
+          </Pressable>
 
-            {/* Join button */}
-            <Pressable
-              onPress={handleJoin}
-              disabled={joinMutation.isPending}
-              style={{
-                alignItems: "center",
-                borderRadius: 12,
-                backgroundColor: "#50C878",
-                paddingVertical: 16,
-                opacity: joinMutation.isPending ? 0.5 : 1,
-              }}
-            >
-              {joinMutation.isPending ? (
-                <ActivityIndicator color="#0A1A1A" />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "700",
-                    color: "#0A1A1A",
-                  }}
-                >
-                  Join League
-                </Text>
-              )}
-            </Pressable>
-          </View>
+          {renderContent()}
         </View>
-      </SafeAreaView>
-    </GradientBackground>
+      </View>
+    </View>
   );
 }

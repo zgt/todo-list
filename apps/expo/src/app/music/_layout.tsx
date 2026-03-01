@@ -7,6 +7,15 @@ export default function MusicLayout() {
         headerShown: false,
         contentStyle: { backgroundColor: "#0A1A1A" },
       }}
-    />
+    >
+      <Stack.Screen
+        name="join/[inviteCode]"
+        options={{
+          presentation: "transparentModal",
+          animation: "fade",
+          contentStyle: { backgroundColor: "transparent" },
+        }}
+      />
+    </Stack>
   );
 }
