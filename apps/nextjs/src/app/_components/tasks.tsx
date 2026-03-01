@@ -595,27 +595,37 @@ function SubtaskSection({
         const prev = queryClient.getQueryData(trpc.task.all.queryKey());
         queryClient.setQueryData(trpc.task.all.queryKey(), (old) => {
           if (!old) return old;
-          return old.map((t) =>
-            t.id !== task.id
-              ? t
-              : {
-                  ...t,
-                  subtasks: t.subtasks.map((s) =>
-                    s.id === variables.id
-                      ? {
-                          ...s,
-                          ...variables,
-                          completedAt:
-                            variables.completed === true
-                              ? new Date()
-                              : variables.completed === false
-                                ? null
-                                : s.completedAt,
-                        }
-                      : s,
-                  ),
-                },
-          );
+          return old.map((t) => {
+            if (t.id !== task.id) return t;
+            const updatedSubtasks = t.subtasks.map((s) =>
+              s.id === variables.id
+                ? {
+                    ...s,
+                    ...variables,
+                    completedAt:
+                      variables.completed === true
+                        ? new Date()
+                        : variables.completed === false
+                          ? null
+                          : s.completedAt,
+                  }
+                : s,
+            );
+            // Auto-complete/un-complete parent based on subtask states
+            const allCompleted =
+              updatedSubtasks.length > 0 &&
+              updatedSubtasks.every((s) => s.completed);
+            return {
+              ...t,
+              subtasks: updatedSubtasks,
+              completed: allCompleted,
+              completedAt: allCompleted
+                ? (t.completedAt ?? new Date())
+                : variables.completed === false
+                  ? null
+                  : t.completedAt,
+            };
+          });
         });
         return { prev };
       },

@@ -135,6 +135,33 @@ export const subtaskRouter = {
         throw new Error("Failed to update subtask");
       }
 
+      // Auto-complete/un-complete parent task based on subtask states
+      if (updates.completed !== undefined) {
+        const taskId = existing.taskId;
+
+        if (updates.completed) {
+          // Check if ALL subtasks are now completed
+          const allSubtasks = await ctx.db.query.Subtask.findMany({
+            where: eq(Subtask.taskId, taskId),
+          });
+          const allCompleted =
+            allSubtasks.length > 0 && allSubtasks.every((s) => s.completed);
+
+          if (allCompleted) {
+            await ctx.db
+              .update(Task)
+              .set({ completed: true, completedAt: new Date() })
+              .where(eq(Task.id, taskId));
+          }
+        } else if (existing.task.completed) {
+          // Subtask un-completed → un-complete parent if it was completed
+          await ctx.db
+            .update(Task)
+            .set({ completed: false, completedAt: null })
+            .where(eq(Task.id, taskId));
+        }
+      }
+
       return subtask;
     }),
 
