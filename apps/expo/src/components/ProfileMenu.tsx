@@ -1,5 +1,12 @@
-import { useEffect } from "react";
-import { Alert, Image, Pressable, Text as RNText, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Image,
+  Pressable,
+  Text as RNText,
+  TextInput,
+  View,
+} from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -7,9 +14,11 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
-import { Bell, LogOut, Music, Users } from "lucide-react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Bell, Check, LogOut, Music, Pencil, Users } from "lucide-react-native";
 
 import type { User } from "~/utils/auth";
+import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
 interface ProfileMenuProps {
@@ -20,8 +29,42 @@ interface ProfileMenuProps {
 
 export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const backdropOpacity = useSharedValue(0);
   const translateY = useSharedValue(300);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(user.name);
+  const inputRef = useRef<TextInput>(null);
+
+  const updateNameMutation = useMutation(
+    trpc.user.updateDisplayName.mutationOptions({
+      onSuccess: () => {
+        setIsEditingName(false);
+        void queryClient.invalidateQueries();
+        void authClient.getSession({ query: { disableCookieCache: true } });
+      },
+      onError: () => {
+        Alert.alert("Error", "Could not update display name. Please try again.");
+      },
+    }),
+  );
+
+  const handleSaveName = () => {
+    const trimmed = editedName.trim();
+    if (!trimmed || trimmed === user.name) {
+      setIsEditingName(false);
+      setEditedName(user.name);
+      return;
+    }
+    updateNameMutation.mutate({ name: trimmed });
+  };
+
+  const handleStartEditing = () => {
+    setEditedName(user.name);
+    setIsEditingName(true);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
 
   useEffect(() => {
     if (visible) {
@@ -30,8 +73,10 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
     } else {
       backdropOpacity.value = withTiming(0, { duration: 150 });
       translateY.value = withTiming(300, { duration: 150 });
+      setIsEditingName(false);
+      setEditedName(user.name);
     }
-  }, [visible, backdropOpacity, translateY]);
+  }, [visible, backdropOpacity, translateY, user.name]);
 
   const backdropAnimatedStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
@@ -111,9 +156,41 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             </View>
 
             <View className="flex-1">
-              <RNText className="text-xl font-semibold text-[#DCE4E4]">
-                {user.name}
-              </RNText>
+              {isEditingName ? (
+                <View className="flex-row items-center gap-2">
+                  <TextInput
+                    ref={inputRef}
+                    value={editedName}
+                    onChangeText={setEditedName}
+                    onSubmitEditing={handleSaveName}
+                    onBlur={handleSaveName}
+                    maxLength={50}
+                    returnKeyType="done"
+                    autoFocus
+                    className="flex-1 rounded-md border border-[#21716C] bg-[#0A1A1A] px-3 py-2 text-lg text-[#DCE4E4]"
+                    placeholderTextColor="#8FA8A8"
+                    placeholder="Display name"
+                    editable={!updateNameMutation.isPending}
+                  />
+                  <Pressable
+                    onPress={handleSaveName}
+                    disabled={updateNameMutation.isPending}
+                    className="rounded-md bg-[#50C878] p-2 active:bg-[#388E3C]"
+                  >
+                    <Check size={18} color="#0A1A1A" />
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={handleStartEditing}
+                  className="flex-row items-center gap-2"
+                >
+                  <RNText className="text-xl font-semibold text-[#DCE4E4]">
+                    {user.name}
+                  </RNText>
+                  <Pencil size={14} color="#8FA8A8" />
+                </Pressable>
+              )}
               {user.email && (
                 <RNText className="text-sm text-[#8FA8A8]">{user.email}</RNText>
               )}
