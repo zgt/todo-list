@@ -12,6 +12,10 @@ import {
 } from "@acme/db/schema";
 
 import { assertListAccess } from "../lib/list-access";
+import {
+  pushNotifyTaskCompleted,
+  pushNotifyTaskEdited,
+} from "../lib/push/shared-list-notifications";
 import { protectedProcedure } from "../trpc";
 
 function serializeSubtaskDates<
@@ -274,7 +278,7 @@ export const taskRouter = {
       // Fetch existing task to check access
       const existing = await ctx.db.query.Task.findFirst({
         where: and(eq(Task.id, id), isNull(Task.deletedAt)),
-        columns: { userId: true, listId: true },
+        columns: { userId: true, listId: true, completed: true },
       });
 
       if (!existing) {
@@ -333,6 +337,23 @@ export const taskRouter = {
           code: "INTERNAL_SERVER_ERROR",
           message: "Task not found or update failed",
         });
+      }
+
+      // Notify other shared list members (fire-and-forget)
+      if (existing.listId) {
+        const notifyParams = {
+          listId: existing.listId,
+          actorUserId: userId,
+          actorName: ctx.session.user.name,
+          taskId: id,
+          taskTitle: task.title,
+        };
+
+        if (updates.completed === true && !existing.completed) {
+          void pushNotifyTaskCompleted(notifyParams);
+        } else if (updates.completed === undefined) {
+          void pushNotifyTaskEdited(notifyParams);
+        }
       }
 
       return serializeTaskDates(task);

@@ -20,12 +20,14 @@ export const user = pgTable("user", {
       submissionReminder: boolean;
       votingOpen: boolean;
       resultsAvailable: boolean;
+      sharedListActivity: boolean;
     }>()
     .default({
       roundStart: true,
       submissionReminder: true,
       votingOpen: true,
       resultsAvailable: true,
+      sharedListActivity: true,
     })
     .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

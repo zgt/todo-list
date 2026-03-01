@@ -11,6 +11,7 @@ import {
 } from "@acme/db/schema";
 
 import { assertListAccess } from "../lib/list-access";
+import { pushNotifySubtaskCompleted } from "../lib/push/shared-list-notifications";
 import { protectedProcedure } from "../trpc";
 
 /** Verify user owns the task or has access via shared list membership. */
@@ -133,6 +134,22 @@ export const subtaskRouter = {
 
       if (!subtask) {
         throw new Error("Failed to update subtask");
+      }
+
+      // Notify other shared list members on subtask completion (fire-and-forget)
+      if (
+        existing.task.listId &&
+        updates.completed === true &&
+        !existing.completed
+      ) {
+        void pushNotifySubtaskCompleted({
+          listId: existing.task.listId,
+          actorUserId: ctx.session.user.id,
+          actorName: ctx.session.user.name,
+          taskId: existing.task.id,
+          taskTitle: existing.task.title,
+          subtaskTitle: subtask.title,
+        });
       }
 
       return subtask;
