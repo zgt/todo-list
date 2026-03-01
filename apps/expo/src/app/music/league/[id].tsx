@@ -211,7 +211,7 @@ export default function LeagueDetails() {
           onPress={() => router.push(`/music/round/${item.id}` as never)}
           style={[
             {
-              borderRadius: 12,
+              borderRadius: 16,
               borderWidth: 1,
               borderColor: isPending ? "#1A3A3A" : "#164B49",
               backgroundColor: "#102A2A",
@@ -305,29 +305,36 @@ export default function LeagueDetails() {
         <Stack.Screen options={{ headerShown: false }} />
 
         {/* Header */}
-        <View className="flex-row items-center justify-between px-4 py-4">
-          <Pressable
-            onPress={() => router.back()}
-            className="rounded-full bg-[#164B49] p-2"
-          >
-            <ArrowLeft color="#DCE4E4" size={24} />
-          </Pressable>
-          <Text
-            className="flex-1 text-center text-xl font-bold text-[#DCE4E4]"
-            numberOfLines={1}
-          >
-            {league.name}
-          </Text>
-          {isAdmin ? (
+        <View className="px-4 py-4">
+          <View className="flex-row items-center justify-between">
             <Pressable
-              onPress={() => settingsSheetRef.current?.present()}
+              onPress={() => router.back()}
               className="rounded-full bg-[#164B49] p-2"
             >
-              <Settings color="#DCE4E4" size={20} />
+              <ArrowLeft color="#DCE4E4" size={24} />
             </Pressable>
-          ) : (
-            <View className="w-10" />
-          )}
+            <Text
+              className="flex-1 text-center text-xl font-bold text-[#DCE4E4]"
+              numberOfLines={1}
+            >
+              {league.name}
+            </Text>
+            {isAdmin ? (
+              <Pressable
+                onPress={() => settingsSheetRef.current?.present()}
+                className="rounded-full bg-[#164B49] p-2"
+              >
+                <Settings color="#DCE4E4" size={20} />
+              </Pressable>
+            ) : (
+              <View className="w-10" />
+            )}
+          </View>
+          {league.description ? (
+            <Text className="mt-1 text-center text-sm text-[#B8CFCF]">
+              {league.description}
+            </Text>
+          ) : null}
         </View>
 
         <FlatList
@@ -345,12 +352,20 @@ export default function LeagueDetails() {
           ListHeaderComponent={
             <View>
               {/* Invite Code Card */}
-              <View className="mb-4 rounded-xl border border-[#164B49] bg-[#102A2A] p-4">
+              <View className="mb-4 rounded-2xl border border-[#50C878]/20 bg-[#102A2A] p-4">
                 <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-sm text-[#8FA8A8]">Invite Code</Text>
-                    <Text className="font-mono text-2xl font-bold text-[#50C878]">
+                  <View className="flex-1">
+                    <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#8FA8A8]">
+                      Invite Code
+                    </Text>
+                    <Text
+                      className="font-mono text-2xl font-bold tracking-widest text-[#50C878]"
+                      selectable
+                    >
                       {league.inviteCode}
+                    </Text>
+                    <Text className="mt-1.5 text-xs text-[#8FA8A8]">
+                      {league.members.length} members
                     </Text>
                   </View>
                   <View className="flex-row gap-2">
@@ -376,9 +391,6 @@ export default function LeagueDetails() {
                     )}
                   </View>
                 </View>
-                <Text className="mt-2 text-sm text-[#8FA8A8]">
-                  {league.members.length} members
-                </Text>
               </View>
 
               {/* Admin: Create Round Button */}
@@ -387,7 +399,7 @@ export default function LeagueDetails() {
                   onPress={() =>
                     router.push(`/music/round/create?leagueId=${id}` as never)
                   }
-                  className="mb-4 flex-row items-center justify-center gap-2 rounded-xl bg-[#50C878] py-3 active:bg-[#66D99A]"
+                  className="mb-4 flex-row items-center justify-center gap-2 rounded-2xl bg-[#50C878] py-3 active:bg-[#66D99A]"
                 >
                   <Plus size={20} color="#0A1A1A" strokeWidth={3} />
                   <Text className="text-base font-bold text-[#0A1A1A]">
@@ -493,7 +505,7 @@ export default function LeagueDetails() {
                       alignItems: "center",
                       justifyContent: "center",
                       gap: 8,
-                      borderRadius: 12,
+                      borderRadius: 16,
                       borderWidth: 1,
                       borderColor: "rgba(239, 68, 68, 0.3)",
                       backgroundColor: pressed

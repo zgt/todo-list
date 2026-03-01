@@ -32,7 +32,7 @@ export function LeagueStandingsTable({
   }
 
   return (
-    <View className="overflow-hidden rounded-xl border border-[#164B49] bg-[#102A2A]">
+    <View className="overflow-hidden rounded-2xl border border-[#164B49] bg-[#102A2A]">
       {/* Header */}
       <View className="flex-row items-center border-b border-[#164B49] px-4 py-3">
         <Text className="w-8 text-xs font-bold text-[#8FA8A8] uppercase">

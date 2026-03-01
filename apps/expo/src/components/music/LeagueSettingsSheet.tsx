@@ -153,17 +153,24 @@ function DeleteConfirmModal({
           </Text>
 
           {/* Buttons */}
-          <View className="gap-3">
+          <View style={{ gap: 12 }}>
             <Pressable
               onPress={onConfirm}
               disabled={isDeleting}
-              className="items-center rounded-xl bg-red-500 py-3.5 active:bg-red-600"
-              style={isDeleting ? { opacity: 0.6 } : undefined}
+              style={[
+                {
+                  alignItems: "center",
+                  borderRadius: 12,
+                  backgroundColor: "#ef4444",
+                  paddingVertical: 14,
+                },
+                isDeleting ? { opacity: 0.6 } : undefined,
+              ]}
             >
               {isDeleting ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text className="text-base font-bold text-white">
+                <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
                   Delete League
                 </Text>
               )}
@@ -171,9 +178,15 @@ function DeleteConfirmModal({
             <Pressable
               onPress={onCancel}
               disabled={isDeleting}
-              className="items-center rounded-xl border border-[#164B49] py-3.5 active:bg-[#164B49]/50"
+              style={{
+                alignItems: "center",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#164B49",
+                paddingVertical: 14,
+              }}
             >
-              <Text className="text-base font-medium text-[#DCE4E4]">
+              <Text style={{ fontSize: 16, fontWeight: "500", color: "#DCE4E4" }}>
                 Cancel
               </Text>
             </Pressable>
