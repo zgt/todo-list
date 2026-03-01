@@ -561,6 +561,7 @@ export default function Index() {
       priority: data.priority ?? "medium",
       reminderAt: data.reminderAt ?? undefined,
       listId: data.listId ?? undefined,
+      subtasks: data.newSubtasks,
     });
 
     // Reminder scheduling is handled by the rescheduleAllReminders useEffect

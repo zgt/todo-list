@@ -4,7 +4,8 @@ import { z } from "zod/v4";
 
 import { and, asc, desc, eq, inArray, isNull, or, sql } from "@acme/db";
 import {
-  CreateTaskSchema,
+  CreateTaskWithSubtasksSchema,
+  Subtask,
   Task,
   TaskListMember,
   TaskPriority,
@@ -235,37 +236,54 @@ export const taskRouter = {
     return stats;
   }),
 
-  // Create new task
+  // Create new task (with optional inline subtasks)
   create: protectedProcedure
-    .input(CreateTaskSchema)
+    .input(CreateTaskWithSubtasksSchema)
     .mutation(async ({ ctx, input }) => {
+      const { subtasks: subtaskInputs, ...taskInput } = input;
+
       // If assigning to a list, verify editor access
-      if (input.listId) {
+      if (taskInput.listId) {
         await assertListAccess(
           ctx.db,
           ctx.session.user.id,
-          input.listId,
+          taskInput.listId,
           "editor",
         );
       }
 
-      const [task] = await ctx.db
-        .insert(Task)
-        .values({
-          ...input,
-          userId: ctx.session.user.id,
-          lastSyncedAt: new Date(),
-        })
-        .returning();
+      // Use a transaction to create task + subtasks atomically
+      const result = await ctx.db.transaction(async (tx) => {
+        const [task] = await tx
+          .insert(Task)
+          .values({
+            ...taskInput,
+            userId: ctx.session.user.id,
+            lastSyncedAt: new Date(),
+          })
+          .returning();
 
-      if (!task) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create task",
-        });
-      }
+        if (!task) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create task",
+          });
+        }
 
-      return serializeTaskDates(task);
+        if (subtaskInputs && subtaskInputs.length > 0) {
+          await tx.insert(Subtask).values(
+            subtaskInputs.map((s, i) => ({
+              taskId: task.id,
+              title: s.title,
+              sortOrder: i,
+            })),
+          );
+        }
+
+        return task;
+      });
+
+      return serializeTaskDates(result);
     }),
 
   // Update existing task

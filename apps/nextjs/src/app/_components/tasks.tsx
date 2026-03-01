@@ -198,7 +198,12 @@ function InlineCreateTask() {
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderAt, setReminderAt] = useState<Date | undefined>();
   const [listId, setListId] = useState<string | undefined>();
+  const [pendingSubtasks, setPendingSubtasks] = useState<
+    { localId: string; title: string }[]
+  >([]);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const newSubtaskInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { data: categories } = useQuery({
@@ -239,6 +244,10 @@ function InlineCreateTask() {
       priority,
       reminderAt,
       listId,
+      subtasks:
+        pendingSubtasks.length > 0
+          ? pendingSubtasks.map((s) => ({ title: s.title }))
+          : undefined,
     });
   };
 
@@ -347,6 +356,103 @@ function InlineCreateTask() {
             aria-label="New task description"
             disabled={createTask.isPending}
           />
+        </div>
+
+        {/* Subtasks */}
+        <div className="mt-3 max-w-2xl">
+          <p className="mb-2 text-xs font-semibold tracking-wider text-[#8FA8A8] uppercase">
+            Subtasks
+            {pendingSubtasks.length > 0 && (
+              <span className="text-primary ml-1 font-normal">
+                ({pendingSubtasks.length})
+              </span>
+            )}
+          </p>
+
+          {pendingSubtasks.length > 0 && (
+            <div className="mb-2 space-y-1">
+              {pendingSubtasks.map((ps) => (
+                <div
+                  key={ps.localId}
+                  className="flex items-center gap-2 rounded-lg border border-[#164B49] bg-[#0A1A1A] px-3 py-2"
+                >
+                  <div className="size-4 shrink-0 rounded border border-[#164B49]" />
+                  <span className="flex-1 truncate text-sm text-[#DCE4E4]">
+                    {ps.title}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPendingSubtasks((prev) =>
+                        prev.filter((s) => s.localId !== ps.localId),
+                      )
+                    }
+                    className="shrink-0 text-[#8FA8A8] transition-colors hover:text-red-400"
+                    aria-label={`Remove subtask: ${ps.title}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Input
+              ref={newSubtaskInputRef}
+              value={newSubtaskTitle}
+              onChange={(e) => setNewSubtaskTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const trimmed = newSubtaskTitle.trim();
+                  if (trimmed) {
+                    setPendingSubtasks((prev) => [
+                      ...prev,
+                      { localId: `pending-${Date.now()}`, title: trimmed },
+                    ]);
+                    setNewSubtaskTitle("");
+                  }
+                } else if (e.key === "Escape") {
+                  setIsCreating(false);
+                }
+              }}
+              placeholder="Add a subtask..."
+              className={cn(
+                "border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
+                "rounded-md px-3 py-1.5 text-sm",
+                "flex-1",
+              )}
+              aria-label="New subtask title"
+              disabled={createTask.isPending}
+            />
+            {newSubtaskTitle.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = newSubtaskTitle.trim();
+                  if (trimmed) {
+                    setPendingSubtasks((prev) => [
+                      ...prev,
+                      { localId: `pending-${Date.now()}`, title: trimmed },
+                    ]);
+                    setNewSubtaskTitle("");
+                    newSubtaskInputRef.current?.focus();
+                  }
+                }}
+                className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-md",
+                  "bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
+                  "transition-colors",
+                )}
+                aria-label="Add subtask"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Field controls row */}

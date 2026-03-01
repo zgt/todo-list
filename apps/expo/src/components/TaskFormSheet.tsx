@@ -37,6 +37,8 @@ export interface TaskFormData {
   priority: PriorityLevel;
   dueDate: Date | null;
   reminderAt: Date | null;
+  /** Subtask titles to create inline (create mode only) */
+  newSubtasks?: { title: string }[];
 }
 
 interface SubtaskData {
@@ -190,6 +192,11 @@ export function TaskFormSheet({
   const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
   const newSubtaskInputRef = useRef<TextInput>(null);
 
+  // Local-only pending subtasks for create mode (not yet persisted)
+  const [pendingSubtasks, setPendingSubtasks] = useState<
+    { localId: string; title: string }[]
+  >([]);
+
   // Keep subtasks in sync when initialData changes (e.g. from query refetch)
   if (initialData?.subtasks !== prevInitialSubtasks) {
     setPrevInitialSubtasks(initialData?.subtasks);
@@ -214,7 +221,20 @@ export function TaskFormSheet({
 
   const handleAddSubtask = useCallback(() => {
     const trimmed = newSubtaskTitle.trim();
-    if (!trimmed || !taskId) return;
+    if (!trimmed) return;
+
+    if (mode === "create") {
+      // In create mode: add to local pending list (no API call yet)
+      setPendingSubtasks((prev) => [
+        ...prev,
+        { localId: `pending-${Date.now()}`, title: trimmed },
+      ]);
+      setNewSubtaskTitle("");
+      newSubtaskInputRef.current?.focus();
+      return;
+    }
+
+    if (!taskId) return;
     createSubtask.mutate(
       { taskId, title: trimmed },
       {
@@ -233,7 +253,7 @@ export function TaskFormSheet({
         },
       },
     );
-  }, [newSubtaskTitle, taskId, createSubtask]);
+  }, [newSubtaskTitle, mode, taskId, createSubtask]);
 
   const resetForm = useCallback(() => {
     setTitle(initialData?.title ?? "");
@@ -248,6 +268,7 @@ export function TaskFormSheet({
     setShowReminderTimePicker(false);
     setPendingReminderDate(null);
     setSubtasks(initialData?.subtasks ?? []);
+    setPendingSubtasks([]);
     setNewSubtaskTitle("");
     setEditingSubtaskId(null);
     setEditingSubtaskTitle("");
@@ -284,6 +305,10 @@ export function TaskFormSheet({
       priority,
       dueDate,
       reminderAt,
+      newSubtasks:
+        mode === "create" && pendingSubtasks.length > 0
+          ? pendingSubtasks.map((s) => ({ title: s.title }))
+          : undefined,
     });
     bottomSheetRef.current?.dismiss();
   };
@@ -576,7 +601,7 @@ export function TaskFormSheet({
             )}
           </View>
 
-          {/* Subtasks (edit mode only) */}
+          {/* Subtasks */}
           {mode === "edit" && taskId && (
             <View style={styles.fieldContainerLarge}>
               <Text style={styles.label}>
@@ -730,6 +755,85 @@ export function TaskFormSheet({
                       <Check size={16} color="#0A1A1A" strokeWidth={3} />
                     </Pressable>
                   )
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Subtasks (create mode — local-only until submit) */}
+          {mode === "create" && (
+            <View style={styles.fieldContainerLarge}>
+              <Text style={styles.label}>
+                Subtasks
+                {pendingSubtasks.length > 0 && (
+                  <Text style={styles.subtaskCount}>
+                    {" "}
+                    ({pendingSubtasks.length})
+                  </Text>
+                )}
+              </Text>
+
+              {pendingSubtasks.length > 0 && (
+                <ScrollView
+                  style={styles.pendingSubtasksList}
+                  nestedScrollEnabled
+                >
+                  {pendingSubtasks.map((ps) => (
+                    <View key={ps.localId} style={styles.subtaskRow}>
+                      <View
+                        style={[styles.checkbox, styles.checkboxUnchecked]}
+                      />
+                      <Text style={[styles.subtaskTitle, { flex: 1 }]}>
+                        {ps.title}
+                      </Text>
+                      <Pressable
+                        onPress={() =>
+                          setPendingSubtasks((prev) =>
+                            prev.filter((s) => s.localId !== ps.localId),
+                          )
+                        }
+                        hitSlop={8}
+                      >
+                        <X size={14} color="#8FA8A8" />
+                      </Pressable>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+
+              {/* Add subtask input */}
+              <View style={styles.addSubtaskRow}>
+                <TextInput
+                  ref={newSubtaskInputRef}
+                  value={newSubtaskTitle}
+                  onChangeText={setNewSubtaskTitle}
+                  placeholder="Add a subtask..."
+                  placeholderTextColor="#4A6A6A"
+                  returnKeyType="done"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 300);
+                  }}
+                  onSubmitEditing={handleAddSubtask}
+                  style={[
+                    styles.addSubtaskInput,
+                    {
+                      fontSize: 16,
+                      height: 48,
+                      textAlignVertical: "center",
+                      borderRadius: 16,
+                    },
+                  ]}
+                />
+                {newSubtaskTitle.trim().length > 0 && (
+                  <Pressable
+                    onPress={handleAddSubtask}
+                    style={styles.addSubtaskButton}
+                    hitSlop={8}
+                  >
+                    <Check size={16} color="#0A1A1A" strokeWidth={3} />
+                  </Pressable>
                 )}
               </View>
             </View>
@@ -1023,6 +1127,9 @@ const styles = StyleSheet.create({
   subtaskTitleCompleted: {
     color: "#8FA8A8",
     textDecorationLine: "line-through",
+  },
+  pendingSubtasksList: {
+    maxHeight: 180,
   },
   addSubtaskRow: {
     flexDirection: "row",
