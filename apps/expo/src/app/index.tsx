@@ -783,6 +783,12 @@ export default function Index() {
           <TaskFormSheet
             mode="create"
             onSubmit={handleCreateSubmit}
+            initialData={{
+              listId:
+                selectedListFilter && selectedListFilter !== "personal"
+                  ? selectedListFilter
+                  : null,
+            }}
             lists={(lists ?? []).map((l) => ({
               id: l.id,
               name: l.name,

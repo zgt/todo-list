@@ -151,6 +151,14 @@ export function TaskFormSheet({
   const [listId, setListId] = useState<string | null>(
     initialData?.listId ?? null,
   );
+  // Keep listId in sync when initialData changes (e.g., list filter changed on home screen)
+  const [prevInitialListId, setPrevInitialListId] = useState(
+    initialData?.listId,
+  );
+  if ((initialData?.listId ?? null) !== (prevInitialListId ?? null)) {
+    setPrevInitialListId(initialData?.listId);
+    setListId(initialData?.listId ?? null);
+  }
   const [priority, setPriority] = useState<PriorityLevel>(
     initialData?.priority ?? "medium",
   );
