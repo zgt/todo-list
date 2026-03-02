@@ -1,11 +1,12 @@
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
+// App Store Category: Productivity
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Tokilist",
   slug: "tokilist",
   scheme: "tokilist",
-  version: "0.1.0",
+  version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon-light.png",
   userInterfaceStyle: "automatic",
@@ -72,6 +73,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     usesAppleSignIn: true,
     bundleIdentifier: "com.zgtf.todolist",
+    buildNumber: "1",
     supportsTablet: true,
     icon: {
       light: "./assets/icon-light.png",
@@ -79,6 +81,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      UIRequiredDeviceCapabilities: ["armv7"],
+      NSUserNotificationsUsageDescription:
+        "Tokilist sends reminders for your tasks and music league updates.",
     },
     entitlements: {
       "com.apple.security.application-groups": ["group.com.zgtf.todolist"],

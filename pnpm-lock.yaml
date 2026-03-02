@@ -26,7 +26,7 @@ catalogs:
       version: 1.27.7
     '@tanstack/react-query':
       specifier: ^5.90.20
-      version: 5.90.20
+      version: 5.90.16
     '@trpc/client':
       specifier: ^11.8.1
       version: 11.8.1
@@ -18448,7 +18448,7 @@ snapshots:
 
   expo-keep-awake@15.0.8(expo@54.0.33)(react@19.2.4):
     dependencies:
-      expo: 54.0.33(@babel/core@7.29.0)(@expo/metro-runtime@6.1.1)(bufferutil@4.0.8)(expo-router@6.0.23)(graphql@15.8.0)(react-native@0.82.0(@babel/core@7.29.0)(@types/react@19.2.9)(bufferutil@4.0.8)(react@19.2.4)(utf-8-validate@6.0.4))(react@19.2.4)(utf-8-validate@6.0.4)
+      expo: 54.0.33(@babel/core@7.28.5)(@expo/metro-runtime@6.1.1)(bufferutil@4.0.8)(expo-router@6.0.23)(graphql@15.8.0)(react-native@0.82.0(@babel/core@7.28.5)(@types/react@19.2.9)(bufferutil@4.0.8)(react@19.2.4))(react@19.2.4)
       react: 19.2.4
     optional: true
 

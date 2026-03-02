@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Stack, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -166,6 +167,8 @@ export default function SettingsScreen() {
               backgroundColor: "#164B49",
               padding: 8,
             }}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
@@ -393,6 +396,19 @@ export default function SettingsScreen() {
 
           {/* Test Notifications Section */}
           <TestNotificationsSection />
+
+          {/* App Version */}
+          <Text
+            style={{
+              marginTop: 32,
+              textAlign: "center",
+              fontSize: 12,
+              color: "#4A6A6A",
+            }}
+          >
+            Tokilist v{Constants.expoConfig?.version ?? "1.0.0"} (
+            {Constants.expoConfig?.ios?.buildNumber ?? "1"})
+          </Text>
         </ScrollView>
       </SafeAreaView>
     </GradientBackground>

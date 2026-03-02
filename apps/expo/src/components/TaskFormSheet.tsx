@@ -342,7 +342,11 @@ export function TaskFormSheet({
     <>
       {/* FAB trigger for create mode */}
       {mode === "create" && (
-        <Pressable onPress={handleOpenSheet}>
+        <Pressable
+          onPress={handleOpenSheet}
+          accessibilityLabel="Create task"
+          accessibilityRole="button"
+        >
           <View style={styles.fab}>
             <Plus size={32} color="#0A1A1A" />
           </View>

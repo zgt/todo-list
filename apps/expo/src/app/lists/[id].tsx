@@ -214,6 +214,8 @@ export default function ListDetailScreen() {
                   onPress={() => router.back()}
                   hitSlop={12}
                   style={{ marginRight: 12 }}
+                  accessibilityLabel="Go back"
+                  accessibilityRole="button"
                 >
                   <ArrowLeft size={24} color="#DCE4E4" />
                 </Pressable>
@@ -276,6 +278,8 @@ export default function ListDetailScreen() {
                       borderRadius: 8,
                       paddingVertical: 10,
                     }}
+                    accessibilityLabel="Invite members"
+                    accessibilityRole="button"
                   >
                     <LinkIcon size={16} color="#50C878" />
                     <Text
@@ -460,19 +464,19 @@ export default function ListDetailScreen() {
             </View>
           )}
           ListFooterComponent={
-            tasks.length > 0 ? (
-              <View style={{ paddingHorizontal: 16, paddingTop: 20 }}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: "600",
-                    color: "#8FA8A8",
-                    marginBottom: 12,
-                  }}
-                >
-                  Tasks ({tasks.length})
-                </Text>
-                {tasks.map((task) => (
+            <View style={{ paddingHorizontal: 16, paddingTop: 20 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: "#8FA8A8",
+                  marginBottom: 12,
+                }}
+              >
+                Tasks ({tasks.length})
+              </Text>
+              {tasks.length > 0 ? (
+                tasks.map((task) => (
                   <View
                     key={task.id}
                     style={{
@@ -510,9 +514,21 @@ export default function ListDetailScreen() {
                       {task.title}
                     </Text>
                   </View>
-                ))}
-              </View>
-            ) : null
+                ))
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: "#8FA8A8",
+                    fontStyle: "italic",
+                    textAlign: "center",
+                    paddingVertical: 16,
+                  }}
+                >
+                  No tasks in this list yet
+                </Text>
+              )}
+            </View>
           }
         />
       </SafeAreaView>

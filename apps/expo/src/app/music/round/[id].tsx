@@ -124,8 +124,11 @@ export default function RoundDetails() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Stack.Screen options={{ headerShown: false }} />
+          <ActivityIndicator size="large" color="#50C878" />
         </SafeAreaView>
       </GradientBackground>
     );
@@ -190,6 +193,8 @@ export default function RoundDetails() {
                     alignItems: "center",
                     justifyContent: "center",
                   }}
+                  accessibilityLabel="Go back"
+                  accessibilityRole="button"
                 >
                   <ArrowLeft size={24} color="#DCE4E4" />
                 </Pressable>
