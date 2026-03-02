@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Keyboard,
+  Linking,
   Pressable,
   Text as RNText,
   TextInput,
@@ -15,7 +16,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, LogOut, Music, Pencil, Users } from "lucide-react-native";
+import { Bell, Check, FileText, LogOut, Music, Pencil, Shield, Users } from "lucide-react-native";
 
 import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/utils/auth";
@@ -245,6 +246,32 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
               <Bell size={20} color="#50C878" />
               <RNText className="text-base font-medium text-[#DCE4E4]">
                 Notifications
+              </RNText>
+            </Pressable>
+
+            <View className="my-2 h-px bg-[#164B49]" />
+
+            <Pressable
+              onPress={() => void Linking.openURL("https://tokilist.com/privacy")}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              accessibilityLabel="Privacy Policy"
+              accessibilityRole="link"
+            >
+              <Shield size={20} color="#8FA8A8" />
+              <RNText className="text-base font-medium text-[#8FA8A8]">
+                Privacy Policy
+              </RNText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => void Linking.openURL("https://tokilist.com/terms")}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              accessibilityLabel="Terms of Service"
+              accessibilityRole="link"
+            >
+              <FileText size={20} color="#8FA8A8" />
+              <RNText className="text-base font-medium text-[#8FA8A8]">
+                Terms of Service
               </RNText>
             </Pressable>
 
