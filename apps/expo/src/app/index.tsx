@@ -13,7 +13,7 @@ import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Layers, List } from "lucide-react-native";
+import { Layers, List, RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
@@ -38,18 +38,30 @@ import { useCategoryFilter } from "./_components/category-filter-context";
 
 type ServerTask = RouterOutputs["task"]["all"][number];
 
-function Header({ onProfilePress }: { onProfilePress: () => void }) {
+function Header({ onProfilePress, onRefresh }: { onProfilePress: () => void; onRefresh: () => void }) {
   const { data: session } = authClient.useSession();
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
       <RNText className="text-foreground text-4xl font-bold">
         Toki <RNText className="text-primary">list</RNText>
       </RNText>
-      {session ? (
-        <ProfileButton user={session.user} onPress={onProfilePress} />
-      ) : (
-        <SignInButton provider={Platform.OS === "ios" ? "apple" : "discord"} />
-      )}
+      <View className="flex-row items-center gap-3">
+        {session && (
+          <Pressable
+            onPress={onRefresh}
+            accessibilityLabel="Refresh tasks"
+            accessibilityRole="button"
+            className="h-10 w-10 items-center justify-center rounded-full"
+          >
+            <RefreshCw size={20} color="#8FA8A8" />
+          </Pressable>
+        )}
+        {session ? (
+          <ProfileButton user={session.user} onPress={onProfilePress} />
+        ) : (
+          <SignInButton provider={Platform.OS === "ios" ? "apple" : "discord"} />
+        )}
+      </View>
     </View>
   );
 }
@@ -638,7 +650,13 @@ export default function Index() {
       <SafeAreaView className="flex-1" edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
-        <Header onProfilePress={() => setShowProfileMenu(true)} />
+        <Header
+          onProfilePress={() => setShowProfileMenu(true)}
+          onRefresh={() => {
+            triggerRipple();
+            void queryClient.invalidateQueries(trpc.task.all.queryFilter());
+          }}
+        />
 
         <View
           className="flex-1 px-4"
