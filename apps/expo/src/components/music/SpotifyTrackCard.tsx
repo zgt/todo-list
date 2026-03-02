@@ -61,6 +61,7 @@ export function SpotifyTrackCard({
           <Image
             source={{ uri: albumArtUrl }}
             style={{ width: imageSize, height: imageSize, borderRadius: 6 }}
+            accessibilityLabel={`Album art for ${trackName} by ${artistName}`}
           />
         ) : (
           <View
@@ -96,6 +97,8 @@ export function SpotifyTrackCard({
               onPress={handleOpenSpotify}
               hitSlop={8}
               className="rounded-md bg-[#1DB954]/20 px-2 py-1"
+              accessibilityLabel={`Open ${trackName} in Spotify`}
+              accessibilityRole="link"
             >
               <View className="flex-row items-center gap-1">
                 <ExternalLink size={10} color="#1DB954" />
@@ -114,7 +117,12 @@ export function SpotifyTrackCard({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={{ opacity: 1 }}>
+      <Pressable
+        onPress={onPress}
+        style={{ opacity: 1 }}
+        accessibilityLabel={`${trackName} by ${artistName}`}
+        accessibilityRole="button"
+      >
         {content}
       </Pressable>
     );

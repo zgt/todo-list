@@ -43,6 +43,8 @@ export default function ListsScreen() {
             onPress={() => router.back()}
             hitSlop={12}
             style={{ marginRight: 12 }}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
             <ArrowLeft size={24} color="#DCE4E4" />
           </Pressable>
@@ -66,6 +68,8 @@ export default function ListsScreen() {
               alignItems: "center",
               justifyContent: "center",
             }}
+            accessibilityLabel="Create list"
+            accessibilityRole="button"
           >
             <Plus size={20} color="#0A1A1A" />
           </Pressable>
@@ -131,6 +135,8 @@ export default function ListsScreen() {
                   borderRadius: 12,
                   overflow: "hidden",
                 }}
+                accessibilityLabel={`List: ${item.name}, ${item.taskCount} tasks`}
+                accessibilityRole="button"
               >
                 <View style={{ flexDirection: "row" }}>
                   {/* Color bar */}

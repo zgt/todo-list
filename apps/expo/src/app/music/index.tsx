@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -67,6 +68,8 @@ export default function MusicLeagueDashboard() {
       <Pressable
         onPress={() => router.push(`/music/league/${item.id}` as never)}
         className="mx-4 mb-3 rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]/60"
+        accessibilityLabel={`League: ${item.name}, ${item.memberCount} members`}
+        accessibilityRole="button"
       >
         <View className="flex-row items-center justify-between">
           <Text className="flex-1 text-lg font-semibold text-[#DCE4E4]">
@@ -123,12 +126,16 @@ export default function MusicLeagueDashboard() {
             <Pressable
               onPress={() => router.push("/music/profile" as never)}
               className="h-10 w-10 items-center justify-center rounded-full bg-[#164B49] active:bg-[#21716C]"
+              accessibilityLabel="Profile"
+              accessibilityRole="button"
             >
               <User size={18} color="#DCE4E4" />
             </Pressable>
             <Pressable
               onPress={() => createLeagueRef.current?.present()}
               className="flex-row items-center gap-1.5 rounded-full bg-[#50C878] px-4 py-2 active:bg-[#66D99A]"
+              accessibilityLabel="Create league"
+              accessibilityRole="button"
             >
               <Plus size={18} color="#0A1A1A" strokeWidth={3} />
               <Text className="text-sm font-bold text-[#0A1A1A]">Create</Text>
@@ -156,6 +163,8 @@ export default function MusicLeagueDashboard() {
             disabled={!inviteCode.trim()}
             className="rounded-2xl bg-[#164B49] px-4 py-3 active:bg-[#21716C]"
             style={!inviteCode.trim() ? { opacity: 0.5 } : undefined}
+            accessibilityLabel="Join league"
+            accessibilityRole="button"
           >
             <Text className="font-semibold text-[#DCE4E4]">Join</Text>
           </Pressable>
@@ -163,7 +172,9 @@ export default function MusicLeagueDashboard() {
 
         {/* Content */}
         {isLoading ? (
-          <View style={{ flex: 1 }} />
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#50C878" />
+          </View>
         ) : !leagues || leagues.length === 0 ? (
           <View className="flex-1 items-center px-8 pt-20">
             <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-[#164B49]">

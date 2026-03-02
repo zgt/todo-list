@@ -165,6 +165,8 @@ export default function SubmitSong() {
                 backgroundColor: "#164B49",
                 padding: 8,
               }}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
             >
               <ArrowLeft color="#DCE4E4" size={24} />
             </Pressable>
@@ -347,6 +349,8 @@ export default function SubmitSong() {
                   opacity:
                     submitMutation.isPending || remainingSlots <= 0 ? 0.5 : 1,
                 }}
+                accessibilityLabel="Submit song"
+                accessibilityRole="button"
               >
                 {submitMutation.isPending ? (
                   <ActivityIndicator color="#0A1A1A" size="small" />

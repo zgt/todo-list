@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Linking,
   Pressable,
@@ -85,8 +86,11 @@ export default function PlaylistView() {
   if (isLoading) {
     return (
       <GradientBackground>
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Stack.Screen options={{ headerShown: false }} />
+          <ActivityIndicator size="large" color="#50C878" />
         </SafeAreaView>
       </GradientBackground>
     );
@@ -114,6 +118,8 @@ export default function PlaylistView() {
               backgroundColor: "#164B49",
               padding: 8,
             }}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
             <ArrowLeft color="#DCE4E4" size={24} />
           </Pressable>
@@ -194,6 +200,8 @@ export default function PlaylistView() {
                     backgroundColor: "rgba(29, 185, 84, 0.1)",
                     paddingVertical: 12,
                   }}
+                  accessibilityLabel="Open playlist in Spotify"
+                  accessibilityRole="link"
                 >
                   <ExternalLink size={18} color="#1DB954" />
                   <Text

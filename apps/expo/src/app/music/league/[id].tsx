@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -212,6 +213,8 @@ export default function LeagueDetails() {
       return (
         <Pressable
           onPress={() => router.push(`/music/round/${item.id}` as never)}
+          accessibilityLabel={`Round ${item.roundNumber}: ${item.themeName}, ${item.status}`}
+          accessibilityRole="button"
           style={[
             {
               borderRadius: 16,
@@ -295,8 +298,11 @@ export default function LeagueDetails() {
   if (isLoading || !league) {
     return (
       <GradientBackground rippleTrigger={rippleTrigger}>
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Stack.Screen options={{ headerShown: false }} />
+          <ActivityIndicator size="large" color="#50C878" />
         </SafeAreaView>
       </GradientBackground>
     );
@@ -313,6 +319,8 @@ export default function LeagueDetails() {
             <Pressable
               onPress={() => router.back()}
               className="rounded-full bg-[#164B49] p-2"
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
             >
               <ArrowLeft color="#DCE4E4" size={24} />
             </Pressable>
@@ -326,6 +334,8 @@ export default function LeagueDetails() {
               <Pressable
                 onPress={() => settingsSheetRef.current?.present()}
                 className="rounded-full bg-[#164B49] p-2"
+                accessibilityLabel="League settings"
+                accessibilityRole="button"
               >
                 <Settings color="#DCE4E4" size={20} />
               </Pressable>
@@ -375,6 +385,8 @@ export default function LeagueDetails() {
                     <Pressable
                       onPress={handleShareInvite}
                       className="h-10 w-10 items-center justify-center rounded-full bg-[#164B49] active:bg-[#21716C]"
+                      accessibilityLabel="Share invite code"
+                      accessibilityRole="button"
                     >
                       <Share2 size={18} color="#DCE4E4" />
                     </Pressable>
@@ -383,6 +395,8 @@ export default function LeagueDetails() {
                         onPress={handleRegenerateCode}
                         disabled={regenerateInviteCodeMutation.isPending}
                         className="h-10 w-10 items-center justify-center rounded-full bg-[#164B49] active:bg-[#21716C]"
+                        accessibilityLabel="Regenerate invite code"
+                        accessibilityRole="button"
                         style={
                           regenerateInviteCodeMutation.isPending
                             ? { opacity: 0.5 }
@@ -401,6 +415,8 @@ export default function LeagueDetails() {
                 <Pressable
                   onPress={() => createRoundRef.current?.present()}
                   className="mb-4 flex-row items-center justify-center gap-2 rounded-2xl bg-[#50C878] py-3 active:bg-[#66D99A]"
+                  accessibilityLabel="Create round"
+                  accessibilityRole="button"
                 >
                   <Plus size={20} color="#0A1A1A" strokeWidth={3} />
                   <Text className="text-base font-bold text-[#0A1A1A]">
