@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   FlatList,
   Image,
+  Linking,
   Pressable,
   RefreshControl,
   Text,
@@ -15,7 +16,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bell,
+  HelpCircle,
   Music,
+  ShieldAlert,
   Star,
   Trophy,
   Users,
@@ -218,23 +221,63 @@ export default function ProfileScreen() {
                 </View>
               )}
 
-              {/* Settings Link */}
-              <Pressable
-                onPress={() => router.push("/music/settings" as never)}
-                className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
-              >
-                <View className="flex-row items-center gap-3">
-                  <Bell size={20} color="#8FA8A8" />
-                  <Text className="text-base font-medium text-[#DCE4E4]">
-                    Notification Settings
-                  </Text>
-                </View>
-                <ArrowLeft
-                  size={18}
-                  color="#8FA8A8"
-                  style={{ transform: [{ rotate: "180deg" }] }}
-                />
-              </Pressable>
+              {/* Settings Links */}
+              <View className="gap-3">
+                <Pressable
+                  onPress={() => router.push("/music/settings" as never)}
+                  className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
+                >
+                  <View className="flex-row items-center gap-3">
+                    <Bell size={20} color="#8FA8A8" />
+                    <Text className="text-base font-medium text-[#DCE4E4]">
+                      Notification Settings
+                    </Text>
+                  </View>
+                  <ArrowLeft
+                    size={18}
+                    color="#8FA8A8"
+                    style={{ transform: [{ rotate: "180deg" }] }}
+                  />
+                </Pressable>
+
+                <Pressable
+                  onPress={() =>
+                    router.push("/music/blocked-users" as never)
+                  }
+                  className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
+                >
+                  <View className="flex-row items-center gap-3">
+                    <ShieldAlert size={20} color="#8FA8A8" />
+                    <Text className="text-base font-medium text-[#DCE4E4]">
+                      Blocked Users
+                    </Text>
+                  </View>
+                  <ArrowLeft
+                    size={18}
+                    color="#8FA8A8"
+                    style={{ transform: [{ rotate: "180deg" }] }}
+                  />
+                </Pressable>
+
+                <Pressable
+                  onPress={() =>
+                    Linking.openURL("mailto:support@tokilist.app")
+                  }
+                  className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
+                >
+                  <View className="flex-row items-center gap-3">
+                    <HelpCircle size={20} color="#8FA8A8" />
+                    <Text className="text-base font-medium text-[#DCE4E4]">
+                      Contact Support
+                    </Text>
+                  </View>
+                  <ArrowLeft
+                    size={18}
+                    color="#8FA8A8"
+                    style={{ transform: [{ rotate: "180deg" }] }}
+                  />
+                </Pressable>
+              </View>
             </View>
           }
         />

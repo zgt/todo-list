@@ -12,6 +12,7 @@ import {
   UpdateTaskSchema,
 } from "@acme/db/schema";
 
+import { flagContentIfNeeded } from "../lib/content-filter";
 import { assertListAccess } from "../lib/list-access";
 import {
   pushNotifyTaskCompleted,
@@ -279,6 +280,9 @@ export const taskRouter = {
             })),
           );
         }
+
+        // Flag content for review (fire-and-forget)
+        void flagContentIfNeeded("TASK", task.id, task.title);
 
         return task;
       });

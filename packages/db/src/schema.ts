@@ -535,6 +535,144 @@ export const Comment = pgTable(
   ],
 );
 
+// UGC Moderation Enums
+export const reportStatusEnum = pgEnum("report_status", [
+  "PENDING",
+  "REVIEWED",
+  "DISMISSED",
+]);
+
+export const reportReasonEnum = pgEnum("report_reason", [
+  "SPAM",
+  "OFFENSIVE",
+  "HARASSMENT",
+  "OTHER",
+]);
+
+export const contentTypeEnum = pgEnum("content_type", [
+  "LEAGUE",
+  "SUBMISSION",
+  "TASK",
+  "USER",
+  "COMMENT",
+  "ROUND",
+]);
+
+// UGC Moderation Tables
+
+export const Report = pgTable(
+  "report",
+  (t) => ({
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    reporterId: t
+      .text("reporter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    reportedUserId: t
+      .text("reported_user_id")
+      .references(() => user.id, { onDelete: "set null" }),
+    contentType: contentTypeEnum("content_type").notNull(),
+    contentId: t.text("content_id").notNull(),
+    reason: reportReasonEnum("reason").notNull(),
+    details: t.text("details"),
+    status: reportStatusEnum("status").default("PENDING").notNull(),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (table) => [
+    index("report_reporter_id_idx").on(table.reporterId),
+    index("report_reported_user_id_idx").on(table.reportedUserId),
+    index("report_content_type_id_idx").on(table.contentType, table.contentId),
+    index("report_status_idx").on(table.status),
+  ],
+);
+
+export const BlockedUser = pgTable(
+  "blocked_user",
+  (t) => ({
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: t
+      .text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    blockedUserId: t
+      .text("blocked_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (table) => [
+    uniqueIndex("blocked_user_unique").on(table.userId, table.blockedUserId),
+    index("blocked_user_user_id_idx").on(table.userId),
+    index("blocked_user_blocked_user_id_idx").on(table.blockedUserId),
+  ],
+);
+
+// Content flag for soft moderation
+export const ContentFlag = pgTable(
+  "content_flag",
+  (t) => ({
+    id: t
+      .text()
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    contentType: contentTypeEnum("content_type").notNull(),
+    contentId: t.text("content_id").notNull(),
+    flaggedText: t.text("flagged_text").notNull(),
+    matchedWords: t.text("matched_words").array().notNull(),
+    createdAt: t
+      .timestamp("created_at", { withTimezone: true, mode: "date" })
+      .$defaultFn(() => new Date())
+      .notNull(),
+  }),
+  (table) => [
+    index("content_flag_content_type_id_idx").on(
+      table.contentType,
+      table.contentId,
+    ),
+  ],
+);
+
+export const reportRelations = relations(Report, ({ one }) => ({
+  reporter: one(user, {
+    fields: [Report.reporterId],
+    references: [user.id],
+    relationName: "reportReporter",
+  }),
+  reportedUser: one(user, {
+    fields: [Report.reportedUserId],
+    references: [user.id],
+    relationName: "reportReportedUser",
+  }),
+}));
+
+export const blockedUserRelations = relations(BlockedUser, ({ one }) => ({
+  user: one(user, {
+    fields: [BlockedUser.userId],
+    references: [user.id],
+    relationName: "blockerUser",
+  }),
+  blockedUser: one(user, {
+    fields: [BlockedUser.blockedUserId],
+    references: [user.id],
+    relationName: "blockedUserTarget",
+  }),
+}));
+
 // Push Notification Tokens
 export const PushToken = pgTable(
   "push_token",

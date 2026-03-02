@@ -23,6 +23,7 @@ import {
   pushNotifyRoundStarted,
   pushNotifyVotingOpen,
 } from "../../lib/push/notifications";
+import { flagContentIfNeeded } from "../../lib/content-filter";
 import { createPlaylist, searchTracks } from "../../lib/spotify";
 import { protectedProcedure, publicProcedure } from "../../trpc";
 
@@ -197,6 +198,12 @@ export const musicLeagueRouter = {
           role: "OWNER",
         });
       });
+
+      // Flag content for review (fire-and-forget, doesn't block creation)
+      const textToCheck = [input.name, input.description]
+        .filter(Boolean)
+        .join(" ");
+      void flagContentIfNeeded("LEAGUE", leagueId, textToCheck);
 
       return { id: leagueId };
     }),
@@ -416,6 +423,14 @@ export const musicLeagueRouter = {
       if (round?.id && status === "SUBMISSION") {
         void notifyRoundStarted(round.id);
         void pushNotifyRoundStarted(round.id);
+      }
+
+      // Flag content for review (fire-and-forget)
+      if (round?.id) {
+        const textToCheck = [input.themeName, input.themeDescription]
+          .filter(Boolean)
+          .join(" ");
+        void flagContentIfNeeded("ROUND", round.id, textToCheck);
       }
 
       return round;
@@ -859,6 +874,14 @@ export const musicLeagueRouter = {
       }
 
       await ctx.db.update(League).set(setValues).where(eq(League.id, leagueId));
+
+      // Flag updated text content for review (fire-and-forget)
+      const textToCheck = [updates.name, updates.description]
+        .filter(Boolean)
+        .join(" ");
+      if (textToCheck) {
+        void flagContentIfNeeded("LEAGUE", leagueId, textToCheck);
+      }
 
       return { success: true };
     }),

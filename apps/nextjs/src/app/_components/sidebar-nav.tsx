@@ -4,7 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Home, Music, Settings, Tag, User, Users, X } from "lucide-react";
+import {
+  HelpCircle,
+  Home,
+  Music,
+  Settings,
+  ShieldAlert,
+  Tag,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
@@ -148,6 +158,20 @@ export function AppSidebar({
                       <Settings className="h-4 w-4" />
                       Settings
                     </Link>
+                    <Link
+                      href="/settings/blocked-users"
+                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
+                    >
+                      <ShieldAlert className="h-4 w-4" />
+                      Blocked Users
+                    </Link>
+                    <a
+                      href="mailto:support@tokilist.app"
+                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                      Contact Support
+                    </a>
                     <div className="my-1 h-px bg-white/10" />
                     <Link
                       href="/privacy"
