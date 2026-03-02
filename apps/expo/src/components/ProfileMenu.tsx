@@ -15,7 +15,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, LogOut, Music, Pencil, Users } from "lucide-react-native";
+import { Bell, Check, LogOut, Music, Pencil, Settings, Users } from "lucide-react-native";
 
 import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/utils/auth";
@@ -245,6 +245,19 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
               <Bell size={20} color="#50C878" />
               <RNText className="text-base font-medium text-[#DCE4E4]">
                 Notifications
+              </RNText>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                onClose();
+                router.push("/profile" as never);
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Settings size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                Account Settings
               </RNText>
             </Pressable>
 

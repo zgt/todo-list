@@ -5,6 +5,7 @@ import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { AppSidebar } from "../_components/sidebar-nav";
+import { AccountDeletion } from "./account-deletion";
 import { DisplayNameSettings } from "./display-name-settings";
 import { NotificationSettings } from "./notification-settings";
 
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
                 <div className="custom-scrollbar flex-1 space-y-12 overflow-y-auto px-2 pt-2 pr-4 pb-2">
                   <DisplayNameSettings />
                   <NotificationSettings />
+                  <AccountDeletion />
                 </div>
               </div>
             </div>
