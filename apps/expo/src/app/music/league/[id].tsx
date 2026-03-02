@@ -13,20 +13,25 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Flag,
   LogOut,
+  MoreVertical,
   Plus,
   RefreshCw,
   Settings,
   Share2,
+  ShieldAlert,
   Trophy,
 } from "lucide-react-native";
 
 import type { CreateRoundSheetRef } from "~/components/music/CreateRoundSheet";
 import type { LeagueSettingsSheetRef } from "~/components/music/LeagueSettingsSheet";
+import type { ReportSheetRef } from "~/components/music/ReportSheet";
 import { CreateRoundSheet } from "~/components/music/CreateRoundSheet";
 import { GradientBackground } from "~/components/GradientBackground";
 import { LeagueSettingsSheet } from "~/components/music/LeagueSettingsSheet";
 import { LeagueStandingsTable } from "~/components/music/LeagueStandingsTable";
+import { ReportSheet } from "~/components/music/ReportSheet";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
@@ -44,6 +49,7 @@ export default function LeagueDetails() {
   const queryClient = useQueryClient();
   const settingsSheetRef = useRef<LeagueSettingsSheetRef>(null);
   const createRoundRef = useRef<CreateRoundSheetRef>(null);
+  const reportSheetRef = useRef<ReportSheetRef>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [rippleTrigger, setRippleTrigger] = useState(0);
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -71,6 +77,10 @@ export default function LeagueDetails() {
       { leagueId: id },
       { enabled: !!id },
     ),
+  );
+
+  const { data: blockedUserIds = [] } = useQuery(
+    trpc.moderation.getBlockedUserIds.queryOptions(),
   );
 
   const regenerateInviteCodeMutation = useMutation(
@@ -322,16 +332,29 @@ export default function LeagueDetails() {
             >
               {league.name}
             </Text>
-            {isAdmin ? (
+            <View className="flex-row gap-2">
+              {isAdmin && (
+                <Pressable
+                  onPress={() => settingsSheetRef.current?.present()}
+                  className="rounded-full bg-[#164B49] p-2"
+                >
+                  <Settings color="#DCE4E4" size={20} />
+                </Pressable>
+              )}
               <Pressable
-                onPress={() => settingsSheetRef.current?.present()}
+                onPress={() =>
+                  reportSheetRef.current?.present({
+                    contentType: "LEAGUE",
+                    contentId: id,
+                    contentLabel: league.name,
+                    reportedUserId: league.creatorId,
+                  })
+                }
                 className="rounded-full bg-[#164B49] p-2"
               >
-                <Settings color="#DCE4E4" size={20} />
+                <Flag color="#8FA8A8" size={20} />
               </Pressable>
-            ) : (
-              <View className="w-10" />
-            )}
+            </View>
           </View>
           {league.description ? (
             <Text className="mt-1 text-center text-sm text-[#B8CFCF]">
@@ -448,51 +471,65 @@ export default function LeagueDetails() {
               <View
                 style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
               >
-                {league.members.map(
-                  (member: {
-                    id: string;
-                    role: string;
-                    userId: string;
-                    user: { name: string | null };
-                  }) => (
-                    <View
-                      key={member.id}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 6,
-                        borderRadius: 9999,
-                        paddingHorizontal: 14,
-                        paddingVertical: 6,
-                        ...(member.userId === currentUserId
-                          ? {
-                              borderWidth: 1,
-                              borderColor: "rgba(80, 200, 120, 0.4)",
-                              backgroundColor: "rgba(80, 200, 120, 0.2)",
-                            }
-                          : {
-                              backgroundColor: "#164B49",
-                            }),
-                      }}
-                    >
-                      <Text
+                {league.members
+                  .filter(
+                    (member: { userId: string }) =>
+                      !blockedUserIds.includes(member.userId),
+                  )
+                  .map(
+                    (member: {
+                      id: string;
+                      role: string;
+                      userId: string;
+                      user: { name: string | null };
+                    }) => (
+                      <Pressable
+                        key={member.id}
+                        onLongPress={() => {
+                          if (member.userId === currentUserId) return;
+                          reportSheetRef.current?.present({
+                            contentType: "USER",
+                            contentId: member.userId,
+                            contentLabel: member.user.name ?? "Unknown",
+                            reportedUserId: member.userId,
+                          });
+                        }}
                         style={{
-                          fontSize: 14,
-                          fontWeight: "500",
-                          color:
-                            member.userId === currentUserId
-                              ? "#50C878"
-                              : "#DCE4E4",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                          borderRadius: 9999,
+                          paddingHorizontal: 14,
+                          paddingVertical: 6,
+                          ...(member.userId === currentUserId
+                            ? {
+                                borderWidth: 1,
+                                borderColor: "rgba(80, 200, 120, 0.4)",
+                                backgroundColor: "rgba(80, 200, 120, 0.2)",
+                              }
+                            : {
+                                backgroundColor: "#164B49",
+                              }),
                         }}
                       >
-                        {member.user.name ?? "Unknown"}
-                      </Text>
-                      {member.role === "OWNER" && (
-                        <Text style={{ fontSize: 12 }}>👑</Text>
-                      )}
-                    </View>
-                  ),
-                )}
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "500",
+                            color:
+                              member.userId === currentUserId
+                                ? "#50C878"
+                                : "#DCE4E4",
+                          }}
+                        >
+                          {member.user.name ?? "Unknown"}
+                        </Text>
+                        {member.role === "OWNER" && (
+                          <Text style={{ fontSize: 12 }}>👑</Text>
+                        )}
+                      </Pressable>
+                    ),
+                  )}
               </View>
 
               {/* Actions */}
@@ -553,6 +590,9 @@ export default function LeagueDetails() {
             onDeleteLeague={handleDeleteLeague}
           />
         )}
+
+        {/* Report/Block Bottom Sheet */}
+        <ReportSheet ref={reportSheetRef} />
       </SafeAreaView>
     </GradientBackground>
   );

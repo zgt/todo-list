@@ -7,10 +7,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
   Copy,
+  Flag,
   LogOut,
+  MoreVertical,
   Music2,
   Plus,
   Settings,
+  ShieldAlert,
+  ShieldOff,
   Trash2,
   Trophy,
   Users,
@@ -34,10 +38,18 @@ import { Checkbox } from "@acme/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@acme/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@acme/ui/dropdown-menu";
 import { Input } from "@acme/ui/input";
 import { Label } from "@acme/ui/label";
 import {
@@ -92,6 +104,13 @@ export default function LeagueDetail() {
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{
+    contentType: "LEAGUE" | "USER";
+    contentId: string;
+    contentLabel: string;
+    reportedUserId?: string;
+  } | null>(null);
 
   const { data: session } = useSession();
 
@@ -116,6 +135,20 @@ export default function LeagueDetail() {
       onSuccess: () => {
         void queryClient.invalidateQueries(
           trpc.musicLeague.getLeagueById.queryFilter({ id: params.leagueId }),
+        );
+      },
+    }),
+  );
+
+  const { data: blockedUserIds = [] } = useQuery(
+    trpc.moderation.getBlockedUserIds.queryOptions(),
+  );
+
+  const blockUser = useMutation(
+    trpc.moderation.blockUser.mutationOptions({
+      onSuccess: () => {
+        void queryClient.invalidateQueries(
+          trpc.moderation.getBlockedUserIds.queryFilter(),
         );
       },
     }),
@@ -195,6 +228,29 @@ export default function LeagueDetail() {
           >
             <Settings className="h-4 w-4" />
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setReportTarget({
+                    contentType: "LEAGUE",
+                    contentId: league.id,
+                    contentLabel: league.name,
+                    reportedUserId: league.creatorId,
+                  });
+                  setReportOpen(true);
+                }}
+              >
+                <Flag className="h-4 w-4" />
+                Report League
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -331,24 +387,66 @@ export default function LeagueDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {league.members.map((member) => (
-                  <div key={member.id} className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.user.image ?? undefined} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                        {member.user.name.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {member.user.name}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {roleLabels[member.role]}
-                      </p>
+                {league.members
+                  .filter((member) => !blockedUserIds.includes(member.userId))
+                  .map((member) => (
+                    <div key={member.id} className="group flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.user.image ?? undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                          {member.user.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {member.user.name}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          {roleLabels[member.role]}
+                        </p>
+                      </div>
+                      {member.userId !== session?.user.id && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100"
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setReportTarget({
+                                  contentType: "USER",
+                                  contentId: member.userId,
+                                  contentLabel: member.user.name,
+                                  reportedUserId: member.userId,
+                                });
+                                setReportOpen(true);
+                              }}
+                            >
+                              <Flag className="h-4 w-4" />
+                              Report User
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() =>
+                                blockUser.mutate({
+                                  blockedUserId: member.userId,
+                                })
+                              }
+                            >
+                              <ShieldAlert className="h-4 w-4" />
+                              Block User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </CardContent>
           </Card>
@@ -366,6 +464,21 @@ export default function LeagueDetail() {
         isLeaving={leaveLeague.isPending}
         isDeleting={deleteLeague.isPending}
       />
+
+      {/* Report Dialog */}
+      {reportTarget && (
+        <ReportDialog
+          open={reportOpen}
+          onClose={() => {
+            setReportOpen(false);
+            setReportTarget(null);
+          }}
+          contentType={reportTarget.contentType}
+          contentId={reportTarget.contentId}
+          contentLabel={reportTarget.contentLabel}
+          reportedUserId={reportTarget.reportedUserId}
+        />
+      )}
     </div>
   );
 }
@@ -670,5 +783,157 @@ function SettingsModal({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+const REPORT_REASONS = [
+  { key: "SPAM" as const, label: "Spam" },
+  { key: "OFFENSIVE" as const, label: "Offensive content" },
+  { key: "HARASSMENT" as const, label: "Harassment" },
+  { key: "OTHER" as const, label: "Other" },
+];
+
+function ReportDialog({
+  open,
+  onClose,
+  contentType,
+  contentId,
+  contentLabel,
+  reportedUserId,
+}: {
+  open: boolean;
+  onClose: () => void;
+  contentType: "LEAGUE" | "USER";
+  contentId: string;
+  contentLabel: string;
+  reportedUserId?: string;
+}) {
+  const trpc = useTRPC();
+  const [reason, setReason] = useState<
+    "SPAM" | "OFFENSIVE" | "HARASSMENT" | "OTHER" | null
+  >(null);
+  const [details, setDetails] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const reportMutation = useMutation(
+    trpc.moderation.reportContent.mutationOptions({
+      onSuccess: () => {
+        setSubmitted(true);
+      },
+    }),
+  );
+
+  const handleSubmit = () => {
+    if (!reason) return;
+    reportMutation.mutate({
+      contentType,
+      contentId,
+      reportedUserId,
+      reason,
+      details: details.trim() || undefined,
+    });
+  };
+
+  const handleClose = () => {
+    setReason(null);
+    setDetails("");
+    setSubmitted(false);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {submitted ? "Report Submitted" : "Report Content"}
+          </DialogTitle>
+          {!submitted && (
+            <DialogDescription>
+              Report &ldquo;{contentLabel}&rdquo;
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        {submitted ? (
+          <div className="py-4 text-center">
+            <p className="text-muted-foreground text-sm">
+              Thank you for your report. We&apos;ll review it and take
+              appropriate action.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label>Reason</Label>
+              {REPORT_REASONS.map((r) => (
+                <label
+                  key={r.key}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                    reason === r.key
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="reason"
+                    checked={reason === r.key}
+                    onChange={() => setReason(r.key)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                      reason === r.key
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground"
+                    }`}
+                  >
+                    {reason === r.key && (
+                      <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className="text-sm">{r.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="report-details">
+                Additional details (optional)
+              </Label>
+              <Textarea
+                id="report-details"
+                rows={3}
+                maxLength={1000}
+                placeholder="Provide more context..."
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+              />
+            </div>
+
+            {reportMutation.error && (
+              <p className="text-destructive text-sm">
+                {reportMutation.error.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={handleClose}>
+            {submitted ? "Close" : "Cancel"}
+          </Button>
+          {!submitted && (
+            <Button
+              onClick={handleSubmit}
+              disabled={!reason || reportMutation.isPending}
+            >
+              {reportMutation.isPending ? "Submitting..." : "Submit Report"}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
