@@ -26,11 +26,21 @@ async function handleTaskAction(
     case TASK_REMINDER_ACTIONS.SNOOZE_10MIN: {
       const snoozeUntil = new Date(Date.now() + 10 * 60 * 1000);
       await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
+      try {
+        await vanillaTrpc.task.update.mutate({ id: taskId, reminderAt: snoozeUntil });
+      } catch (err) {
+        console.error("[Notifications] Failed to update reminder:", err);
+      }
       break;
     }
     case TASK_REMINDER_ACTIONS.SNOOZE_1HR: {
       const snoozeUntil = new Date(Date.now() + 60 * 60 * 1000);
       await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
+      try {
+        await vanillaTrpc.task.update.mutate({ id: taskId, reminderAt: snoozeUntil });
+      } catch (err) {
+        console.error("[Notifications] Failed to update reminder:", err);
+      }
       break;
     }
     case TASK_REMINDER_ACTIONS.MARK_DONE: {

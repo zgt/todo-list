@@ -26,6 +26,7 @@ import { authClient } from "~/utils/auth";
 import {
   cancelTaskReminder,
   rescheduleAllReminders,
+  scheduleTaskReminder,
 } from "~/utils/notifications";
 import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import { GradientBackground } from "../components/GradientBackground";
@@ -474,6 +475,10 @@ export default function Index() {
 
   const handleSnooze = async (taskId: string, snoozedUntil: Date) => {
     await snoozeMutation.mutateAsync({ id: taskId, snoozedUntil });
+    const task = serverTasks?.find((t) => t.id === taskId);
+    if (task) {
+      await scheduleTaskReminder(taskId, task.title, snoozedUntil);
+    }
   };
 
   const handleOpenSnoozeSheet = useCallback(

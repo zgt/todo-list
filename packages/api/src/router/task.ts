@@ -561,7 +561,12 @@ export const taskRouter = {
 
       const [task] = await ctx.db
         .update(Task)
-        .set({ snoozedUntil: input.snoozedUntil, updatedAt: new Date() })
+        .set({
+          snoozedUntil: input.snoozedUntil,
+          reminderAt: input.snoozedUntil,
+          reminderSentAt: null,
+          updatedAt: new Date(),
+        })
         .where(eq(Task.id, input.id))
         .returning();
 
