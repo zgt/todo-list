@@ -9,6 +9,7 @@ import { CreateTaskProvider } from "./_components/create-task-context";
 import { ListFilterProvider } from "./_components/list-filter-context";
 import { PriorityFilterProvider } from "./_components/priority-filter-context";
 import { AppSidebar } from "./_components/sidebar-nav";
+import { SignInButtons } from "./_components/sign-in-buttons";
 import { TaskHeader } from "./_components/task-header";
 import { TaskCardSkeleton, TaskList } from "./_components/tasks";
 import { ViewToggleProvider } from "./_components/view-toggle-context";
@@ -70,6 +71,7 @@ export default async function HomePage() {
                                 <p className="text-muted-foreground mb-6">
                                   Please sign in to manage your tasks
                                 </p>
+                                <SignInButtons />
                               </div>
                             )}
                           </div>

@@ -6,6 +6,7 @@ import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { CategoryTree } from "../_components/categories/CategoryTree";
 import { AppSidebar } from "../_components/sidebar-nav";
+import { SignInButtons } from "../_components/sign-in-buttons";
 import { CategoryListSkeleton } from "./category-components";
 
 export default async function CategoriesPage() {
@@ -50,6 +51,7 @@ export default async function CategoriesPage() {
                     <p className="text-muted-foreground mb-6">
                       Please sign in to manage your categories
                     </p>
+                    <SignInButtons />
                   </div>
                 )}
               </div>
