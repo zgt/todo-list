@@ -1093,8 +1093,10 @@ function SubtaskSection({
     setEditingId(null);
   };
 
+  const hasDescription = !!task.description;
+
   return (
-    <div className="mt-4 border-t border-[#164B49]/40 pt-3">
+    <div className={cn(hasDescription ? "mt-4 border-t border-[#164B49]/40 pt-3" : "mt-1")}>
       <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
         Subtasks
         {subtasks.length > 0 && (
@@ -1150,7 +1152,7 @@ function SubtaskSection({
                   "min-w-0 flex-1 truncate text-left text-[13px] transition-colors",
                   subtask.completed
                     ? "text-[#8FA8A8]/60 line-through"
-                    : "text-[#DCE4E4]",
+                    : "text-[#E8F0F0]",
                 )}
               >
                 {subtask.title}
@@ -1442,13 +1444,21 @@ export function TaskCard(props: {
           />
         </button>
 
-        <div className="min-w-0 grow space-y-1 sm:space-y-2">
+        <div
+          className="min-w-0 grow cursor-pointer space-y-1 sm:space-y-2"
+          onClick={() => {
+            if (!isEditing) {
+              setIsExpanded(!isExpanded);
+            }
+          }}
+        >
           {/* Title - inline editable */}
           {isEditing ? (
             <Input
               ref={titleInputRef}
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               onKeyDown={handleKeyDown}
               placeholder="Task title"
               className={cn(
@@ -1462,13 +1472,15 @@ export function TaskCard(props: {
             />
           ) : (
             <button
-              onClick={handleEditClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditClick();
+              }}
               disabled={updateTask.isPending}
               className={cn(
                 "group/title -m-1 rounded-md p-1 text-left transition-all duration-200",
                 "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                "w-full",
               )}
               aria-label={`Edit task title. Current value: ${props.task.title}`}
             >
@@ -1494,7 +1506,10 @@ export function TaskCard(props: {
           {/* Description snippet - view mode */}
           {!isExpanded && props.task.description ? (
             <button
-              onClick={handleEditClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditClick();
+              }}
               disabled={updateTask.isPending}
               className={cn(
                 "group/desc -m-1 rounded-md p-1 text-left transition-all duration-200",
@@ -1505,7 +1520,7 @@ export function TaskCard(props: {
               aria-label={`Edit task description. Current value: ${props.task.description}`}
             >
               <div className="flex items-center gap-2">
-                <p className="text-muted-foreground truncate text-sm">
+                <p className="truncate text-sm text-[#C8D6D6]">
                   {props.task.description}
                 </p>
                 <Pencil className="h-3 w-3 shrink-0 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
@@ -1692,36 +1707,38 @@ export function TaskCard(props: {
         <div className="overflow-hidden">
           <div className="space-y-0 px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
             {/* Description section */}
-            <div className="border-t border-[#164B49]/60 pt-3">
-              {isEditing ? (
-                <div className="max-w-2xl">
-                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
-                    Description
-                  </label>
-                  <textarea
-                    value={editedDescription}
-                    onChange={(e) => setEditedDescription(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") handleCancel();
-                      // Don't handle Enter in textarea — allow newlines
-                    }}
-                    placeholder="Add a description..."
-                    rows={3}
-                    className={cn(
-                      "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
-                      "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-                      "rounded-lg px-3 py-2.5 text-sm leading-relaxed",
-                    )}
-                    aria-label="Edit task description"
-                    disabled={updateTask.isPending}
-                  />
-                </div>
-              ) : props.task.description ? (
-                <p className="max-w-2xl text-sm leading-relaxed text-[#8FA8A8] whitespace-pre-wrap">
-                  {props.task.description}
-                </p>
-              ) : null}
-            </div>
+            {(isEditing || props.task.description) && (
+              <div className="border-t border-[#164B49]/60 pt-3">
+                {isEditing ? (
+                  <div className="max-w-2xl">
+                    <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+                      Description
+                    </label>
+                    <textarea
+                      value={editedDescription}
+                      onChange={(e) => setEditedDescription(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") handleCancel();
+                        // Don't handle Enter in textarea — allow newlines
+                      }}
+                      placeholder="Add a description..."
+                      rows={3}
+                      className={cn(
+                        "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                        "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                        "rounded-lg px-3 py-2.5 text-sm leading-relaxed",
+                      )}
+                      aria-label="Edit task description"
+                      disabled={updateTask.isPending}
+                    />
+                  </div>
+                ) : props.task.description ? (
+                  <p className="max-w-2xl text-sm leading-relaxed text-[#C8D6D6] whitespace-pre-wrap">
+                    {props.task.description}
+                  </p>
+                ) : null}
+              </div>
+            )}
 
             {/* Subtask section */}
             <SubtaskSection task={props.task} />
