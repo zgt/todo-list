@@ -6,7 +6,6 @@ import { Check } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
-import { PRIORITY_CONFIG } from "./priority-config";
 import { PriorityBadge } from "./PriorityBadge";
 
 type CalendarTask = LocalTask & {
@@ -45,13 +44,8 @@ function formatDateHeader(dateKey: string): string {
   });
 }
 
-// Priority to dot color mapping
-const PRIORITY_DOT_COLORS: Record<string, string> = {
-  high: "#EF4444",
-  medium: "#50C878",
-  low: "#3B82F6",
-  none: "#8FA8A8",
-};
+// Default dot color for tasks without a category
+const DEFAULT_DOT_COLOR = "#8FA8A8";
 
 const AgendaTaskRow = memo(
   ({
@@ -71,11 +65,11 @@ const AgendaTaskRow = memo(
           alignItems: "center",
           paddingVertical: 12,
           paddingHorizontal: 16,
-          backgroundColor: "#102A2A",
+          backgroundColor: "rgba(255, 255, 255, 0.05)",
           borderRadius: 12,
           marginBottom: 8,
           borderWidth: 1,
-          borderColor: "#164B49",
+          borderColor: "rgba(255, 255, 255, 0.2)",
         }}
         accessibilityRole="button"
         accessibilityLabel={`Task: ${task.title}`}
@@ -203,16 +197,16 @@ export function CalendarView({
     > = {};
 
     for (const [dateKey, dateTasks] of tasksByDate) {
-      // Collect unique priority colors for dots (max 3)
+      // Collect unique category colors for dots (max 3)
       const seenColors = new Set<string>();
       const dots: { key: string; color: string }[] = [];
 
       for (const task of dateTasks) {
-        const priorityKey = task.priority ?? "none";
-        const color = PRIORITY_DOT_COLORS[priorityKey] ?? "#8FA8A8";
+        const color = task.category?.color ?? DEFAULT_DOT_COLOR;
+        const key = task.category?.name ?? "none";
         if (!seenColors.has(color) && dots.length < 3) {
           seenColors.add(color);
-          dots.push({ key: priorityKey, color });
+          dots.push({ key, color });
         }
       }
 
