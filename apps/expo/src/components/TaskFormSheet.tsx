@@ -196,6 +196,14 @@ export function TaskFormSheet({
   const [dueDate, setDueDate] = useState<Date | null>(
     initialData?.dueDate ?? null,
   );
+  // Keep dueDate in sync when initialData changes (e.g., calendar date selected)
+  const [prevInitialDueDate, setPrevInitialDueDate] = useState(
+    initialData?.dueDate?.getTime(),
+  );
+  if ((initialData?.dueDate?.getTime() ?? null) !== (prevInitialDueDate ?? null)) {
+    setPrevInitialDueDate(initialData?.dueDate?.getTime());
+    setDueDate(initialData?.dueDate ?? null);
+  }
   const [reminderAt, setReminderAt] = useState<Date | null>(
     initialData?.reminderAt ?? null,
   );

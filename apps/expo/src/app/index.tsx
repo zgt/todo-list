@@ -106,6 +106,7 @@ export default function Index() {
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [viewMode, setViewMode] = useState<"stack" | "list" | "calendar">("stack");
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
   const [rippleTrigger, setRippleTrigger] = useState(0);
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRipple = useCallback(() => {
@@ -842,6 +843,7 @@ export default function Index() {
               onToggle={handleToggle}
               onTaskPress={handleTaskPress}
               onSubtaskToggle={handleSubtaskToggle}
+              onDateSelect={setCalendarSelectedDate}
             />
           ) : filteredTasks.length > 0 ? (
             <SwipeableCardStack
@@ -896,6 +898,13 @@ export default function Index() {
               listId:
                 selectedListFilter && selectedListFilter !== "personal"
                   ? selectedListFilter
+                  : null,
+              dueDate:
+                viewMode === "calendar" && calendarSelectedDate
+                  ? (() => {
+                      const [y, m, d] = calendarSelectedDate.split("-").map(Number);
+                      return new Date(y!, m! - 1, d!);
+                    })()
                   : null,
             }}
             lists={(lists ?? []).map((l) => ({

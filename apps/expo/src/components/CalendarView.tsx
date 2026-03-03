@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { CalendarList } from "react-native-calendars";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Check } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
@@ -11,6 +11,7 @@ import { PriorityBadge } from "./PriorityBadge";
 type CalendarTask = LocalTask & {
   category?: { name: string; color: string } | null;
   subtasks?: { id: string; title: string; completed: boolean }[];
+  reminderAt?: Date | null;
 };
 
 interface CalendarViewProps {
@@ -18,6 +19,7 @@ interface CalendarViewProps {
   onToggle: (id: string, completed: boolean) => void;
   onTaskPress?: (id: string) => void;
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
+  onDateSelect?: (dateKey: string) => void;
 }
 
 /** Extract local date string (YYYY-MM-DD) without UTC conversion */
@@ -65,11 +67,11 @@ const AgendaTaskRow = memo(
           alignItems: "center",
           paddingVertical: 12,
           paddingHorizontal: 16,
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          backgroundColor: "rgba(16, 42, 42, 0.8)",
           borderRadius: 12,
           marginBottom: 8,
           borderWidth: 1,
-          borderColor: "rgba(255, 255, 255, 0.2)",
+          borderColor: "rgba(22, 75, 73, 0.6)",
         }}
         accessibilityRole="button"
         accessibilityLabel={`Task: ${task.title}`}
@@ -86,9 +88,7 @@ const AgendaTaskRow = memo(
             borderRadius: 12,
             borderWidth: 2,
             borderColor: task.completed ? "#50C878" : "#164B49",
-            backgroundColor: task.completed
-              ? "#50C878"
-              : "transparent",
+            backgroundColor: task.completed ? "#50C878" : "transparent",
             alignItems: "center",
             justifyContent: "center",
             marginRight: 12,
@@ -165,21 +165,33 @@ export function CalendarView({
   tasks,
   onToggle,
   onTaskPress,
+  onDateSelect,
 }: CalendarViewProps) {
   const todayKey = toLocalDateKey(new Date());
   const [selectedDate, setSelectedDate] = useState(todayKey);
 
-  // Group tasks by local date key
+  // Group tasks by local date key (due date + reminder date)
   const tasksByDate = useMemo(() => {
     const map = new Map<string, CalendarTask[]>();
-    for (const task of tasks) {
-      if (!task.dueDate) continue;
-      const key = toLocalDateKey(task.dueDate);
+
+    const addToDate = (key: string, task: CalendarTask) => {
       const existing = map.get(key);
       if (existing) {
-        existing.push(task);
+        // Avoid duplicates if dueDate and reminderAt are the same day
+        if (!existing.some((t) => t.id === task.id)) {
+          existing.push(task);
+        }
       } else {
         map.set(key, [task]);
+      }
+    };
+
+    for (const task of tasks) {
+      if (task.dueDate) {
+        addToDate(toLocalDateKey(task.dueDate), task);
+      }
+      if (task.reminderAt) {
+        addToDate(toLocalDateKey(task.reminderAt), task);
       }
     }
     return map;
@@ -237,14 +249,25 @@ export function CalendarView({
   const handleDayPress = useCallback(
     (day: { dateString: string }) => {
       setSelectedDate(day.dateString);
+      onDateSelect?.(day.dateString);
     },
-    [],
+    [onDateSelect],
   );
 
   return (
     <View style={{ flex: 1 }}>
       {/* Calendar section */}
-      <View style={{ height: 340 }}>
+      <View
+        style={{
+          height: Dimensions.get("window").height * 0.4,
+          marginHorizontal: 8,
+          backgroundColor: "rgba(16, 42, 42, 0.8)",
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: "rgba(22, 75, 73, 0.6)",
+          overflow: "hidden",
+        }}
+      >
         <CalendarList
           markingType="multi-dot"
           markedDates={markedDates}
@@ -252,9 +275,12 @@ export function CalendarView({
           current={todayKey}
           pastScrollRange={24}
           futureScrollRange={24}
-          calendarHeight={340}
+          calendarHeight={Dimensions.get("window").height * 0.4}
+          calendarWidth={Dimensions.get("window").width - 16}
           theme={calendarTheme}
           showScrollIndicator={false}
+          snapToInterval={28}
+          decelerationRate="fast"
         />
       </View>
 
@@ -262,7 +288,7 @@ export function CalendarView({
       <Animated.View
         entering={FadeIn.duration(200)}
         exiting={FadeOut.duration(150)}
-        style={{ flex: 1, paddingHorizontal: 4, paddingTop: 12 }}
+        style={{ flex: 1, paddingHorizontal: 8, paddingTop: 12 }}
       >
         {/* Date header */}
         <Text
@@ -271,7 +297,7 @@ export function CalendarView({
             fontSize: 18,
             fontWeight: "600",
             marginBottom: 12,
-            paddingHorizontal: 4,
+            paddingHorizontal: 8,
           }}
         >
           {formatDateHeader(selectedDate)}
