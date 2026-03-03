@@ -279,11 +279,6 @@ function SidebarListsSection() {
                   {list.memberCount > 1 && (
                     <Users className="h-3 w-3 text-[#8FA8A8]" />
                   )}
-                  {list.taskCount > 0 && (
-                    <span className="min-w-[1.25rem] rounded-full bg-white/10 px-1.5 py-0.5 text-center text-[10px] font-medium text-[#8FA8A8]">
-                      {list.taskCount}
-                    </span>
-                  )}
                   <Link
                     href={`/lists/${list.id}`}
                     onClick={(e) => e.stopPropagation()}

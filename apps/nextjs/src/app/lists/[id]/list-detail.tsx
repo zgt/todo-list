@@ -140,7 +140,7 @@ export function ListDetail() {
   }
 
   return (
-    <div className="w-full max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6">
       {/* Header */}
       <div className="glass-card rounded-2xl border border-white/10 p-6">
         <div className="flex items-center gap-4">

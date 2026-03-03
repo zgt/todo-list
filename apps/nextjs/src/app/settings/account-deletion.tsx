@@ -60,15 +60,15 @@ export function AccountDeletion() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-[#E57373]">Danger Zone</h2>
+    <div className="glass-card rounded-2xl border-[#E57373]/20 p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-[#E57373]">Danger Zone</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Irreversible actions that affect your account.
         </p>
       </div>
 
-      <div className="rounded-xl border border-[#E57373]/30 bg-[#2A1010]/50 p-6">
+      <div className="rounded-xl border border-[#E57373]/20 bg-[#2A1010]/30 p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-[#E57373]">

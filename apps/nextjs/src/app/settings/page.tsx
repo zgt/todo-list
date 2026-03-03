@@ -35,10 +35,12 @@ export default async function SettingsPage() {
                   <h1 className="text-3xl font-bold text-white">Settings</h1>
                 </div>
 
-                <div className="custom-scrollbar flex-1 space-y-12 overflow-y-auto px-2 pt-2 pr-4 pb-2">
-                  <DisplayNameSettings />
-                  <NotificationSettings />
-                  <AccountDeletion />
+                <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto px-2 pt-2 pr-4 pb-2">
+                  <div className="mx-auto w-full max-w-4xl space-y-6">
+                    <DisplayNameSettings />
+                    <NotificationSettings />
+                    <AccountDeletion />
+                  </div>
                 </div>
               </div>
             </div>

@@ -42,7 +42,8 @@ export function PriorityBadge({
   priority: string | null;
   variant?: "default" | "compact" | "icon-only";
 }) {
-  if (!priority || !(priority in priorityConfig)) return null;
+  if (!priority || !(priority in priorityConfig) || priority === "medium")
+    return null;
 
   const config = priorityConfig[priority as TaskPriority];
   const Icon = config.icon;
@@ -153,9 +154,10 @@ export function PrioritySelectorPill({
     >
       <SelectTrigger
         className={cn(
-          "h-auto gap-1 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+          "gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
           "transition-all hover:brightness-110",
           "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+          "shadow-none data-[size]:h-auto [&>[aria-hidden]]:hidden",
         )}
         style={{
           backgroundColor: `${config.color}20`,
@@ -163,7 +165,7 @@ export function PrioritySelectorPill({
           color: config.color,
         }}
       >
-        <Icon className="size-3" strokeWidth={2.5} />
+        <Icon className="size-3.5" strokeWidth={2.5} />
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

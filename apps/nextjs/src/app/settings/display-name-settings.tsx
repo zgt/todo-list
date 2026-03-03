@@ -50,46 +50,41 @@ export function DisplayNameSettings() {
   const hasChanges = name.trim() !== currentName;
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-white">Display Name</h2>
+    <div className="glass-card rounded-2xl p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-white">Display Name</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Change how your name appears across the app.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-xl border border-[#164B49] bg-[#102A2A]/80 p-4">
-          <div className="flex items-center gap-3">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && hasChanges) handleSave();
-              }}
-              placeholder="Your display name"
-              maxLength={50}
-              className="border-[#164B49] bg-[#0A1A1A] text-[#DCE4E4] placeholder:text-[#8FA8A8] focus:border-[#21716C]"
-              disabled={updateName.isPending}
-            />
-          </div>
-        </div>
+      <div className="flex items-center gap-3">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && hasChanges) handleSave();
+          }}
+          placeholder="Your display name"
+          maxLength={50}
+          className="border-[#164B49] bg-[#0A1A1A] text-[#DCE4E4] placeholder:text-[#8FA8A8] focus:border-[#21716C]"
+          disabled={updateName.isPending}
+        />
+        <Button
+          onClick={handleSave}
+          disabled={updateName.isPending || !hasChanges || !name.trim()}
+          className="bg-primary hover:bg-primary/90 shrink-0 text-black"
+        >
+          {updateName.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Name"
+          )}
+        </Button>
       </div>
-
-      <Button
-        onClick={handleSave}
-        disabled={updateName.isPending || !hasChanges || !name.trim()}
-        className="bg-primary hover:bg-primary/90 text-black"
-      >
-        {updateName.isPending ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          "Save Name"
-        )}
-      </Button>
     </div>
   );
 }

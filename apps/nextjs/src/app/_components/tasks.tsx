@@ -598,16 +598,8 @@ function InlineCreateTask() {
         "glass-card border-primary/50 shadow-glow bg-primary/5",
       )}
     >
-      {/* Top row with checkbox spacer, chevron, and inline title input */}
-      <div className="flex flex-row items-center gap-2 p-3 pb-0 sm:gap-4 sm:p-6 sm:pb-0">
-        {/* Spacer for checkbox alignment */}
-        <div className="size-4 shrink-0 sm:size-6" />
-
-        {/* Chevron in expanded position */}
-        <div className="shrink-0 text-[#8FA8A8]">
-          <ChevronRight className="h-3 w-3 rotate-90 transition-transform duration-300 sm:h-4 sm:w-4" />
-        </div>
-
+      {/* Top row with inline title input */}
+      <div className="flex flex-row items-center gap-2 p-3 pb-0 sm:gap-3 sm:px-4 sm:pt-4 sm:pb-0">
         {/* Inline title input */}
         <div className="min-w-0 grow">
           <Input
@@ -617,7 +609,7 @@ function InlineCreateTask() {
             onKeyDown={handleKeyDown}
             placeholder="New task..."
             className={cn(
-              "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
+              "border-[#164B49] bg-[#1a2f2e] text-white placeholder:text-[#8FA8A8]",
               "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
               "rounded-md px-2 py-1 text-sm font-medium sm:px-3 sm:py-1.5 sm:text-lg",
               "w-full sm:max-w-md",
@@ -629,10 +621,10 @@ function InlineCreateTask() {
       </div>
 
       {/* Expanded area (always open for create) */}
-      <div className="mx-3 mt-3 border-t border-[#164B49] sm:mx-6 sm:mt-4" />
-      <div className="px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
+      <div className="mx-3 mt-2 border-t border-[#164B49] sm:mx-4 sm:mt-3" />
+      <div className="px-3 pt-2 pb-3 sm:px-4 sm:pt-3 sm:pb-4">
         {/* Description textarea */}
-        <div className="mt-3 max-w-2xl">
+        <div className="mt-1 max-w-2xl">
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -640,9 +632,9 @@ function InlineCreateTask() {
               if (e.key === "Escape") setIsCreating(false);
             }}
             placeholder="Description (optional)"
-            rows={3}
+            rows={2}
             className={cn(
-              "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+              "w-full resize-y border border-[#164B49] bg-[#1a2f2e] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
               "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
               "rounded-md px-3 py-2 text-sm",
             )}
@@ -652,8 +644,8 @@ function InlineCreateTask() {
         </div>
 
         {/* Subtasks */}
-        <div className="mt-3 max-w-2xl">
-          <p className="mb-2 text-xs font-semibold tracking-wider text-[#8FA8A8] uppercase">
+        <div className="mt-2 max-w-2xl">
+          <p className="mb-1.5 text-xs font-semibold tracking-wider text-[#8FA8A8] uppercase">
             Subtasks
             {pendingSubtasks.length > 0 && (
               <span className="text-primary ml-1 font-normal">
@@ -713,7 +705,7 @@ function InlineCreateTask() {
               }}
               placeholder="Add a subtask..."
               className={cn(
-                "border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                "border-[#164B49] bg-[#1a2f2e] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
                 "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
                 "rounded-md px-3 py-1.5 text-sm",
                 "flex-1",
@@ -748,8 +740,8 @@ function InlineCreateTask() {
           </div>
         </div>
 
-        {/* Field controls row */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
+        {/* Field controls row + Save/Cancel */}
+        <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-3">
           <PrioritySelectorPill
             value={priority}
             onChange={setPriority}
@@ -820,38 +812,41 @@ function InlineCreateTask() {
             onIntervalChange={setRecurrenceInterval}
             disabled={createTask.isPending}
           />
-        </div>
 
-        {/* Save/Cancel buttons */}
-        <div className="mt-3 flex justify-end gap-2 sm:mt-4">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setIsCreating(false)}
-            disabled={createTask.isPending}
-            className="text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
-          >
-            <X className="mr-1 h-4 w-4" />
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={createTask.isPending || !title.trim()}
-            className={cn(
-              "bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
-              "disabled:cursor-not-allowed disabled:opacity-50",
-            )}
-          >
-            {createTask.isPending ? (
-              "..."
-            ) : (
-              <>
-                <Check className="mr-1 h-4 w-4" />
-                Save
-              </>
-            )}
-          </Button>
+          {/* Save/Cancel inline */}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCreating(false)}
+              disabled={createTask.isPending}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#8FA8A8] backdrop-blur-md",
+                "transition-all hover:border-[#21716C] hover:bg-[#102A2A] hover:text-[#DCE4E4]",
+              )}
+            >
+              <X className="h-3.5 w-3.5" />
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={createTask.isPending || !title.trim()}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border border-[#50C878]/50 bg-[#50C878]/20 px-4 py-1.5 text-xs font-medium text-[#50C878] backdrop-blur-md",
+                "transition-all hover:bg-[#50C878]/30",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+              )}
+            >
+              {createTask.isPending ? (
+                "..."
+              ) : (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Save
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1099,12 +1094,20 @@ function SubtaskSection({
   };
 
   return (
-    <div className="mt-3 border-t border-[#164B49]/50 pt-3 pl-8">
-      <div className="flex flex-col gap-1">
+    <div className="mt-4 border-t border-[#164B49]/40 pt-3">
+      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+        Subtasks
+        {subtasks.length > 0 && (
+          <span className="ml-1.5 text-[#50C878]/70">
+            {subtasks.filter((s) => s.completed).length}/{subtasks.length}
+          </span>
+        )}
+      </p>
+      <div className="flex flex-col gap-0.5 rounded-lg bg-white/[0.02] p-1">
         {subtasks.map((subtask) => (
           <div
             key={subtask.id}
-            className="group/subtask flex items-center gap-2 rounded-md px-1 py-0.5 hover:bg-white/5"
+            className="group/subtask flex items-center gap-2.5 rounded-md px-2 py-1 transition-colors hover:bg-white/5"
           >
             <Checkbox
               checked={subtask.completed}
@@ -1115,7 +1118,7 @@ function SubtaskSection({
                 });
               }}
               className={cn(
-                "size-4 rounded border-2 transition-all",
+                "size-3.5 rounded border-2 transition-all",
                 subtask.completed
                   ? "bg-primary border-primary text-black"
                   : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
@@ -1144,9 +1147,9 @@ function SubtaskSection({
                   setEditingTitle(subtask.title);
                 }}
                 className={cn(
-                  "min-w-0 flex-1 truncate text-left text-sm transition-colors",
+                  "min-w-0 flex-1 truncate text-left text-[13px] transition-colors",
                   subtask.completed
-                    ? "text-[#8FA8A8] line-through"
+                    ? "text-[#8FA8A8]/60 line-through"
                     : "text-[#DCE4E4]",
                 )}
               >
@@ -1162,26 +1165,26 @@ function SubtaskSection({
             </button>
           </div>
         ))}
-      </div>
-      {/* Add subtask input */}
-      <div className="mt-1 flex items-center gap-2 px-1 py-0.5">
-        <Plus className="h-4 w-4 shrink-0 text-[#8FA8A8]" />
-        <input
-          ref={newInputRef}
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleCreate();
-            } else if (e.key === "Escape") {
-              setNewTitle("");
-              newInputRef.current?.blur();
-            }
-          }}
-          placeholder="Add a subtask..."
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#DCE4E4] outline-none placeholder:text-[#8FA8A8]"
-        />
+        {/* Add subtask input */}
+        <div className="flex items-center gap-2.5 rounded-md px-2 py-1">
+          <Plus className="h-3.5 w-3.5 shrink-0 text-[#8FA8A8]/50" />
+          <input
+            ref={newInputRef}
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreate();
+              } else if (e.key === "Escape") {
+                setNewTitle("");
+                newInputRef.current?.blur();
+              }
+            }}
+            placeholder="Add a subtask..."
+            className="min-w-0 flex-1 bg-transparent text-[13px] text-[#DCE4E4] outline-none placeholder:text-[#8FA8A8]/50"
+          />
+        </div>
       </div>
     </div>
   );
@@ -1380,13 +1383,29 @@ export function TaskCard(props: {
     (editedRecurrenceRule ?? null) !== (props.task.recurrenceRule ?? null) ||
     editedRecurrenceInterval !== (props.task.recurrenceInterval ?? 1);
 
+  // Determine if task is overdue (past due date or overdue reminder, and not completed)
+  const isDueDateOverdue =
+    !props.task.completed &&
+    !!props.task.dueDate &&
+    new Date(props.task.dueDate) < new Date();
+  const isReminderOverdue =
+    !props.task.completed &&
+    !!props.task.reminderAt &&
+    getReminderStatus(
+      props.task.reminderAt,
+      props.task.reminderSentAt ?? null,
+    ) === "overdue";
+  const isOverdue = isDueDateOverdue || isReminderOverdue;
+
   return (
     <div
       className={cn(
         "group relative overflow-hidden rounded-xl transition-all duration-300 sm:rounded-2xl",
         props.task.completed
-          ? "glass-card border-primary/50 shadow-glow bg-primary/5"
-          : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
+          ? "glass-card border-primary/50 shadow-glow bg-primary/5 opacity-50"
+          : isOverdue
+            ? "glass-card border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)] hover:shadow-glowHover"
+            : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
       )}
     >
       {/* Collapsed row */}
@@ -1457,13 +1476,13 @@ export function TaskCard(props: {
                 <h2
                   className={cn(
                     "truncate text-sm font-medium transition-colors sm:text-lg",
-                    props.task.completed ? "text-white/70" : "text-white",
+                    props.task.completed ? "text-white/50 line-through" : "text-white",
                   )}
                 >
                   {props.task.title}
                 </h2>
                 {props.task.subtasks.length > 0 && (
-                  <span className="shrink-0 text-xs text-[#8FA8A8]">
+                  <span className="shrink-0 text-sm text-[#9CA3AF]">
                     {props.task.subtasks.filter((s) => s.completed).length}/
                     {props.task.subtasks.length}
                   </span>
@@ -1510,7 +1529,14 @@ export function TaskCard(props: {
         {/* Due Date - collapsed row - hidden on mobile */}
         {!isExpanded && editedDueDate ? (
           <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
-            <div className="flex items-center gap-1.5 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-2 py-1 text-xs font-medium text-[#DCE4E4] backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5">
+            <div
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5",
+                isDueDateOverdue
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                  : "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4]",
+              )}
+            >
               <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden lg:inline">
                 {new Date(editedDueDate).toLocaleDateString("en-US", {
@@ -1526,6 +1552,9 @@ export function TaskCard(props: {
                   day: "numeric",
                 })}
               </span>
+              {isDueDateOverdue && (
+                <span className="hidden font-semibold sm:inline">Overdue</span>
+              )}
             </div>
           </div>
         ) : null}
@@ -1546,8 +1575,16 @@ export function TaskCard(props: {
           </div>
         ) : null}
 
-        {/* Reminder - collapsed row - hidden on mobile */}
-        {!isExpanded && props.task.reminderAt ? (
+        {/* Reminder - collapsed row - hidden on mobile (hide overdue badge for completed tasks) */}
+        {!isExpanded &&
+        props.task.reminderAt &&
+        !(
+          props.task.completed &&
+          getReminderStatus(
+            props.task.reminderAt,
+            props.task.reminderSentAt ?? null,
+          ) === "overdue"
+        ) ? (
           <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
             <div
               className={cn(
@@ -1653,32 +1690,37 @@ export function TaskCard(props: {
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-[#164B49] px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
-            {/* Description textarea / read-only */}
-            <div className="max-w-2xl">
+          <div className="space-y-0 px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
+            {/* Description section */}
+            <div className="border-t border-[#164B49]/60 pt-3">
               {isEditing ? (
-                <textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") handleCancel();
-                    // Don't handle Enter in textarea — allow newlines
-                  }}
-                  placeholder="Description (optional)"
-                  rows={3}
-                  className={cn(
-                    "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
-                    "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-                    "rounded-md px-3 py-2 text-sm",
-                  )}
-                  aria-label="Edit task description"
-                  disabled={updateTask.isPending}
-                />
-              ) : (
-                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-                  {props.task.description ?? "No description"}
+                <div className="max-w-2xl">
+                  <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+                    Description
+                  </label>
+                  <textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") handleCancel();
+                      // Don't handle Enter in textarea — allow newlines
+                    }}
+                    placeholder="Add a description..."
+                    rows={3}
+                    className={cn(
+                      "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                      "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                      "rounded-lg px-3 py-2.5 text-sm leading-relaxed",
+                    )}
+                    aria-label="Edit task description"
+                    disabled={updateTask.isPending}
+                  />
+                </div>
+              ) : props.task.description ? (
+                <p className="max-w-2xl text-sm leading-relaxed text-[#8FA8A8] whitespace-pre-wrap">
+                  {props.task.description}
                 </p>
-              )}
+              ) : null}
             </div>
 
             {/* Subtask section */}
@@ -1766,84 +1808,151 @@ export function TaskCard(props: {
 
             {/* Read-only badges when expanded but not editing */}
             {!isEditing && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
-                <PriorityBadge
-                  priority={props.task.priority}
-                  variant="compact"
-                />
-                {props.task.dueDate && (
-                  <div className="flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {new Date(props.task.dueDate).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </div>
-                )}
-                {editedCategory && (
-                  <div
-                    className="rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md"
-                    style={{
-                      backgroundColor: `${editedCategory.color}60`,
-                      borderColor: `${editedCategory.color}80`,
-                      color: editedCategory.color,
-                    }}
-                  >
-                    {editedCategory.name}
-                  </div>
-                )}
-                {props.task.reminderAt && (
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
-                      getReminderBadgeClasses(
+              <div className="mt-4 border-t border-[#164B49]/40 pt-3">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <PriorityBadge
+                    priority={props.task.priority}
+                    variant="compact"
+                  />
+                  {props.task.dueDate && (
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                        isDueDateOverdue
+                          ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                          : "border-[#164B49] bg-[#102A2A]/80 text-[#8FA8A8]",
+                      )}
+                    >
+                      <Calendar className="h-3 w-3" />
+                      {new Date(props.task.dueDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                      {isDueDateOverdue && (
+                        <span className="font-semibold text-amber-400">Overdue</span>
+                      )}
+                    </div>
+                  )}
+                  {editedCategory && (
+                    <div
+                      className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+                      style={{
+                        backgroundColor: `${editedCategory.color}20`,
+                        borderColor: `${editedCategory.color}40`,
+                        color: editedCategory.color,
+                      }}
+                    >
+                      {editedCategory.name}
+                    </div>
+                  )}
+                  {props.task.reminderAt &&
+                    !(
+                      props.task.completed &&
+                      getReminderStatus(
+                        props.task.reminderAt,
+                        props.task.reminderSentAt ?? null,
+                      ) === "overdue"
+                    ) && (
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                        getReminderBadgeClasses(
+                          props.task.reminderAt,
+                          props.task.reminderSentAt,
+                        ),
+                      )}
+                    >
+                      <Bell className="h-3 w-3" />
+                      {formatReminder(
                         props.task.reminderAt,
                         props.task.reminderSentAt,
-                      ),
-                    )}
-                  >
-                    <Bell className="h-3.5 w-3.5" />
-                    {formatReminder(
-                      props.task.reminderAt,
-                      props.task.reminderSentAt,
-                    )}
-                  </div>
-                )}
-                {props.task.recurrenceRule && (
-                  <div className="flex items-center gap-2 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-4 py-1.5 text-xs font-medium text-[#50C878] backdrop-blur-md">
-                    <Repeat className="h-3.5 w-3.5" />
-                    {(props.task.recurrenceInterval ?? 1) === 1
-                      ? props.task.recurrenceRule.charAt(0).toUpperCase() +
-                        props.task.recurrenceRule.slice(1)
-                      : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                  {props.task.recurrenceRule && (
+                    <div className="flex items-center gap-1.5 rounded-full border border-[#50C878]/20 bg-[#50C878]/5 px-2.5 py-1 text-[11px] font-medium text-[#50C878]">
+                      <Repeat className="h-3 w-3" />
+                      {(props.task.recurrenceInterval ?? 1) === 1
+                        ? props.task.recurrenceRule.charAt(0).toUpperCase() +
+                          props.task.recurrenceRule.slice(1)
+                        : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
+                    </div>
+                  )}
+                  {props.task.list && (
+                    <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#8FA8A8]">
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: props.task.list.color ?? "#8FA8A8",
+                        }}
+                      />
+                      {props.task.list.name}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action buttons - expanded non-editing view */}
+            {!isEditing && (
+              <div className="mt-3 flex items-center justify-end gap-1 border-t border-[#164B49]/40 pt-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-amber-500/10 hover:text-amber-400"
+                      aria-label="Snooze task"
+                    >
+                      <AlarmClock className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Snooze</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="end">
+                    <SnoozePopoverContent taskId={props.task.id} />
+                  </PopoverContent>
+                </Popover>
+                <button
+                  onClick={handleEditClick}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-[#50C878]/10 hover:text-[#50C878]"
+                  aria-label="Edit task"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+                <button
+                  onClick={() => deleteTask.mutate(props.task.id)}
+                  disabled={deleteTask.isPending}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                  aria-label="Delete task"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
               </div>
             )}
 
             {/* Save/Cancel buttons inside expanded area */}
             {isEditing && (
-              <div className="mt-3 flex justify-end gap-2 sm:mt-4">
+              <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-[#164B49]/40 pt-3">
                 <Button
                   type="button"
                   variant="ghost"
+                  size="sm"
                   onClick={handleCancel}
                   disabled={updateTask.isPending}
-                  className="text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
+                  className="h-8 px-3 text-xs text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
                 >
-                  <X className="mr-1 h-4 w-4" />
                   Cancel
                 </Button>
                 <Button
                   type="button"
+                  size="sm"
                   onClick={handleSave}
                   disabled={
                     updateTask.isPending || !hasChanges || !editedTitle.trim()
                   }
                   className={cn(
-                    "bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
+                    "h-8 px-4 text-xs bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                   )}
                 >
@@ -1851,7 +1960,7 @@ export function TaskCard(props: {
                     "..."
                   ) : (
                     <>
-                      <Check className="mr-1 h-4 w-4" />
+                      <Check className="mr-1 h-3.5 w-3.5" />
                       Save
                     </>
                   )}

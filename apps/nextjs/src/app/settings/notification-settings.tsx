@@ -85,17 +85,17 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-white">Notification Settings</h2>
+    <div className="glass-card rounded-2xl p-6">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-white">Notification Settings</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Configure how and when you receive task reminders.
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Email Reminders */}
-        <div className="flex items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A]/80 p-4">
+        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
             <p className="font-medium text-[#DCE4E4]">Email reminders</p>
             <p className="text-sm text-[#8FA8A8]">
@@ -106,7 +106,7 @@ export function NotificationSettings() {
         </div>
 
         {/* Push Reminders */}
-        <div className="flex items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A]/80 p-4">
+        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
             <p className="font-medium text-[#DCE4E4]">Push reminders</p>
             <p className="text-sm text-[#8FA8A8]">
@@ -117,7 +117,7 @@ export function NotificationSettings() {
         </div>
 
         {/* Reminder Offset */}
-        <div className="flex items-center justify-between rounded-xl border border-[#164B49] bg-[#102A2A]/80 p-4">
+        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
             <p className="font-medium text-[#DCE4E4]">Reminder timing</p>
             <p className="text-sm text-[#8FA8A8]">
@@ -128,7 +128,7 @@ export function NotificationSettings() {
             value={String(reminderOffsetMinutes)}
             onValueChange={(v) => setLocalOffset(Number(v))}
           >
-            <SelectTrigger className="w-48 border-[#164B49] bg-[#102A2A]">
+            <SelectTrigger className="w-48 border-[#164B49] bg-[#0A1A1A]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -142,13 +142,15 @@ export function NotificationSettings() {
         </div>
       </div>
 
-      <Button
-        onClick={handleSave}
-        disabled={updatePrefs.isPending || !hasChanges}
-        className="bg-primary hover:bg-primary/90 text-black"
-      >
-        {updatePrefs.isPending ? "Saving..." : "Save Preferences"}
-      </Button>
+      <div className="mt-6">
+        <Button
+          onClick={handleSave}
+          disabled={updatePrefs.isPending || !hasChanges}
+          className="bg-primary hover:bg-primary/90 text-black"
+        >
+          {updatePrefs.isPending ? "Saving..." : "Save Preferences"}
+        </Button>
+      </div>
     </div>
   );
 }

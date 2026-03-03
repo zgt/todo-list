@@ -45,6 +45,9 @@ export function TaskHeader() {
         {/* Sidebar trigger */}
         <SidebarTrigger className="shrink-0" />
 
+        {/* Page title */}
+        <h1 className="shrink-0 text-3xl font-bold text-white">Tokilist</h1>
+
         {/* Category Filter */}
         <div className="shrink-0">
           <CategoryFilter />
