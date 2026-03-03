@@ -2,17 +2,54 @@ import { useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 
-import type { NotificationData } from "~/utils/notifications";
+import type { NotificationData, TaskNotificationData } from "~/utils/notifications";
+import { vanillaTrpc } from "~/utils/api";
 import {
   configureNotificationHandler,
   requestPermissions,
+  scheduleTaskReminder,
+  TASK_REMINDER_ACTIONS,
 } from "~/utils/notifications";
+
+/**
+ * Handle a notification action button tap (snooze or mark done).
+ * Runs outside React render cycle — uses vanillaTrpc for mutations.
+ */
+async function handleTaskAction(
+  actionIdentifier: string,
+  data: TaskNotificationData,
+  notificationTitle: string,
+) {
+  const { taskId } = data;
+
+  switch (actionIdentifier) {
+    case TASK_REMINDER_ACTIONS.SNOOZE_10MIN: {
+      const snoozeUntil = new Date(Date.now() + 10 * 60 * 1000);
+      await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
+      break;
+    }
+    case TASK_REMINDER_ACTIONS.SNOOZE_1HR: {
+      const snoozeUntil = new Date(Date.now() + 60 * 60 * 1000);
+      await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
+      break;
+    }
+    case TASK_REMINDER_ACTIONS.MARK_DONE: {
+      try {
+        await vanillaTrpc.task.update.mutate({ id: taskId, completed: true });
+      } catch (err) {
+        console.error("[Notifications] Failed to mark task done:", err);
+      }
+      break;
+    }
+  }
+}
 
 /**
  * Hook to set up notification handling at the app root level.
  * - Configures the foreground handler
  * - Requests permissions
  * - Handles notification taps (deep linking)
+ * - Handles action button responses (snooze/done) in background
  */
 export function useNotifications() {
   const router = useRouter();
@@ -24,7 +61,7 @@ export function useNotifications() {
   >(undefined);
 
   useEffect(() => {
-    // Configure foreground behavior
+    // Configure foreground behavior + register notification categories
     configureNotificationHandler();
 
     // Request permissions on mount
@@ -39,23 +76,38 @@ export function useNotifications() {
         );
       });
 
-    // Handle user tapping a notification
+    // Handle user tapping a notification or an action button
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data as unknown as
           | NotificationData
           | undefined;
+        const actionIdentifier = response.actionIdentifier;
 
-        if (data?.type === "task-reminder" && "taskId" in data) {
-          // Navigate to task list and open the task's edit sheet
-          router.push({
-            pathname: "/",
-            params: { openTask: data.taskId },
-          });
-        } else if (data?.type === "league" && data.roundId) {
-          router.push(`/music/round/${data.roundId}`);
-        } else if (data?.type === "league" && data.leagueId) {
-          router.push(`/music/league/${data.leagueId}`);
+        // Handle action buttons (snooze/done) — these don't open the app
+        if (
+          data?.type === "task-reminder" &&
+          "taskId" in data &&
+          actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER
+        ) {
+          const title =
+            response.notification.request.content.body ?? "Task Reminder";
+          void handleTaskAction(actionIdentifier, data, title);
+          return;
+        }
+
+        // Default tap — navigate into the app
+        if (actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
+          if (data?.type === "task-reminder" && "taskId" in data) {
+            router.push({
+              pathname: "/",
+              params: { openTask: data.taskId },
+            });
+          } else if (data?.type === "league" && data.roundId) {
+            router.push(`/music/round/${data.roundId}`);
+          } else if (data?.type === "league" && data.leagueId) {
+            router.push(`/music/league/${data.leagueId}`);
+          }
         }
       });
 

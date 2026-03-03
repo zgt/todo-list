@@ -31,6 +31,40 @@ export function configureNotificationHandler() {
         shouldSetBadge: true,
       }),
   });
+
+  // Register iOS notification category with snooze/done action buttons
+  void registerTaskReminderCategory();
+}
+
+// ─── Notification Categories ────────────────────────────────────────
+
+export const TASK_REMINDER_ACTIONS = {
+  SNOOZE_10MIN: "SNOOZE_10MIN",
+  SNOOZE_1HR: "SNOOZE_1HR",
+  MARK_DONE: "MARK_DONE",
+} as const;
+
+/** Register the task-reminder category with actionable buttons on iOS */
+async function registerTaskReminderCategory() {
+  if (Platform.OS !== "ios") return;
+
+  await Notifications.setNotificationCategoryAsync("task-reminder", [
+    {
+      identifier: TASK_REMINDER_ACTIONS.SNOOZE_10MIN,
+      buttonTitle: "Snooze 10min",
+      options: { opensAppToForeground: false },
+    },
+    {
+      identifier: TASK_REMINDER_ACTIONS.SNOOZE_1HR,
+      buttonTitle: "Snooze 1hr",
+      options: { opensAppToForeground: false },
+    },
+    {
+      identifier: TASK_REMINDER_ACTIONS.MARK_DONE,
+      buttonTitle: "Done ✓",
+      options: { opensAppToForeground: false, isDestructive: true },
+    },
+  ]);
 }
 
 // ─── Permissions ─────────────────────────────────────────────────────
