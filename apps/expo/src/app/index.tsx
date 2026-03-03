@@ -27,10 +27,12 @@ import {
   cancelTaskReminder,
   rescheduleAllReminders,
 } from "~/utils/notifications";
+import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
+import { SnoozeSheet } from "../components/SnoozeSheet";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import { TaskFormSheet } from "../components/TaskFormSheet";
 import { CategoryFilter } from "./_components/category-filter";
@@ -117,6 +119,7 @@ export default function Index() {
   );
 
   const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
+  const snoozeSheetRef = useRef<SnoozeSheetRef>(null);
 
   const queryClient = useQueryClient();
 
@@ -423,6 +426,56 @@ export default function Index() {
     void cancelTaskReminder(id);
   };
 
+  // tRPC mutation for snoozing a task
+  const snoozeMutation = useMutation(
+    trpc.task.snooze.mutationOptions({
+      onMutate: async ({ id }) => {
+        triggerRipple();
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
+
+        if (previousTasks) {
+          queryClient.setQueryData<RouterOutputs["task"]["all"]>(
+            trpc.task.all.queryKey(),
+            previousTasks.filter((task) => task.id !== id),
+          );
+        }
+
+        return { previousTasks };
+      },
+      onError: (error: TRPCClientErrorLike<AppRouter>, _vars, context) => {
+        if (context?.previousTasks) {
+          queryClient.setQueryData(
+            trpc.task.all.queryKey(),
+            context.previousTasks,
+          );
+        }
+        console.error("Failed to snooze task:", error);
+        Alert.alert(
+          "Failed to snooze task",
+          "Your task couldn't be snoozed. Please try again.",
+        );
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+      },
+    }),
+  );
+
+  const handleSnooze = async (taskId: string, snoozedUntil: Date) => {
+    await snoozeMutation.mutateAsync({ id: taskId, snoozedUntil });
+  };
+
+  const handleOpenSnoozeSheet = useCallback(
+    (taskId: string) => {
+      snoozeSheetRef.current?.present(taskId);
+    },
+    [],
+  );
+
   // tRPC mutation for toggling subtask completion
   const subtaskUpdateMutation = useMutation(
     trpc.subtask.update.mutationOptions({
@@ -526,6 +579,11 @@ export default function Index() {
             priority: newTask.priority ?? "medium",
             reminderAt: newTask.reminderAt ?? null,
             reminderSentAt: null,
+            snoozedUntil: null,
+            recurrenceRule: newTask.recurrenceRule ?? null,
+            recurrenceInterval: newTask.recurrenceInterval ?? null,
+            recurrenceEndDate: newTask.recurrenceEndDate ?? null,
+            recurrenceSourceId: null,
             category: null,
             subtasks: [],
             listId: newTask.listId ?? null,
@@ -574,6 +632,8 @@ export default function Index() {
       reminderAt: data.reminderAt ?? undefined,
       listId: data.listId ?? undefined,
       subtasks: data.newSubtasks,
+      recurrenceRule: data.recurrenceRule ?? undefined,
+      recurrenceInterval: data.recurrenceInterval ?? undefined,
     });
 
     // Reminder scheduling is handled by the rescheduleAllReminders useEffect
@@ -592,6 +652,8 @@ export default function Index() {
       priority: data.priority ?? "medium",
       reminderAt: data.reminderAt,
       listId: data.listId,
+      recurrenceRule: data.recurrenceRule,
+      recurrenceInterval: data.recurrenceInterval,
     });
 
     setEditingTask(null);
@@ -837,6 +899,7 @@ export default function Index() {
           isOpen={!!editingTask}
           onClose={() => setEditingTask(null)}
           onSubmit={handleEditSubmit}
+          onSnooze={handleOpenSnoozeSheet}
           initialData={
             editingTask
               ? {
@@ -849,6 +912,8 @@ export default function Index() {
                   reminderAt: editingTask.reminderAt,
                   subtasks: editingTask.subtasks,
                   listId: editingTask.listId,
+                  recurrenceRule: editingTask.recurrenceRule as TaskFormData["recurrenceRule"],
+                  recurrenceInterval: editingTask.recurrenceInterval,
                 }
               : undefined
           }
@@ -861,6 +926,9 @@ export default function Index() {
           onDelete={handleEditDelete}
         />
       </SafeAreaView>
+
+      {/* Snooze Sheet */}
+      <SnoozeSheet ref={snoozeSheetRef} onSnooze={handleSnooze} />
 
       {/* Profile Menu */}
       <ProfileMenu

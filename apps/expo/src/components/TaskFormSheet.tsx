@@ -4,7 +4,6 @@ import type {
 } from "@gorhom/bottom-sheet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Keyboard,
   Platform,
@@ -21,13 +20,29 @@ import {
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Calendar, Check, Plus, Trash2, X } from "lucide-react-native";
+import {
+  AlarmClock,
+  Bell,
+  Calendar,
+  Check,
+  Plus,
+  Repeat,
+  Trash2,
+  X,
+} from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import { trpc } from "~/utils/api";
 import { CategoryWheelPicker } from "./CategoryWheelPicker";
 import { CustomDatePicker } from "./CustomDatePicker";
 import { CustomTimePicker } from "./CustomTimePicker";
+
+export type RecurrenceRuleValue =
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "custom";
 
 export interface TaskFormData {
   title: string;
@@ -37,6 +52,8 @@ export interface TaskFormData {
   priority: PriorityLevel;
   dueDate: Date | null;
   reminderAt: Date | null;
+  recurrenceRule: RecurrenceRuleValue | null;
+  recurrenceInterval: number | null;
   /** Subtask titles to create inline (create mode only) */
   newSubtasks?: { title: string }[];
 }
@@ -65,6 +82,7 @@ interface TaskFormSheetProps {
   isSubmitting?: boolean;
   mode: "create" | "edit";
   onDelete?: () => void;
+  onSnooze?: (taskId: string) => void;
   /** For edit mode: controlled open state (e.g. !!editingTask) */
   isOpen?: boolean;
 }
@@ -108,6 +126,16 @@ function formatDateTime(date: Date): string {
   }).format(date);
 }
 
+const RECURRENCE_OPTIONS: {
+  value: RecurrenceRuleValue;
+  label: string;
+}[] = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];
+
 export function TaskFormSheet({
   onClose,
   onSubmit,
@@ -116,6 +144,7 @@ export function TaskFormSheet({
   isSubmitting,
   mode,
   onDelete,
+  onSnooze,
   isOpen,
 }: TaskFormSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -169,6 +198,13 @@ export function TaskFormSheet({
   );
   const [reminderAt, setReminderAt] = useState<Date | null>(
     initialData?.reminderAt ?? null,
+  );
+  const [recurrenceRule, setRecurrenceRule] =
+    useState<RecurrenceRuleValue | null>(
+      initialData?.recurrenceRule ?? null,
+    );
+  const [recurrenceInterval, setRecurrenceInterval] = useState<number>(
+    initialData?.recurrenceInterval ?? 1,
   );
 
   // Date picker state
@@ -263,6 +299,8 @@ export function TaskFormSheet({
     setPriority(initialData?.priority ?? "medium");
     setDueDate(initialData?.dueDate ?? null);
     setReminderAt(initialData?.reminderAt ?? null);
+    setRecurrenceRule(initialData?.recurrenceRule ?? null);
+    setRecurrenceInterval(initialData?.recurrenceInterval ?? 1);
     setShowDatePicker(false);
     setShowReminderDatePicker(false);
     setShowReminderTimePicker(false);
@@ -305,6 +343,8 @@ export function TaskFormSheet({
       priority,
       dueDate,
       reminderAt,
+      recurrenceRule,
+      recurrenceInterval: recurrenceRule ? recurrenceInterval : null,
       newSubtasks:
         mode === "create" && pendingSubtasks.length > 0
           ? pendingSubtasks.map((s) => ({ title: s.title }))
@@ -605,6 +645,117 @@ export function TaskFormSheet({
             )}
           </View>
 
+          {/* Recurrence */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>Repeat</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.pillRow}
+            >
+              <Pressable
+                onPress={() => setRecurrenceRule(null)}
+                style={[
+                  styles.pill,
+                  recurrenceRule === null
+                    ? styles.pillActiveGreen
+                    : styles.pillInactive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.pillText,
+                    { color: recurrenceRule === null ? "#50C878" : "#8FA8A8" },
+                  ]}
+                >
+                  None
+                </Text>
+              </Pressable>
+              {RECURRENCE_OPTIONS.map((opt) => {
+                const isActive = recurrenceRule === opt.value;
+                return (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => setRecurrenceRule(opt.value)}
+                    style={[
+                      styles.pill,
+                      isActive ? styles.pillActiveGreen : styles.pillInactive,
+                    ]}
+                  >
+                    <View
+                      style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                    >
+                      {isActive && <Repeat size={12} color="#50C878" />}
+                      <Text
+                        style={[
+                          styles.pillText,
+                          { color: isActive ? "#50C878" : "#8FA8A8" },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {recurrenceRule && recurrenceRule !== "daily" && (
+              <View style={styles.intervalRow}>
+                <Text style={styles.intervalLabel}>Every</Text>
+                <Pressable
+                  onPress={() =>
+                    setRecurrenceInterval(Math.max(1, recurrenceInterval - 1))
+                  }
+                  style={styles.intervalButton}
+                >
+                  <Text style={styles.intervalButtonText}>−</Text>
+                </Pressable>
+                <Text style={styles.intervalValue}>{recurrenceInterval}</Text>
+                <Pressable
+                  onPress={() =>
+                    setRecurrenceInterval(
+                      Math.min(365, recurrenceInterval + 1),
+                    )
+                  }
+                  style={styles.intervalButton}
+                >
+                  <Text style={styles.intervalButtonText}>+</Text>
+                </Pressable>
+                <Text style={styles.intervalUnit}>
+                  {recurrenceRule === "weekly"
+                    ? recurrenceInterval === 1
+                      ? "week"
+                      : "weeks"
+                    : recurrenceRule === "monthly"
+                      ? recurrenceInterval === 1
+                        ? "month"
+                        : "months"
+                      : recurrenceRule === "yearly"
+                        ? recurrenceInterval === 1
+                          ? "year"
+                          : "years"
+                        : recurrenceInterval === 1
+                          ? "day"
+                          : "days"}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Snooze Button (edit mode only) */}
+          {mode === "edit" && onSnooze && initialData?.id && (
+            <Pressable
+              onPress={() => {
+                bottomSheetRef.current?.dismiss();
+                onSnooze(initialData.id!);
+              }}
+              style={styles.snoozeButton}
+            >
+              <AlarmClock size={18} color="#50C878" />
+              <Text style={styles.snoozeButtonText}>Snooze</Text>
+            </Pressable>
+          )}
+
           {/* Subtasks */}
           {mode === "edit" && taskId && (
             <View style={styles.fieldContainerLarge}>
@@ -747,18 +898,18 @@ export function TaskFormSheet({
                   onSubmitEditing={handleAddSubtask}
                   style={styles.addSubtaskInput}
                 />
-                {createSubtask.isPending ? (
-                  <ActivityIndicator size="small" color="#50C878" />
-                ) : (
-                  newSubtaskTitle.trim().length > 0 && (
-                    <Pressable
-                      onPress={handleAddSubtask}
-                      style={styles.addSubtaskButton}
-                      hitSlop={8}
-                    >
-                      <Check size={16} color="#0A1A1A" strokeWidth={3} />
-                    </Pressable>
-                  )
+                {newSubtaskTitle.trim().length > 0 && (
+                  <Pressable
+                    onPress={handleAddSubtask}
+                    disabled={createSubtask.isPending}
+                    style={[
+                      styles.addSubtaskButton,
+                      createSubtask.isPending && { opacity: 0.5 },
+                    ]}
+                    hitSlop={8}
+                  >
+                    <Check size={16} color="#0A1A1A" strokeWidth={3} />
+                  </Pressable>
                 )}
               </View>
             </View>
@@ -1194,5 +1345,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#ef4444",
+  },
+  intervalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 10,
+    paddingLeft: 4,
+  },
+  intervalLabel: {
+    fontSize: 14,
+    color: "#8FA8A8",
+  },
+  intervalButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "#164B49",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  intervalButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#DCE4E4",
+  },
+  intervalValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#50C878",
+    width: 24,
+    textAlign: "center",
+  },
+  intervalUnit: {
+    fontSize: 14,
+    color: "#8FA8A8",
+  },
+  snoozeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(80, 200, 120, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(80, 200, 120, 0.3)",
+    borderRadius: 10,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  snoozeButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#50C878",
   },
 });

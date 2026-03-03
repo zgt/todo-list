@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, asc, desc, eq, inArray, isNull, or, sql } from "@acme/db";
+import { and, asc, desc, eq, gt, inArray, isNull, lt, or, sql } from "@acme/db";
 import {
   CreateTaskWithSubtasksSchema,
   Subtask,
@@ -50,6 +50,8 @@ function serializeTaskDates<
     lastSyncedAt: unknown;
     reminderAt: unknown;
     reminderSentAt: unknown;
+    snoozedUntil: unknown;
+    recurrenceEndDate: unknown;
     subtasks?: {
       createdAt: unknown;
       updatedAt: unknown;
@@ -84,6 +86,12 @@ function serializeTaskDates<
     reminderSentAt: task.reminderSentAt
       ? new Date(task.reminderSentAt as string | number | Date)
       : null,
+    snoozedUntil: task.snoozedUntil
+      ? new Date(task.snoozedUntil as string | number | Date)
+      : null,
+    recurrenceEndDate: task.recurrenceEndDate
+      ? new Date(task.recurrenceEndDate as string | number | Date)
+      : null,
     subtasks: task.subtasks?.map(serializeSubtaskDates),
   };
 }
@@ -100,16 +108,52 @@ async function getMemberListIds(
   return memberships.map((m) => m.listId);
 }
 
+/** Calculate the next due date based on recurrence rule and interval */
+function getNextDueDate(
+  currentDueDate: Date | null,
+  rule: string,
+  interval: number,
+): Date {
+  const base = currentDueDate ?? new Date();
+  const next = new Date(base);
+
+  switch (rule) {
+    case "daily":
+      next.setDate(next.getDate() + interval);
+      break;
+    case "weekly":
+      next.setDate(next.getDate() + 7 * interval);
+      break;
+    case "monthly":
+      next.setMonth(next.getMonth() + interval);
+      break;
+    case "yearly":
+      next.setFullYear(next.getFullYear() + interval);
+      break;
+    case "custom":
+      // For custom, interval represents days
+      next.setDate(next.getDate() + interval);
+      break;
+    default:
+      next.setDate(next.getDate() + interval);
+  }
+
+  return next;
+}
+
 export const taskRouter = {
-  // Get all non-deleted tasks for current user (personal + shared lists)
+  // Get all non-deleted, non-snoozed tasks for current user (personal + shared lists)
   all: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
     const memberListIds = await getMemberListIds(ctx.db, userId);
+    const now = new Date();
 
     const tasks = await ctx.db.query.Task.findMany({
       where: and(
         isNull(Task.deletedAt),
         isNull(Task.archivedAt),
+        // Filter out snoozed tasks (snoozedUntil is null OR in the past)
+        or(isNull(Task.snoozedUntil), lt(Task.snoozedUntil, now)),
         memberListIds.length > 0
           ? or(
               and(eq(Task.userId, userId), isNull(Task.listId)),
@@ -297,10 +341,24 @@ export const taskRouter = {
       const { id, ...updates } = input;
       const userId = ctx.session.user.id;
 
-      // Fetch existing task to check access
+      // Fetch existing task to check access and recurrence info
       const existing = await ctx.db.query.Task.findFirst({
         where: and(eq(Task.id, id), isNull(Task.deletedAt)),
-        columns: { userId: true, listId: true, completed: true },
+        columns: {
+          userId: true,
+          listId: true,
+          completed: true,
+          title: true,
+          description: true,
+          categoryId: true,
+          dueDate: true,
+          priority: true,
+          reminderAt: true,
+          recurrenceRule: true,
+          recurrenceInterval: true,
+          recurrenceEndDate: true,
+          recurrenceSourceId: true,
+        },
       });
 
       if (!existing) {
@@ -378,6 +436,56 @@ export const taskRouter = {
         }
       }
 
+      // Auto-create next recurring task when completing a recurring task
+      if (
+        updates.completed === true &&
+        !existing.completed &&
+        existing.recurrenceRule
+      ) {
+        const interval = existing.recurrenceInterval ?? 1;
+        const nextDueDate = getNextDueDate(
+          existing.dueDate,
+          existing.recurrenceRule,
+          interval,
+        );
+
+        // Only create next occurrence if before end date (or no end date)
+        const shouldCreate =
+          !existing.recurrenceEndDate ||
+          nextDueDate <= existing.recurrenceEndDate;
+
+        if (shouldCreate) {
+          // Calculate new reminder offset relative to due date
+          let nextReminderAt: Date | null = null;
+          if (existing.reminderAt && existing.dueDate) {
+            const offset =
+              existing.dueDate.getTime() - existing.reminderAt.getTime();
+            nextReminderAt = new Date(nextDueDate.getTime() - offset);
+          }
+
+          void ctx.db
+            .insert(Task)
+            .values({
+              userId,
+              title: existing.title,
+              description: existing.description,
+              categoryId: existing.categoryId,
+              listId: existing.listId,
+              dueDate: nextDueDate,
+              priority: existing.priority,
+              reminderAt: nextReminderAt,
+              recurrenceRule: existing.recurrenceRule,
+              recurrenceInterval: existing.recurrenceInterval,
+              recurrenceEndDate: existing.recurrenceEndDate,
+              recurrenceSourceId: existing.recurrenceSourceId ?? id,
+              lastSyncedAt: new Date(),
+            })
+            .catch((err) =>
+              console.error("Failed to create recurring task:", err),
+            );
+        }
+      }
+
       return serializeTaskDates(task);
     }),
 
@@ -421,4 +529,108 @@ export const taskRouter = {
 
       return { success: true };
     }),
+
+  // Snooze a task until a specific date
+  snooze: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().uuid(),
+        snoozedUntil: z.date(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const existing = await ctx.db.query.Task.findFirst({
+        where: and(eq(Task.id, input.id), isNull(Task.deletedAt)),
+        columns: { userId: true, listId: true },
+      });
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
+      }
+
+      if (existing.listId) {
+        await assertListAccess(ctx.db, userId, existing.listId, "editor");
+      } else if (existing.userId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not authorized",
+        });
+      }
+
+      const [task] = await ctx.db
+        .update(Task)
+        .set({ snoozedUntil: input.snoozedUntil, updatedAt: new Date() })
+        .where(eq(Task.id, input.id))
+        .returning();
+
+      if (!task) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to snooze task",
+        });
+      }
+
+      return serializeTaskDates(task);
+    }),
+
+  // Clear snooze from a task
+  unsnooze: protectedProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const existing = await ctx.db.query.Task.findFirst({
+        where: and(eq(Task.id, input.id), isNull(Task.deletedAt)),
+        columns: { userId: true, listId: true },
+      });
+
+      if (!existing) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Task not found" });
+      }
+
+      if (existing.listId) {
+        await assertListAccess(ctx.db, userId, existing.listId, "editor");
+      } else if (existing.userId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not authorized",
+        });
+      }
+
+      const [task] = await ctx.db
+        .update(Task)
+        .set({ snoozedUntil: null, updatedAt: new Date() })
+        .where(eq(Task.id, input.id))
+        .returning();
+
+      if (!task) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to unsnooze task",
+        });
+      }
+
+      return serializeTaskDates(task);
+    }),
+
+  // Get all currently snoozed tasks
+  snoozed: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+    const now = new Date();
+
+    const tasks = await ctx.db.query.Task.findMany({
+      where: and(
+        eq(Task.userId, userId),
+        isNull(Task.deletedAt),
+        isNull(Task.archivedAt),
+        gt(Task.snoozedUntil, now),
+      ),
+      orderBy: [asc(Task.snoozedUntil)],
+      with: { category: true, subtasks: true, list: true },
+    });
+
+    return tasks.map(serializeTaskDates);
+  }),
 } satisfies TRPCRouterRecord;

@@ -182,6 +182,23 @@ export const Task = pgTable(
       withTimezone: true,
       mode: "date",
     }),
+    // Snooze
+    snoozedUntil: t.timestamp("snoozed_until", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    // Recurrence
+    recurrenceRule: t.varchar("recurrence_rule", { length: 20 }), // 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+    recurrenceInterval: t.integer("recurrence_interval").default(1),
+    recurrenceEndDate: t.timestamp("recurrence_end_date", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    recurrenceSourceId: t
+      .uuid("recurrence_source_id")
+      // Self-reference requires explicit type assertion
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .references((): any => Task.id, { onDelete: "set null" }),
   }),
   (table) => [
     index("task_user_id_deleted_at_order_idx").on(
@@ -203,6 +220,8 @@ export const Task = pgTable(
       table.completed,
     ),
     index("task_reminder_at_idx").on(table.reminderAt),
+    index("task_snoozed_until_idx").on(table.userId, table.snoozedUntil),
+    index("task_recurrence_source_id_idx").on(table.recurrenceSourceId),
     check(
       "task_priority_valid",
       sql`${table.priority} IS NULL OR ${table.priority} IN ('high', 'medium', 'low')`,
@@ -753,6 +772,15 @@ export const ThemeTemplate = pgTable("theme_template", (t) => ({
 }));
 
 // Existing Schemas
+export const RecurrenceRule = z.enum([
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly",
+  "custom",
+]);
+export type RecurrenceRule = z.infer<typeof RecurrenceRule>;
+
 export const CreateTaskSchema = createInsertSchema(Task, {
   title: z.string().min(1, "Title is required").max(500),
   description: z.string().max(5000).optional(),
@@ -761,6 +789,9 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   dueDate: z.date().optional(),
   priority: TaskPriority.optional().default("medium"),
   reminderAt: z.date().optional(),
+  recurrenceRule: RecurrenceRule.optional(),
+  recurrenceInterval: z.number().int().min(1).max(365).optional(),
+  recurrenceEndDate: z.date().optional(),
 }).omit({
   id: true,
   userId: true,
@@ -773,6 +804,8 @@ export const CreateTaskSchema = createInsertSchema(Task, {
   version: true,
   deletedAt: true,
   lastSyncedAt: true,
+  snoozedUntil: true,
+  recurrenceSourceId: true,
 });
 
 export const UpdateTaskSchema = z.object({
@@ -790,6 +823,9 @@ export const UpdateTaskSchema = z.object({
   archivedAt: z.date().nullable().optional(),
   reminderAt: z.date().nullable().optional(),
   deletedAt: z.date().nullable().optional(),
+  recurrenceRule: RecurrenceRule.nullable().optional(),
+  recurrenceInterval: z.number().int().min(1).max(365).nullable().optional(),
+  recurrenceEndDate: z.date().nullable().optional(),
 });
 
 export const CreateSubtaskSchema = createInsertSchema(Subtask, {
@@ -896,6 +932,14 @@ export const taskRelations = relations(Task, ({ one, many }) => ({
   list: one(TaskList, {
     fields: [Task.listId],
     references: [TaskList.id],
+  }),
+  recurrenceSource: one(Task, {
+    fields: [Task.recurrenceSourceId],
+    references: [Task.id],
+    relationName: "taskRecurrence",
+  }),
+  recurrenceChildren: many(Task, {
+    relationName: "taskRecurrence",
   }),
 }));
 

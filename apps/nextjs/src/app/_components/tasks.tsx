@@ -8,12 +8,15 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import {
+  AlarmClock,
   Bell,
   Calendar,
   Check,
   ChevronRight,
+  Minus,
   Pencil,
   Plus,
+  Repeat,
   Trash2,
   X,
 } from "lucide-react";
@@ -183,6 +186,289 @@ function ReminderPill({
   );
 }
 
+// --- Snooze helper functions ---
+
+function getLaterToday(): Date {
+  const later = new Date();
+  later.setHours(later.getHours() + 4);
+  later.setMinutes(0, 0, 0);
+  return later;
+}
+
+function getTomorrowAt9am(): Date {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+  return tomorrow;
+}
+
+function getNextMondayAt9am(): Date {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(monday.getDate() + daysUntilMonday);
+  monday.setHours(9, 0, 0, 0);
+  return monday;
+}
+
+// --- Snooze popover content (shared between SnoozePill and hover action) ---
+
+function SnoozePopoverContent({ taskId }: { taskId: string }) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const [showCustom, setShowCustom] = useState(false);
+
+  const snoozeMutation = useMutation(
+    trpc.task.snooze.mutationOptions({
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
+        toast.success("Task snoozed!");
+      },
+      onError: () => toast.error("Failed to snooze task"),
+    }),
+  );
+
+  const handleSnooze = (date: Date) => {
+    snoozeMutation.mutate({ id: taskId, snoozedUntil: date });
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="px-2 py-1 text-xs font-medium text-[#8FA8A8]">
+        Snooze until
+      </p>
+      <button
+        onClick={() => handleSnooze(getLaterToday())}
+        className={cn(
+          "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
+          "hover:bg-[#183F3F] transition-colors",
+        )}
+      >
+        Later Today
+        <span className="ml-2 text-xs text-[#8FA8A8]">
+          {getLaterToday().toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+        </span>
+      </button>
+      <button
+        onClick={() => handleSnooze(getTomorrowAt9am())}
+        className={cn(
+          "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
+          "hover:bg-[#183F3F] transition-colors",
+        )}
+      >
+        Tomorrow
+        <span className="ml-2 text-xs text-[#8FA8A8]">9:00 AM</span>
+      </button>
+      <button
+        onClick={() => handleSnooze(getNextMondayAt9am())}
+        className={cn(
+          "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
+          "hover:bg-[#183F3F] transition-colors",
+        )}
+      >
+        Next Week
+        <span className="ml-2 text-xs text-[#8FA8A8]">Mon 9:00 AM</span>
+      </button>
+      <div className="my-1 border-t border-[#164B49]" />
+      {showCustom ? (
+        <div className="flex flex-col gap-2 px-2 py-1">
+          <label className="text-xs font-medium text-[#DCE4E4]">
+            Pick date & time
+          </label>
+          <input
+            type="datetime-local"
+            onChange={(e) => {
+              const date = fromDatetimeLocal(e.target.value);
+              if (date) handleSnooze(date);
+            }}
+            className="rounded-md border border-[#164B49] bg-[#102A2A] px-3 py-2 text-sm text-[#DCE4E4] focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
+          />
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowCustom(true)}
+          className={cn(
+            "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
+            "hover:bg-[#183F3F] transition-colors",
+          )}
+        >
+          <Calendar className="mr-2 inline h-3.5 w-3.5" />
+          Pick Date
+        </button>
+      )}
+    </div>
+  );
+}
+
+// --- Snooze pill for task cards ---
+
+function SnoozePill({ taskId }: { taskId: string }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+            "transition-all hover:border-[#21716C]",
+            "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+            "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4] hover:bg-[#102A2A]",
+          )}
+        >
+          <AlarmClock className="h-3.5 w-3.5" />
+          Snooze
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-2" align="end">
+        <SnoozePopoverContent taskId={taskId} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// --- Recurrence pill for create/edit ---
+
+type RecurrenceRuleType =
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
+  | "custom"
+  | null;
+
+const RECURRENCE_OPTIONS: { label: string; value: RecurrenceRuleType }[] = [
+  { label: "None", value: null },
+  { label: "Daily", value: "daily" },
+  { label: "Weekly", value: "weekly" },
+  { label: "Monthly", value: "monthly" },
+  { label: "Yearly", value: "yearly" },
+];
+
+function getRecurrenceUnitLabel(rule: RecurrenceRuleType): string {
+  switch (rule) {
+    case "daily":
+      return "day";
+    case "weekly":
+      return "week";
+    case "monthly":
+      return "month";
+    case "yearly":
+      return "year";
+    default:
+      return "";
+  }
+}
+
+function RecurrencePill({
+  rule,
+  interval,
+  onRuleChange,
+  onIntervalChange,
+  disabled,
+}: {
+  rule: RecurrenceRuleType;
+  interval: number;
+  onRuleChange: (rule: RecurrenceRuleType) => void;
+  onIntervalChange: (interval: number) => void;
+  disabled?: boolean;
+}) {
+  const unitLabel = rule ? getRecurrenceUnitLabel(rule) : "";
+  const displayLabel = rule
+    ? interval === 1
+      ? rule.charAt(0).toUpperCase() + rule.slice(1)
+      : `Every ${interval} ${unitLabel}s`
+    : "Repeat";
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+            "transition-all hover:border-[#21716C]",
+            "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+            rule
+              ? "border-[#50C878]/50 bg-[#50C878]/10 text-[#50C878]"
+              : "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4] hover:bg-[#102A2A]",
+          )}
+          disabled={disabled}
+        >
+          <Repeat className="h-3.5 w-3.5" />
+          {displayLabel}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="end">
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-medium text-[#8FA8A8]">Recurrence</p>
+          <div className="flex flex-wrap gap-1.5">
+            {RECURRENCE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value ?? "none"}
+                onClick={() => {
+                  onRuleChange(opt.value);
+                  if (!opt.value) onIntervalChange(1);
+                }}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                  rule === opt.value
+                    ? "border-[#50C878]/50 bg-[#50C878]/10 text-[#50C878]"
+                    : "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4] hover:border-[#21716C] hover:bg-[#102A2A]",
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {rule && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#8FA8A8]">Every</span>
+              <button
+                onClick={() => onIntervalChange(Math.max(1, interval - 1))}
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-md",
+                  "border border-[#164B49] bg-[#102A2A] text-[#DCE4E4]",
+                  "hover:border-[#21716C] hover:bg-[#183F3F] transition-colors",
+                  "disabled:opacity-50",
+                )}
+                disabled={interval <= 1}
+                aria-label="Decrease interval"
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <span className="min-w-[1.5rem] text-center text-sm font-medium text-[#DCE4E4]">
+                {interval}
+              </span>
+              <button
+                onClick={() => onIntervalChange(Math.min(365, interval + 1))}
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-md",
+                  "border border-[#164B49] bg-[#102A2A] text-[#DCE4E4]",
+                  "hover:border-[#21716C] hover:bg-[#183F3F] transition-colors",
+                  "disabled:opacity-50",
+                )}
+                disabled={interval >= 365}
+                aria-label="Increase interval"
+              >
+                <Plus className="h-3 w-3" />
+              </button>
+              <span className="text-xs text-[#8FA8A8]">
+                {unitLabel}
+                {interval !== 1 ? "s" : ""}
+              </span>
+            </div>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // --- Inline create task row ---
 
 function InlineCreateTask() {
@@ -198,6 +484,9 @@ function InlineCreateTask() {
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderAt, setReminderAt] = useState<Date | undefined>();
   const [listId, setListId] = useState<string | undefined>();
+  const [recurrenceRule, setRecurrenceRule] =
+    useState<RecurrenceRuleType>(null);
+  const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [pendingSubtasks, setPendingSubtasks] = useState<
     { localId: string; title: string }[]
   >([]);
@@ -244,6 +533,9 @@ function InlineCreateTask() {
       priority,
       reminderAt,
       listId,
+      recurrenceRule: recurrenceRule ?? undefined,
+      recurrenceInterval:
+        recurrenceRule ? recurrenceInterval : undefined,
       subtasks:
         pendingSubtasks.length > 0
           ? pendingSubtasks.map((s) => ({ title: s.title }))
@@ -518,6 +810,13 @@ function InlineCreateTask() {
           <ListPickerPill
             value={listId}
             onChange={setListId}
+            disabled={createTask.isPending}
+          />
+          <RecurrencePill
+            rule={recurrenceRule}
+            interval={recurrenceInterval}
+            onRuleChange={setRecurrenceRule}
+            onIntervalChange={setRecurrenceInterval}
             disabled={createTask.isPending}
           />
         </div>
@@ -911,6 +1210,13 @@ export function TaskCard(props: {
   const [editedListId, setEditedListId] = useState<string | undefined>(
     props.task.listId ?? undefined,
   );
+  const [editedRecurrenceRule, setEditedRecurrenceRule] =
+    useState<RecurrenceRuleType>(
+      (props.task.recurrenceRule as RecurrenceRuleType) ?? null,
+    );
+  const [editedRecurrenceInterval, setEditedRecurrenceInterval] = useState(
+    props.task.recurrenceInterval ?? 1,
+  );
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch categories for the select dropdown (only when user is logged in)
@@ -979,6 +1285,10 @@ export function TaskCard(props: {
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setEditedReminderAt(props.task.reminderAt ?? undefined);
     setEditedListId(props.task.listId ?? undefined);
+    setEditedRecurrenceRule(
+      (props.task.recurrenceRule as RecurrenceRuleType) ?? null,
+    );
+    setEditedRecurrenceInterval(props.task.recurrenceInterval ?? 1);
     setIsExpanded(true);
     setIsEditing(true);
     setTimeout(() => titleInputRef.current?.focus(), 0);
@@ -1007,6 +1317,10 @@ export function TaskCard(props: {
         priority: editedPriority,
         reminderAt: editedReminderAt ?? null,
         listId: editedListId ?? null,
+        recurrenceRule: editedRecurrenceRule ?? null,
+        recurrenceInterval: editedRecurrenceRule
+          ? editedRecurrenceInterval
+          : null,
       });
       setIsEditing(false);
       setIsExpanded(false);
@@ -1024,6 +1338,10 @@ export function TaskCard(props: {
     setEditedPriority((props.task.priority ?? "medium") as TaskPriority);
     setEditedReminderAt(props.task.reminderAt ?? undefined);
     setEditedListId(props.task.listId ?? undefined);
+    setEditedRecurrenceRule(
+      (props.task.recurrenceRule as RecurrenceRuleType) ?? null,
+    );
+    setEditedRecurrenceInterval(props.task.recurrenceInterval ?? 1);
     setIsEditing(false);
     setIsExpanded(false);
   };
@@ -1052,7 +1370,10 @@ export function TaskCard(props: {
     editedCategoryId !== props.task.categoryId ||
     editedPriority !== (props.task.priority ?? "medium") ||
     editedReminderAt?.getTime() !== props.task.reminderAt?.getTime() ||
-    (editedListId ?? null) !== (props.task.listId ?? null);
+    (editedListId ?? null) !== (props.task.listId ?? null) ||
+    (editedRecurrenceRule ?? null) !==
+      (props.task.recurrenceRule ?? null) ||
+    editedRecurrenceInterval !== (props.task.recurrenceInterval ?? 1);
 
   return (
     <div
@@ -1174,7 +1495,7 @@ export function TaskCard(props: {
           <div
             className={cn(
               "z-10 transition-transform duration-300 ease-in-out shrink-0",
-              "hidden sm:block sm:group-hover:-translate-x-32",
+              "hidden sm:block sm:group-hover:-translate-x-48",
             )}
           >
             <PriorityBadge priority={props.task.priority} variant="compact" />
@@ -1183,7 +1504,7 @@ export function TaskCard(props: {
 
         {/* Due Date - collapsed row - hidden on mobile */}
         {!isExpanded && editedDueDate ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
             <div className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
               <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden lg:inline">
@@ -1206,7 +1527,7 @@ export function TaskCard(props: {
 
         {/* Category - collapsed row - hidden on mobile */}
         {!isExpanded && editedCategory ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
             <div
               className="rounded-full border px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium backdrop-blur-md truncate max-w-[100px] sm:max-w-none"
               style={{
@@ -1222,7 +1543,7 @@ export function TaskCard(props: {
 
         {/* Reminder - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.reminderAt ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
             <div
               className={cn(
                 "flex items-center gap-1.5 sm:gap-2 rounded-full border px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium backdrop-blur-md",
@@ -1242,7 +1563,7 @@ export function TaskCard(props: {
 
         {/* List badge - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.list ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-32 shrink-0 hidden sm:block">
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
             <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-[#8FA8A8] backdrop-blur-md">
               <span
                 className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0"
@@ -1257,9 +1578,40 @@ export function TaskCard(props: {
           </div>
         ) : null}
 
+        {/* Recurrence - collapsed row - hidden on mobile */}
+        {!isExpanded && props.task.recurrenceRule ? (
+          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
+            <div className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium text-[#50C878] backdrop-blur-md">
+              <Repeat className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">
+                {(props.task.recurrenceInterval ?? 1) === 1
+                  ? (props.task.recurrenceRule as string).charAt(0).toUpperCase() +
+                    (props.task.recurrenceRule as string).slice(1)
+                  : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
         {/* Hover Actions - only in collapsed non-editing state - hidden on mobile */}
         {!isExpanded && !isEditing && (
           <div className="absolute inset-y-0 right-0 hidden sm:flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-full w-12 sm:w-16 rounded-none bg-amber-500 text-white hover:bg-amber-600 hover:text-white"
+                  aria-label="Snooze task"
+                >
+                  <AlarmClock className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="sr-only">Snooze</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-2" align="end">
+                <SnoozePopoverContent taskId={props.task.id} />
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="icon"
@@ -1393,6 +1745,14 @@ export function TaskCard(props: {
                   onChange={setEditedListId}
                   disabled={updateTask.isPending}
                 />
+                <RecurrencePill
+                  rule={editedRecurrenceRule}
+                  interval={editedRecurrenceInterval}
+                  onRuleChange={setEditedRecurrenceRule}
+                  onIntervalChange={setEditedRecurrenceInterval}
+                  disabled={updateTask.isPending}
+                />
+                <SnoozePill taskId={props.task.id} />
               </div>
             )}
 
@@ -1441,6 +1801,15 @@ export function TaskCard(props: {
                       props.task.reminderAt,
                       props.task.reminderSentAt,
                     )}
+                  </div>
+                )}
+                {props.task.recurrenceRule && (
+                  <div className="flex items-center gap-2 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-4 py-1.5 text-xs font-medium text-[#50C878] backdrop-blur-md">
+                    <Repeat className="h-3.5 w-3.5" />
+                    {(props.task.recurrenceInterval ?? 1) === 1
+                      ? (props.task.recurrenceRule as string).charAt(0).toUpperCase() +
+                        (props.task.recurrenceRule as string).slice(1)
+                      : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
                   </div>
                 )}
               </div>

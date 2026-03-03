@@ -15,6 +15,13 @@
       "when": 1771642412618,
       "tag": "0001_magenta_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772549438310,
+      "tag": "0002_tidy_leech",
+      "breakpoints": true
     }
   ]
 }
