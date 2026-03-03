@@ -13,7 +13,7 @@ import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Layers, List, RefreshCw } from "lucide-react-native";
+import { CalendarDays, Layers, List, RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
@@ -33,6 +33,7 @@ import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SnoozeSheet } from "../components/SnoozeSheet";
+import { CalendarView } from "../components/CalendarView";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import { TaskFormSheet } from "../components/TaskFormSheet";
 import { CategoryFilter } from "./_components/category-filter";
@@ -72,23 +73,28 @@ function ViewToggleButton({
   viewMode,
   onToggle,
 }: {
-  viewMode: "stack" | "list";
+  viewMode: "stack" | "list" | "calendar";
   onToggle: () => void;
 }) {
+  const label =
+    viewMode === "stack"
+      ? "Switch to list view"
+      : viewMode === "list"
+        ? "Switch to calendar view"
+        : "Switch to card view";
+
+  // Icon shows the *next* mode
+  const Icon =
+    viewMode === "stack" ? List : viewMode === "list" ? CalendarDays : Layers;
+
   return (
     <Pressable
       onPress={onToggle}
       accessibilityRole="button"
-      accessibilityLabel={
-        viewMode === "stack" ? "Switch to list view" : "Switch to card view"
-      }
+      accessibilityLabel={label}
     >
       <Animated.View className="border-border bg-surface h-12 w-12 items-center justify-center rounded-full border-2">
-        {viewMode === "stack" ? (
-          <List size={24} color="#DCE4E4" />
-        ) : (
-          <Layers size={24} color="#DCE4E4" />
-        )}
+        <Icon size={24} color="#DCE4E4" />
       </Animated.View>
     </Pressable>
   );
@@ -99,7 +105,7 @@ export default function Index() {
   const { openTask } = useLocalSearchParams<{ openTask?: string }>();
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [viewMode, setViewMode] = useState<"stack" | "list">("stack");
+  const [viewMode, setViewMode] = useState<"stack" | "list" | "calendar">("stack");
   const [rippleTrigger, setRippleTrigger] = useState(0);
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRipple = useCallback(() => {
@@ -830,7 +836,14 @@ export default function Index() {
               ))}
             </ScrollView>
           )}
-          {filteredTasks.length > 0 ? (
+          {viewMode === "calendar" ? (
+            <CalendarView
+              tasks={filteredTasks}
+              onToggle={handleToggle}
+              onTaskPress={handleTaskPress}
+              onSubtaskToggle={handleSubtaskToggle}
+            />
+          ) : filteredTasks.length > 0 ? (
             <SwipeableCardStack
               key={viewMode}
               isCompact={viewMode === "stack"}
@@ -871,7 +884,9 @@ export default function Index() {
           <ViewToggleButton
             viewMode={viewMode}
             onToggle={() =>
-              setViewMode((v) => (v === "stack" ? "list" : "stack"))
+              setViewMode((v) =>
+                v === "stack" ? "list" : v === "list" ? "calendar" : "stack",
+              )
             }
           />
           <TaskFormSheet

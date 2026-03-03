@@ -11,6 +11,7 @@ import { PriorityFilterProvider } from "./_components/priority-filter-context";
 import { AppSidebar } from "./_components/sidebar-nav";
 import { TaskHeader } from "./_components/task-header";
 import { TaskCardSkeleton, TaskList } from "./_components/tasks";
+import { ViewToggleProvider } from "./_components/view-toggle-context";
 
 export default async function HomePage() {
   const session = await getSession();
@@ -45,32 +46,34 @@ export default async function HomePage() {
                   <CreateTaskProvider>
                     <CategoryFilterProvider>
                       <PriorityFilterProvider>
-                        <TaskHeader />
+                        <ViewToggleProvider>
+                          <TaskHeader />
 
-                        <div className="custom-scrollbar mt-3 sm:mt-6 flex-1 overflow-y-auto px-0 sm:px-2 pt-2 pr-2 sm:pr-4 pb-2">
-                          {session?.user ? (
-                            <Suspense
-                              fallback={
-                                <div className="flex w-full flex-col gap-4">
-                                  <TaskCardSkeleton />
-                                  <TaskCardSkeleton />
-                                  <TaskCardSkeleton />
-                                </div>
-                              }
-                            >
-                              <TaskList />
-                            </Suspense>
-                          ) : (
-                            <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                              <h2 className="mb-2 text-2xl font-bold text-white">
-                                Welcome to Tokilist
-                              </h2>
-                              <p className="text-muted-foreground mb-6">
-                                Please sign in to manage your tasks
-                              </p>
-                            </div>
-                          )}
-                        </div>
+                          <div className="custom-scrollbar mt-3 sm:mt-6 flex-1 overflow-y-auto px-0 sm:px-2 pt-2 pr-2 sm:pr-4 pb-2">
+                            {session?.user ? (
+                              <Suspense
+                                fallback={
+                                  <div className="flex w-full flex-col gap-4">
+                                    <TaskCardSkeleton />
+                                    <TaskCardSkeleton />
+                                    <TaskCardSkeleton />
+                                  </div>
+                                }
+                              >
+                                <TaskList />
+                              </Suspense>
+                            ) : (
+                              <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                                <h2 className="mb-2 text-2xl font-bold text-white">
+                                  Welcome to Tokilist
+                                </h2>
+                                <p className="text-muted-foreground mb-6">
+                                  Please sign in to manage your tasks
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </ViewToggleProvider>
                       </PriorityFilterProvider>
                     </CategoryFilterProvider>
                   </CreateTaskProvider>

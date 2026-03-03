@@ -3,24 +3,28 @@
 import { useState } from "react";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Search } from "lucide-react";
+import { CalendarDays, List, RefreshCw, Search } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
 import { SidebarTrigger } from "@acme/ui/sidebar";
 import { toast } from "@acme/ui/toast";
 
+import { cn } from "@acme/ui";
+
 import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { useCreateTask } from "./create-task-context";
 import { ListFilter } from "./list-filter";
 import { PriorityFilter } from "./priority-filter";
+import { useViewToggle } from "./view-toggle-context";
 
 export function TaskHeader() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { setIsCreating } = useCreateTask();
+  const { viewMode, setViewMode } = useViewToggle();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -70,6 +74,34 @@ export function TaskHeader() {
             placeholder="Search"
             className="border-border bg-surface/50 w-64 rounded-full pl-10 backdrop-blur-sm"
           />
+        </div>
+
+        {/* View toggle */}
+        <div className="flex items-center rounded-full border border-[#164B49] bg-[#102A2A]/80 p-0.5">
+          <button
+            onClick={() => setViewMode("list")}
+            className={cn(
+              "flex items-center justify-center rounded-full p-1.5 transition-colors",
+              viewMode === "list"
+                ? "bg-primary/20 text-primary"
+                : "text-[#8FA8A8] hover:text-[#DCE4E4]",
+            )}
+            aria-label="List view"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("calendar")}
+            className={cn(
+              "flex items-center justify-center rounded-full p-1.5 transition-colors",
+              viewMode === "calendar"
+                ? "bg-primary/20 text-primary"
+                : "text-[#8FA8A8] hover:text-[#DCE4E4]",
+            )}
+            aria-label="Calendar view"
+          >
+            <CalendarDays className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Refresh button */}

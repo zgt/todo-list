@@ -34,6 +34,7 @@ import { toast } from "@acme/ui/toast";
 
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
+import { CalendarView } from "./calendar-view";
 import { useCategoryFilter } from "./category-filter-context";
 import { CategoryTreePicker } from "./category-tree-picker";
 import { useCreateTask } from "./create-task-context";
@@ -41,6 +42,7 @@ import { useListFilter } from "./list-filter-context";
 import { ListPickerPill } from "./list-picker-pill";
 import { PriorityBadge, PrioritySelectorPill } from "./priority";
 import { usePriorityFilter } from "./priority-filter-context";
+import { useViewToggle } from "./view-toggle-context";
 
 // Validation schema for inline task editing
 const EditTaskSchema = z.object({
@@ -868,6 +870,7 @@ export function TaskList() {
   const { effectiveCategoryIds } = useCategoryFilter();
   const { selectedPriorities } = usePriorityFilter();
   const { selectedListId } = useListFilter();
+  const { viewMode } = useViewToggle();
 
   // Filter tasks based on selected categories, priorities, and list
   const filteredTasks = tasks.filter((task) => {
@@ -924,6 +927,10 @@ export function TaskList() {
         </p>
       </div>
     );
+  }
+
+  if (viewMode === "calendar") {
+    return <CalendarView tasks={filteredTasks} />;
   }
 
   return (
