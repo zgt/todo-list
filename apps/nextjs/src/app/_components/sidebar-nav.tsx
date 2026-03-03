@@ -13,7 +13,6 @@ import {
   Tag,
   User,
   Users,
-  X,
 } from "lucide-react";
 
 import { cn } from "@acme/ui";
@@ -63,7 +62,7 @@ export function AppSidebar({
   user?: { name?: string | null; email?: string | null; image?: string | null };
 }) {
   const pathname = usePathname();
-  const { open, setOpen, isMobile } = useSidebar();
+  useSidebar();
 
   return (
     <>
@@ -75,129 +74,129 @@ export function AppSidebar({
         <SidebarContent className="bg-transparent p-0">
           <div className="glass-panel flex h-full flex-col rounded-2xl p-3 sm:rounded-3xl sm:p-4 md:p-4">
             <SidebarMenu className="gap-2">
-            {navigation.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== "/" && pathname.startsWith(item.href));
+              {navigation.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
 
-              return (
-                <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive}
-                    className={cn(
-                      "h-12 rounded-xl px-4 text-base transition-all duration-300",
-                      isActive
-                        ? "bg-primary/20 text-primary shadow-glow border-primary/20 border"
-                        : "text-muted-foreground hover:text-foreground hover:bg-white/5",
-                    )}
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span className="font-medium">{item.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
-          </SidebarMenu>
-
-          {/* Lists Section - only on home page */}
-          {user && pathname === "/" && <SidebarListsSection />}
-
-          <div className="mt-auto pt-4">
-            {user ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="glass-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-white/10 p-3 transition-colors hover:bg-white/5">
-                    <div className="from-primary size-10 rounded-full bg-linear-to-br to-emerald-700 p-[2px]">
-                      {user.image ? (
-                        <Image
-                          src={user.image}
-                          alt={user.name ?? "User"}
-                          width={40}
-                          height={40}
-                          className="size-full rounded-full border-2 border-black object-cover"
-                        />
-                      ) : (
-                        <div className="bg-muted flex size-full items-center justify-center rounded-full border-2 border-black">
-                          <span className="text-xs font-bold">
-                            {user.name?.[0] ?? "?"}
-                          </span>
-                        </div>
+                return (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className={cn(
+                        "h-12 rounded-xl px-4 text-base transition-all duration-300",
+                        isActive
+                          ? "bg-primary/20 text-primary shadow-glow border-primary/20 border"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5",
                       )}
-                    </div>
-                    <div className="flex-1 overflow-hidden text-left">
-                      <p className="truncate text-sm font-medium text-white">
-                        {user.name}
-                      </p>
-                      <p className="text-muted-foreground truncate text-xs">
-                        {user.email}
-                      </p>
-                    </div>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="glass-card w-56 border-white/10 p-2"
-                  side="top"
-                  align="start"
-                  sideOffset={8}
-                >
-                  <div className="flex flex-col gap-1">
-                    <Link
-                      href="/music/profile"
-                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
                     >
-                      <User className="h-4 w-4" />
-                      Profile
-                    </Link>
-                    <Link
-                      href="/music/settings"
-                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Link>
-                    <Link
-                      href="/settings/blocked-users"
-                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
-                    >
-                      <ShieldAlert className="h-4 w-4" />
-                      Blocked Users
-                    </Link>
-                    <a
-                      href="mailto:support@tokilist.app"
-                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
-                    >
-                      <HelpCircle className="h-4 w-4" />
-                      Contact Support
-                    </a>
-                    <div className="my-1 h-px bg-white/10" />
-                    <Link
-                      href="/privacy"
-                      className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#8FA8A8] transition-colors hover:bg-white/5"
-                    >
-                      Privacy Policy
-                    </Link>
-                    <form>
-                      <button
-                        type="submit"
-                        formAction={signOut}
-                        className="hover:text-foreground w-full rounded-lg px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span className="font-medium">{item.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+
+            {/* Lists Section - only on home page */}
+            {user && pathname === "/" && <SidebarListsSection />}
+
+            <div className="mt-auto pt-4">
+              {user ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="glass-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-white/10 p-3 transition-colors hover:bg-white/5">
+                      <div className="from-primary size-10 rounded-full bg-linear-to-br to-emerald-700 p-[2px]">
+                        {user.image ? (
+                          <Image
+                            src={user.image}
+                            alt={user.name ?? "User"}
+                            width={40}
+                            height={40}
+                            className="size-full rounded-full border-2 border-black object-cover"
+                          />
+                        ) : (
+                          <div className="bg-muted flex size-full items-center justify-center rounded-full border-2 border-black">
+                            <span className="text-xs font-bold">
+                              {user.name?.[0] ?? "?"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 overflow-hidden text-left">
+                        <p className="truncate text-sm font-medium text-white">
+                          {user.name}
+                        </p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {user.email}
+                        </p>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="glass-card w-56 border-white/10 p-2"
+                    side="top"
+                    align="start"
+                    sideOffset={8}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <Link
+                        href="/music/profile"
+                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
                       >
-                        Sign out
-                      </button>
-                    </form>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <SidebarSignInButton />
-            )}
+                        <User className="h-4 w-4" />
+                        Profile
+                      </Link>
+                      <Link
+                        href="/music/settings"
+                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Settings
+                      </Link>
+                      <Link
+                        href="/settings/blocked-users"
+                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
+                      >
+                        <ShieldAlert className="h-4 w-4" />
+                        Blocked Users
+                      </Link>
+                      <a
+                        href="mailto:support@tokilist.app"
+                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                        Contact Support
+                      </a>
+                      <div className="my-1 h-px bg-white/10" />
+                      <Link
+                        href="/privacy"
+                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#8FA8A8] transition-colors hover:bg-white/5"
+                      >
+                        Privacy Policy
+                      </Link>
+                      <form>
+                        <button
+                          type="submit"
+                          formAction={signOut}
+                          className="hover:text-foreground w-full rounded-lg px-3 py-2 text-left text-sm text-white transition-colors hover:bg-white/5"
+                        >
+                          Sign out
+                        </button>
+                      </form>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <SidebarSignInButton />
+              )}
+            </div>
           </div>
-        </div>
-      </SidebarContent>
-    </Sidebar>
+        </SidebarContent>
+      </Sidebar>
     </>
   );
 }

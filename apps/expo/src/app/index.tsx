@@ -18,6 +18,7 @@ import { CalendarDays, Layers, List, RefreshCw } from "lucide-react-native";
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
 import type { PriorityLevel } from "../components/priority-config";
+import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
@@ -28,13 +29,12 @@ import {
   rescheduleAllReminders,
   scheduleTaskReminder,
 } from "~/utils/notifications";
-import type { SnoozeSheetRef } from "../components/SnoozeSheet";
+import { CalendarView } from "../components/CalendarView";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
 import { ProfileMenu } from "../components/ProfileMenu";
 import { SignInButton } from "../components/SignInButton";
 import { SnoozeSheet } from "../components/SnoozeSheet";
-import { CalendarView } from "../components/CalendarView";
 import { SwipeableCardStack } from "../components/SwipeableCardStack";
 import { TaskFormSheet } from "../components/TaskFormSheet";
 import { CategoryFilter } from "./_components/category-filter";
@@ -42,7 +42,13 @@ import { useCategoryFilter } from "./_components/category-filter-context";
 
 type ServerTask = RouterOutputs["task"]["all"][number];
 
-function Header({ onProfilePress, onRefresh }: { onProfilePress: () => void; onRefresh: () => void }) {
+function Header({
+  onProfilePress,
+  onRefresh,
+}: {
+  onProfilePress: () => void;
+  onRefresh: () => void;
+}) {
   const { data: session } = authClient.useSession();
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
@@ -63,7 +69,9 @@ function Header({ onProfilePress, onRefresh }: { onProfilePress: () => void; onR
         {session ? (
           <ProfileButton user={session.user} onPress={onProfilePress} />
         ) : (
-          <SignInButton provider={Platform.OS === "ios" ? "apple" : "discord"} />
+          <SignInButton
+            provider={Platform.OS === "ios" ? "apple" : "discord"}
+          />
         )}
       </View>
     </View>
@@ -106,8 +114,12 @@ export default function Index() {
   const { openTask } = useLocalSearchParams<{ openTask?: string }>();
   const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [viewMode, setViewMode] = useState<"stack" | "list" | "calendar">("stack");
-  const [calendarSelectedDate, setCalendarSelectedDate] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"stack" | "list" | "calendar">(
+    "stack",
+  );
+  const [calendarSelectedDate, setCalendarSelectedDate] = useState<
+    string | null
+  >(null);
   const [rippleTrigger, setRippleTrigger] = useState(0);
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRipple = useCallback(() => {
@@ -481,12 +493,9 @@ export default function Index() {
     }
   };
 
-  const handleOpenSnoozeSheet = useCallback(
-    (taskId: string) => {
-      snoozeSheetRef.current?.present(taskId);
-    },
-    [],
-  );
+  const handleOpenSnoozeSheet = useCallback((taskId: string) => {
+    snoozeSheetRef.current?.present(taskId);
+  }, []);
 
   // tRPC mutation for toggling subtask completion
   const subtaskUpdateMutation = useMutation(
@@ -907,8 +916,10 @@ export default function Index() {
               dueDate:
                 viewMode === "calendar" && calendarSelectedDate
                   ? (() => {
-                      const [y, m, d] = calendarSelectedDate.split("-").map(Number);
-                      return new Date(y!, m! - 1, d!);
+                      const [y, m, d] = calendarSelectedDate
+                        .split("-")
+                        .map(Number);
+                      return new Date(y ?? 0, (m ?? 1) - 1, d);
                     })()
                   : null,
             }}
@@ -941,7 +952,8 @@ export default function Index() {
                   reminderAt: editingTask.reminderAt,
                   subtasks: editingTask.subtasks,
                   listId: editingTask.listId,
-                  recurrenceRule: editingTask.recurrenceRule as TaskFormData["recurrenceRule"],
+                  recurrenceRule:
+                    editingTask.recurrenceRule as TaskFormData["recurrenceRule"],
                   recurrenceInterval: editingTask.recurrenceInterval,
                 }
               : undefined

@@ -8,8 +8,6 @@ import {
   Text,
   View,
 } from "react-native";
-
-import { UserAvatar } from "~/components/UserAvatar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -25,6 +23,7 @@ import {
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
+import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
@@ -241,9 +240,7 @@ export default function ProfileScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() =>
-                    router.push("/music/blocked-users" as never)
-                  }
+                  onPress={() => router.push("/music/blocked-users" as never)}
                   className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
                 >
                   <View className="flex-row items-center gap-3">
@@ -260,9 +257,7 @@ export default function ProfileScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() =>
-                    Linking.openURL("mailto:support@tokilist.app")
-                  }
+                  onPress={() => Linking.openURL("mailto:support@tokilist.app")}
                   className="flex-row items-center justify-between rounded-2xl border border-[#164B49] bg-[#102A2A] p-4 active:bg-[#164B49]"
                 >
                   <View className="flex-row items-center gap-3">

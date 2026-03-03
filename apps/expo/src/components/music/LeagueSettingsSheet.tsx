@@ -170,7 +170,9 @@ function DeleteConfirmModal({
               {isDeleting ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}>
+                <Text
+                  style={{ fontSize: 16, fontWeight: "700", color: "#ffffff" }}
+                >
                   Delete League
                 </Text>
               )}
@@ -186,7 +188,9 @@ function DeleteConfirmModal({
                 paddingVertical: 14,
               }}
             >
-              <Text style={{ fontSize: 16, fontWeight: "500", color: "#DCE4E4" }}>
+              <Text
+                style={{ fontSize: 16, fontWeight: "500", color: "#DCE4E4" }}
+              >
                 Cancel
               </Text>
             </Pressable>
@@ -346,7 +350,11 @@ export const LeagueSettingsSheet = forwardRef<
                 placeholderTextColor="#8FA8A8"
                 maxLength={100}
                 className="rounded-2xl border border-[#164B49] bg-[#0A1A1A] px-4 text-[#DCE4E4]"
-                style={{ fontSize: 16, height: 48, textAlignVertical: "center" }}
+                style={{
+                  fontSize: 16,
+                  height: 48,
+                  textAlignVertical: "center",
+                }}
               />
             </View>
 
@@ -364,7 +372,12 @@ export const LeagueSettingsSheet = forwardRef<
                 multiline
                 numberOfLines={3}
                 className="rounded-2xl border border-[#164B49] bg-[#0A1A1A] px-4 text-[#DCE4E4]"
-                style={{ fontSize: 16, minHeight: 80, paddingVertical: 12, textAlignVertical: "top" }}
+                style={{
+                  fontSize: 16,
+                  minHeight: 80,
+                  paddingVertical: 12,
+                  textAlignVertical: "top",
+                }}
               />
             </View>
 

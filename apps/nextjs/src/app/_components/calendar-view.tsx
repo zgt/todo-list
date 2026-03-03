@@ -25,7 +25,7 @@ function formatDateHeader(dateKey: string): string {
   if (dateKey === tomorrowKey) return "Tomorrow";
 
   const [year, month, day] = dateKey.split("-").map(Number);
-  const date = new Date(year!, month! - 1, day);
+  const date = new Date(year ?? 0, (month ?? 0) - 1, day);
   return date.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -77,7 +77,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
     const dates: Date[] = [];
     for (const key of tasksByDate.keys()) {
       const [y, m, d] = key.split("-").map(Number);
-      dates.push(new Date(y!, m! - 1, d));
+      dates.push(new Date(y ?? 0, (m ?? 0) - 1, d));
     }
     return dates;
   }, [tasksByDate]);
@@ -110,7 +110,12 @@ export function CalendarView({ tasks }: CalendarViewProps) {
           onSelect={(date) => date && setSelectedDate(date)}
           modifiers={{ hasTasks: datesWithTasks }}
           components={{
-            DayButton: ({ day, modifiers, className, ...buttonProps }) => {
+            DayButton: ({
+              day,
+              modifiers: _modifiers,
+              className,
+              ...buttonProps
+            }) => {
               const dateKey = toLocalDateKey(day.date);
               const dots = dotsByDateKey.get(dateKey);
               const isToday = dateKey === todayKey;
@@ -127,15 +132,25 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                     justifyContent: "center",
                     gap: "2px",
                     ...(isSelected
-                      ? { backgroundColor: "#50C878", color: "#0A1A1A", borderRadius: "6px" }
+                      ? {
+                          backgroundColor: "#50C878",
+                          color: "#0A1A1A",
+                          borderRadius: "6px",
+                        }
                       : isToday
-                        ? { backgroundColor: "rgba(80,200,120,0.2)", color: "#50C878", borderRadius: "6px" }
+                        ? {
+                            backgroundColor: "rgba(80,200,120,0.2)",
+                            color: "#50C878",
+                            borderRadius: "6px",
+                          }
                         : {}),
                   }}
                 >
                   <span>{day.date.getDate()}</span>
                   {dots && dots.length > 0 && (
-                    <span style={{ display: "flex", gap: "2px", height: "4px" }}>
+                    <span
+                      style={{ display: "flex", gap: "2px", height: "4px" }}
+                    >
                       {dots.map((color, i) => (
                         <span
                           key={i}
@@ -170,7 +185,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
           </div>
         ) : (
           <div className="flex items-center justify-center py-8">
-            <p className="text-sm italic text-[#8FA8A8]">
+            <p className="text-sm text-[#8FA8A8] italic">
               No tasks for this day
             </p>
           </div>

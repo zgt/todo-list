@@ -61,16 +61,15 @@ export default function BlockedUsersPage() {
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={entry.user.image ?? undefined} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                      {(entry.user.name ?? "?").charAt(0).toUpperCase()}
+                      {entry.user.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
-                      {entry.user.name ?? "Unknown"}
+                      {entry.user.name}
                     </p>
                     <p className="text-muted-foreground text-xs">
-                      Blocked{" "}
-                      {new Date(entry.createdAt).toLocaleDateString()}
+                      Blocked {new Date(entry.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <Button

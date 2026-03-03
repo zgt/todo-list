@@ -22,16 +22,17 @@ import {
   Pencil,
   Shield,
   Trash2,
-  UserCircle,
 } from "lucide-react-native";
 
-import { UserAvatar } from "~/components/UserAvatar";
 import { GradientBackground } from "~/components/GradientBackground";
+import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
 const APP_VERSION =
-  Constants.expoConfig?.version ?? Constants.manifest2?.extra?.expoClient?.version ?? "0.0.0";
+  Constants.expoConfig?.version ??
+  Constants.manifest2?.extra?.expoClient?.version ??
+  "0.0.0";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -56,7 +57,10 @@ export default function ProfileScreen() {
         void authClient.getSession({ query: { disableCookieCache: true } });
       },
       onError: () => {
-        Alert.alert("Error", "Could not update display name. Please try again.");
+        Alert.alert(
+          "Error",
+          "Could not update display name. Please try again.",
+        );
       },
     }),
   );
@@ -71,10 +75,7 @@ export default function ProfileScreen() {
         }
       },
       onError: (error) => {
-        Alert.alert(
-          "Deletion Failed",
-          error.message ?? "Could not delete your account. Please try again.",
-        );
+        Alert.alert("Deletion Failed", error.message);
       },
     }),
   );
@@ -258,7 +259,10 @@ export default function ProfileScreen() {
           </View>
 
           {/* About Section */}
-          <SectionHeader icon={<Info size={20} color="#50C878" />} title="About" />
+          <SectionHeader
+            icon={<Info size={20} color="#50C878" />}
+            title="About"
+          />
           <View
             style={{
               borderRadius: 12,

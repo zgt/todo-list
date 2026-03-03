@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
-import { eq } from "@acme/db";
 import { z } from "zod/v4";
 
+import { eq } from "@acme/db";
 import {
   account,
   Category,
@@ -37,11 +37,9 @@ export const userRouter = {
   deleteAccount: protectedProcedure
     .input(
       z.object({
-        confirmation: z
-          .string()
-          .refine((val) => val === "DELETE", {
-            message: 'You must type "DELETE" to confirm account deletion',
-          }),
+        confirmation: z.string().refine((val) => val === "DELETE", {
+          message: 'You must type "DELETE" to confirm account deletion',
+        }),
       }),
     )
     .mutation(async ({ ctx }) => {

@@ -18,9 +18,7 @@ export default function PrivacyPolicyPage() {
         </Link>
 
         <article className="prose prose-invert max-w-none">
-          <h1 className="mb-2 text-4xl font-bold text-white">
-            Privacy Policy
-          </h1>
+          <h1 className="mb-2 text-4xl font-bold text-white">Privacy Policy</h1>
           <p className="mb-10 text-sm text-[#8FA8A8]">
             Last updated: March 1, 2026
           </p>
@@ -118,9 +116,9 @@ export default function PrivacyPolicyPage() {
               </li>
             </ul>
             <p>
-              Each of these services has its own privacy policy. We encourage you
-              to review them. We only share the minimum data necessary for these
-              integrations to function.
+              Each of these services has its own privacy policy. We encourage
+              you to review them. We only share the minimum data necessary for
+              these integrations to function.
             </p>
           </Section>
 

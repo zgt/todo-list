@@ -2,7 +2,10 @@ import { useEffect, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 
-import type { NotificationData, TaskNotificationData } from "~/utils/notifications";
+import type {
+  NotificationData,
+  TaskNotificationData,
+} from "~/utils/notifications";
 import { vanillaTrpc } from "~/utils/api";
 import {
   configureNotificationHandler,
@@ -27,7 +30,10 @@ async function handleTaskAction(
       const snoozeUntil = new Date(Date.now() + 10 * 60 * 1000);
       await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
       try {
-        await vanillaTrpc.task.update.mutate({ id: taskId, reminderAt: snoozeUntil });
+        await vanillaTrpc.task.update.mutate({
+          id: taskId,
+          reminderAt: snoozeUntil,
+        });
       } catch (err) {
         console.error("[Notifications] Failed to update reminder:", err);
       }
@@ -37,7 +43,10 @@ async function handleTaskAction(
       const snoozeUntil = new Date(Date.now() + 60 * 60 * 1000);
       await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
       try {
-        await vanillaTrpc.task.update.mutate({ id: taskId, reminderAt: snoozeUntil });
+        await vanillaTrpc.task.update.mutate({
+          id: taskId,
+          reminderAt: snoozeUntil,
+        });
       } catch (err) {
         console.error("[Notifications] Failed to update reminder:", err);
       }

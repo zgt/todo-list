@@ -13,6 +13,7 @@ import {
   Vote,
 } from "@acme/db/schema";
 
+import { flagContentIfNeeded } from "../../lib/content-filter";
 import {
   notifyResultsAvailable,
   notifyRoundStarted,
@@ -23,7 +24,6 @@ import {
   pushNotifyRoundStarted,
   pushNotifyVotingOpen,
 } from "../../lib/push/notifications";
-import { flagContentIfNeeded } from "../../lib/content-filter";
 import { createPlaylist, searchTracks } from "../../lib/spotify";
 import { protectedProcedure, publicProcedure } from "../../trpc";
 

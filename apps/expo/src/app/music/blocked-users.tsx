@@ -12,8 +12,8 @@ import { Stack, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ShieldOff } from "lucide-react-native";
 
-import { UserAvatar } from "~/components/UserAvatar";
 import { GradientBackground } from "~/components/GradientBackground";
+import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
 
 export default function BlockedUsersScreen() {
@@ -30,11 +30,9 @@ export default function BlockedUsersScreen() {
     }, 500);
   }, []);
 
-  const {
-    data: blockedUsers,
-    isLoading,
-    refetch,
-  } = useQuery(trpc.moderation.getBlockedUsers.queryOptions());
+  const { data: blockedUsers, refetch } = useQuery(
+    trpc.moderation.getBlockedUsers.queryOptions(),
+  );
 
   const unblockMutation = useMutation(
     trpc.moderation.unblockUser.mutationOptions({
@@ -65,13 +63,17 @@ export default function BlockedUsersScreen() {
   }, [refetch, triggerRipple]);
 
   const handleUnblock = (userId: string, userName: string) => {
-    Alert.alert("Unblock User", `Unblock ${userName}? You'll see their content again.`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Unblock",
-        onPress: () => unblockMutation.mutate({ blockedUserId: userId }),
-      },
-    ]);
+    Alert.alert(
+      "Unblock User",
+      `Unblock ${userName}? You'll see their content again.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Unblock",
+          onPress: () => unblockMutation.mutate({ blockedUserId: userId }),
+        },
+      ],
+    );
   };
 
   return (
@@ -106,10 +108,12 @@ export default function BlockedUsersScreen() {
           }
           ListEmptyComponent={
             <View className="items-center py-12">
-              <ShieldOff size={40} color="#8FA8A8" style={{ marginBottom: 12 }} />
-              <Text className="text-base text-[#8FA8A8]">
-                No blocked users
-              </Text>
+              <ShieldOff
+                size={40}
+                color="#8FA8A8"
+                style={{ marginBottom: 12 }}
+              />
+              <Text className="text-base text-[#8FA8A8]">No blocked users</Text>
               <Text className="mt-1 text-sm text-[#4B6B6B]">
                 Users you block will appear here
               </Text>
@@ -137,7 +141,7 @@ export default function BlockedUsersScreen() {
                 <Text
                   style={{ fontSize: 16, fontWeight: "600", color: "#DCE4E4" }}
                 >
-                  {item.user.name ?? "Unknown"}
+                  {item.user.name}
                 </Text>
                 <Text style={{ fontSize: 12, color: "#8FA8A8", marginTop: 2 }}>
                   Blocked {new Date(item.createdAt).toLocaleDateString()}
@@ -145,10 +149,7 @@ export default function BlockedUsersScreen() {
               </View>
               <Pressable
                 onPress={() =>
-                  handleUnblock(
-                    item.blockedUserId,
-                    item.user.name ?? "this user",
-                  )
+                  handleUnblock(item.blockedUserId, item.user.name)
                 }
                 disabled={unblockMutation.isPending}
                 style={({ pressed }) => ({

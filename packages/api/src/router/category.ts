@@ -232,10 +232,7 @@ export const categoryRouter = {
       if (!categoryId) return [];
 
       const category = await ctx.db.query.Category.findFirst({
-        where: and(
-          eq(Category.id, categoryId),
-          isNull(Category.deletedAt),
-        ),
+        where: and(eq(Category.id, categoryId), isNull(Category.deletedAt)),
       });
 
       if (!category) return [];

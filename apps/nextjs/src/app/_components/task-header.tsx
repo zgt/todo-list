@@ -5,12 +5,11 @@ import { PlusIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, List, RefreshCw, Search } from "lucide-react";
 
+import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { Input } from "@acme/ui/input";
 import { SidebarTrigger } from "@acme/ui/sidebar";
 import { toast } from "@acme/ui/toast";
-
-import { cn } from "@acme/ui";
 
 import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
@@ -40,9 +39,9 @@ export function TaskHeader() {
   };
 
   return (
-    <header className="flex items-center justify-between gap-2 sm:gap-4 pr-2 sm:pr-6">
+    <header className="flex items-center justify-between gap-2 pr-2 sm:gap-4 sm:pr-6">
       {/* Left side - Mobile trigger and Category Filter */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto sm:gap-4">
         {/* Sidebar trigger */}
         <SidebarTrigger className="shrink-0" />
 
@@ -110,7 +109,7 @@ export function TaskHeader() {
           size="icon"
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="bg-surface/50 size-9 sm:size-12 rounded-full backdrop-blur-sm transition-opacity disabled:opacity-60"
+          className="bg-surface/50 size-9 rounded-full backdrop-blur-sm transition-opacity disabled:opacity-60 sm:size-12"
         >
           <RefreshCw
             className={`h-4 w-4 sm:h-5 sm:w-5 ${isRefreshing ? "animate-spin" : ""}`}
@@ -120,7 +119,7 @@ export function TaskHeader() {
         {/* New Task button */}
         <Button
           size="lg"
-          className="bg-primary shadow-glow hover:shadow-glowHover gap-1 sm:gap-2 rounded-full px-3 sm:px-4 lg:px-6 text-sm sm:text-base"
+          className="bg-primary shadow-glow hover:shadow-glowHover gap-1 rounded-full px-3 text-sm sm:gap-2 sm:px-4 sm:text-base lg:px-6"
           onClick={() => setIsCreating(true)}
         >
           <span className="hidden font-semibold lg:inline">New Task</span>

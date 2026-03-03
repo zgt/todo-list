@@ -35,7 +35,7 @@ export default async function HomePage() {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-hidden px-2 pt-2 pb-2 sm:px-4 sm:pt-4 sm:pb-4 md:px-6 md:pt-6 md:pb-6">
-              <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-8">
+              <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-2xl p-3 sm:rounded-3xl sm:p-6 md:p-8">
                 {/* Aurora effect inside panel */}
                 <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden rounded-3xl">
                   <div className="bg-primary/10 absolute top-[-50%] left-[-20%] h-[80%] w-[80%] rounded-full mix-blend-screen blur-[100px]"></div>
@@ -49,7 +49,7 @@ export default async function HomePage() {
                         <ViewToggleProvider>
                           <TaskHeader />
 
-                          <div className="custom-scrollbar mt-3 sm:mt-6 flex-1 overflow-y-auto px-0 sm:px-2 pt-2 pr-2 sm:pr-4 pb-2">
+                          <div className="custom-scrollbar mt-3 flex-1 overflow-y-auto px-0 pt-2 pr-2 pb-2 sm:mt-6 sm:px-2 sm:pr-4">
                             {session?.user ? (
                               <Suspense
                                 fallback={

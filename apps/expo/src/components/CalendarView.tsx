@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from "react";
-import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Pressable, Text, View } from "react-native";
 import { CalendarList } from "react-native-calendars";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Check } from "lucide-react-native";
@@ -38,7 +38,7 @@ function formatDateHeader(dateKey: string): string {
   if (dateKey === tomorrowKey) return "Tomorrow";
 
   const [year, month, day] = dateKey.split("-").map(Number);
-  const date = new Date(year!, month! - 1, day);
+  const date = new Date(year ?? 0, (month ?? 1) - 1, day);
   return date.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",

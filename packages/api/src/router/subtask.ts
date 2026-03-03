@@ -113,7 +113,12 @@ export const subtaskRouter = {
         });
       }
 
-      await assertTaskAccess(ctx.db, ctx.session.user.id, existing.task, "editor");
+      await assertTaskAccess(
+        ctx.db,
+        ctx.session.user.id,
+        existing.task,
+        "editor",
+      );
 
       const updateData: Record<string, unknown> = { ...updates };
 
@@ -198,7 +203,12 @@ export const subtaskRouter = {
         });
       }
 
-      await assertTaskAccess(ctx.db, ctx.session.user.id, existing.task, "editor");
+      await assertTaskAccess(
+        ctx.db,
+        ctx.session.user.id,
+        existing.task,
+        "editor",
+      );
 
       await ctx.db.delete(Subtask).where(eq(Subtask.id, input.id));
 

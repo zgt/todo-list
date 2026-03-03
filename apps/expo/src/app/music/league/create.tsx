@@ -154,7 +154,12 @@ export default function CreateLeague() {
                   placeholder="e.g. Friday Vibes"
                   placeholderTextColor="#8FA8A8"
                   maxLength={100}
-                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]" style={{ fontSize: 16, height: 48, textAlignVertical: "center" }}
+                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]"
+                  style={{
+                    fontSize: 16,
+                    height: 48,
+                    textAlignVertical: "center",
+                  }}
                 />
               </View>
 
@@ -172,7 +177,13 @@ export default function CreateLeague() {
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
-                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]" style={{ fontSize: 16, minHeight: 80, paddingVertical: 12, textAlignVertical: "top" }}
+                  className="rounded-2xl border border-[#164B49] bg-[#102A2A] px-4 text-[#DCE4E4]"
+                  style={{
+                    fontSize: 16,
+                    minHeight: 80,
+                    paddingVertical: 12,
+                    textAlignVertical: "top",
+                  }}
                 />
               </View>
 

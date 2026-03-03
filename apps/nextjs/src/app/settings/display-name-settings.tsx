@@ -16,12 +16,12 @@ export function DisplayNameSettings() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
 
-  const currentName = session?.user?.name ?? "";
+  const currentName = session?.user.name ?? "";
   const [name, setName] = useState(currentName);
   const [initialized, setInitialized] = useState(false);
 
   // Sync initial value when session loads
-  if (session?.user?.name && !initialized) {
+  if (session?.user.name && !initialized) {
     setName(session.user.name);
     setInitialized(true);
   }

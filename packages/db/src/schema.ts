@@ -841,9 +841,7 @@ export const CreateSubtaskSchema = createInsertSchema(Subtask, {
 });
 
 export const CreateTaskWithSubtasksSchema = CreateTaskSchema.extend({
-  subtasks: z
-    .array(z.object({ title: z.string().min(1).max(500) }))
-    .optional(),
+  subtasks: z.array(z.object({ title: z.string().min(1).max(500) })).optional(),
 });
 
 export const UpdateSubtaskSchema = z.object({

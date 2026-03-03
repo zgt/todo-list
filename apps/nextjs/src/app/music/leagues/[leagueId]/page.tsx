@@ -14,7 +14,6 @@ import {
   Plus,
   Settings,
   ShieldAlert,
-  ShieldOff,
   Trash2,
   Trophy,
   Users,
@@ -47,7 +46,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@acme/ui/dropdown-menu";
 import { Input } from "@acme/ui/input";
@@ -390,7 +388,10 @@ export default function LeagueDetail() {
                 {league.members
                   .filter((member) => !blockedUserIds.includes(member.userId))
                   .map((member) => (
-                    <div key={member.id} className="group flex items-center gap-3">
+                    <div
+                      key={member.id}
+                      className="group flex items-center gap-3"
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={member.user.image ?? undefined} />
                         <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">

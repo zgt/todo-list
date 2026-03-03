@@ -16,10 +16,20 @@ import Animated, {
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, FileText, LogOut, Music, Pencil, Settings, Shield, Users } from "lucide-react-native";
+import {
+  Bell,
+  Check,
+  FileText,
+  LogOut,
+  Music,
+  Pencil,
+  Settings,
+  Shield,
+  Users,
+} from "lucide-react-native";
 
-import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/utils/auth";
+import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
@@ -48,7 +58,10 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
         void authClient.getSession({ query: { disableCookieCache: true } });
       },
       onError: () => {
-        Alert.alert("Error", "Could not update display name. Please try again.");
+        Alert.alert(
+          "Error",
+          "Could not update display name. Please try again.",
+        );
       },
     }),
   );
@@ -76,14 +89,18 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
     } else {
       backdropOpacity.value = withTiming(0, { duration: 150 });
       translateY.value = withTiming(300, { duration: 150 });
+    }
+    return () => {
       setIsEditingName(false);
       setEditedName(user.name);
-    }
+    };
   }, [visible, backdropOpacity, translateY, user.name]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener("keyboardWillShow", (e) => {
-      keyboardOffset.value = withTiming(-e.endCoordinates.height * 0.35, { duration: 250 });
+      keyboardOffset.value = withTiming(-e.endCoordinates.height * 0.35, {
+        duration: 250,
+      });
     });
     const hideSub = Keyboard.addListener("keyboardWillHide", () => {
       keyboardOffset.value = withTiming(0, { duration: 250 });
@@ -99,9 +116,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
   }));
 
   const sheetAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: translateY.value + keyboardOffset.value },
-    ],
+    transform: [{ translateY: translateY.value + keyboardOffset.value }],
   }));
 
   const handleSignOut = async () => {
@@ -178,7 +193,12 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                     returnKeyType="done"
                     autoFocus
                     className="flex-1 rounded-2xl border border-[#21716C] bg-[#0A1A1A] px-3 text-[#DCE4E4]"
-                    style={{ paddingVertical: 10, fontSize: 18, height: 48, textAlignVertical: "center" }}
+                    style={{
+                      paddingVertical: 10,
+                      fontSize: 18,
+                      height: 48,
+                      textAlignVertical: "center",
+                    }}
                     placeholderTextColor="#8FA8A8"
                     placeholder="Display name"
                     editable={!updateNameMutation.isPending}
@@ -265,7 +285,9 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             <View className="my-2 h-px bg-[#164B49]" />
 
             <Pressable
-              onPress={() => void Linking.openURL("https://tokilist.com/privacy")}
+              onPress={() =>
+                void Linking.openURL("https://tokilist.com/privacy")
+              }
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Privacy Policy"
               accessibilityRole="link"

@@ -245,9 +245,7 @@ export function TaskCard({
           <Pressable onPress={onToggle}>
             <View
               className={`h-7 w-7 items-center justify-center rounded-full border-2 ${
-                task.completed
-                  ? "bg-primary border-primary"
-                  : "border-white/30"
+                task.completed ? "bg-primary border-primary" : "border-white/30"
               }`}
             >
               {task.completed && (
@@ -288,9 +286,7 @@ export function TaskCard({
                   }}
                 >
                   <Bell size={10} color={reminderInfo.color} />
-                  <RNText
-                    style={{ fontSize: 11, color: reminderInfo.color }}
-                  >
+                  <RNText style={{ fontSize: 11, color: reminderInfo.color }}>
                     {reminderInfo.label}
                   </RNText>
                 </View>
@@ -369,7 +365,6 @@ export function TaskCard({
               )}
             </View>
           </View>
-
         </View>
       </Pressable>
 
@@ -440,11 +435,7 @@ export function TaskCard({
               onSave({ priority: p });
             }}
             trigger={
-              <PriorityBadge
-                priority={priority}
-                size="sm"
-                showLabel={false}
-              />
+              <PriorityBadge priority={priority} size="sm" showLabel={false} />
             }
           />
           {task.category && (
@@ -501,9 +492,7 @@ export function TaskCard({
         <Pressable onPress={onToggle}>
           <View
             className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
-              task.completed
-                ? "bg-primary border-primary"
-                : "border-white/30"
+              task.completed ? "bg-primary border-primary" : "border-white/30"
             }`}
           >
             {task.completed && (
@@ -552,9 +541,7 @@ export function TaskCard({
             {subtasks.slice(0, 4).map((subtask) => (
               <Pressable
                 key={subtask.id}
-                onPress={() =>
-                  onSubtaskToggle(subtask.id, !subtask.completed)
-                }
+                onPress={() => onSubtaskToggle(subtask.id, !subtask.completed)}
                 style={styles.subtaskRowCard}
               >
                 <View

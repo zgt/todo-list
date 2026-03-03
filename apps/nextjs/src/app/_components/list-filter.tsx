@@ -22,13 +22,6 @@ export function ListFilter() {
 
   if (!lists) return null;
 
-  const selectedLabel =
-    selectedListId === null
-      ? null
-      : selectedListId === "personal"
-        ? "Personal"
-        : lists.find((l) => l.id === selectedListId)?.name;
-
   return (
     <Popover>
       <PopoverTrigger asChild>

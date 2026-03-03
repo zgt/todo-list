@@ -1,5 +1,11 @@
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, Text, View } from "react-native";
 import {
   BottomSheetBackdrop,

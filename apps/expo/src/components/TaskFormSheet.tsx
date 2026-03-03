@@ -200,7 +200,9 @@ export function TaskFormSheet({
   const [prevInitialDueDate, setPrevInitialDueDate] = useState(
     initialData?.dueDate?.getTime(),
   );
-  if ((initialData?.dueDate?.getTime() ?? null) !== (prevInitialDueDate ?? null)) {
+  if (
+    (initialData?.dueDate?.getTime() ?? null) !== (prevInitialDueDate ?? null)
+  ) {
     setPrevInitialDueDate(initialData?.dueDate?.getTime());
     setDueDate(initialData?.dueDate ?? null);
   }
@@ -208,9 +210,7 @@ export function TaskFormSheet({
     initialData?.reminderAt ?? null,
   );
   const [recurrenceRule, setRecurrenceRule] =
-    useState<RecurrenceRuleValue | null>(
-      initialData?.recurrenceRule ?? null,
-    );
+    useState<RecurrenceRuleValue | null>(initialData?.recurrenceRule ?? null);
   const [recurrenceInterval, setRecurrenceInterval] = useState<number>(
     initialData?.recurrenceInterval ?? 1,
   );
@@ -691,7 +691,11 @@ export function TaskFormSheet({
                     ]}
                   >
                     <View
-                      style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
                     >
                       {isActive && <Repeat size={12} color="#50C878" />}
                       <Text
@@ -721,9 +725,7 @@ export function TaskFormSheet({
                 <Text style={styles.intervalValue}>{recurrenceInterval}</Text>
                 <Pressable
                   onPress={() =>
-                    setRecurrenceInterval(
-                      Math.min(365, recurrenceInterval + 1),
-                    )
+                    setRecurrenceInterval(Math.min(365, recurrenceInterval + 1))
                   }
                   style={styles.intervalButton}
                 >
@@ -755,7 +757,7 @@ export function TaskFormSheet({
             <Pressable
               onPress={() => {
                 bottomSheetRef.current?.dismiss();
-                onSnooze(initialData.id!);
+                if (initialData.id) onSnooze(initialData.id);
               }}
               style={styles.snoozeButton}
             >

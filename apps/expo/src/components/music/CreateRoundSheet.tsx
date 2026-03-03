@@ -15,6 +15,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -22,7 +23,6 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Clock, Info, Sparkles } from "lucide-react-native";
-import { useRouter } from "expo-router";
 
 import type { ThemeTemplatePickerRef } from "~/components/music/ThemeTemplatePicker";
 import { ThemeTemplatePicker } from "~/components/music/ThemeTemplatePicker";
@@ -77,31 +77,12 @@ export const CreateRoundSheet = forwardRef<
   }));
 
   const createRoundMutation = useMutation(
-    trpc.musicLeague.createRound.mutationOptions({
-      onSuccess: async (data) => {
-        await queryClient.invalidateQueries(
-          trpc.musicLeague.getLeagueById.queryFilter(),
-        );
-        await queryClient.invalidateQueries(
-          trpc.musicLeague.getAllLeagues.queryFilter(),
-        );
-        bottomSheetRef.current?.dismiss();
-        if (data?.id) {
-          router.push(`/music/round/${data.id}` as never);
-        }
-      },
-      onError: (error) => {
-        Alert.alert("Failed to create round", error.message);
-      },
-    }),
+    trpc.musicLeague.createRound.mutationOptions(),
   );
 
   const handleCreate = () => {
     if (!themeName.trim()) {
-      Alert.alert(
-        "Theme required",
-        "Please enter a theme name for the round.",
-      );
+      Alert.alert("Theme required", "Please enter a theme name for the round.");
       return;
     }
     if (!leagueId) {
@@ -109,11 +90,33 @@ export const CreateRoundSheet = forwardRef<
       return;
     }
 
-    createRoundMutation.mutate({
-      leagueId,
-      themeName: themeName.trim(),
-      themeDescription: themeDescription.trim() || undefined,
-    });
+    createRoundMutation.mutate(
+      {
+        leagueId,
+        themeName: themeName.trim(),
+        themeDescription: themeDescription.trim() || undefined,
+      },
+      {
+        onSuccess: (data) => {
+          void queryClient
+            .invalidateQueries(trpc.musicLeague.getLeagueById.queryFilter())
+            .then(() =>
+              queryClient.invalidateQueries(
+                trpc.musicLeague.getAllLeagues.queryFilter(),
+              ),
+            )
+            .then(() => {
+              bottomSheetRef.current?.dismiss();
+              if (data?.id) {
+                router.push(`/music/round/${data.id}` as never);
+              }
+            });
+        },
+        onError: (error) => {
+          Alert.alert("Failed to create round", error.message);
+        },
+      },
+    );
   };
 
   const renderBackdrop = useCallback(
@@ -178,9 +181,7 @@ export const CreateRoundSheet = forwardRef<
             className="mb-4 flex-row items-center justify-center gap-2 rounded-2xl border border-[#164B49] bg-[#0A1A1A] py-3 active:bg-[#164B49]"
           >
             <Sparkles size={18} color="#50C878" />
-            <Text className="font-semibold text-[#50C878]">
-              Browse Themes
-            </Text>
+            <Text className="font-semibold text-[#50C878]">Browse Themes</Text>
           </Pressable>
 
           {/* Theme Description */}
@@ -230,11 +231,7 @@ export const CreateRoundSheet = forwardRef<
                 </View>
                 {hasUnfinishedRound && (
                   <View className="mt-2 flex-row items-start gap-2 rounded-lg bg-[#FFA500]/10 p-3">
-                    <Info
-                      size={14}
-                      color="#FFA500"
-                      style={{ marginTop: 1 }}
-                    />
+                    <Info size={14} color="#FFA500" style={{ marginTop: 1 }} />
                     <Text className="flex-1 text-xs text-[#FFA500]">
                       This round will start after the current round ends
                     </Text>
@@ -276,10 +273,7 @@ export const CreateRoundSheet = forwardRef<
         </BottomSheetScrollView>
       </BottomSheetModal>
 
-      <ThemeTemplatePicker
-        ref={themePickerRef}
-        onSelectTheme={setThemeName}
-      />
+      <ThemeTemplatePicker ref={themePickerRef} onSelectTheme={setThemeName} />
     </>
   );
 });

@@ -16,20 +16,18 @@ import {
   ArrowLeft,
   Flag,
   LogOut,
-  MoreVertical,
   Plus,
   RefreshCw,
   Settings,
   Share2,
-  ShieldAlert,
   Trophy,
 } from "lucide-react-native";
 
 import type { CreateRoundSheetRef } from "~/components/music/CreateRoundSheet";
 import type { LeagueSettingsSheetRef } from "~/components/music/LeagueSettingsSheet";
 import type { ReportSheetRef } from "~/components/music/ReportSheet";
-import { CreateRoundSheet } from "~/components/music/CreateRoundSheet";
 import { GradientBackground } from "~/components/GradientBackground";
+import { CreateRoundSheet } from "~/components/music/CreateRoundSheet";
 import { LeagueSettingsSheet } from "~/components/music/LeagueSettingsSheet";
 import { LeagueStandingsTable } from "~/components/music/LeagueStandingsTable";
 import { ReportSheet } from "~/components/music/ReportSheet";
@@ -391,7 +389,7 @@ export default function LeagueDetails() {
               <View className="mb-4 rounded-2xl border border-[#50C878]/20 bg-[#102A2A] p-4">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-1">
-                    <Text className="mb-1 text-xs font-semibold uppercase tracking-wider text-[#8FA8A8]">
+                    <Text className="mb-1 text-xs font-semibold tracking-wider text-[#8FA8A8] uppercase">
                       Invite Code
                     </Text>
                     <Text
@@ -484,9 +482,7 @@ export default function LeagueDetails() {
               <Text className="mt-8 mb-4 text-xl font-bold text-[#DCE4E4]">
                 Members
               </Text>
-              <View
-                style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}
-              >
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {league.members
                   .filter(
                     (member: { userId: string }) =>

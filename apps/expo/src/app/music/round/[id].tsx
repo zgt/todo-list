@@ -1963,11 +1963,7 @@ function MemberStatusBoard({
               style={{ flexDirection: "row", alignItems: "center" }}
             >
               {/* Avatar */}
-              <UserAvatar
-                name={member.name}
-                image={member.image}
-                size={32}
-              />
+              <UserAvatar name={member.name} image={member.image} size={32} />
 
               {/* Name */}
               <Text

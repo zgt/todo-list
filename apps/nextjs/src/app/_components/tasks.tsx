@@ -247,7 +247,7 @@ function SnoozePopoverContent({ taskId }: { taskId: string }) {
         onClick={() => handleSnooze(getLaterToday())}
         className={cn(
           "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
-          "hover:bg-[#183F3F] transition-colors",
+          "transition-colors hover:bg-[#183F3F]",
         )}
       >
         Later Today
@@ -262,7 +262,7 @@ function SnoozePopoverContent({ taskId }: { taskId: string }) {
         onClick={() => handleSnooze(getTomorrowAt9am())}
         className={cn(
           "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
-          "hover:bg-[#183F3F] transition-colors",
+          "transition-colors hover:bg-[#183F3F]",
         )}
       >
         Tomorrow
@@ -272,7 +272,7 @@ function SnoozePopoverContent({ taskId }: { taskId: string }) {
         onClick={() => handleSnooze(getNextMondayAt9am())}
         className={cn(
           "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
-          "hover:bg-[#183F3F] transition-colors",
+          "transition-colors hover:bg-[#183F3F]",
         )}
       >
         Next Week
@@ -298,7 +298,7 @@ function SnoozePopoverContent({ taskId }: { taskId: string }) {
           onClick={() => setShowCustom(true)}
           className={cn(
             "rounded-md px-3 py-2 text-left text-sm text-[#DCE4E4]",
-            "hover:bg-[#183F3F] transition-colors",
+            "transition-colors hover:bg-[#183F3F]",
           )}
         >
           <Calendar className="mr-2 inline h-3.5 w-3.5" />
@@ -435,7 +435,7 @@ function RecurrencePill({
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-md",
                   "border border-[#164B49] bg-[#102A2A] text-[#DCE4E4]",
-                  "hover:border-[#21716C] hover:bg-[#183F3F] transition-colors",
+                  "transition-colors hover:border-[#21716C] hover:bg-[#183F3F]",
                   "disabled:opacity-50",
                 )}
                 disabled={interval <= 1}
@@ -451,7 +451,7 @@ function RecurrencePill({
                 className={cn(
                   "flex h-6 w-6 items-center justify-center rounded-md",
                   "border border-[#164B49] bg-[#102A2A] text-[#DCE4E4]",
-                  "hover:border-[#21716C] hover:bg-[#183F3F] transition-colors",
+                  "transition-colors hover:border-[#21716C] hover:bg-[#183F3F]",
                   "disabled:opacity-50",
                 )}
                 disabled={interval >= 365}
@@ -536,8 +536,7 @@ function InlineCreateTask() {
       reminderAt,
       listId,
       recurrenceRule: recurrenceRule ?? undefined,
-      recurrenceInterval:
-        recurrenceRule ? recurrenceInterval : undefined,
+      recurrenceInterval: recurrenceRule ? recurrenceInterval : undefined,
       subtasks:
         pendingSubtasks.length > 0
           ? pendingSubtasks.map((s) => ({ title: s.title }))
@@ -602,11 +601,11 @@ function InlineCreateTask() {
       {/* Top row with checkbox spacer, chevron, and inline title input */}
       <div className="flex flex-row items-center gap-2 p-3 pb-0 sm:gap-4 sm:p-6 sm:pb-0">
         {/* Spacer for checkbox alignment */}
-        <div className="size-4 sm:size-6 shrink-0" />
+        <div className="size-4 shrink-0 sm:size-6" />
 
         {/* Chevron in expanded position */}
         <div className="shrink-0 text-[#8FA8A8]">
-          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 rotate-90 transition-transform duration-300" />
+          <ChevronRight className="h-3 w-3 rotate-90 transition-transform duration-300 sm:h-4 sm:w-4" />
         </div>
 
         {/* Inline title input */}
@@ -620,7 +619,7 @@ function InlineCreateTask() {
             className={cn(
               "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
               "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-              "rounded-md px-2 py-1 sm:px-3 sm:py-1.5 text-sm sm:text-lg font-medium",
+              "rounded-md px-2 py-1 text-sm font-medium sm:px-3 sm:py-1.5 sm:text-lg",
               "w-full sm:max-w-md",
             )}
             aria-label="New task title"
@@ -750,7 +749,7 @@ function InlineCreateTask() {
         </div>
 
         {/* Field controls row */}
-        <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
           <PrioritySelectorPill
             value={priority}
             onChange={setPriority}
@@ -824,7 +823,7 @@ function InlineCreateTask() {
         </div>
 
         {/* Save/Cancel buttons */}
-        <div className="mt-3 sm:mt-4 flex justify-end gap-2">
+        <div className="mt-3 flex justify-end gap-2 sm:mt-4">
           <Button
             type="button"
             variant="ghost"
@@ -1378,14 +1377,13 @@ export function TaskCard(props: {
     editedPriority !== (props.task.priority ?? "medium") ||
     editedReminderAt?.getTime() !== props.task.reminderAt?.getTime() ||
     (editedListId ?? null) !== (props.task.listId ?? null) ||
-    (editedRecurrenceRule ?? null) !==
-      (props.task.recurrenceRule ?? null) ||
+    (editedRecurrenceRule ?? null) !== (props.task.recurrenceRule ?? null) ||
     editedRecurrenceInterval !== (props.task.recurrenceInterval ?? 1);
 
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-xl sm:rounded-2xl transition-all duration-300",
+        "group relative overflow-hidden rounded-xl transition-all duration-300 sm:rounded-2xl",
         props.task.completed
           ? "glass-card border-primary/50 shadow-glow bg-primary/5"
           : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
@@ -1398,7 +1396,7 @@ export function TaskCard(props: {
           onCheckedChange={handleToggleComplete}
           disabled={updateTask.isPending || isEditing}
           className={cn(
-            "size-4 sm:size-6 rounded-full border-2 transition-all shrink-0",
+            "size-4 shrink-0 rounded-full border-2 transition-all sm:size-6",
             props.task.completed
               ? "bg-primary border-primary text-black"
               : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
@@ -1419,7 +1417,7 @@ export function TaskCard(props: {
         >
           <ChevronRight
             className={cn(
-              "h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300",
+              "h-3 w-3 transition-transform duration-300 sm:h-4 sm:w-4",
               isExpanded && "rotate-90",
             )}
           />
@@ -1437,7 +1435,7 @@ export function TaskCard(props: {
               className={cn(
                 "border-[#164B49] bg-[#102A2A] text-white placeholder:text-[#8FA8A8]",
                 "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20",
-                "rounded-md px-2 py-1 sm:px-3 sm:py-1.5 text-sm sm:text-lg font-medium",
+                "rounded-md px-2 py-1 text-sm font-medium sm:px-3 sm:py-1.5 sm:text-lg",
                 "max-w-full sm:max-w-md",
               )}
               aria-label="Edit task title"
@@ -1458,7 +1456,7 @@ export function TaskCard(props: {
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <h2
                   className={cn(
-                    "text-sm sm:text-lg font-medium transition-colors truncate",
+                    "truncate text-sm font-medium transition-colors sm:text-lg",
                     props.task.completed ? "text-white/70" : "text-white",
                   )}
                 >
@@ -1470,7 +1468,7 @@ export function TaskCard(props: {
                     {props.task.subtasks.length}
                   </span>
                 )}
-                <Pencil className="hidden sm:block h-4 w-4 text-[#50C878]/60 opacity-0 transition-opacity group-hover/title:opacity-100" />
+                <Pencil className="hidden h-4 w-4 text-[#50C878]/60 opacity-0 transition-opacity group-hover/title:opacity-100 sm:block" />
               </div>
             </button>
           )}
@@ -1483,15 +1481,15 @@ export function TaskCard(props: {
                 "group/desc -m-1 rounded-md p-1 text-left transition-all duration-200",
                 "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                "hidden sm:block w-full",
+                "hidden w-full sm:block",
               )}
               aria-label={`Edit task description. Current value: ${props.task.description}`}
             >
               <div className="flex items-center gap-2">
-                <p className="text-muted-foreground text-sm truncate">
+                <p className="text-muted-foreground truncate text-sm">
                   {props.task.description}
                 </p>
-                <Pencil className="shrink-0 h-3 w-3 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
+                <Pencil className="h-3 w-3 shrink-0 text-[#50C878]/60 opacity-0 transition-opacity group-hover/desc:opacity-100" />
               </div>
             </button>
           ) : null}
@@ -1501,7 +1499,7 @@ export function TaskCard(props: {
         {!isExpanded && (
           <div
             className={cn(
-              "z-10 transition-transform duration-300 ease-in-out shrink-0",
+              "z-10 shrink-0 transition-transform duration-300 ease-in-out",
               "hidden sm:block sm:group-hover:-translate-x-48",
             )}
           >
@@ -1511,8 +1509,8 @@ export function TaskCard(props: {
 
         {/* Due Date - collapsed row - hidden on mobile */}
         {!isExpanded && editedDueDate ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
-            <div className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md">
+          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+            <div className="flex items-center gap-1.5 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-2 py-1 text-xs font-medium text-[#DCE4E4] backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5">
               <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden lg:inline">
                 {new Date(editedDueDate).toLocaleDateString("en-US", {
@@ -1534,9 +1532,9 @@ export function TaskCard(props: {
 
         {/* Category - collapsed row - hidden on mobile */}
         {!isExpanded && editedCategory ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
+          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
             <div
-              className="rounded-full border px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium backdrop-blur-md truncate max-w-[100px] sm:max-w-none"
+              className="max-w-[100px] truncate rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:max-w-none sm:px-4 sm:py-1.5"
               style={{
                 backgroundColor: `${editedCategory.color}60`,
                 borderColor: `${editedCategory.color}80`,
@@ -1550,10 +1548,10 @@ export function TaskCard(props: {
 
         {/* Reminder - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.reminderAt ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
+          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
             <div
               className={cn(
-                "flex items-center gap-1.5 sm:gap-2 rounded-full border px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium backdrop-blur-md",
+                "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5",
                 getReminderBadgeClasses(
                   props.task.reminderAt,
                   props.task.reminderSentAt,
@@ -1562,7 +1560,10 @@ export function TaskCard(props: {
             >
               <Bell className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">
-                {formatReminder(props.task.reminderAt, props.task.reminderSentAt)}
+                {formatReminder(
+                  props.task.reminderAt,
+                  props.task.reminderSentAt,
+                )}
               </span>
             </div>
           </div>
@@ -1570,15 +1571,15 @@ export function TaskCard(props: {
 
         {/* List badge - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.list ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
-            <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-[#8FA8A8] backdrop-blur-md">
+          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs font-medium text-[#8FA8A8] backdrop-blur-md sm:gap-1.5 sm:px-3 sm:py-1.5">
               <span
-                className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full shrink-0"
+                className="h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2"
                 style={{
                   backgroundColor: props.task.list.color ?? "#8FA8A8",
                 }}
               />
-              <span className="truncate max-w-[80px] sm:max-w-none">
+              <span className="max-w-[80px] truncate sm:max-w-none">
                 {props.task.list.name}
               </span>
             </div>
@@ -1587,13 +1588,13 @@ export function TaskCard(props: {
 
         {/* Recurrence - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.recurrenceRule ? (
-          <div className="z-10 transition-transform duration-300 ease-in-out sm:group-hover:-translate-x-48 shrink-0 hidden sm:block">
-            <div className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-2 sm:px-4 py-1 sm:py-1.5 text-xs font-medium text-[#50C878] backdrop-blur-md">
+          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+            <div className="flex items-center gap-1.5 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-2 py-1 text-xs font-medium text-[#50C878] backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5">
               <Repeat className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">
                 {(props.task.recurrenceInterval ?? 1) === 1
-                  ? (props.task.recurrenceRule as string).charAt(0).toUpperCase() +
-                    (props.task.recurrenceRule as string).slice(1)
+                  ? props.task.recurrenceRule.charAt(0).toUpperCase() +
+                    props.task.recurrenceRule.slice(1)
                   : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
               </span>
             </div>
@@ -1602,13 +1603,13 @@ export function TaskCard(props: {
 
         {/* Hover Actions - only in collapsed non-editing state - hidden on mobile */}
         {!isExpanded && !isEditing && (
-          <div className="absolute inset-y-0 right-0 hidden sm:flex translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0">
+          <div className="absolute inset-y-0 right-0 hidden translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0 sm:flex">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-full w-12 sm:w-16 rounded-none bg-amber-500 text-white hover:bg-amber-600 hover:text-white"
+                  className="h-full w-12 rounded-none bg-amber-500 text-white hover:bg-amber-600 hover:text-white sm:w-16"
                   aria-label="Snooze task"
                 >
                   <AlarmClock className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -1622,7 +1623,7 @@ export function TaskCard(props: {
             <Button
               variant="ghost"
               size="icon"
-              className="h-full w-12 sm:w-16 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white"
+              className="h-full w-12 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white sm:w-16"
               onClick={handleEditClick}
               aria-label="Edit task"
             >
@@ -1632,7 +1633,7 @@ export function TaskCard(props: {
             <Button
               variant="ghost"
               size="icon"
-              className="h-full w-12 sm:w-16 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white"
+              className="h-full w-12 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white sm:w-16"
               onClick={() => deleteTask.mutate(props.task.id)}
               disabled={deleteTask.isPending}
               aria-label="Delete task"
@@ -1685,7 +1686,7 @@ export function TaskCard(props: {
 
             {/* Field controls row */}
             {isEditing && (
-              <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
                 <PrioritySelectorPill
                   value={editedPriority}
                   onChange={setEditedPriority}
@@ -1765,7 +1766,7 @@ export function TaskCard(props: {
 
             {/* Read-only badges when expanded but not editing */}
             {!isEditing && (
-              <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
                 <PriorityBadge
                   priority={props.task.priority}
                   variant="compact"
@@ -1814,8 +1815,8 @@ export function TaskCard(props: {
                   <div className="flex items-center gap-2 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-4 py-1.5 text-xs font-medium text-[#50C878] backdrop-blur-md">
                     <Repeat className="h-3.5 w-3.5" />
                     {(props.task.recurrenceInterval ?? 1) === 1
-                      ? (props.task.recurrenceRule as string).charAt(0).toUpperCase() +
-                        (props.task.recurrenceRule as string).slice(1)
+                      ? props.task.recurrenceRule.charAt(0).toUpperCase() +
+                        props.task.recurrenceRule.slice(1)
                       : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
                   </div>
                 )}
@@ -1824,7 +1825,7 @@ export function TaskCard(props: {
 
             {/* Save/Cancel buttons inside expanded area */}
             {isEditing && (
-              <div className="mt-3 sm:mt-4 flex justify-end gap-2">
+              <div className="mt-3 flex justify-end gap-2 sm:mt-4">
                 <Button
                   type="button"
                   variant="ghost"

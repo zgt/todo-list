@@ -5,8 +5,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/utils/auth";
+import { UserAvatar } from "~/components/UserAvatar";
 
 interface ProfileButtonProps {
   user: User;

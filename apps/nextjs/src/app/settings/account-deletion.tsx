@@ -42,7 +42,7 @@ export function AccountDeletion() {
         router.refresh();
       },
       onError: (error) => {
-        toast.error(error.message ?? "Failed to delete account");
+        toast.error(error.message);
       },
     }),
   );
@@ -105,9 +105,8 @@ export function AccountDeletion() {
 
               <div className="space-y-2">
                 <p className="text-sm text-[#DCE4E4]/70">
-                  Type{" "}
-                  <span className="font-bold text-[#E57373]">DELETE</span> to
-                  confirm.
+                  Type <span className="font-bold text-[#E57373]">DELETE</span>{" "}
+                  to confirm.
                 </p>
                 <Input
                   value={confirmText}
@@ -133,9 +132,7 @@ export function AccountDeletion() {
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDelete}
-                  disabled={
-                    confirmText !== "DELETE" || deleteAccount.isPending
-                  }
+                  disabled={confirmText !== "DELETE" || deleteAccount.isPending}
                   variant="destructive"
                   className="bg-[#E57373] text-white hover:bg-[#D32F2F] disabled:opacity-50"
                 >

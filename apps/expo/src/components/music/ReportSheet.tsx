@@ -27,7 +27,13 @@ import { trpc } from "~/utils/api";
 
 export interface ReportSheetRef {
   present: (params: {
-    contentType: "LEAGUE" | "SUBMISSION" | "TASK" | "USER" | "COMMENT" | "ROUND";
+    contentType:
+      | "LEAGUE"
+      | "SUBMISSION"
+      | "TASK"
+      | "USER"
+      | "COMMENT"
+      | "ROUND";
     contentId: string;
     contentLabel?: string;
     reportedUserId?: string;
@@ -36,9 +42,21 @@ export interface ReportSheetRef {
 }
 
 const REASONS = [
-  { key: "SPAM" as const, label: "Spam", description: "Unwanted or repetitive content" },
-  { key: "OFFENSIVE" as const, label: "Offensive", description: "Inappropriate or harmful content" },
-  { key: "HARASSMENT" as const, label: "Harassment", description: "Bullying or targeted abuse" },
+  {
+    key: "SPAM" as const,
+    label: "Spam",
+    description: "Unwanted or repetitive content",
+  },
+  {
+    key: "OFFENSIVE" as const,
+    label: "Offensive",
+    description: "Inappropriate or harmful content",
+  },
+  {
+    key: "HARASSMENT" as const,
+    label: "Harassment",
+    description: "Bullying or targeted abuse",
+  },
   { key: "OTHER" as const, label: "Other", description: "Something else" },
 ];
 
@@ -76,36 +94,11 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
   }));
 
   const reportMutation = useMutation(
-    trpc.moderation.reportContent.mutationOptions({
-      onSuccess: () => {
-        bottomSheetRef.current?.dismiss();
-        Alert.alert(
-          "Report Submitted",
-          "Thank you for helping keep our community safe. We'll review this report.",
-        );
-      },
-      onError: (error) => {
-        Alert.alert("Failed to submit report", error.message);
-      },
-    }),
+    trpc.moderation.reportContent.mutationOptions(),
   );
 
   const blockMutation = useMutation(
-    trpc.moderation.blockUser.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries(
-          trpc.moderation.getBlockedUserIds.queryFilter(),
-        );
-        bottomSheetRef.current?.dismiss();
-        Alert.alert(
-          "User Blocked",
-          "You won't see content from this user anymore.",
-        );
-      },
-      onError: (error) => {
-        Alert.alert("Failed to block user", error.message);
-      },
-    }),
+    trpc.moderation.blockUser.mutationOptions(),
   );
 
   const handleSubmitReport = () => {
@@ -113,13 +106,27 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
       Alert.alert("Select a reason", "Please select a reason for your report.");
       return;
     }
-    reportMutation.mutate({
-      contentType,
-      contentId,
-      reportedUserId,
-      reason: selectedReason,
-      details: details.trim() || undefined,
-    });
+    reportMutation.mutate(
+      {
+        contentType,
+        contentId,
+        reportedUserId,
+        reason: selectedReason,
+        details: details.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          bottomSheetRef.current?.dismiss();
+          Alert.alert(
+            "Report Submitted",
+            "Thank you for helping keep our community safe. We'll review this report.",
+          );
+        },
+        onError: (error) => {
+          Alert.alert("Failed to submit report", error.message);
+        },
+      },
+    );
   };
 
   const handleBlockUser = () => {
@@ -132,7 +139,28 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
         {
           text: "Block",
           style: "destructive",
-          onPress: () => blockMutation.mutate({ blockedUserId: reportedUserId }),
+          onPress: () =>
+            blockMutation.mutate(
+              { blockedUserId: reportedUserId },
+              {
+                onSuccess: () => {
+                  void queryClient
+                    .invalidateQueries(
+                      trpc.moderation.getBlockedUserIds.queryFilter(),
+                    )
+                    .then(() => {
+                      bottomSheetRef.current?.dismiss();
+                      Alert.alert(
+                        "User Blocked",
+                        "You won't see content from this user anymore.",
+                      );
+                    });
+                },
+                onError: (error) => {
+                  Alert.alert("Failed to block user", error.message);
+                },
+              },
+            ),
         },
       ],
     );
@@ -172,7 +200,14 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 20,
+          }}
+        >
           <Flag size={22} color="#ef4444" />
           <View>
             <Text style={{ fontSize: 20, fontWeight: "700", color: "#DCE4E4" }}>
@@ -187,7 +222,14 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
         </View>
 
         {/* Reason Selection */}
-        <Text style={{ fontSize: 14, fontWeight: "600", color: "#8FA8A8", marginBottom: 10 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: "600",
+            color: "#8FA8A8",
+            marginBottom: 10,
+          }}
+        >
           Why are you reporting this?
         </Text>
         <View style={{ gap: 8, marginBottom: 20 }}>
@@ -223,7 +265,9 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
                 }}
               />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: "600", color: "#DCE4E4" }}>
+                <Text
+                  style={{ fontSize: 15, fontWeight: "600", color: "#DCE4E4" }}
+                >
                   {reason.label}
                 </Text>
                 <Text style={{ fontSize: 12, color: "#8FA8A8", marginTop: 1 }}>
@@ -235,7 +279,14 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_, ref) => {
         </View>
 
         {/* Optional Details */}
-        <Text style={{ fontSize: 14, fontWeight: "600", color: "#8FA8A8", marginBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: "600",
+            color: "#8FA8A8",
+            marginBottom: 8,
+          }}
+        >
           Additional details (optional)
         </Text>
         <TextInput
