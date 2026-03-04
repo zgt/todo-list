@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useMutation,
   useQuery,
@@ -1070,9 +1071,25 @@ export function TaskList() {
   return (
     <div className="flex w-full flex-col gap-4">
       {isCreating && <InlineCreateTask />}
-      {filteredTasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
-      ))}
+      <AnimatePresence mode="popLayout">
+        {filteredTasks.map((task, i) => (
+          <motion.div
+            key={task.id}
+            initial={{ opacity: 0, y: -12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{
+              type: "spring",
+              stiffness: 380,
+              damping: 30,
+              delay: i * 0.04,
+            }}
+            layout
+          >
+            <TaskCard task={task} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1346,6 +1363,7 @@ export function TaskCard(props: {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isAnimatingExpand, setIsAnimatingExpand] = useState(false);
   const [editedTitle, setEditedTitle] = useState(props.task.title);
   const [editedDescription, setEditedDescription] = useState(
     props.task.description ?? "",
@@ -1676,7 +1694,10 @@ export function TaskCard(props: {
           <div
             className={cn(
               "z-10 shrink-0 transition-transform duration-300 ease-in-out",
-              "hidden sm:block sm:group-hover:-translate-x-48",
+              "hidden sm:block",
+              isAnimatingExpand
+                ? "translate-x-[600px]"
+                : "translate-x-0 sm:group-hover:-translate-x-48",
             )}
           >
             <PriorityBadge priority={props.task.priority} variant="compact" />
@@ -1685,7 +1706,14 @@ export function TaskCard(props: {
 
         {/* Due Date - collapsed row - hidden on mobile */}
         {!isExpanded && editedDueDate ? (
-          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+          <div
+            className={cn(
+              "z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block",
+              isAnimatingExpand
+                ? "translate-x-[600px]"
+                : "translate-x-0 sm:group-hover:-translate-x-48",
+            )}
+          >
             <div
               className={cn(
                 "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5",
@@ -1718,7 +1746,14 @@ export function TaskCard(props: {
 
         {/* Category - collapsed row - hidden on mobile */}
         {!isExpanded && editedCategory ? (
-          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+          <div
+            className={cn(
+              "z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block",
+              isAnimatingExpand
+                ? "translate-x-[600px]"
+                : "translate-x-0 sm:group-hover:-translate-x-48",
+            )}
+          >
             <div
               className="max-w-[100px] truncate rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:max-w-none sm:px-4 sm:py-1.5"
               style={{
@@ -1742,7 +1777,14 @@ export function TaskCard(props: {
             props.task.reminderSentAt ?? null,
           ) === "overdue"
         ) ? (
-          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+          <div
+            className={cn(
+              "z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block",
+              isAnimatingExpand
+                ? "translate-x-[600px]"
+                : "translate-x-0 sm:group-hover:-translate-x-48",
+            )}
+          >
             <div
               className={cn(
                 "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5",
@@ -1765,7 +1807,14 @@ export function TaskCard(props: {
 
         {/* List badge - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.list ? (
-          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+          <div
+            className={cn(
+              "z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block",
+              isAnimatingExpand
+                ? "translate-x-[600px]"
+                : "translate-x-0 sm:group-hover:-translate-x-48",
+            )}
+          >
             <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs font-medium text-[#8FA8A8] backdrop-blur-md sm:gap-1.5 sm:px-3 sm:py-1.5">
               <span
                 className="h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2"
@@ -1782,7 +1831,14 @@ export function TaskCard(props: {
 
         {/* Recurrence - collapsed row - hidden on mobile */}
         {!isExpanded && props.task.recurrenceRule ? (
-          <div className="z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block sm:group-hover:-translate-x-48">
+          <div
+            className={cn(
+              "z-10 hidden shrink-0 transition-transform duration-300 ease-in-out sm:block",
+              isAnimatingExpand
+                ? "translate-x-[600px]"
+                : "translate-x-0 sm:group-hover:-translate-x-48",
+            )}
+          >
             <div className="flex items-center gap-1.5 rounded-full border border-[#50C878]/30 bg-[#50C878]/10 px-2 py-1 text-xs font-medium text-[#50C878] backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5">
               <Repeat className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span className="hidden sm:inline">
@@ -1797,7 +1853,14 @@ export function TaskCard(props: {
 
         {/* Hover Actions - only in collapsed non-editing state - hidden on mobile */}
         {!isExpanded && !isEditing && (
-          <div className="absolute inset-y-0 right-0 hidden translate-x-full transition-transform duration-300 ease-in-out group-hover:translate-x-0 sm:flex">
+          <div
+            className={cn(
+              "absolute inset-y-0 right-0 z-20 hidden transition-transform duration-300 ease-in-out sm:flex",
+              isAnimatingExpand
+                ? "translate-x-full"
+                : "translate-x-full group-hover:translate-x-0",
+            )}
+          >
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -1840,13 +1903,21 @@ export function TaskCard(props: {
       </div>
 
       {/* Expanded area */}
-      <div
-        className={cn(
-          "grid transition-all duration-300",
-          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
-        )}
+      <AnimatePresence
+        onExitComplete={() => setIsAnimatingExpand(false)}
       >
-        <div className="overflow-hidden">
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{
+              height: { type: "spring", stiffness: 400, damping: 35 },
+              opacity: { duration: 0.2 },
+            }}
+            onAnimationStart={() => setIsAnimatingExpand(true)}
+            className="overflow-hidden"
+          >
           <div className="space-y-0 px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
             {/* Description section */}
             {(isEditing || props.task.description) && (
@@ -2132,8 +2203,9 @@ export function TaskCard(props: {
               </div>
             )}
           </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
