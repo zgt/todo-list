@@ -8,12 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Turborepo monorepo for a cross-platform Tokilist application — a task management and music league app with web (Next.js), mobile (Expo/React Native), and an experimental TanStack Start frontend, sharing a common tRPC API backend. The stack uses:
+This is a Turborepo monorepo for a cross-platform Tokilist application — a task management and music league app with web (Next.js) and mobile (Expo/React Native), sharing a common tRPC API backend. The stack uses:
 
 - **Turborepo** for monorepo management
 - **Next.js 15** with React 19 for web
 - **Expo SDK 54** with React Native 0.81 for mobile
-- **TanStack Start** for alternative web frontend (experimental)
 - **tRPC v11** for type-safe API layer
 - **Drizzle ORM** with PostgreSQL (Supabase)
 - **Better Auth** for authentication (OAuth, session management, auth proxy)
@@ -158,7 +157,6 @@ pnpm build:prod:android # Google Play Store
 apps/
   ├── expo/            # React Native mobile app (Expo SDK 54)
   ├── nextjs/          # Next.js web app
-  └── tanstack-start/  # TanStack Start web app (experimental)
 packages/
   ├── api/             # Shared tRPC router definitions
   ├── auth/            # Better Auth configuration
@@ -177,7 +175,6 @@ tooling/
 
 - **Next.js app** depends on: `@acme/api`, `@acme/auth`, `@acme/db`, `@acme/ui`
 - **Expo app** depends on: `@acme/api` (dev only for types), `@acme/auth`
-- **TanStack Start app** depends on: `@acme/api`, `@acme/auth`, `@acme/db` (experimental)
 - **API package** depends on: `@acme/auth`, `@acme/db`
 - **Auth package** depends on: `@acme/db`
 

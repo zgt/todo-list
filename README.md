@@ -8,8 +8,6 @@ A cross-platform task management and music league app built as a Turborepo monor
 
 - **[Next.js Web App](./apps/nextjs)** — Next.js 15, React 19, Tailwind CSS v4, shadcn/ui
 - **[Expo Mobile App](./apps/expo)** — Expo SDK 54, React Native 0.81, NativeWind v5, iOS home screen widgets (SwiftUI)
-- **[TanStack Start](./apps/tanstack-start)** — Alternative web frontend (experimental)
-
 ### Packages
 
 - **[@acme/api](./packages/api)** — tRPC v11 API layer shared across all apps
@@ -110,7 +108,6 @@ eas update --auto
 apps/
   ├── expo/          # React Native mobile app
   ├── nextjs/        # Next.js web app
-  └── tanstack-start/# TanStack Start web app (experimental)
 packages/
   ├── api/           # Shared tRPC router
   ├── auth/          # Better Auth config
