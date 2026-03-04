@@ -58,8 +58,7 @@ export default function PrivacyPolicyPage() {
             <ul>
               <li>Tasks and task lists</li>
               <li>Categories</li>
-              <li>Music league data (leagues, rounds, submissions)</li>
-              <li>Shared list memberships</li>
+<li>Shared list memberships</li>
             </ul>
 
             <h3 className="text-lg font-semibold text-[#DCE4E4]">
@@ -85,10 +84,6 @@ export default function PrivacyPolicyPage() {
                 Send push notifications and email reminders you have opted into
               </li>
               <li>Enable shared lists and collaborative features</li>
-              <li>
-                Facilitate music league functionality, including Spotify
-                integration
-              </li>
             </ul>
             <p>
               We do <strong>not</strong> sell, rent, or share your personal
@@ -105,10 +100,6 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <strong>Google OAuth</strong> &mdash; for account authentication
-              </li>
-              <li>
-                <strong>Spotify API</strong> &mdash; for music league song
-                search and playback features
               </li>
               <li>
                 <strong>Expo Push Notification Service</strong> &mdash; for
@@ -143,7 +134,6 @@ export default function PrivacyPolicyPage() {
             <ul>
               <li>Your profile information</li>
               <li>Your tasks and task lists</li>
-              <li>Your music league data</li>
               <li>Your notification preferences and push tokens</li>
             </ul>
             <p>

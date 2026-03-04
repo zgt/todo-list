@@ -122,10 +122,6 @@ export function useNotifications() {
               pathname: "/",
               params: { openTask: data.taskId },
             });
-          } else if (data?.type === "league" && data.roundId) {
-            router.push(`/music/round/${data.roundId}`);
-          } else if (data?.type === "league" && data.leagueId) {
-            router.push(`/music/league/${data.leagueId}`);
           }
         }
       });

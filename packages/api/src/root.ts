@@ -1,7 +1,6 @@
 import { authRouter } from "./router/auth";
 import { categoryRouter } from "./router/category";
 import { moderationRouter } from "./router/moderation";
-import { musicLeagueRouter } from "./router/music-league";
 import { notificationRouter } from "./router/notification";
 import { postRouter } from "./router/post";
 import { subtaskRouter } from "./router/subtask";
@@ -15,7 +14,6 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   category: categoryRouter,
   moderation: moderationRouter,
-  musicLeague: musicLeagueRouter,
   notification: notificationRouter,
   post: postRouter,
   subtask: subtaskRouter,

@@ -75,8 +75,8 @@ export function AccountDeletion() {
               Delete Account
             </h3>
             <p className="text-muted-foreground mt-1 text-sm">
-              Permanently delete your account, all tasks, lists, music league
-              data, and preferences. This action cannot be undone.
+              Permanently delete your account, all tasks, lists, and
+              preferences. This action cannot be undone.
             </p>
           </div>
 
@@ -98,8 +98,8 @@ export function AccountDeletion() {
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-[#DCE4E4]/70">
                   This will permanently delete your account and all associated
-                  data including tasks, lists, music league memberships,
-                  submissions, and votes. This action is irreversible.
+                  data including tasks, lists, and preferences. This action
+                  is irreversible.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 

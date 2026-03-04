@@ -7,11 +7,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   HelpCircle,
   Home,
-  Music,
   Settings,
   ShieldAlert,
   Tag,
-  User,
   Users,
 } from "lucide-react";
 
@@ -44,12 +42,7 @@ const navigation = [
     href: "/categories",
     icon: Tag,
   },
-  {
-    name: "Music Leagues",
-    href: "/music",
-    icon: Music,
-  },
-  {
+{
     name: "Settings",
     href: "/settings",
     icon: Settings,
@@ -143,20 +136,6 @@ export function AppSidebar({
                     sideOffset={8}
                   >
                     <div className="flex flex-col gap-1">
-                      <Link
-                        href="/music/profile"
-                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
-                      >
-                        <User className="h-4 w-4" />
-                        Profile
-                      </Link>
-                      <Link
-                        href="/music/settings"
-                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"
-                      >
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </Link>
                       <Link
                         href="/settings/blocked-users"
                         className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white transition-colors hover:bg-white/5"

@@ -5,19 +5,14 @@ import { eq } from "@acme/db";
 import {
   account,
   Category,
-  Comment,
-  League,
-  LeagueMember,
   PushToken,
   session,
-  Submission,
   Task,
   TaskList,
   TaskListInvite,
   TaskListMember,
   user,
   UserPreference,
-  Vote,
 } from "@acme/db/schema";
 
 import { protectedProcedure } from "../trpc";
@@ -46,16 +41,7 @@ export const userRouter = {
       const userId = ctx.session.user.id;
 
       await ctx.db.transaction(async (tx) => {
-        // 1. Delete music league data (votes, comments, submissions depend on user)
-        await tx.delete(Vote).where(eq(Vote.voterId, userId));
-        await tx.delete(Comment).where(eq(Comment.userId, userId));
-        await tx.delete(Submission).where(eq(Submission.userId, userId));
-        await tx.delete(LeagueMember).where(eq(LeagueMember.userId, userId));
-
-        // Delete leagues the user created (cascades rounds/submissions/votes)
-        await tx.delete(League).where(eq(League.creatorId, userId));
-
-        // 2. Delete task-related data
+        // 1. Delete task-related data
         // Subtasks cascade from tasks, so just delete tasks
         await tx.delete(Task).where(eq(Task.userId, userId));
         await tx.delete(Category).where(eq(Category.userId, userId));

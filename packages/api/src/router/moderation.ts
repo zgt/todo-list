@@ -12,12 +12,9 @@ export const moderationRouter = {
     .input(
       z.object({
         contentType: z.enum([
-          "LEAGUE",
-          "SUBMISSION",
           "TASK",
           "USER",
           "COMMENT",
-          "ROUND",
         ]),
         contentId: z.string().min(1),
         reportedUserId: z.string().optional(),
