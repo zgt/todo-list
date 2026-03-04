@@ -10,16 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
 import { Stack, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Bell,
-  BellOff,
-  Clock,
-  Mail,
-} from "lucide-react-native";
+import { ArrowLeft, Bell, BellOff, Clock, Mail } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { trpc } from "~/utils/api";
@@ -389,9 +382,6 @@ export default function SettingsScreen() {
             Music Leagues → Settings
           </Text>
 
-          {/* Test Notifications Section */}
-          <TestNotificationsSection />
-
           {/* App Version */}
           <Text
             style={{
@@ -401,11 +391,11 @@ export default function SettingsScreen() {
               color: "#4A6A6A",
             }}
           >
-              </Text>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-    </View>
+            Tokilist v{Constants.expoConfig?.version ?? "1.0.0"} (
+            {Constants.expoConfig?.ios?.buildNumber ?? "1"})
+          </Text>
+        </ScrollView>
+      </SafeAreaView>
+    </GradientBackground>
   );
 }

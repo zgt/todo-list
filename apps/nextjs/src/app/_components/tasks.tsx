@@ -114,21 +114,6 @@ function getReminderBadgeClasses(
   }
 }
 
-function toDatetimeLocal(date: Date | undefined): string {
-  if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
-function fromDatetimeLocal(value: string): Date | undefined {
-  if (!value) return undefined;
-  return new Date(value);
-}
-
 // --- Reminder pill used in both InlineCreateTask and TaskCard edit mode ---
 
 function TimePicker({
@@ -212,12 +197,14 @@ function ReminderPill({
     value?.getMinutes() ?? 0,
   );
 
-  // Sync internal state when value changes externally
-  useEffect(() => {
+  // Sync internal state when value changes externally (render-time update)
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setSelectedDate(value);
     setSelectedHours(value?.getHours() ?? 9);
     setSelectedMinutes(value?.getMinutes() ?? 0);
-  }, [value]);
+  }
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -268,7 +255,7 @@ function ReminderPill({
         <div className="flex flex-col">
           <CalendarPicker date={selectedDate} onDateChange={handleDateSelect} />
           <div className="border-t border-[#164B49] px-3 py-2.5">
-            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+            <label className="mb-1.5 block text-[10px] font-semibold tracking-wider text-[#8FA8A8]/70 uppercase">
               Time
             </label>
             <TimePicker
@@ -327,11 +314,7 @@ function getNextMondayAt9am(): Date {
 
 // --- Snooze popover content (shared between SnoozePill and hover action) ---
 
-function SnoozeCustomPicker({
-  onSnooze,
-}: {
-  onSnooze: (date: Date) => void;
-}) {
+function SnoozeCustomPicker({ onSnooze }: { onSnooze: (date: Date) => void }) {
   const [date, setDate] = useState<Date | undefined>();
   const [hours, setHours] = useState(9);
   const [minutes, setMinutes] = useState(0);
@@ -351,7 +334,7 @@ function SnoozeCustomPicker({
     <div className="flex flex-col">
       <CalendarPicker date={date} onDateChange={handleDateSelect} />
       <div className="border-t border-[#164B49] px-3 py-2.5">
-        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+        <label className="mb-1.5 block text-[10px] font-semibold tracking-wider text-[#8FA8A8]/70 uppercase">
           Time
         </label>
         <TimePicker
@@ -752,7 +735,7 @@ export function InlineCreateTask({
       ref={containerRef}
       className={cn(
         "group relative overflow-hidden rounded-2xl transition-all duration-300",
-        "border border-primary/50 bg-[#102A2A]/80 backdrop-blur-sm",
+        "border-primary/50 border bg-[#102A2A]/80 backdrop-blur-sm",
       )}
     >
       {/* Top row with inline title input */}
@@ -1253,8 +1236,12 @@ function SubtaskSection({
   const hasDescription = !!task.description;
 
   return (
-    <div className={cn(hasDescription ? "mt-4 border-t border-[#164B49]/40 pt-3" : "mt-1")}>
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+    <div
+      className={cn(
+        hasDescription ? "mt-4 border-t border-[#164B49]/40 pt-3" : "mt-1",
+      )}
+    >
+      <p className="mb-2 text-[10px] font-semibold tracking-wider text-[#8FA8A8]/70 uppercase">
         Subtasks
         {subtasks.length > 0 && (
           <span className="ml-1.5 text-[#50C878]/70">
@@ -1564,8 +1551,8 @@ export function TaskCard(props: {
         props.task.completed
           ? "border-primary/50 shadow-glow bg-primary/5 opacity-50"
           : isOverdue
-            ? "border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)] hover:shadow-glowHover"
-            : "hover:border-[#21716C] hover:bg-[#102A2A] hover:shadow-glowHover",
+            ? "hover:shadow-glowHover border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)]"
+            : "hover:shadow-glowHover hover:border-[#21716C] hover:bg-[#102A2A]",
       )}
     >
       {/* Collapsed row */}
@@ -1595,10 +1582,7 @@ export function TaskCard(props: {
         </div>
 
         {/* Chevron toggle */}
-        <div
-          className="shrink-0 text-[#8FA8A8]"
-          aria-hidden="true"
-        >
+        <div className="shrink-0 text-[#8FA8A8]" aria-hidden="true">
           <ChevronRight
             className={cn(
               "h-3 w-3 transition-transform duration-300 sm:h-4 sm:w-4",
@@ -1644,7 +1628,9 @@ export function TaskCard(props: {
                 <h2
                   className={cn(
                     "truncate text-sm font-medium transition-colors sm:text-lg",
-                    props.task.completed ? "text-white/50 line-through" : "text-white",
+                    props.task.completed
+                      ? "text-white/50 line-through"
+                      : "text-white",
                   )}
                 >
                   {props.task.title}
@@ -1867,7 +1853,7 @@ export function TaskCard(props: {
               <div className="border-t border-[#164B49]/60 pt-3">
                 {isEditing ? (
                   <div className="max-w-2xl">
-                    <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+                    <label className="mb-1.5 block text-[10px] font-semibold tracking-wider text-[#8FA8A8]/70 uppercase">
                       Description
                     </label>
                     <textarea
@@ -1889,7 +1875,7 @@ export function TaskCard(props: {
                     />
                   </div>
                 ) : props.task.description ? (
-                  <p className="max-w-2xl text-sm leading-relaxed text-[#C8D6D6] whitespace-pre-wrap">
+                  <p className="max-w-2xl text-sm leading-relaxed whitespace-pre-wrap text-[#C8D6D6]">
                     {props.task.description}
                   </p>
                 ) : null}
@@ -1997,13 +1983,18 @@ export function TaskCard(props: {
                       )}
                     >
                       <Calendar className="h-3 w-3" />
-                      {new Date(props.task.dueDate).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {new Date(props.task.dueDate).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        },
+                      )}
                       {isDueDateOverdue && (
-                        <span className="font-semibold text-amber-400">Overdue</span>
+                        <span className="font-semibold text-amber-400">
+                          Overdue
+                        </span>
                       )}
                     </div>
                   )}
@@ -2027,22 +2018,22 @@ export function TaskCard(props: {
                         props.task.reminderSentAt ?? null,
                       ) === "overdue"
                     ) && (
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                        getReminderBadgeClasses(
+                      <div
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                          getReminderBadgeClasses(
+                            props.task.reminderAt,
+                            props.task.reminderSentAt,
+                          ),
+                        )}
+                      >
+                        <Bell className="h-3 w-3" />
+                        {formatReminder(
                           props.task.reminderAt,
                           props.task.reminderSentAt,
-                        ),
-                      )}
-                    >
-                      <Bell className="h-3 w-3" />
-                      {formatReminder(
-                        props.task.reminderAt,
-                        props.task.reminderSentAt,
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
                   {props.task.recurrenceRule && (
                     <div className="flex items-center gap-1.5 rounded-full border border-[#50C878]/20 bg-[#50C878]/5 px-2.5 py-1 text-[11px] font-medium text-[#50C878]">
                       <Repeat className="h-3 w-3" />
@@ -2125,7 +2116,7 @@ export function TaskCard(props: {
                     updateTask.isPending || !hasChanges || !editedTitle.trim()
                   }
                   className={cn(
-                    "h-8 px-4 text-xs bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]",
+                    "h-8 bg-[#50C878] px-4 text-xs text-[#0A1A1A] hover:bg-[#66D99A]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                   )}
                 >

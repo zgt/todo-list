@@ -191,7 +191,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
         {WEEKDAYS.map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-medium uppercase tracking-wider text-[#8FA8A8]"
+            className="text-center text-xs font-medium tracking-wider text-[#8FA8A8] uppercase"
           >
             {day}
           </div>
@@ -228,9 +228,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                 key={dateKey}
                 onClick={() => handleDayClick(dateKey)}
                 className={`cursor-pointer overflow-hidden p-1.5 transition-colors ${borderClasses} ${
-                  isSelected
-                    ? "bg-[#164B49]/30"
-                    : "hover:bg-[#164B49]/20"
+                  isSelected ? "bg-[#164B49]/30" : "hover:bg-[#164B49]/20"
                 } ${!isCurrentMonth ? "opacity-40" : ""}`}
               >
                 {/* Date number - centered */}
@@ -242,9 +240,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                   ) : (
                     <span
                       className={`flex h-6 w-6 items-center justify-center text-sm ${
-                        isCurrentMonth
-                          ? "text-[#8FA8A8]"
-                          : "text-[#4A6A6A]"
+                        isCurrentMonth ? "text-[#8FA8A8]" : "text-[#4A6A6A]"
                       }`}
                     >
                       {date.getDate()}
@@ -258,18 +254,15 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                     <div
                       key={task.id}
                       className={`flex items-center gap-1 rounded-sm px-1 py-px ${
-                        task.completed
-                          ? "line-through opacity-40"
-                          : ""
+                        task.completed ? "line-through opacity-40" : ""
                       }`}
                     >
                       <span
                         className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full"
                         style={{
                           backgroundColor:
-                            PRIORITY_DOT_COLORS[
-                              task.priority ?? "none"
-                            ] ?? "#8FA8A8",
+                            PRIORITY_DOT_COLORS[task.priority ?? "none"] ??
+                            "#8FA8A8",
                         }}
                       />
                       <span className="truncate text-xs text-[#DCE4E4]">

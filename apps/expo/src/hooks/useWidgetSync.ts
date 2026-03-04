@@ -1,6 +1,6 @@
+import type { AppStateStatus } from "react-native";
 import { useEffect, useRef } from "react";
 import { AppState } from "react-native";
-import type { AppStateStatus } from "react-native";
 
 import type { WidgetTask } from "~/utils/widget";
 import {
@@ -93,7 +93,9 @@ export function useWidgetActions(
     // Process on mount (app just opened)
     void handleAppState("active");
 
-    const sub = AppState.addEventListener("change", handleAppState);
+    const sub = AppState.addEventListener("change", (state) => {
+      void handleAppState(state);
+    });
     return () => sub.remove();
   }, [updateTaskMutation, invalidateQueries]);
 }

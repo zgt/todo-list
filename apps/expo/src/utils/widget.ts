@@ -64,18 +64,19 @@ export function updateWidget(tasks: WidgetTask[]): void {
   try {
     // Sort tasks: incomplete first, then completed (for large widget display)
     // Limit to 10 tasks total
-    const sortedTasks = [...tasks]
-      .sort((a, b) => Number(a.completed) - Number(b.completed));
-    
+    const sortedTasks = [...tasks].sort(
+      (a, b) => Number(a.completed) - Number(b.completed),
+    );
+
     // We keep all tasks for statistics, but the widget view might only show a subset.
-    // However, to keep JSON size small, we might want to limit. 
+    // However, to keep JSON size small, we might want to limit.
     // But for filtering to work on the widget side, we need ALL tasks (or at least more of them).
-    // Let's bump the limit or send all (within reason). 
-    // If the user has 1000 tasks, that's bad. 
+    // Let's bump the limit or send all (within reason).
+    // If the user has 1000 tasks, that's bad.
     // Let's send top 50 relevant tasks? Or maybe just keep the previous logic but ensure we capture enough.
     // Actually, if we want to filter by category on the widget, we need the tasks for those categories.
     // If we only send top 10 mixed tasks, filtering by "Work" might show 0 results if the top 10 are "Personal".
-    // So we should probably send more tasks, but maybe strip some data if needed. 
+    // So we should probably send more tasks, but maybe strip some data if needed.
     // For now, let's send up to 50 tasks.
     const limitedTasks = sortedTasks.slice(0, 50);
 
@@ -91,26 +92,27 @@ export function updateWidget(tasks: WidgetTask[]): void {
 
     // Extract unique categories from the tasks
     const categoriesMap = new Map<string, WidgetCategoryItem>();
-    
-    // We iterate over ALL tasks (not just limited ones) to find available categories? 
-    // Or just the ones we are sending? 
+
+    // We iterate over ALL tasks (not just limited ones) to find available categories?
+    // Or just the ones we are sending?
     // If we filter on widget, we can only show tasks we sent. So strictly speaking, only categories present in the sent tasks are "available" to be shown.
-    // However, it might be nice to know other categories exist. 
+    // However, it might be nice to know other categories exist.
     // But for now, let's stick to categories present in `widgetTasks`.
-    widgetTasks.forEach(task => {
+    widgetTasks.forEach((task) => {
       if (task.categoryId && task.categoryName && task.categoryColor) {
         if (!categoriesMap.has(task.categoryId)) {
           categoriesMap.set(task.categoryId, {
             id: task.categoryId,
             name: task.categoryName,
-            color: task.categoryColor
+            color: task.categoryColor,
           });
         }
       }
     });
 
-    const widgetCategories = Array.from(categoriesMap.values())
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const widgetCategories = Array.from(categoriesMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
 
     const completedCount = tasks.filter((t) => t.completed).length;
 
