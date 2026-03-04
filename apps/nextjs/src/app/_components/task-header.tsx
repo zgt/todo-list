@@ -41,7 +41,7 @@ export function TaskHeader() {
   return (
     <header className="flex items-center justify-between gap-2 pr-2 sm:gap-4 sm:pr-6">
       {/* Left side - Mobile trigger and Category Filter */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto sm:gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-4">
         {/* Sidebar trigger */}
         <SidebarTrigger className="shrink-0" />
 

@@ -8,16 +8,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Turborepo monorepo for a cross-platform Tokilist application with web (Next.js) and mobile (Expo) clients sharing a common tRPC API backend. The stack uses:
+This is a Turborepo monorepo for a cross-platform Tokilist application — a task management and music league app with web (Next.js), mobile (Expo/React Native), and an experimental TanStack Start frontend, sharing a common tRPC API backend. The stack uses:
 
 - **Turborepo** for monorepo management
 - **Next.js 15** with React 19 for web
-- **Expo** with React Native for mobile
+- **Expo SDK 54** with React Native 0.81 for mobile
+- **TanStack Start** for alternative web frontend (experimental)
 - **tRPC v11** for type-safe API layer
-- **Drizzle ORM** with PostgreSQL (Neon/Supabase)
-- **Better Auth** for authentication
-- **Tailwind CSS v4** for styling
-- **shadcn/ui** for web UI components
+- **Drizzle ORM** with PostgreSQL (Supabase)
+- **Better Auth** for authentication (OAuth, session management, auth proxy)
+- **Tailwind CSS v4** + **NativeWind v5** for styling
+- **shadcn/ui** + **Framer Motion** for web UI components
+- **SwiftUI** for native iOS home screen widgets
+- **Spotify Web API** for music league integration
+- **Expo Push Notifications** for mobile push notifications
+- **Supabase Edge Functions** for task archiving
+
+### Key Features
+
+**Task Management**: Create, organize, and track tasks with categories, priorities, and due dates. Offline-first mobile with local SQLite, bidirectional sync, and conflict resolution. Native iOS home screen widgets (small/medium/large). Automatic archiving of completed tasks via Supabase Edge Functions.
+
+**Music League**: Spotify-integrated social game where friends compete by submitting songs to themed rounds. Includes leagues with invite codes, sequential round system (Submission → Voting → Results), Spotify search/playlist generation, upvote/downvote voting with point budgets, leaderboards, and push notifications.
+
+**Obsidian Sync**: Sync tasks to an Obsidian vault as markdown files via `scripts/sync-tasks-to-obsidian.ts`. Requires Obsidian Local REST API plugin and env vars (`OBSIDIAN_SYNC_API_KEY`, `TOKILIST_USER_ID`, `OBSIDIAN_REST_API_KEY`).
 
 ## Development Commands
 
@@ -143,24 +156,28 @@ pnpm build:prod:android # Google Play Store
 
 ```
 apps/
-  ├── expo/          # React Native mobile app
-  └── nextjs/        # Next.js web app
+  ├── expo/            # React Native mobile app (Expo SDK 54)
+  ├── nextjs/          # Next.js web app
+  └── tanstack-start/  # TanStack Start web app (experimental)
 packages/
-  ├── api/           # tRPC router definitions
-  ├── auth/          # Better Auth configuration
-  ├── db/            # Drizzle schema and client
-  └── ui/            # Shared UI components (shadcn/ui)
+  ├── api/             # Shared tRPC router definitions
+  ├── auth/            # Better Auth configuration
+  ├── db/              # Drizzle schema and client
+  └── ui/              # Shared UI components (shadcn/ui)
+scripts/               # Obsidian sync utilities
+supabase/              # Edge functions (task archiving)
 tooling/
-  ├── eslint/        # ESLint configurations
-  ├── prettier/      # Prettier config
-  ├── tailwind/      # Tailwind theme
-  └── typescript/    # TypeScript configs
+  ├── eslint/          # ESLint configurations
+  ├── prettier/        # Prettier config
+  ├── tailwind/        # Tailwind theme
+  └── typescript/      # TypeScript configs
 ```
 
 ### Package Dependencies
 
 - **Next.js app** depends on: `@acme/api`, `@acme/auth`, `@acme/db`, `@acme/ui`
 - **Expo app** depends on: `@acme/api` (dev only for types), `@acme/auth`
+- **TanStack Start app** depends on: `@acme/api`, `@acme/auth`, `@acme/db` (experimental)
 - **API package** depends on: `@acme/auth`, `@acme/db`
 - **Auth package** depends on: `@acme/db`
 
@@ -217,8 +234,10 @@ Current setup uses Discord OAuth. To add providers, update both configs.
 
 **Mobile (Expo)**:
 - Cannot use `@acme/ui` components (web-only)
-- Uses React Native components with NativeWind
+- Uses React Native components with NativeWind v5
 - Custom checkbox implementation (not Radix UI)
+- Offline-first with local SQLite database and bidirectional sync with conflict resolution
+- Native iOS home screen widgets built with SwiftUI (small/medium/large sizes)
 
 **Shared**:
 - tRPC client setup differs (React Query configuration)
@@ -268,13 +287,18 @@ Both use the same Zod schemas from `@acme/db/schema`.
 Required in `.env` at repository root:
 
 ```bash
-POSTGRES_URL=                    # Neon/Supabase connection string
+POSTGRES_URL=                    # Supabase connection string
 AUTH_SECRET=                     # Random secret for Better Auth
 AUTH_DISCORD_ID=                 # Discord OAuth client ID
 AUTH_DISCORD_SECRET=             # Discord OAuth client secret
 AUTH_REDIRECT_PROXY_URL=         # Auth proxy URL (for Expo OAuth)
 PORT=3000                        # Optional: Next.js port
 EXPO_PUBLIC_EAS_PROJECT_ID=      # EAS Project ID (get from `eas init`)
+
+# Obsidian Sync (optional)
+OBSIDIAN_SYNC_API_KEY=           # Obsidian sync API key
+TOKILIST_USER_ID=                # User ID for sync
+OBSIDIAN_REST_API_KEY=           # Obsidian Local REST API plugin key
 ```
 
 ## Troubleshooting
@@ -305,6 +329,22 @@ pnpm build
 1. Deploy Next.js app to get stable URL
 2. Set `AUTH_REDIRECT_PROXY_URL` to deployed URL
 3. Add auth proxy plugin to Better Auth config (already included)
+
+## Deployment
+
+### Web (Vercel)
+1. Create a new Vercel project pointing to `apps/nextjs`
+2. Add `POSTGRES_URL` and other env vars
+3. Deploy — Vercel handles Turborepo builds automatically
+
+### Mobile (EAS)
+See `apps/expo/EAS_DEPLOYMENT.md` for complete guide. Quick commands:
+```bash
+cd apps/expo
+eas build --platform ios --profile production
+eas submit --platform ios --latest
+eas update --auto  # OTA updates (no native changes)
+```
 
 ## Code Style
 
