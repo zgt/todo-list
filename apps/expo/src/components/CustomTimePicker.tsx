@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 
 interface CustomTimePickerProps {
   isVisible: boolean;
@@ -75,12 +76,22 @@ export function CustomTimePicker({
   }, [isVisible, date]);
 
   // Update selection live during scroll
+  const lastHourIdx = useRef(-1);
+  const lastMinuteIdx = useRef(-1);
+  const lastPeriodIdx = useRef(-1);
+
   const handleHourScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (programmatic.current) return;
       const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
       const h = HOURS[idx];
-      if (h !== undefined) setSelectedHour(h);
+      if (h !== undefined) {
+        if (idx !== lastHourIdx.current) {
+          lastHourIdx.current = idx;
+          void Haptics.selectionAsync();
+        }
+        setSelectedHour(h);
+      }
     },
     [],
   );
@@ -90,7 +101,13 @@ export function CustomTimePicker({
       if (programmatic.current) return;
       const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
       const m = MINUTES[idx];
-      if (m !== undefined) setSelectedMinute(m);
+      if (m !== undefined) {
+        if (idx !== lastMinuteIdx.current) {
+          lastMinuteIdx.current = idx;
+          void Haptics.selectionAsync();
+        }
+        setSelectedMinute(m);
+      }
     },
     [],
   );
@@ -100,7 +117,13 @@ export function CustomTimePicker({
       if (programmatic.current) return;
       const idx = Math.round(e.nativeEvent.contentOffset.y / ITEM_HEIGHT);
       const p = PERIODS[idx];
-      if (p !== undefined) setSelectedPeriod(p);
+      if (p !== undefined) {
+        if (idx !== lastPeriodIdx.current) {
+          lastPeriodIdx.current = idx;
+          void Haptics.selectionAsync();
+        }
+        setSelectedPeriod(p);
+      }
     },
     [],
   );

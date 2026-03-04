@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Animated from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Layers, List, RefreshCw } from "lucide-react-native";
@@ -331,6 +332,9 @@ export default function Index() {
   );
 
   const handleToggle = async (id: string, completed: boolean) => {
+    if (completed) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     await toggleMutation.mutateAsync({ id, completed });
     // Cancel reminder when completing a task
     if (completed) {
@@ -565,6 +569,9 @@ export default function Index() {
   );
 
   const handleSubtaskToggle = async (subtaskId: string, completed: boolean) => {
+    if (completed) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     await subtaskUpdateMutation.mutateAsync({ id: subtaskId, completed });
   };
 
