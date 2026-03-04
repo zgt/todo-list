@@ -230,6 +230,8 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
                 placeholderTextColor="#52525B"
                 selectionColor="#50C878"
                 maxLength={100}
+                autoCorrect={true}
+                autoCapitalize="words"
                 autoFocus
               />
 

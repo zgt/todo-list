@@ -155,15 +155,13 @@ export function TaskCard({
     const timeSinceLastTap = now - lastTapRef.current;
 
     if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-      // Double tap detected
+      // Double tap → open edit form
       if (singleTapTimeoutRef.current) {
         clearTimeout(singleTapTimeoutRef.current);
         singleTapTimeoutRef.current = null;
       }
-      // Toggle expand if there are subtasks or a description
-      if (subtaskTotal > 0 || task.description) {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        onToggleExpand();
+      if (onTaskPress) {
+        onTaskPress();
       }
     } else {
       // Single tap - wait to see if it's a double tap
@@ -171,7 +169,10 @@ export function TaskCard({
         clearTimeout(singleTapTimeoutRef.current);
       }
       singleTapTimeoutRef.current = setTimeout(() => {
-        if (onTaskPress) {
+        if ((subtaskTotal > 0 || task.description) && !isExpanded) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          onToggleExpand();
+        } else if (onTaskPress) {
           onTaskPress();
         }
       }, 250);
@@ -320,20 +321,22 @@ export function TaskCard({
                   </RNText>
                 </View>
               )}
-              <PrioritySelector
-                value={priority}
-                onChange={(p) => {
-                  onChangePriority(p);
-                  onSave({ priority: p });
-                }}
-                trigger={
-                  <PriorityBadge
-                    priority={priority}
-                    size="sm"
-                    showLabel={false}
-                  />
-                }
-              />
+              {priority !== "medium" && (
+                <PrioritySelector
+                  value={priority}
+                  onChange={(p) => {
+                    onChangePriority(p);
+                    onSave({ priority: p });
+                  }}
+                  trigger={
+                    <PriorityBadge
+                      priority={priority}
+                      size="xs"
+                      showLabel={false}
+                    />
+                  }
+                />
+              )}
               {task.dueDate && (
                 <View style={styles.compactPillDate}>
                   <RNText style={{ fontSize: 11, color: "#8FA8A8" }}>
@@ -421,6 +424,8 @@ export function TaskCard({
       )}
     </View>
   );
+
+  const maxVisibleSubtasks = Math.max(4, Math.floor((CARD_HEIGHT - 260) / 28));
 
   // Card layout (column)
   const renderCardLayout = () => (
@@ -538,7 +543,7 @@ export function TaskCard({
         {/* Subtasks in card view */}
         {subtaskTotal > 0 && onSubtaskToggle && (
           <View style={styles.subtasksContainer}>
-            {subtasks.slice(0, 4).map((subtask) => (
+            {subtasks.slice(0, maxVisibleSubtasks).map((subtask) => (
               <Pressable
                 key={subtask.id}
                 onPress={() => onSubtaskToggle(subtask.id, !subtask.completed)}
@@ -567,9 +572,9 @@ export function TaskCard({
                 </RNText>
               </Pressable>
             ))}
-            {subtaskTotal > 4 && (
+            {subtaskTotal > maxVisibleSubtasks && (
               <RNText style={styles.moreSubtasks}>
-                +{subtaskTotal - 4} more
+                +{subtaskTotal - maxVisibleSubtasks} more
               </RNText>
             )}
           </View>

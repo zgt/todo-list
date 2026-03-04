@@ -334,6 +334,8 @@ export function CategoryFilter({
                 placeholderTextColor="#52525B"
                 selectionColor="#50C878"
                 maxLength={100}
+                autoCorrect={true}
+                autoCapitalize="words"
                 autoFocus
               />
 

@@ -6,7 +6,7 @@ import { PRIORITY_CONFIG } from "./priority-config";
 
 interface PriorityBadgeProps {
   priority: PriorityLevel;
-  size?: "sm" | "md";
+  size?: "xs" | "sm" | "md";
   showLabel?: boolean;
 }
 
@@ -17,18 +17,24 @@ export const PriorityBadge = memo(
     if (!config) return null;
     const Icon = config.Icon;
 
+    const sizeStyles = {
+      xs: { paddingHorizontal: 6, paddingVertical: 1, borderWidth: 1, icon: 10 },
+      sm: { paddingHorizontal: 10, paddingVertical: 4, borderWidth: 2, icon: 14 },
+      md: { paddingHorizontal: 10, paddingVertical: 4, borderWidth: 2, icon: 16 },
+    }[size!];
+
     return (
       <View
         className={`flex-row items-center gap-1 rounded-full ${config.bgClass}`}
         style={{
-          paddingHorizontal: 10,
-          paddingVertical: 4,
-          borderWidth: 2,
+          paddingHorizontal: sizeStyles.paddingHorizontal,
+          paddingVertical: sizeStyles.paddingVertical,
+          borderWidth: sizeStyles.borderWidth,
           borderColor: `${config.color}60`,
           borderRadius: 9999,
         }}
       >
-        <Icon size={size === "sm" ? 12 : 16} color={`${config.color}CC`} />
+        <Icon size={sizeStyles.icon} color={`${config.color}CC`} />
         {showLabel && (
           <Text className={`text-xs font-medium ${config.textClass}`}>
             {config.label}
