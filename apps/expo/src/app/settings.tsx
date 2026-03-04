@@ -18,11 +18,7 @@ import {
   Bell,
   BellOff,
   Clock,
-  FlaskConical,
   Mail,
-  Send,
-  Smartphone,
-  Wifi,
 } from "lucide-react-native";
 
 import { GradientBackground } from "~/components/GradientBackground";
@@ -32,7 +28,6 @@ import {
   cancelAllTaskReminders,
   getPermissionStatus,
   requestPermissions,
-  scheduleTaskReminder,
 } from "~/utils/notifications";
 
 export default function SettingsScreen() {
@@ -406,196 +401,6 @@ export default function SettingsScreen() {
               color: "#4A6A6A",
             }}
           >
-            Tokilist v{Constants.expoConfig?.version ?? "1.0.0"} (
-            {Constants.expoConfig?.ios?.buildNumber ?? "1"})
-          </Text>
-        </ScrollView>
-      </SafeAreaView>
-    </GradientBackground>
-  );
-}
-
-// ─── Test Buttons (dev only) ─────────────────────────────────────────
-
-interface TestButton {
-  label: string;
-  description: string;
-  icon: React.ReactNode;
-  onPress: () => void | Promise<void>;
-  loading?: boolean;
-}
-
-function TestNotificationsSection() {
-  const [sendingLocal, setSendingLocal] = useState(false);
-  const [sendingScheduled, setSendingScheduled] = useState(false);
-
-  const testPushGeneric = useMutation(
-    trpc.notification.sendTestPush.mutationOptions({
-      onSuccess: () =>
-        Alert.alert("Sent", "Server push sent — check your device."),
-      onError: (e) => Alert.alert("Failed", e.message),
-    }),
-  );
-
-  const testPushRound = useMutation(
-    trpc.notification.sendTestPush.mutationOptions({
-      onSuccess: () => Alert.alert("Sent", "Round started push sent."),
-      onError: (e) => Alert.alert("Failed", e.message),
-    }),
-  );
-
-  const testPushVoting = useMutation(
-    trpc.notification.sendTestPush.mutationOptions({
-      onSuccess: () => Alert.alert("Sent", "Voting open push sent."),
-      onError: (e) => Alert.alert("Failed", e.message),
-    }),
-  );
-
-  const testPushResults = useMutation(
-    trpc.notification.sendTestPush.mutationOptions({
-      onSuccess: () => Alert.alert("Sent", "Results push sent."),
-      onError: (e) => Alert.alert("Failed", e.message),
-    }),
-  );
-
-  const handleLocalNotification = async () => {
-    setSendingLocal(true);
-    try {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "📋 Local Test",
-          body: "This is a local notification — no server involved!",
-          sound: "default",
-          data: { type: "test" },
-        },
-        trigger: null, // fire immediately
-      });
-      Alert.alert("Sent", "Local notification fired.");
-    } catch (e) {
-      Alert.alert("Failed", e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setSendingLocal(false);
-    }
-  };
-
-  const handleScheduledNotification = async () => {
-    setSendingScheduled(true);
-    try {
-      const fiveSecondsFromNow = new Date(Date.now() + 5 * 1000);
-      await scheduleTaskReminder(
-        "test-scheduled",
-        "Test Task — Due in 5 seconds!",
-        fiveSecondsFromNow,
-        0,
-      );
-      Alert.alert(
-        "Scheduled",
-        "Task reminder will fire in ~5 seconds. Background the app to see it!",
-      );
-    } catch (e) {
-      Alert.alert("Failed", e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setSendingScheduled(false);
-    }
-  };
-
-  const buttons: TestButton[] = [
-    {
-      label: "Local (Immediate)",
-      description: "Fires a local notification right now",
-      icon: <Smartphone size={18} color="#DCE4E4" />,
-      onPress: handleLocalNotification,
-      loading: sendingLocal,
-    },
-    {
-      label: "Local (Scheduled 5s)",
-      description: "Schedules a task reminder in 5 seconds",
-      icon: <Clock size={18} color="#DCE4E4" />,
-      onPress: handleScheduledNotification,
-      loading: sendingScheduled,
-    },
-    {
-      label: "Server Push (Generic)",
-      description: "Sends a test push via Expo push service",
-      icon: <Wifi size={18} color="#DCE4E4" />,
-      onPress: () => testPushGeneric.mutate({ variant: "generic" }),
-      loading: testPushGeneric.isPending,
-    },
-    {
-      label: "Server Push (Round Started)",
-      description: "Simulates a new round notification",
-      icon: <Send size={18} color="#DCE4E4" />,
-      onPress: () => testPushRound.mutate({ variant: "round-started" }),
-      loading: testPushRound.isPending,
-    },
-    {
-      label: "Server Push (Voting Open)",
-      description: "Simulates a voting open notification",
-      icon: <Send size={18} color="#DCE4E4" />,
-      onPress: () => testPushVoting.mutate({ variant: "voting-open" }),
-      loading: testPushVoting.isPending,
-    },
-    {
-      label: "Server Push (Results)",
-      description: "Simulates a results available notification",
-      icon: <Send size={18} color="#DCE4E4" />,
-      onPress: () => testPushResults.mutate({ variant: "results-available" }),
-      loading: testPushResults.isPending,
-    },
-  ];
-
-  return (
-    <View style={{ marginTop: 32 }}>
-      <View
-        style={{
-          marginBottom: 16,
-          flexDirection: "row",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <FlaskConical size={22} color="#E5A04D" />
-        <View>
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#DCE4E4" }}>
-            Test Notifications
-          </Text>
-          <Text style={{ fontSize: 14, color: "#8FA8A8" }}>
-            Tap to test each notification type
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ gap: 8 }}>
-        {buttons.map((btn) => (
-          <Pressable
-            key={btn.label}
-            onPress={btn.onPress}
-            disabled={btn.loading}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: "#164B49",
-              backgroundColor: "#102A2A",
-              padding: 16,
-              opacity: btn.loading ? 0.5 : 1,
-            }}
-          >
-            {btn.loading ? (
-              <ActivityIndicator size="small" color="#DCE4E4" />
-            ) : (
-              btn.icon
-            )}
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{ fontSize: 14, fontWeight: "500", color: "#DCE4E4" }}
-              >
-                {btn.label}
-              </Text>
-              <Text style={{ marginTop: 2, fontSize: 12, color: "#8FA8A8" }}>
-                {btn.description}
               </Text>
             </View>
           </Pressable>
