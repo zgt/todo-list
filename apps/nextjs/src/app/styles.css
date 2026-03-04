@@ -94,3 +94,14 @@
     text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
   }
 }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

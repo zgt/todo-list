@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
@@ -79,6 +79,10 @@ export function CalendarView({ tasks }: CalendarViewProps) {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
+  // Track whether the task panel is open for animation
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+
   // Group tasks by local date key (due date and/or reminder date)
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>();
@@ -96,6 +100,18 @@ export function CalendarView({ tasks }: CalendarViewProps) {
     }
     return map;
   }, [tasks]);
+
+  const selectedTasks = useMemo(
+    () => (selectedKey ? (tasksByDate.get(selectedKey) ?? []) : []),
+    [selectedKey, tasksByDate],
+  );
+
+  const hasTasks = selectedTasks.length > 0;
+
+  // Animate panel open/close
+  useEffect(() => {
+    setIsPanelOpen(hasTasks);
+  }, [hasTasks]);
 
   const weeks = useMemo(
     () => getMonthGrid(currentYear, currentMonth),
@@ -178,11 +194,13 @@ export function CalendarView({ tasks }: CalendarViewProps) {
         ))}
       </div>
 
-      {/* Month grid */}
+      {/* Month grid - shrinks when task panel opens */}
       <div
-        className="grid flex-1 grid-cols-7 rounded-xl border border-[#164B49] bg-[#102A2A]/60 backdrop-blur-sm"
+        className="grid grid-cols-7 rounded-xl border border-[#164B49] bg-[#102A2A]/60 backdrop-blur-sm transition-[flex] duration-300 ease-in-out"
         style={{
+          flex: isPanelOpen ? "0 0 auto" : "1 1 0%",
           gridTemplateRows: `repeat(${weeks.length}, 1fr)`,
+          minHeight: isPanelOpen ? "45%" : undefined,
         }}
       >
         {weeks.map((week, wi) =>
@@ -268,27 +286,43 @@ export function CalendarView({ tasks }: CalendarViewProps) {
         )}
       </div>
 
-      {/* Selected day task list */}
-      {selectedKey && (tasksByDate.get(selectedKey)?.length ?? 0) > 0 && (
-        <div className="mt-3 border-t border-[#164B49]/50 pt-3">
-          <h3 className="mb-2 text-sm font-medium text-[#8FA8A8]">
-            {(() => {
-              const [y, m, d] = selectedKey.split("-").map(Number);
-              const date = new Date(y ?? 0, (m ?? 0) - 1, d);
-              return date.toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              });
-            })()}
-          </h3>
-          <div className="flex flex-col gap-2">
-            {(tasksByDate.get(selectedKey) ?? []).map((task) => (
-              <TaskCard key={task.id} task={task} />
-            ))}
-          </div>
+      {/* Animated task panel container using grid row trick */}
+      <div
+        ref={panelRef}
+        className="grid transition-[grid-template-rows] duration-300 ease-in-out"
+        style={{
+          gridTemplateRows: isPanelOpen ? "1fr" : "0fr",
+        }}
+      >
+        <div className="overflow-hidden">
+          {selectedKey && selectedTasks.length > 0 && (
+            <div className="mt-3 border-t border-[#164B49]/50 pt-3">
+              <h3 className="mb-2 text-sm font-medium text-[#8FA8A8]">
+                {(() => {
+                  const [y, m, d] = selectedKey.split("-").map(Number);
+                  const date = new Date(y ?? 0, (m ?? 0) - 1, d);
+                  return date.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  });
+                })()}
+              </h3>
+              <div className="flex flex-col gap-2">
+                {selectedTasks.map((task, i) => (
+                  <div
+                    key={task.id}
+                    className="animate-[slideDown_250ms_ease-out_both]"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                  >
+                    <TaskCard task={task} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
