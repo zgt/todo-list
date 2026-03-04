@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
 
-import { TaskCard } from "./tasks";
+import { useCreateTask } from "./create-task-context";
+import { InlineCreateTask, TaskCard } from "./tasks";
 
 type Task = RouterOutputs["task"]["all"][number];
 
@@ -79,9 +80,9 @@ export function CalendarView({ tasks }: CalendarViewProps) {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  // Track whether the task panel is open for animation
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const { isCreating } = useCreateTask();
 
   // Group tasks by local date key (due date and/or reminder date)
   const tasksByDate = useMemo(() => {
@@ -107,11 +108,14 @@ export function CalendarView({ tasks }: CalendarViewProps) {
   );
 
   const hasTasks = selectedTasks.length > 0;
+  const isPanelOpen = hasTasks || isCreating;
 
-  // Animate panel open/close
-  useEffect(() => {
-    setIsPanelOpen(hasTasks);
-  }, [hasTasks]);
+  // Compute the due date for new tasks based on the selected calendar day
+  const createDueDate = useMemo(() => {
+    const key = selectedKey ?? todayKey;
+    const [y, m, d] = key.split("-").map(Number);
+    return new Date(y ?? 0, (m ?? 0) - 1, d);
+  }, [selectedKey, todayKey]);
 
   const weeks = useMemo(
     () => getMonthGrid(currentYear, currentMonth),
@@ -295,11 +299,12 @@ export function CalendarView({ tasks }: CalendarViewProps) {
         }}
       >
         <div className="overflow-hidden">
-          {selectedKey && selectedTasks.length > 0 && (
+          {isPanelOpen && (
             <div className="mt-3 border-t border-[#164B49]/50 pt-3">
               <h3 className="mb-2 text-sm font-medium text-[#8FA8A8]">
                 {(() => {
-                  const [y, m, d] = selectedKey.split("-").map(Number);
+                  const key = selectedKey ?? todayKey;
+                  const [y, m, d] = key.split("-").map(Number);
                   const date = new Date(y ?? 0, (m ?? 0) - 1, d);
                   return date.toLocaleDateString("en-US", {
                     weekday: "long",
@@ -309,11 +314,18 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                 })()}
               </h3>
               <div className="flex flex-col gap-2">
+                {isCreating && (
+                  <div className="animate-[slideDown_250ms_ease-out_both]">
+                    <InlineCreateTask initialDueDate={createDueDate} />
+                  </div>
+                )}
                 {selectedTasks.map((task, i) => (
                   <div
                     key={task.id}
                     className="animate-[slideDown_250ms_ease-out_both]"
-                    style={{ animationDelay: `${i * 60}ms` }}
+                    style={{
+                      animationDelay: `${(isCreating ? i + 1 : i) * 60}ms`,
+                    }}
                   >
                     <TaskCard task={task} />
                   </div>

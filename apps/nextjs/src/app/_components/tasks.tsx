@@ -27,7 +27,7 @@ import type { TaskPriority } from "@acme/db/schema";
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { Checkbox } from "@acme/ui/checkbox";
-import { DatePicker } from "@acme/ui/date-picker";
+import { CalendarPicker } from "@acme/ui/date-picker";
 import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { toast } from "@acme/ui/toast";
@@ -131,6 +131,71 @@ function fromDatetimeLocal(value: string): Date | undefined {
 
 // --- Reminder pill used in both InlineCreateTask and TaskCard edit mode ---
 
+function TimePicker({
+  hours,
+  minutes,
+  onHoursChange,
+  onMinutesChange,
+}: {
+  hours: number;
+  minutes: number;
+  onHoursChange: (h: number) => void;
+  onMinutesChange: (m: number) => void;
+}) {
+  const period = hours >= 12 ? "PM" : "AM";
+  const display12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+
+  const togglePeriod = () => {
+    onHoursChange(hours >= 12 ? hours - 12 : hours + 12);
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={() => onHoursChange(hours <= 0 ? 23 : hours - 1)}
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] transition-colors hover:border-[#21716C] hover:bg-[#183F3F]"
+        aria-label="Decrease hour"
+      >
+        <Minus className="h-3 w-3" />
+      </button>
+      <span className="min-w-[2rem] text-center text-sm font-medium text-[#DCE4E4]">
+        {display12}
+      </span>
+      <button
+        onClick={() => onHoursChange(hours >= 23 ? 0 : hours + 1)}
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] transition-colors hover:border-[#21716C] hover:bg-[#183F3F]"
+        aria-label="Increase hour"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
+      <span className="text-sm font-medium text-[#8FA8A8]">:</span>
+      <button
+        onClick={() => onMinutesChange(minutes <= 0 ? 55 : minutes - 5)}
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] transition-colors hover:border-[#21716C] hover:bg-[#183F3F]"
+        aria-label="Decrease minutes"
+      >
+        <Minus className="h-3 w-3" />
+      </button>
+      <span className="min-w-[2rem] text-center text-sm font-medium text-[#DCE4E4]">
+        {String(minutes).padStart(2, "0")}
+      </span>
+      <button
+        onClick={() => onMinutesChange(minutes >= 55 ? 0 : minutes + 5)}
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] transition-colors hover:border-[#21716C] hover:bg-[#183F3F]"
+        aria-label="Increase minutes"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
+      <button
+        onClick={togglePeriod}
+        className="ml-1 rounded-md border border-[#164B49] bg-[#102A2A] px-2 py-1 text-xs font-medium text-[#DCE4E4] transition-colors hover:border-[#21716C] hover:bg-[#183F3F]"
+      >
+        {period}
+      </button>
+    </div>
+  );
+}
+
 function ReminderPill({
   value,
   onChange,
@@ -140,6 +205,47 @@ function ReminderPill({
   onChange: (date: Date | undefined) => void;
   disabled?: boolean;
 }) {
+  // Internal state for building the date+time before applying
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(value);
+  const [selectedHours, setSelectedHours] = useState(value?.getHours() ?? 9);
+  const [selectedMinutes, setSelectedMinutes] = useState(
+    value?.getMinutes() ?? 0,
+  );
+
+  // Sync internal state when value changes externally
+  useEffect(() => {
+    setSelectedDate(value);
+    setSelectedHours(value?.getHours() ?? 9);
+    setSelectedMinutes(value?.getMinutes() ?? 0);
+  }, [value]);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      const combined = new Date(date);
+      combined.setHours(selectedHours, selectedMinutes, 0, 0);
+      onChange(combined);
+    }
+  };
+
+  const handleHoursChange = (h: number) => {
+    setSelectedHours(h);
+    if (selectedDate) {
+      const combined = new Date(selectedDate);
+      combined.setHours(h, selectedMinutes, 0, 0);
+      onChange(combined);
+    }
+  };
+
+  const handleMinutesChange = (m: number) => {
+    setSelectedMinutes(m);
+    if (selectedDate) {
+      const combined = new Date(selectedDate);
+      combined.setHours(selectedHours, m, 0, 0);
+      onChange(combined);
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -158,29 +264,34 @@ function ReminderPill({
           {value ? formatReminder(value) : "Reminder"}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-3" align="end">
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-[#DCE4E4]">
-            Set reminder
-          </label>
-          <input
-            type="datetime-local"
-            value={toDatetimeLocal(value)}
-            onChange={(e) => onChange(fromDatetimeLocal(e.target.value))}
-            className="rounded-md border border-[#164B49] bg-[#102A2A] px-3 py-2 text-sm text-[#DCE4E4] focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
-          />
+      <PopoverContent className="w-auto p-0" align="end">
+        <div className="flex flex-col">
+          <CalendarPicker date={selectedDate} onDateChange={handleDateSelect} />
+          <div className="border-t border-[#164B49] px-3 py-2.5">
+            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+              Time
+            </label>
+            <TimePicker
+              hours={selectedHours}
+              minutes={selectedMinutes}
+              onHoursChange={handleHoursChange}
+              onMinutesChange={handleMinutesChange}
+            />
+          </div>
           {value && (
-            <button
-              onClick={() => onChange(undefined)}
-              className={cn(
-                "flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
-                "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
-                "transition-all",
-              )}
-            >
-              <X className="h-3 w-3" />
-              Clear reminder
-            </button>
+            <div className="border-t border-[#164B49] p-2">
+              <button
+                onClick={() => onChange(undefined)}
+                className={cn(
+                  "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                  "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
+                  "transition-all",
+                )}
+              >
+                <X className="h-3 w-3" />
+                Clear reminder
+              </button>
+            </div>
           )}
         </div>
       </PopoverContent>
@@ -215,6 +326,60 @@ function getNextMondayAt9am(): Date {
 }
 
 // --- Snooze popover content (shared between SnoozePill and hover action) ---
+
+function SnoozeCustomPicker({
+  onSnooze,
+}: {
+  onSnooze: (date: Date) => void;
+}) {
+  const [date, setDate] = useState<Date | undefined>();
+  const [hours, setHours] = useState(9);
+  const [minutes, setMinutes] = useState(0);
+
+  const handleDateSelect = (d: Date | undefined) => {
+    setDate(d);
+  };
+
+  const handleConfirm = () => {
+    if (!date) return;
+    const combined = new Date(date);
+    combined.setHours(hours, minutes, 0, 0);
+    onSnooze(combined);
+  };
+
+  return (
+    <div className="flex flex-col">
+      <CalendarPicker date={date} onDateChange={handleDateSelect} />
+      <div className="border-t border-[#164B49] px-3 py-2.5">
+        <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-[#8FA8A8]/70">
+          Time
+        </label>
+        <TimePicker
+          hours={hours}
+          minutes={minutes}
+          onHoursChange={setHours}
+          onMinutesChange={setMinutes}
+        />
+      </div>
+      <div className="border-t border-[#164B49] p-2">
+        <button
+          onClick={handleConfirm}
+          disabled={!date}
+          className={cn(
+            "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+            date
+              ? "bg-[#50C878]/20 text-[#50C878] hover:bg-[#50C878]/30"
+              : "bg-[#102A2A] text-[#8FA8A8] opacity-50",
+            "transition-all",
+          )}
+        >
+          <Check className="h-3 w-3" />
+          Snooze
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function SnoozePopoverContent({ taskId }: { taskId: string }) {
   const trpc = useTRPC();
@@ -280,19 +445,7 @@ function SnoozePopoverContent({ taskId }: { taskId: string }) {
       </button>
       <div className="my-1 border-t border-[#164B49]" />
       {showCustom ? (
-        <div className="flex flex-col gap-2 px-2 py-1">
-          <label className="text-xs font-medium text-[#DCE4E4]">
-            Pick date & time
-          </label>
-          <input
-            type="datetime-local"
-            onChange={(e) => {
-              const date = fromDatetimeLocal(e.target.value);
-              if (date) handleSnooze(date);
-            }}
-            className="rounded-md border border-[#164B49] bg-[#102A2A] px-3 py-2 text-sm text-[#DCE4E4] focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
-          />
-        </div>
+        <SnoozeCustomPicker onSnooze={handleSnooze} />
       ) : (
         <button
           onClick={() => setShowCustom(true)}
@@ -473,7 +626,11 @@ function RecurrencePill({
 
 // --- Inline create task row ---
 
-function InlineCreateTask() {
+export function InlineCreateTask({
+  initialDueDate,
+}: {
+  initialDueDate?: Date;
+}) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -481,7 +638,7 @@ function InlineCreateTask() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [dueDate, setDueDate] = useState<Date | undefined>(initialDueDate);
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderAt, setReminderAt] = useState<Date | undefined>();
@@ -595,7 +752,7 @@ function InlineCreateTask() {
       ref={containerRef}
       className={cn(
         "group relative overflow-hidden rounded-2xl transition-all duration-300",
-        "glass-card border-primary/50 shadow-glow bg-primary/5",
+        "border border-primary/50 bg-[#102A2A]/80 backdrop-blur-sm",
       )}
     >
       {/* Top row with inline title input */}
@@ -770,7 +927,7 @@ function InlineCreateTask() {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <div className="flex flex-col">
-                <DatePicker date={dueDate} onDateChange={setDueDate} />
+                <CalendarPicker date={dueDate} onDateChange={setDueDate} />
                 {dueDate && (
                   <div className="border-t border-[#164B49] p-2">
                     <button
@@ -1403,38 +1560,44 @@ export function TaskCard(props: {
     <div
       className={cn(
         "group relative overflow-hidden rounded-xl transition-all duration-300 sm:rounded-2xl",
+        "border border-[#164B49] bg-[#102A2A]/80 backdrop-blur-sm",
         props.task.completed
-          ? "glass-card border-primary/50 shadow-glow bg-primary/5 opacity-50"
+          ? "border-primary/50 shadow-glow bg-primary/5 opacity-50"
           : isOverdue
-            ? "glass-card border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)] hover:shadow-glowHover"
-            : "glass-card hover:border-primary/30 hover:shadow-glowHover hover:bg-white/5",
+            ? "border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)] hover:shadow-glowHover"
+            : "hover:border-[#21716C] hover:bg-[#102A2A] hover:shadow-glowHover",
       )}
     >
       {/* Collapsed row */}
-      <div className="flex flex-row items-center gap-2 p-3 sm:gap-4 sm:p-6">
-        <Checkbox
-          checked={props.task.completed}
-          onCheckedChange={handleToggleComplete}
-          disabled={updateTask.isPending || isEditing}
-          className={cn(
-            "size-4 shrink-0 rounded-full border-2 transition-all sm:size-6",
-            props.task.completed
-              ? "bg-primary border-primary text-black"
-              : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
-          )}
-        />
+      <div
+        className={cn(
+          "flex flex-row items-center gap-2 p-3 sm:gap-4 sm:p-6",
+          !isEditing && "cursor-pointer",
+        )}
+        onClick={() => {
+          if (!isEditing) {
+            setIsExpanded(!isExpanded);
+          }
+        }}
+      >
+        <div onClick={(e) => e.stopPropagation()}>
+          <Checkbox
+            checked={props.task.completed}
+            onCheckedChange={handleToggleComplete}
+            disabled={updateTask.isPending || isEditing}
+            className={cn(
+              "size-4 shrink-0 rounded-full border-2 transition-all sm:size-6",
+              props.task.completed
+                ? "bg-primary border-primary text-black"
+                : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
+            )}
+          />
+        </div>
 
         {/* Chevron toggle */}
-        <button
-          onClick={() => {
-            if (isExpanded && isEditing) {
-              handleCancel();
-            } else {
-              setIsExpanded(!isExpanded);
-            }
-          }}
-          className="shrink-0 text-[#8FA8A8] transition-colors hover:text-[#DCE4E4]"
-          aria-label={isExpanded ? "Collapse task" : "Expand task"}
+        <div
+          className="shrink-0 text-[#8FA8A8]"
+          aria-hidden="true"
         >
           <ChevronRight
             className={cn(
@@ -1442,16 +1605,9 @@ export function TaskCard(props: {
               isExpanded && "rotate-90",
             )}
           />
-        </button>
+        </div>
 
-        <div
-          className="min-w-0 grow cursor-pointer space-y-1 sm:space-y-2"
-          onClick={() => {
-            if (!isEditing) {
-              setIsExpanded(!isExpanded);
-            }
-          }}
-        >
+        <div className="min-w-0 grow space-y-1 sm:space-y-2">
           {/* Title - inline editable */}
           {isEditing ? (
             <Input
@@ -1515,7 +1671,7 @@ export function TaskCard(props: {
                 "group/desc -m-1 rounded-md p-1 text-left transition-all duration-200",
                 "hover:bg-white/5 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                "hidden w-full sm:block",
+                "hidden sm:block sm:max-w-xs lg:max-w-sm",
               )}
               aria-label={`Edit task description. Current value: ${props.task.description}`}
             >
@@ -1774,7 +1930,7 @@ export function TaskCard(props: {
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <div className="flex flex-col">
-                      <DatePicker
+                      <CalendarPicker
                         date={editedDueDate}
                         onDateChange={setEditedDueDate}
                       />
