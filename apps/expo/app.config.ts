@@ -14,7 +14,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     fallbackToCacheTimeout: 0,
   },
   owner: "zgtf",
-  newArchEnabled: true,
   assetBundlePatterns: ["**/*"],
   android: {
     package: "com.zgtf.tokilist",
@@ -22,7 +21,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: "./assets/icon-light.png",
       backgroundColor: "#0A1A1A",
     },
-    // edgeToEdgeEnabled: true, // Commented out - causes type error with new architecture
   },
   extra: {
     eas: {

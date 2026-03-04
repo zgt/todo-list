@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/refs -- This component intentionally reads/writes refs during render
    to implement a deferred sort pattern: task order only updates on navigation or add/remove,
    not on completion toggling, preventing cards from jumping away mid-interaction. */
-import type { ComponentRef } from "react";
+import type { ScrollView } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
@@ -54,7 +54,7 @@ export function SwipeableCardStack({
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
   const skipAnimationIds = useRef<Set<string>>(new Set());
-  const scrollViewRef = useRef<ComponentRef<typeof Animated.ScrollView>>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Scroll to current card when switching to compact mode
   useEffect(() => {

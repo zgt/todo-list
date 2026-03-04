@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import { Audio } from "expo-av";
+import {
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+} from "expo-audio";
 import { Pause, Play } from "lucide-react-native";
 
 interface AudioPreviewPlayerProps {
@@ -8,77 +12,37 @@ interface AudioPreviewPlayerProps {
 }
 
 export function AudioPreviewPlayer({ previewUrl }: AudioPreviewPlayerProps) {
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const player = useAudioPlayer(previewUrl, { updateInterval: 100 });
+  const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
-    return () => {
-      void soundRef.current?.unloadAsync();
-    };
+    void setAudioModeAsync({ playsInSilentMode: true });
   }, []);
 
   // Reset when previewUrl changes
   useEffect(() => {
-    const cleanup = async () => {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
-      setIsPlaying(false);
-      setProgress(0);
-      setDuration(0);
-    };
-    void cleanup();
-  }, [previewUrl]);
+    void player.seekTo(0);
+  }, [previewUrl, player]);
 
-  const handlePlayPause = async () => {
-    if (isPlaying && soundRef.current) {
-      await soundRef.current.pauseAsync();
-      setIsPlaying(false);
-      return;
-    }
-
-    if (soundRef.current) {
-      await soundRef.current.playAsync();
-      setIsPlaying(true);
-      return;
-    }
-
-    // Load and play
-    setIsLoading(true);
-    try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: previewUrl },
-        { shouldPlay: true },
-        (status) => {
-          if (!status.isLoaded) return;
-          setProgress(status.positionMillis);
-          setDuration(status.durationMillis ?? 0);
-          if (status.didJustFinish) {
-            setIsPlaying(false);
-            setProgress(0);
-            void soundRef.current?.setPositionAsync(0);
-          }
-        },
-      );
-
-      soundRef.current = sound;
-      setIsPlaying(true);
-    } catch {
-      // Audio load failed silently
-    } finally {
-      setIsLoading(false);
+  const handlePlayPause = () => {
+    if (status.playing) {
+      player.pause();
+    } else {
+      player.play();
     }
   };
 
-  const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
+  const isLoading = !status.isLoaded;
+  const currentTime = status.currentTime;
+  const duration = status.duration;
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Reset to beginning when playback finishes
+  useEffect(() => {
+    if (status.isLoaded && currentTime >= duration && duration > 0) {
+      void player.seekTo(0);
+    }
+  }, [currentTime, duration, status.isLoaded, player]);
 
   return (
     <View className="mt-2 flex-row items-center gap-3">
@@ -90,7 +54,7 @@ export function AudioPreviewPlayer({ previewUrl }: AudioPreviewPlayerProps) {
       >
         {isLoading ? (
           <ActivityIndicator size="small" color="#0A1A1A" />
-        ) : isPlaying ? (
+        ) : status.playing ? (
           <Pause size={14} color="#0A1A1A" fill="#0A1A1A" />
         ) : (
           <Play size={14} color="#0A1A1A" fill="#0A1A1A" />
@@ -108,9 +72,7 @@ export function AudioPreviewPlayer({ previewUrl }: AudioPreviewPlayerProps) {
       {/* Time */}
       <Text className="w-10 text-right text-xs text-[#8FA8A8]">
         {duration > 0
-          ? `0:${Math.floor(progress / 1000)
-              .toString()
-              .padStart(2, "0")}`
+          ? `0:${Math.floor(currentTime).toString().padStart(2, "0")}`
           : "0:00"}
       </Text>
     </View>
