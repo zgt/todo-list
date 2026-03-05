@@ -112,6 +112,7 @@ export default function RoundDetails() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     triggerRipple();
     try {
       await refetch();

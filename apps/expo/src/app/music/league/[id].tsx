@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -125,6 +126,7 @@ export default function LeagueDetails() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     triggerRipple();
     try {
       await Promise.all([refetchLeague(), refetchStandings()]);

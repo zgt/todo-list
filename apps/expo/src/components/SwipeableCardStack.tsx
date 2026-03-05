@@ -4,6 +4,7 @@
 import type { ScrollView } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, RefreshControl } from "react-native";
+import * as Haptics from "expo-haptics";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
 import type { PriorityLevel } from "./priority-config";
@@ -212,6 +213,7 @@ export function SwipeableCardStack({
     if (currentIndex < sortedTasks.length - 1) {
       const newIndex = resortWithTarget("next");
       setCurrentIndex(newIndex);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -219,6 +221,7 @@ export function SwipeableCardStack({
     if (currentIndex > 0) {
       const newIndex = resortWithTarget("prev");
       setCurrentIndex(newIndex);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -233,6 +236,7 @@ export function SwipeableCardStack({
             refreshing={refreshing}
             onRefresh={async () => {
               setRefreshing(true);
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               onRefresh();
               setTimeout(() => setRefreshing(false), 1000);
             }}

@@ -437,6 +437,7 @@ export default function Index() {
     trpc.task.delete.mutationOptions({
       onMutate: async (taskId) => {
         triggerRipple();
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
         const previousTasks = queryClient.getQueryData<
@@ -689,6 +690,7 @@ export default function Index() {
       recurrenceRule: data.recurrenceRule ?? undefined,
       recurrenceInterval: data.recurrenceInterval ?? undefined,
     });
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     // Reminder scheduling is handled by the rescheduleAllReminders useEffect
     // when serverTasks updates after query invalidation
@@ -769,6 +771,7 @@ export default function Index() {
         <Header
           onProfilePress={() => setShowProfileMenu(true)}
           onRefresh={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             triggerRipple();
             void queryClient.invalidateQueries(trpc.task.all.queryFilter());
           }}
@@ -905,6 +908,7 @@ export default function Index() {
               onTaskPress={handleTaskPress}
               onSubtaskToggle={handleSubtaskToggle}
               onRefresh={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 triggerRipple();
                 void queryClient.invalidateQueries(trpc.task.all.queryFilter());
               }}
@@ -937,11 +941,12 @@ export default function Index() {
           <View className="flex-1" />
           <ViewToggleButton
             viewMode={viewMode}
-            onToggle={() =>
+            onToggle={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               setViewMode((v) =>
                 v === "stack" ? "list" : v === "list" ? "calendar" : "stack",
-              )
-            }
+              );
+            }}
           />
           <TaskFormSheet
             mode="create"

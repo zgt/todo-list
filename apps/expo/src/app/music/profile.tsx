@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -56,6 +57,7 @@ export default function ProfileScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     triggerRipple();
     try {
       await refetch();
