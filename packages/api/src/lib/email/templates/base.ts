@@ -8,7 +8,7 @@ export function emailWrapper(content: string): string {
       ${content}
     </div>
     <p style="color:#8FA8A8;font-size:12px;text-align:center;margin-top:24px;">
-      Tokilist Music Leagues
+      Tokilist
     </p>
   </div>
 </body>

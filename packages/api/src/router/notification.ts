@@ -74,42 +74,12 @@ export const notificationRouter = {
 
   /** Send a test push notification to the current user's devices */
   sendTestPush: protectedProcedure
-    .input(
-      z.object({
-        variant: z.enum([
-          "generic",
-          "round-started",
-          "voting-open",
-          "results-available",
-        ]),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const messages = {
-        generic: {
-          title: "🔔 Test Notification",
-          body: "If you see this, push notifications are working!",
-          data: { type: "test" },
-        },
-        "round-started": {
-          title: "🎵 New Round: 90s One-Hit Wonders",
-          body: "Test League — Submit by Feb 25, 11:59 PM",
-          data: { type: "league", leagueId: "test", roundId: "test" },
-        },
-        "voting-open": {
-          title: "🗳️ Time to Vote!",
-          body: 'Test League — "90s One-Hit Wonders" voting open until Mar 1',
-          data: { type: "league", leagueId: "test", roundId: "test" },
-        },
-        "results-available": {
-          title: "🏆 Results Are In!",
-          body: 'Test League — See who won "90s One-Hit Wonders"',
-          data: { type: "league", leagueId: "test", roundId: "test" },
-        },
-      };
-
-      const msg = messages[input.variant];
-      await sendPushToUser(ctx.session.user.id, msg);
+    .mutation(async ({ ctx }) => {
+      await sendPushToUser(ctx.session.user.id, {
+        title: "🔔 Test Notification",
+        body: "If you see this, push notifications are working!",
+        data: { type: "test" },
+      });
 
       return { success: true };
     }),

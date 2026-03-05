@@ -359,7 +359,7 @@ export default function ProfileScreen() {
                 }}
               >
                 This will permanently delete your account, all tasks, lists, and
-                music league data. Type{" "}
+                associated data. Type{" "}
                 <Text style={{ fontWeight: "700", color: "#E57373" }}>
                   DELETE
                 </Text>{" "}

@@ -369,18 +369,6 @@ export default function SettingsScreen() {
             )}
           </View>
 
-          {/* Info */}
-          <Text
-            style={{
-              marginTop: 16,
-              textAlign: "center",
-              fontSize: 12,
-              color: "#8FA8A8",
-            }}
-          >
-            Music League notification preferences can be found in{"\n"}
-            Music Leagues → Settings
-          </Text>
 
           {/* App Version */}
           <Text

@@ -21,7 +21,6 @@ import {
   Check,
   FileText,
   LogOut,
-  Music,
   Pencil,
   Settings,
   Shield,
@@ -243,20 +242,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
               </RNText>
             </Pressable>
 
-            <Pressable
-              onPress={() => {
-                onClose();
-                router.push("/music" as never);
-              }}
-              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-            >
-              <Music size={20} color="#50C878" />
-              <RNText className="text-base font-medium text-[#DCE4E4]">
-                Music Leagues
-              </RNText>
-            </Pressable>
-
-            <Pressable
+<Pressable
               onPress={() => {
                 onClose();
                 router.push("/settings" as never);

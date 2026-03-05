@@ -44,7 +44,7 @@ export function checkContent(text: string): {
  * Fire-and-forget — does not throw or block the calling mutation.
  */
 export async function flagContentIfNeeded(
-  contentType: "LEAGUE" | "SUBMISSION" | "TASK" | "USER" | "COMMENT" | "ROUND",
+  contentType: "TASK" | "USER" | "COMMENT",
   contentId: string,
   text: string,
 ): Promise<boolean> {

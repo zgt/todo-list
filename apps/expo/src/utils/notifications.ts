@@ -9,13 +9,7 @@ export interface TaskNotificationData {
   type: "task-reminder";
 }
 
-export interface LeagueNotificationData {
-  type: "league";
-  leagueId?: string;
-  roundId?: string;
-}
-
-export type NotificationData = TaskNotificationData | LeagueNotificationData;
+export type NotificationData = TaskNotificationData;
 
 // ─── Configuration ───────────────────────────────────────────────────
 
