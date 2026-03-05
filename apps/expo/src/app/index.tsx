@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Layers, List, RefreshCw } from "lucide-react-native";
+import { CalendarDays, Info, Layers, List, RefreshCw } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
@@ -22,6 +22,7 @@ import type { PriorityLevel } from "../components/priority-config";
 import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
+import { useSwipeTutorial } from "~/hooks/useSwipeTutorial";
 import { useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
@@ -46,9 +47,11 @@ type ServerTask = RouterOutputs["task"]["all"][number];
 function Header({
   onProfilePress,
   onRefresh,
+  onInfoPress,
 }: {
   onProfilePress: () => void;
   onRefresh: () => void;
+  onInfoPress: () => void;
 }) {
   const { data: session } = authClient.useSession();
   return (
@@ -57,6 +60,16 @@ function Header({
         Toki <RNText className="text-primary">list</RNText>
       </RNText>
       <View className="flex-row items-center gap-3">
+        {session && (
+          <Pressable
+            onPress={onInfoPress}
+            accessibilityLabel="Swipe tutorial"
+            accessibilityRole="button"
+            className="h-10 w-10 items-center justify-center rounded-full"
+          >
+            <Info size={20} color="#8FA8A8" />
+          </Pressable>
+        )}
         {session && (
           <Pressable
             onPress={onRefresh}
@@ -130,6 +143,19 @@ export default function Index() {
       rippleDebounceRef.current = null;
     }, 500);
   }, []);
+  // Swipe tutorial auto-show on first launch
+  const { shouldShow: shouldShowTutorial, isLoading: tutorialLoading, markSeen } = useSwipeTutorial();
+  const tutorialShownRef = useRef(false);
+  useEffect(() => {
+    if (!tutorialLoading && shouldShowTutorial && session && !isPending && !tutorialShownRef.current) {
+      tutorialShownRef.current = true;
+      void markSeen();
+      // Delay to ensure layout is stable before presenting modal
+      const timer = setTimeout(() => router.push("/swipe-tutorial"), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [tutorialLoading, shouldShowTutorial, session, isPending, markSeen, router]);
+
   const { effectiveCategoryIds } = useCategoryFilter();
   const [selectedPriorities, setSelectedPriorities] = useState<PriorityLevel[]>(
     [],
@@ -746,6 +772,7 @@ export default function Index() {
             triggerRipple();
             void queryClient.invalidateQueries(trpc.task.all.queryFilter());
           }}
+          onInfoPress={() => router.push("/swipe-tutorial")}
         />
 
         <View

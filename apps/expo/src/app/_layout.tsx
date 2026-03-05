@@ -76,7 +76,17 @@ function RootLayout() {
                       colorScheme == "dark" ? "#09090B" : "#FFFFFF",
                   },
                 }}
-              />
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen
+                  name="swipe-tutorial"
+                  options={{
+                    presentation: "fullScreenModal",
+                    headerShown: false,
+                    animation: "slide_from_bottom",
+                  }}
+                />
+              </Stack>
               <StatusBar />
             </CategoryFilterProvider>
           </BottomSheetModalProvider>
