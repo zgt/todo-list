@@ -272,7 +272,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
 
             <Pressable
               onPress={() =>
-                void Linking.openURL("https://tokilist.com/privacy")
+                void Linking.openURL("https://calayo.net/privacy")
               }
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Privacy Policy"
@@ -285,7 +285,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             </Pressable>
 
             <Pressable
-              onPress={() => void Linking.openURL("https://tokilist.com/terms")}
+              onPress={() => void Linking.openURL("https://calayo.net/terms")}
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Terms of Service"
               accessibilityRole="link"

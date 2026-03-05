@@ -168,10 +168,10 @@ export default function PrivacyPolicyPage() {
             </p>
             <p>
               <a
-                href="mailto:privacy@tokilist.app"
+                href="mailto:support@calayo.net"
                 className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
               >
-                privacy@tokilist.app
+                support@calayo.net
               </a>
             </p>
           </Section>

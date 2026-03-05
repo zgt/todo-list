@@ -290,7 +290,7 @@ export default function ProfileScreen() {
 
             <Pressable
               onPress={() =>
-                void Linking.openURL("https://tokilist.com/privacy")
+                void Linking.openURL("https://calayo.net/privacy")
               }
               style={{
                 flexDirection: "row",
@@ -308,7 +308,7 @@ export default function ProfileScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => void Linking.openURL("https://tokilist.com/terms")}
+              onPress={() => void Linking.openURL("https://calayo.net/terms")}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
