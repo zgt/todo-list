@@ -4,23 +4,23 @@
 **Tokilist**
 
 ## Subtitle (30 characters max)
-Tasks, Lists & Music Leagues
+Tasks, Lists & Collaboration
 
 ## Category
 Primary: **Productivity**
-Secondary: **Social Networking**
+Secondary: **Lifestyle**
 
 ---
 
 ## App Description (4000 characters max)
 
-Tokilist is the task manager that actually gets out of your way — and the music league app your friend group has been waiting for.
+Tokilist is the task manager that actually gets out of your way.
 
 **Smart Task Management**
-Organize your life with a clean, fast task manager built for how you actually work. Create tasks, break them down into subtasks, set priorities, add due dates and reminders, and categorize everything your way. Swipe through your tasks in card view or switch to a classic list — whatever fits your flow.
+Organize your life with a clean, fast task manager built for how you actually work. Create tasks, break them down into subtasks, set priorities, add due dates and reminders, and categorize everything your way. Swipe through your tasks in card view, switch to a classic list, or plan ahead with the calendar — whatever fits your flow.
 
 • Create tasks with subtasks, priorities, and due dates
-• Swipeable card stack or list view — your choice
+• Swipeable card stack, list view, or calendar — your choice
 • Smart categories and filters to find anything fast
 • Push notification reminders so nothing slips
 • Auto-complete tasks when all subtasks are done
@@ -33,35 +33,28 @@ Collaborate with anyone. Share lists with friends, family, or teammates. See wha
 • Push notifications for shared list activity
 • Role-based access — control who can view or edit
 
-**Music Leagues**
-Challenge your friends to a music battle. Create a league, invite your crew, and compete round by round. Each round has a theme — submit your best track, vote on everyone's picks, and see who has the best taste (or at least the most persuasive one).
-
-• Create and join music leagues with invite codes
-• Themed rounds with submission and voting phases
-• Spotify integration for seamless track selection
-• Standings, stats, and bragging rights
-• Collaborative playlists generated from each round
-
 **Built for You**
 • Beautiful dark theme that's easy on the eyes
 • Sign in with Discord, Google, or Apple
 • Works on iPhone and iPad
+• iOS widgets for quick task access
+• Interactive swipe tutorial to get started fast
 • Your data stays yours — read our privacy policy
 
-Whether you're managing your daily to-dos, coordinating a grocery list with your partner, or settling once and for all who has the best music taste in your friend group — Tokilist has you covered.
+Whether you're managing your daily to-dos, coordinating a grocery list with your partner, or keeping a shared project on track with your team — Tokilist has you covered.
 
 ---
 
 ## Keywords (100 characters max, comma-separated)
 
-tasks,todo,list,music,league,shared,collaborate,reminders,spotify,voting,productivity,organizer
+tasks,todo,list,shared,collaborate,reminders,productivity,organizer,calendar,subtasks,categories
 
 ---
 
 ## Promotional Text (170 characters max)
 *Can be updated anytime without app review*
 
-The task manager that does more. Manage tasks, share lists with friends, and compete in music leagues. Try it free.
+The task manager that does more. Manage tasks, share lists with friends, and stay on top of everything. Try it free.
 
 ---
 
@@ -70,11 +63,11 @@ The task manager that does more. Manage tasks, share lists with friends, and com
 Welcome to Tokilist! 🎉
 
 • Smart task management with subtasks, priorities, and reminders
-• Swipeable card view or classic list view
+• Swipeable card view, classic list view, or calendar view
 • Shared lists with real-time collaboration
-• Music Leagues — compete with friends to find the best tracks
-• Spotify integration for music league submissions
+• iOS widgets for quick task access
 • Push notifications for reminders and shared list activity
+• Interactive swipe tutorial to learn the ropes
 • Dark theme designed for comfort
 
 ---
@@ -85,12 +78,13 @@ Welcome to Tokilist! 🎉
 To test the app:
 1. Sign in with Discord or Apple (both OAuth flows are functional)
 2. Create a task from the main screen — you can add subtasks inline
-3. Try the Music Leagues section — create a league, generate an invite code, and explore round creation
+3. Try swiping tasks left to complete, right to edit
 4. Shared lists can be tested by creating a list and sharing via the list detail page
+5. Switch between card view, list view, and calendar view using the toggle button
 
 Demo account (if needed): [provide test credentials here]
 
-The app requires an internet connection for all features. Spotify integration requires a Spotify account for music search within leagues.
+The app requires an internet connection for all features.
 
 ---
 
@@ -119,10 +113,10 @@ The app requires an internet connection for all features. Spotify integration re
 
 ### iPhone 6.7" (required — iPhone 15 Pro Max / 16 Pro Max)
 1. Main task view (card stack with tasks)
-2. Task detail with subtasks
-3. Shared list view
-4. Music Leagues dashboard
-5. Music League round (voting or submission)
+2. List view with tasks
+3. Calendar view
+4. Task detail with subtasks expanded
+5. Shared list view
 
 ### iPhone 6.1" (required — iPhone 15 Pro / 16 Pro)
 Same 5 screenshots, captured on 6.1" device/simulator

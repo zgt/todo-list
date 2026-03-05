@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: "tokilist",
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/icon-light.png",
+  icon: "./assets/icon-dark.png",
   userInterfaceStyle: "automatic",
   updates: {
     fallbackToCacheTimeout: 0,
@@ -81,7 +81,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       ITSAppUsesNonExemptEncryption: false,
       UIRequiredDeviceCapabilities: ["armv7"],
       NSUserNotificationsUsageDescription:
-        "Tokilist sends reminders for your tasks and music league updates.",
+        "Tokilist sends reminders for your tasks and due dates.",
     },
     entitlements: {
       "com.apple.security.application-groups": ["group.com.zgtf.todolist"],
