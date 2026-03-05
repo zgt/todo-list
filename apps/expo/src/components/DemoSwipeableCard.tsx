@@ -1,6 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, View } from "react-native";
-import { useSharedValue } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 import type { LocalTask } from "~/db/client";
 import { SwipeableCard } from "./SwipeableCard";
@@ -108,20 +112,34 @@ export function DemoListStack() {
   const swipeProgress = useSharedValue(0);
   // Guard: when a swipe action fires, suppress the next tap (expand/collapse)
   const swipeActionFiredRef = useRef(false);
+  // Skip stack animation only on initial mount so cards don't animate from wrong positions,
+  // but allow animation on subsequent yOffset changes (expand/collapse)
+  const skipAnimationRef = useRef(true);
+  useEffect(() => {
+    skipAnimationRef.current = false;
+  }, []);
 
   const handleSubtaskToggle = useCallback(
     (taskId: string, subtaskId: string, completed: boolean) => {
+      if (swipeActionFiredRef.current) {
+        swipeActionFiredRef.current = false;
+        return;
+      }
       setTasks((prev) =>
         prev.map((t) => {
           if (t.id !== taskId) return t;
           const withSubs = t as unknown as {
             subtasks: { id: string; title: string; completed: boolean; sortOrder: number }[];
           };
+          const updatedSubtasks = withSubs.subtasks.map((s) =>
+            s.id === subtaskId ? { ...s, completed } : s,
+          );
+          const allComplete = updatedSubtasks.every((s) => s.completed);
           return {
             ...t,
-            subtasks: withSubs.subtasks.map((s) =>
-              s.id === subtaskId ? { ...s, completed } : s,
-            ),
+            subtasks: updatedSubtasks,
+            completed: allComplete ? true : t.completed,
+            completedAt: allComplete ? (t.completedAt ?? new Date()) : t.completedAt,
           } as unknown as LocalTask;
         }),
       );
@@ -138,14 +156,27 @@ export function DemoListStack() {
   }
   const totalHeight = y - COMPACT_CARD_GAP;
 
+  // Animate container height to match sibling card movement
+  const animatedHeight = useSharedValue(totalHeight);
+  useEffect(() => {
+    if (skipAnimationRef.current) {
+      animatedHeight.value = totalHeight;
+    } else {
+      animatedHeight.value = withSpring(totalHeight, {
+        damping: 60,
+        stiffness: 380,
+      });
+    }
+  }, [totalHeight, animatedHeight]);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    width: SCREEN_WIDTH - 32,
+    height: animatedHeight.value,
+    alignSelf: "center" as const,
+  }));
+
   return (
-    <View
-      style={{
-        width: SCREEN_WIDTH - 32,
-        height: totalHeight,
-        alignSelf: "center",
-      }}
-    >
+    <Animated.View style={containerStyle}>
       {tasks.map((task, idx) => (
         <SwipeableCard
           key={task.id}
@@ -200,7 +231,7 @@ export function DemoListStack() {
             setDeletePendingId((cur) => (cur === task.id ? null : cur));
           }}
           onSave={noop}
-          skipStackAnimation={true}
+          skipStackAnimation={skipAnimationRef.current}
           onNext={noop}
           onPrevious={noop}
           onSubtaskToggle={(subtaskId, completed) =>
@@ -216,7 +247,7 @@ export function DemoListStack() {
           }}
         />
       ))}
-    </View>
+    </Animated.View>
   );
 }
 
