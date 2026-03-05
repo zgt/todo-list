@@ -82,7 +82,7 @@ To test the app:
 4. Shared lists can be tested by creating a list and sharing via the list detail page
 5. Switch between card view, list view, and calendar view using the toggle button
 
-Demo account (if needed): [provide test credentials here]
+Demo account: No credentials needed. Please use "Sign in with Apple" to create a test account. All features are available immediately after sign-in.
 
 The app requires an internet connection for all features.
 
