@@ -466,11 +466,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#164B49",
     paddingHorizontal: 16,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(15, 23, 20, 0.85)",
   },
   triggerButtonActive: {
     borderColor: "#50C878",
-    backgroundColor: "#102A2A",
+    backgroundColor: "rgba(16, 42, 42, 0.9)",
   },
   triggerText: {
     fontSize: 14,

@@ -116,7 +116,7 @@ function ViewToggleButton({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Animated.View className="border-border h-12 w-12 items-center justify-center rounded-full border-2 bg-transparent">
+      <Animated.View className="border-border h-12 w-12 items-center justify-center rounded-full border-2" style={{ backgroundColor: 'rgba(15, 23, 20, 0.85)' }}>
         <Icon size={24} color="#DCE4E4" />
       </Animated.View>
     </Pressable>
@@ -780,7 +780,7 @@ export default function Index() {
 
         <View
           className="flex-1 px-4"
-          style={{ minHeight: Dimensions.get("window").height * 0.75 }}
+          style={{ minHeight: Dimensions.get("window").height - 50 }}
         >
           {/* List Filter */}
           {lists && lists.length > 0 && (
@@ -928,7 +928,7 @@ export default function Index() {
       {/* Bottom button bar */}
       <SafeAreaView
         edges={["bottom"]}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}
       >
         <View className="flex-row items-center gap-4 px-4 pb-1">
           <View className="ml-2 flex-row gap-2">

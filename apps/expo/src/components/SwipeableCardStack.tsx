@@ -250,6 +250,7 @@ export function SwipeableCardStack({
         marginTop: isCompact ? 0 : -10,
         minHeight: totalContentHeight,
         paddingTop: isCompact ? 0 : 0,
+        paddingBottom: isCompact ? 80 : 0,
       }}
       style={{
         flex: 1,
