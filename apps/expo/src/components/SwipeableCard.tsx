@@ -442,7 +442,7 @@ export function SwipeableCard({
       ? 0
       : (translateX.value / SCREEN_WIDTH) * ROTATION_FACTOR;
 
-    const targetWidth = isCompact ? SCREEN_WIDTH * 0.95 : SCREEN_WIDTH * 0.85;
+    const targetWidth = isCompact ? SCREEN_WIDTH - 32 : SCREEN_WIDTH * 0.85;
     const subtaskCount =
       (task as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
     const expandedExtra =
@@ -472,6 +472,7 @@ export function SwipeableCard({
           cardStyle,
           {
             position: "absolute",
+            overflow: "hidden",
           },
         ]}
       >

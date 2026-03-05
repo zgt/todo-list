@@ -276,7 +276,7 @@ export function CalendarView({
           pastScrollRange={24}
           futureScrollRange={24}
           calendarHeight={Dimensions.get("window").height * 0.4}
-          calendarWidth={Dimensions.get("window").width - 16}
+          calendarWidth={Dimensions.get("window").width - 48}
           theme={calendarTheme}
           showScrollIndicator={false}
           snapToInterval={28}

@@ -150,8 +150,9 @@ export function TaskFormSheet({
 }: TaskFormSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
-  const snapPoints = useMemo(() => ["85%"], []);
+  const snapPoints = useMemo(() => ["90%"], []);
   const scrollViewRef = useRef<ScrollView>(null);
+  const subtaskSectionY = useRef(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -276,7 +277,10 @@ export function TaskFormSheet({
       ]);
       setNewSubtaskTitle("");
       newSubtaskInputRef.current?.focus();
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(
+        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+        100,
+      );
       return;
     }
 
@@ -296,7 +300,10 @@ export function TaskFormSheet({
           ]);
           setNewSubtaskTitle("");
           newSubtaskInputRef.current?.focus();
-          setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+          setTimeout(
+            () => scrollViewRef.current?.scrollToEnd({ animated: true }),
+            100,
+          );
         },
       },
     );
@@ -495,7 +502,12 @@ export function TaskFormSheet({
 
           {/* Subtasks (edit mode) */}
           {mode === "edit" && taskId && (
-            <View style={styles.fieldContainerLarge}>
+            <View
+              style={styles.fieldContainerLarge}
+              onLayout={(e) => {
+                subtaskSectionY.current = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.label}>
                 Subtasks
                 {subtasks.length > 0 && (
@@ -633,7 +645,10 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                      scrollViewRef.current?.scrollTo({
+                        y: subtaskSectionY.current,
+                        animated: true,
+                      });
                     }, 300);
                   }}
                   onSubmitEditing={handleAddSubtask}
@@ -658,7 +673,12 @@ export function TaskFormSheet({
 
           {/* Subtasks (create mode — local-only until submit) */}
           {mode === "create" && (
-            <View style={styles.fieldContainerLarge}>
+            <View
+              style={styles.fieldContainerLarge}
+              onLayout={(e) => {
+                subtaskSectionY.current = e.nativeEvent.layout.y;
+              }}
+            >
               <Text style={styles.label}>
                 Subtasks
                 {pendingSubtasks.length > 0 && (
@@ -710,7 +730,10 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                      scrollViewRef.current?.scrollTo({
+                        y: subtaskSectionY.current,
+                        animated: true,
+                      });
                     }, 300);
                   }}
                   onSubmitEditing={handleAddSubtask}
@@ -739,8 +762,8 @@ export function TaskFormSheet({
 
           {/* Due Date | Reminder | Priority */}
           <View style={styles.fieldContainer}>
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              {/* Due Date - icon button */}
+            <View style={{ gap: 8 }}>
+              {/* Due Date - full width button */}
               <Pressable
                 onPress={() => {
                   if (dueDate) {
@@ -755,12 +778,16 @@ export function TaskFormSheet({
                   dueDate && styles.compactIconButtonActive,
                 ]}
               >
-                <Calendar size={18} color={dueDate ? "#50C878" : "#8FA8A8"} />
-                {dueDate && (
-                  <Text style={styles.compactIconLabel} numberOfLines={1}>
-                    {formatDate(dueDate)}
-                  </Text>
-                )}
+                <Calendar size={20} color={dueDate ? "#50C878" : "#8FA8A8"} />
+                <Text
+                  style={[
+                    styles.compactIconLabel,
+                    !dueDate && { color: "#8FA8A8" },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {dueDate ? formatDate(dueDate) : "Due date"}
+                </Text>
                 {dueDate && (
                   <Pressable
                     onPress={(e) => {
@@ -769,13 +796,14 @@ export function TaskFormSheet({
                       setShowDatePicker(false);
                     }}
                     hitSlop={8}
+                    style={{ marginLeft: "auto" }}
                   >
-                    <X size={12} color="#ef4444" />
+                    <X size={16} color="#ef4444" />
                   </Pressable>
                 )}
               </Pressable>
 
-              {/* Reminder - icon button */}
+              {/* Reminder - full width button */}
               <Pressable
                 onPress={() => {
                   if (reminderAt) {
@@ -794,7 +822,16 @@ export function TaskFormSheet({
                   reminderAt && styles.compactIconButtonActive,
                 ]}
               >
-                <Bell size={18} color={reminderAt ? "#50C878" : "#8FA8A8"} />
+                <Bell size={20} color={reminderAt ? "#50C878" : "#8FA8A8"} />
+                <Text
+                  style={[
+                    styles.compactIconLabel,
+                    !reminderAt && { color: "#8FA8A8" },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {reminderAt ? formatDateTime(reminderAt) : "Reminder"}
+                </Text>
                 {reminderAt && (
                   <Pressable
                     onPress={(e) => {
@@ -804,13 +841,14 @@ export function TaskFormSheet({
                       setShowReminderTimePicker(false);
                     }}
                     hitSlop={8}
+                    style={{ marginLeft: "auto" }}
                   >
-                    <X size={12} color="#ef4444" />
+                    <X size={16} color="#ef4444" />
                   </Pressable>
                 )}
               </Pressable>
 
-              {/* Priority - compact segment */}
+              {/* Priority - full width segment */}
               <View style={styles.compactPriorityRow}>
                 {PRIORITY_OPTIONS.map((opt) => {
                   const isActive = priority === opt.value;
@@ -830,12 +868,12 @@ export function TaskFormSheet({
                     >
                       <Text
                         style={{
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: isActive ? "700" : "500",
                           color: isActive ? opt.color : "#8FA8A8",
                         }}
                       >
-                        {opt.value === "low" ? "L" : opt.value === "medium" ? "M" : "H"}
+                        {opt.label}
                       </Text>
                     </Pressable>
                   );
@@ -1364,22 +1402,22 @@ const styles = StyleSheet.create({
   compactIconButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 10,
     backgroundColor: "#102A2A",
     borderWidth: 1,
     borderColor: "#164B49",
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    minHeight: 44,
   },
   compactIconButtonActive: {
     borderColor: "#50C878",
     backgroundColor: "rgba(80, 200, 120, 0.1)",
   },
   compactIconLabel: {
-    fontSize: 12,
+    fontSize: 15,
     color: "#DCE4E4",
-    maxWidth: 80,
+    flex: 1,
   },
   compactPriorityRow: {
     flexDirection: "row",
@@ -1390,9 +1428,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#102A2A",
   },
   compactPriorityButton: {
-    paddingVertical: 8,
+    flex: 1,
+    paddingVertical: 10,
     paddingHorizontal: 10,
     alignItems: "center",
+    minHeight: 44,
+    justifyContent: "center",
     borderColor: "#164B49",
   },
 });

@@ -103,7 +103,7 @@ function ViewToggleButton({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Animated.View className="border-border bg-surface h-12 w-12 items-center justify-center rounded-full border-2">
+      <Animated.View className="border-border h-12 w-12 items-center justify-center rounded-full border-2 bg-transparent">
         <Icon size={24} color="#DCE4E4" />
       </Animated.View>
     </Pressable>
@@ -877,6 +877,10 @@ export default function Index() {
               onUpdate={handleUpdate}
               onTaskPress={handleTaskPress}
               onSubtaskToggle={handleSubtaskToggle}
+              onRefresh={() => {
+                triggerRipple();
+                void queryClient.invalidateQueries(trpc.task.all.queryFilter());
+              }}
             />
           ) : (
             <View className="mt-10 items-center">

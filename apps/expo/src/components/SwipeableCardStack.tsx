@@ -3,7 +3,7 @@
    not on completion toggling, preventing cards from jumping away mid-interaction. */
 import type { ScrollView } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Dimensions } from "react-native";
+import { Dimensions, RefreshControl } from "react-native";
 import Animated, { useSharedValue } from "react-native-reanimated";
 
 import type { PriorityLevel } from "./priority-config";
@@ -37,6 +37,7 @@ interface SwipeableCardStackProps {
   ) => void;
   onTaskPress?: (id: string) => void;
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
+  onRefresh?: () => void;
 }
 
 export function SwipeableCardStack({
@@ -48,7 +49,9 @@ export function SwipeableCardStack({
   isCompact,
   onTaskPress,
   onSubtaskToggle,
+  onRefresh,
 }: SwipeableCardStackProps) {
+  const [refreshing, setRefreshing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
@@ -224,6 +227,19 @@ export function SwipeableCardStack({
       ref={scrollViewRef}
       scrollEnabled={isCompact}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        isCompact && onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              setRefreshing(true);
+              onRefresh();
+              setTimeout(() => setRefreshing(false), 1000);
+            }}
+            tintColor="#50C878"
+          />
+        ) : undefined
+      }
       contentContainerStyle={{
         alignItems: "center",
         justifyContent: isCompact ? "flex-start" : "center",

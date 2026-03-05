@@ -10,8 +10,6 @@ import {
   View,
 } from "react-native";
 import Animated, {
-  FadeInUp,
-  FadeOutUp,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
@@ -169,7 +167,10 @@ export function TaskCard({
         clearTimeout(singleTapTimeoutRef.current);
       }
       singleTapTimeoutRef.current = setTimeout(() => {
-        if ((subtaskTotal > 0 || task.description) && !isExpanded) {
+        if (isExpanded) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          onToggleExpand();
+        } else if ((subtaskTotal > 0 || task.description)) {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           onToggleExpand();
         } else if (onTaskPress) {
@@ -373,11 +374,7 @@ export function TaskCard({
 
       {/* Expanded description and subtasks section */}
       {isExpanded && (!!task.description || subtaskTotal > 0) && (
-        <Animated.View
-          entering={FadeInUp.duration(50).springify().damping(180)}
-          exiting={FadeOutUp.duration(150)}
-          style={styles.expandedSubtasksContainer}
-        >
+        <View style={styles.expandedSubtasksContainer}>
           {task.description && (
             <RNText style={styles.expandedDescription}>
               {task.description}
@@ -420,7 +417,7 @@ export function TaskCard({
               ))}
             </View>
           )}
-        </Animated.View>
+        </View>
       )}
     </View>
   );
@@ -604,7 +601,6 @@ export function TaskCard({
         styles.container,
         containerStyle,
         getBackgroundStyle(),
-        isExpanded && isCompact && { overflow: "visible" },
       ]}
     >
       <View
