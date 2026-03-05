@@ -106,6 +106,8 @@ export function DemoListStack() {
   const [expandedId, setExpandedId] = useState<string | null>("demo-list-1");
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0);
+  // Guard: when a swipe action fires, suppress the next tap (expand/collapse)
+  const swipeActionFiredRef = useRef(false);
 
   const handleSubtaskToggle = useCallback(
     (taskId: string, subtaskId: string, completed: boolean) => {
@@ -158,6 +160,7 @@ export function DemoListStack() {
           yOffset={yOffsets[idx]}
           deletePending={deletePendingId === task.id}
           onToggle={() => {
+            swipeActionFiredRef.current = true;
             setTasks((prev) =>
               prev.map((t) =>
                 t.id === task.id
@@ -168,6 +171,7 @@ export function DemoListStack() {
             setDeletePendingId((cur) => (cur === task.id ? null : cur));
           }}
           onComplete={() => {
+            swipeActionFiredRef.current = true;
             setTasks((prev) =>
               prev.map((t) =>
                 t.id === task.id
@@ -177,6 +181,7 @@ export function DemoListStack() {
             );
           }}
           onDelete={() => {
+            swipeActionFiredRef.current = true;
             // Reset to original since we can't remove cards from the demo
             const original = makeListTasks().find((o) => o.id === task.id);
             if (original) {
@@ -187,11 +192,13 @@ export function DemoListStack() {
             setDeletePendingId((cur) => (cur === task.id ? null : cur));
           }}
           onDeletePending={() => {
+            swipeActionFiredRef.current = true;
             setDeletePendingId(task.id);
           }}
-          onCancelDelete={() =>
-            setDeletePendingId((cur) => (cur === task.id ? null : cur))
-          }
+          onCancelDelete={() => {
+            swipeActionFiredRef.current = true;
+            setDeletePendingId((cur) => (cur === task.id ? null : cur));
+          }}
           onSave={noop}
           skipStackAnimation={true}
           onNext={noop}
@@ -200,9 +207,13 @@ export function DemoListStack() {
             handleSubtaskToggle(task.id, subtaskId, completed)
           }
           isExpanded={expandedId === task.id}
-          onToggleExpand={() =>
-            setExpandedId((cur) => (cur === task.id ? null : task.id))
-          }
+          onToggleExpand={() => {
+            if (swipeActionFiredRef.current) {
+              swipeActionFiredRef.current = false;
+              return;
+            }
+            setExpandedId((cur) => (cur === task.id ? null : task.id));
+          }}
         />
       ))}
     </View>
@@ -236,7 +247,7 @@ export function DemoCardStack() {
         }),
       );
       setDeletePendingId(null);
-    }, 1500);
+    }, 60_000);
   }, []);
 
   const handleNext = useCallback(() => {
