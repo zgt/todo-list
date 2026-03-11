@@ -1,37 +1,50 @@
 # Tokilist
 
-A cross-platform task management and music league app built as a Turborepo monorepo with shared backend, web (Next.js), and mobile (Expo/React Native) clients.
+A cross-platform task management app built as a Turborepo monorepo with shared backend, web (Next.js), and mobile (Expo/React Native) clients.
 
 ## What's Inside
 
 ### Apps
 
-- **[Next.js Web App](./apps/nextjs)** — Next.js 15, React 19, Tailwind CSS v4, shadcn/ui
-- **[Expo Mobile App](./apps/expo)** — Expo SDK 54, React Native 0.81, NativeWind v5, iOS home screen widgets (SwiftUI)
+- **[Next.js Web App](./apps/nextjs)** — Next.js 16, React 19, Tailwind CSS v4, shadcn/ui
+- **[Expo Mobile App](./apps/expo)** — Expo SDK 55, React Native 0.83, NativeWind v5, iOS home screen widgets (SwiftUI)
+
 ### Packages
 
 - **[@acme/api](./packages/api)** — tRPC v11 API layer shared across all apps
-- **[@acme/auth](./packages/auth)** — Authentication via Better Auth (OAuth, session management, auth proxy)
+- **[@acme/auth](./packages/auth)** — Authentication via Better Auth (Discord OAuth, Apple Sign In, session management, auth proxy)
 - **[@acme/db](./packages/db)** — Drizzle ORM with PostgreSQL (Supabase)
 - **[@acme/ui](./packages/ui)** — Shared UI components (shadcn/ui)
 
 ## Features
 
 ### Task Management
-- Create, organize, and track tasks with categories, priorities, and due dates
+- Create, organize, and track tasks with hierarchical categories, priorities, and due dates
+- Subtasks with auto-completion logic (complete parent when all subtasks done)
+- Recurring tasks (daily, weekly, monthly, yearly, custom interval)
+- Task snoozing with configurable durations
+- Reminders with configurable offset and cron-based delivery
 - Offline-first mobile with local SQLite, bidirectional sync, and conflict resolution
 - Native iOS home screen widgets (small/medium/large) with real-time task display
 - Automatic archiving of completed tasks via Supabase Edge Functions
+- Multiple views: stack (swipeable cards), list, and calendar (mobile)
 
-### Music League
-A Spotify-integrated social game where friends compete by submitting songs to themed rounds.
+### Shared Lists
+- Create collaborative task lists with invite codes
+- Role-based access control (owner/editor/viewer)
+- Configurable invites with expiration and usage limits
+- Push notifications for shared list activity
 
-- **Leagues** — Create or join leagues with invite codes, configurable settings (songs per round, point budgets, submission/voting windows)
-- **Rounds** — Sequential round system with automatic scheduling. Submission → Voting → Results lifecycle
-- **Spotify Integration** — Search and submit tracks, auto-generate playlists via Spotify API
-- **Voting** — Upvote/downvote system with separate point budgets and hater tracking
-- **Leaderboards** — Cumulative standings across rounds
-- **Push Notifications** — Round started, voting open, results available (Expo Push + server-side)
+### Content Moderation
+- Report content (spam, offensive, harassment)
+- Block/unblock users
+- Auto-flagging based on keyword matching
+
+### Push Notifications
+- Expo Push Notification Service integration
+- Per-user preferences (push/email toggles, reminder offset)
+- Shared list activity notifications
+- Scheduled reminders via server-side cron job
 
 ### Obsidian Sync
 Sync tasks to an Obsidian vault as markdown files.
@@ -70,14 +83,15 @@ pnpm db:studio
 | Layer | Tech |
 |-------|------|
 | Monorepo | Turborepo |
-| Web | Next.js 15, React 19, Tailwind CSS v4 |
-| Mobile | Expo SDK 54, React Native, NativeWind v5 |
+| Web | Next.js 16, React 19, Tailwind CSS v4 |
+| Mobile | Expo SDK 55, React Native 0.83, NativeWind v5 |
 | API | tRPC v11 |
 | Database | PostgreSQL (Supabase), Drizzle ORM |
-| Auth | Better Auth (OAuth, session management) |
+| Auth | Better Auth (Discord OAuth, Apple Sign In) |
 | UI | shadcn/ui, Framer Motion |
 | Widgets | SwiftUI (iOS) |
-| External APIs | Spotify Web API, Expo Push Notifications |
+| Notifications | Expo Push Notifications |
+| Error Tracking | Sentry (mobile) |
 
 ## Deployment
 

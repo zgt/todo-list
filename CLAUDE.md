@@ -8,26 +8,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Turborepo monorepo for a cross-platform Tokilist application — a task management and music league app with web (Next.js) and mobile (Expo/React Native), sharing a common tRPC API backend. The stack uses:
+This is a Turborepo monorepo for a cross-platform Tokilist application — a task management app with web (Next.js) and mobile (Expo/React Native), sharing a common tRPC API backend. The stack uses:
 
 - **Turborepo** for monorepo management
-- **Next.js 15** with React 19 for web
-- **Expo SDK 54** with React Native 0.81 for mobile
+- **Next.js 16** with React 19 for web
+- **Expo SDK 55** with React Native 0.83 for mobile
 - **tRPC v11** for type-safe API layer
 - **Drizzle ORM** with PostgreSQL (Supabase)
-- **Better Auth** for authentication (OAuth, session management, auth proxy)
+- **Better Auth** for authentication (Discord OAuth, Apple Sign In, session management, auth proxy)
 - **Tailwind CSS v4** + **NativeWind v5** for styling
 - **shadcn/ui** + **Framer Motion** for web UI components
 - **SwiftUI** for native iOS home screen widgets
-- **Spotify Web API** for music league integration
 - **Expo Push Notifications** for mobile push notifications
 - **Supabase Edge Functions** for task archiving
+- **Sentry** for mobile error tracking
 
 ### Key Features
 
-**Task Management**: Create, organize, and track tasks with categories, priorities, and due dates. Offline-first mobile with local SQLite, bidirectional sync, and conflict resolution. Native iOS home screen widgets (small/medium/large). Automatic archiving of completed tasks via Supabase Edge Functions.
+**Task Management**: Create, organize, and track tasks with hierarchical categories, priorities (high/medium/low), due dates, reminders, and recurring schedules (daily/weekly/monthly/yearly/custom). Supports subtasks with auto-completion logic. Offline-first mobile with local SQLite, bidirectional sync, and conflict resolution. Native iOS home screen widgets (small/medium/large). Automatic archiving of completed tasks via Supabase Edge Functions. Task snoozing with configurable durations.
 
-**Music League**: Spotify-integrated social game where friends compete by submitting songs to themed rounds. Includes leagues with invite codes, sequential round system (Submission → Voting → Results), Spotify search/playlist generation, upvote/downvote voting with point budgets, leaderboards, and push notifications.
+**Shared Lists**: Create collaborative task lists with invite codes. Role-based access control (owner/editor/viewer). Members can be invited via shareable codes with optional expiration and usage limits. Push notifications for shared list activity (task edits, completions, subtask completions).
+
+**Content Moderation**: User blocking system and content reporting (spam, offensive, harassment). Auto-flagging of content based on keyword matching. Report status tracking (pending/reviewed/dismissed).
+
+**Push Notifications**: Expo Push Notification Service integration with per-user preferences (push/email toggles, configurable reminder offset). Scheduled reminders via cron job. Shared list activity notifications.
 
 **Obsidian Sync**: Sync tasks to an Obsidian vault as markdown files via `scripts/sync-tasks-to-obsidian.ts`. Requires Obsidian Local REST API plugin and env vars (`OBSIDIAN_SYNC_API_KEY`, `TOKILIST_USER_ID`, `OBSIDIAN_REST_API_KEY`).
 
@@ -155,7 +159,7 @@ pnpm build:prod:android # Google Play Store
 
 ```
 apps/
-  ├── expo/            # React Native mobile app (Expo SDK 54)
+  ├── expo/            # React Native mobile app (Expo SDK 55)
   ├── nextjs/          # Next.js web app
 packages/
   ├── api/             # Shared tRPC router definitions
@@ -193,13 +197,24 @@ Database schemas follow these conventions:
 
 Database naming follows `snake_case` convention (configured in `drizzle.config.ts`).
 
-### tRPC API Pattern
+### tRPC API Routers
 
 API routes are defined in `packages/api/src/router/`:
 
-1. Create router file (e.g., `task.ts`)
-2. Define procedures using `publicProcedure` or `protectedProcedure`
-3. Register in `packages/api/src/root.ts`
+| Router | Purpose |
+|--------|---------|
+| `task.ts` | CRUD, snooze/unsnooze, priority filtering, recurrence |
+| `category.ts` | Hierarchical category tree, breadcrumbs, reparenting |
+| `task-list.ts` | Shared lists, invites, member roles, join/leave |
+| `subtask.ts` | Subtask CRUD, reorder, auto-complete parent logic |
+| `notification.ts` | Push token registration, user preferences, test push |
+| `moderation.ts` | Report content, block/unblock users |
+| `user.ts` | Display name update, account deletion |
+| `sync.ts` | Offline-first push/pull with conflict resolution |
+| `auth.ts` | Session management |
+| `post.ts` | Demo posts (legacy) |
+
+Define procedures using `publicProcedure` or `protectedProcedure`, register in `packages/api/src/root.ts`.
 
 **User-scoped queries**: Always filter by `ctx.session.user.id` in `protectedProcedure`:
 
@@ -220,7 +235,7 @@ Better Auth configuration is split:
 
 The CLI config is isolated in `script/` directory to prevent accidental imports.
 
-Current setup uses Discord OAuth. To add providers, update both configs.
+Current setup uses Discord OAuth and Apple Sign In (optional, iOS). To add providers, update both configs.
 
 ### Cross-Platform Considerations
 
@@ -228,6 +243,7 @@ Current setup uses Discord OAuth. To add providers, update both configs.
 - Uses `@acme/ui` components (shadcn/ui with Radix UI)
 - Server components by default
 - Client components marked with `"use client"`
+- Views: stack layout with glassmorphism panels, Aurora effects
 
 **Mobile (Expo)**:
 - Cannot use `@acme/ui` components (web-only)
@@ -235,6 +251,9 @@ Current setup uses Discord OAuth. To add providers, update both configs.
 - Custom checkbox implementation (not Radix UI)
 - Offline-first with local SQLite database and bidirectional sync with conflict resolution
 - Native iOS home screen widgets built with SwiftUI (small/medium/large sizes)
+- Views: swipeable card stack, list view, calendar view
+- Sentry error tracking integration
+- Swipe gesture tutorial for onboarding
 
 **Shared**:
 - tRPC client setup differs (React Query configuration)
@@ -288,9 +307,16 @@ POSTGRES_URL=                    # Supabase connection string
 AUTH_SECRET=                     # Random secret for Better Auth
 AUTH_DISCORD_ID=                 # Discord OAuth client ID
 AUTH_DISCORD_SECRET=             # Discord OAuth client secret
+AUTH_APPLE_ID=                   # Apple Sign In client ID (optional)
+AUTH_APPLE_SECRET=               # Apple Sign In client secret (optional)
+AUTH_APPLE_BUNDLE_ID=            # Apple app bundle ID (optional)
 AUTH_REDIRECT_PROXY_URL=         # Auth proxy URL (for Expo OAuth)
+CRON_SECRET=                     # Secret for cron job authentication
 PORT=3000                        # Optional: Next.js port
 EXPO_PUBLIC_EAS_PROJECT_ID=      # EAS Project ID (get from `eas init`)
+
+# Email (optional)
+RESEND_API_KEY=                  # Resend API key for email notifications
 
 # Obsidian Sync (optional)
 OBSIDIAN_SYNC_API_KEY=           # Obsidian sync API key

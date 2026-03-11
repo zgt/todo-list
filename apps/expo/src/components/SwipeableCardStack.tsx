@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/refs -- This component intentionally reads/writes refs during render
-   to implement a deferred sort pattern: task order only updates on navigation or add/remove,
-   not on completion toggling, preventing cards from jumping away mid-interaction. */
+   to implement a deferred sort pattern: task order only updates on navigation, completion delay,
+   or add/remove, preventing cards from jumping away mid-interaction. */
 import type { ScrollView } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, RefreshControl } from "react-native";
@@ -19,6 +19,9 @@ const PRIORITY_WEIGHTS: Record<string, number> = {
   low: 1,
   none: 0,
 };
+
+/** Delay before completed tasks re-sort into their new position (ms) */
+const COMPLETION_RESORT_DELAY = 500;
 
 interface SwipeableCardStackProps {
   tasks: LocalTask[];
@@ -60,6 +63,18 @@ export function SwipeableCardStack({
   const skipAnimationIds = useRef<Set<string>>(new Set());
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Delayed resort mechanism: after completing a task, wait briefly then re-sort
+  const resortTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingResortRef = useRef(false);
+  const [, setResortTrigger] = useState(0);
+
+  // Clean up resort timer on unmount
+  useEffect(() => {
+    return () => {
+      if (resortTimerRef.current) clearTimeout(resortTimerRef.current);
+    };
+  }, []);
+
   // Scroll to current card when switching to compact mode
   useEffect(() => {
     if (isCompact && scrollViewRef.current) {
@@ -70,8 +85,8 @@ export function SwipeableCardStack({
     }
   }, [isCompact, currentIndex]);
 
-  // Deferred sort: only re-sort on navigation or task list changes (add/remove/refresh),
-  // not on completion toggling, so the card doesn't jump away instantly.
+  // Deferred sort: only re-sort on navigation, delayed completion, or task list changes (add/remove).
+  // Matches parent sort: completed → priority (high first) → createdAt (newest first).
   const sortTasks = useCallback(
     (t: LocalTask[]) =>
       [...t].sort((a, b) => {
@@ -84,19 +99,26 @@ export function SwipeableCardStack({
           PRIORITY_WEIGHTS[(a.priority ?? "none") as string] ?? 0;
         const priorityB =
           PRIORITY_WEIGHTS[(b.priority ?? "none") as string] ?? 0;
-        return priorityB - priorityA;
+        if (priorityB !== priorityA) return priorityB - priorityA;
+
+        // Tiebreaker: newest first (matches parent sort in index.tsx)
+        return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
       }),
     [],
   );
   const prevTaskIdsRef = useRef<string>("");
   const sortedTasksRef = useRef<LocalTask[]>(sortTasks(tasks));
 
-  // Re-sort when tasks are added/removed (ids change) but NOT when completed status changes
+  // Check if a delayed resort was requested (after task completion)
+  const shouldForceResort = pendingResortRef.current;
+  if (shouldForceResort) pendingResortRef.current = false;
+
+  // Re-sort when tasks are added/removed (ids change) or after completion delay
   const currentTaskIds = tasks
     .map((t) => t.id)
     .sort()
     .join(",");
-  if (currentTaskIds !== prevTaskIdsRef.current) {
+  if (currentTaskIds !== prevTaskIdsRef.current || shouldForceResort) {
     prevTaskIdsRef.current = currentTaskIds;
     sortedTasksRef.current = sortTasks(tasks);
   } else {
@@ -110,6 +132,15 @@ export function SwipeableCardStack({
   }
 
   const sortedTasks = sortedTasksRef.current;
+
+  // Clamp currentIndex if it's out of bounds after a resort
+  useEffect(() => {
+    if (sortedTasks.length === 0) return;
+    const maxIdx = sortedTasks.length - 1;
+    if (currentIndex > maxIdx) {
+      setCurrentIndex(maxIdx);
+    }
+  }, [currentIndex, sortedTasks.length]);
 
   // Show previous card (if exists), current card, and next 2 cards for stacking effect
   const startIndex = Math.max(0, currentIndex - 1);
@@ -154,9 +185,20 @@ export function SwipeableCardStack({
     return null;
   }
 
+  const scheduleResort = () => {
+    if (resortTimerRef.current) clearTimeout(resortTimerRef.current);
+    resortTimerRef.current = setTimeout(() => {
+      pendingResortRef.current = true;
+      setResortTrigger((n) => n + 1);
+    }, COMPLETION_RESORT_DELAY);
+  };
+
   const handleComplete = (taskId: string) => {
-    // Just call the parent's complete handler - task stays in list
     onComplete(taskId);
+    // After a brief delay, re-sort so the completed task animates to its new position.
+    // In card mode the next uncompleted task slides into the current index.
+    // In compact mode the completed task slides to the bottom of the list.
+    scheduleResort();
   };
 
   const handleDelete = (taskId: string) => {
@@ -182,6 +224,9 @@ export function SwipeableCardStack({
   };
 
   const resortWithTarget = (targetDirection: "next" | "prev") => {
+    // Cancel any pending delayed resort since we're resorting now via navigation
+    if (resortTimerRef.current) clearTimeout(resortTimerRef.current);
+
     const prev = sortedTasksRef.current;
     // The task we want to land on after navigation
     const targetIdx =

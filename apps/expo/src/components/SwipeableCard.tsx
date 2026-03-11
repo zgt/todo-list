@@ -136,7 +136,6 @@ export function SwipeableCard({
     }
 
     if (skipStackAnimation) {
-      console.log("skip");
       stackTranslateY.value = targetY;
       stackScale.value = targetScale;
       stackOpacity.value = targetOpacity;
