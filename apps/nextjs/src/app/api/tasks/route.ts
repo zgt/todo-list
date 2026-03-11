@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       isNull(Task.archivedAt),
     ),
     orderBy: [desc(Task.createdAt)],
-    with: { category: true },
+    with: { category: true, subtasks: true },
   });
 
   // Collect all unique category IDs and ancestor IDs needed
