@@ -422,7 +422,7 @@ function routeCodingTask(task: Task): void {
 
   // Coding with no sub-category → Ideas/
   if (!subCat) {
-    const filePath = join(VAULT_PATH, "Tasks", "Coding", "Ideas", `${sanitize(task.title)}.md`);
+    const filePath = join(VAULT_PATH, "Coding", "Ideas", `${sanitize(task.title)}.md`);
     console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
     writeFile(filePath, codingTaskFile({
       id: task.id,
@@ -443,7 +443,7 @@ function routeCodingTask(task: Task): void {
     for (const subtask of task.subtasks) {
       const type = classifyTask(subtask.title);
       const folder = type === "bug" ? "Bugs" : "Features";
-      const filePath = join(VAULT_PATH, "Tasks", "Coding", project, folder, `${sanitize(subtask.title)}.md`);
+      const filePath = join(VAULT_PATH, "Coding", "Projects", project, folder, `${sanitize(subtask.title)}.md`);
       console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
       writeFile(filePath, codingTaskFile({
         id: subtask.id,
@@ -461,7 +461,7 @@ function routeCodingTask(task: Task): void {
   // Single task without subtasks
   const type = classifyTask(task.title);
   const folder = type === "bug" ? "Bugs" : "Features";
-  const filePath = join(VAULT_PATH, "Tasks", "Coding", project, folder, `${sanitize(task.title)}.md`);
+  const filePath = join(VAULT_PATH, "Coding", "Projects", project, folder, `${sanitize(task.title)}.md`);
   console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
   writeFile(filePath, codingTaskFile({
     id: task.id,
@@ -497,22 +497,39 @@ function routeSewingTask(task: Task): void {
 
   if (subCat === "Alterations" || subCat === "Design") {
     const folder = subCat;
-    const filePath = join(VAULT_PATH, "Tasks", "Fashion", folder, `${sanitize(task.title)}.md`);
-    console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
-    writeFile(filePath, fashionTaskFile({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      completed: task.completed,
-      category: folder,
-      createdAt: task.createdAt,
-      subtasks: task.subtasks,
-    }));
+    if (task.subtasks.length > 0) {
+      // Each subtask gets its own file in a task-named folder
+      for (const subtask of task.subtasks) {
+        const filePath = join(VAULT_PATH, "Fashion", folder, sanitize(task.title), `${sanitize(subtask.title)}.md`);
+        console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+        writeFile(filePath, fashionTaskFile({
+          id: subtask.id,
+          title: subtask.title,
+          description: null,
+          completed: subtask.completed,
+          category: folder,
+          createdAt: task.createdAt,
+          subtasks: [],
+        }));
+      }
+    } else {
+      const filePath = join(VAULT_PATH, "Fashion", folder, `${sanitize(task.title)}.md`);
+      console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+      writeFile(filePath, fashionTaskFile({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        completed: task.completed,
+        category: folder,
+        createdAt: task.createdAt,
+        subtasks: [],
+      }));
+    }
     return;
   }
 
   // Fallback: Sewing with unknown sub-category
-  const filePath = join(VAULT_PATH, "Tasks", "Fashion", sanitize(subCat ?? "General"), `${sanitize(task.title)}.md`);
+  const filePath = join(VAULT_PATH, "Fashion", sanitize(subCat ?? "General"), `${sanitize(task.title)}.md`);
   console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
   writeFile(filePath, fashionTaskFile({
     id: task.id,
@@ -528,8 +545,10 @@ function routeSewingTask(task: Task): void {
 // ─── Main ────────────────────────────────────────────────────────────
 
 async function main() {
-  if (!API_KEY) { console.error("OBSIDIAN_SYNC_API_KEY is required"); process.exit(1); }
-  if (!USER_ID) { console.error("TOKILIST_USER_ID is required"); process.exit(1); }
+  if (!API_KEY) { console.error("OBSIDIAN_SYNC_API_KEY is required (checked .env at ~/coding/todo-list/.env)"); process.exit(1); }
+  if (!USER_ID) { console.error("TOKILIST_USER_ID is required (checked .env at ~/coding/todo-list/.env)"); process.exit(1); }
+  console.log(`API_KEY: ${API_KEY.slice(0, 6)}...${API_KEY.slice(-4)}`);
+  console.log(`USER_ID: ${USER_ID}`);
 
   if (DRY_RUN) console.log("🏃 DRY RUN — no files will be modified\n");
 
@@ -556,6 +575,8 @@ async function main() {
           apiBase = url;
           console.log(`Found dev server on port ${port}`);
           break;
+        } else {
+          console.log(`Port ${port} responded with ${attempt.status} (${attempt.statusText})`);
         }
       } catch {
         // port not responding, try next
