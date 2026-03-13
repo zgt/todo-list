@@ -184,13 +184,16 @@ function Scene() {
   const prevIsFetching = useRef(0);
 
   useFrame((state, delta) => {
+    // Clamp delta to prevent large jumps when tab is backgrounded and refocused
+    const clampedDelta = Math.min(delta, 0.05);
+
     // eslint-disable-next-line react-hooks/immutability
     dotMaterial.uniforms.time.value = state.clock.elapsedTime;
 
     let isActive = false;
 
     if (manualRippleTimeRemaining.current > 0) {
-      manualRippleTimeRemaining.current -= delta;
+      manualRippleTimeRemaining.current -= clampedDelta;
       isActive = true;
     }
 
@@ -224,7 +227,7 @@ function Scene() {
     const nextIntensity = THREE.MathUtils.lerp(
       currentIntensity,
       targetIntensity,
-      delta * dampSpeed,
+      clampedDelta * dampSpeed,
     );
 
     dotMaterial.uniforms.rippleIntensity.value = nextIntensity;
@@ -235,7 +238,7 @@ function Scene() {
         // Reset time only on fresh activation from 0
         // But here we just keep incrementing to make it continuous
       }
-      dotMaterial.uniforms.rippleTime.value += delta * 2.0; // speed factor
+      dotMaterial.uniforms.rippleTime.value += clampedDelta * 2.0; // speed factor
     } else {
       dotMaterial.uniforms.rippleTime.value = 0;
     }
