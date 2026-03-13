@@ -6,6 +6,7 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
+import * as Haptics from "expo-haptics";
 import { Filter } from "lucide-react-native";
 
 import type { PriorityLevel } from "~/components/priority-config";
@@ -24,10 +25,12 @@ export function PriorityFilter({
   const snapPoints = useMemo(() => ["35%"], []);
 
   const handleOpen = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     bottomSheetRef.current?.present();
   };
 
   const handleToggle = (priority: PriorityLevel) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (selectedPriorities.includes(priority)) {
       onChange(selectedPriorities.filter((p) => p !== priority));
     } else {

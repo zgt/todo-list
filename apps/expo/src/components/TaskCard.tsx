@@ -15,6 +15,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { Bell, Check, Trash2 } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
@@ -244,7 +245,12 @@ export function TaskCard({
       <Pressable onPress={handleCardPress}>
         <View className="flex-row items-center gap-3 px-4 py-3">
           {/* Left: Checkbox */}
-          <Pressable onPress={onToggle}>
+          <Pressable
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onToggle();
+            }}
+          >
             <View
               className={`h-7 w-7 items-center justify-center rounded-full border-2 ${
                 task.completed ? "bg-primary border-primary" : "border-white/30"
@@ -386,9 +392,12 @@ export function TaskCard({
                 <View key={subtask.id}>
                   {index > 0 && <View style={styles.subtaskSeparator} />}
                   <Pressable
-                    onPress={() =>
-                      onSubtaskToggle(subtask.id, !subtask.completed)
-                    }
+                    onPress={() => {
+                      void Haptics.impactAsync(
+                        Haptics.ImpactFeedbackStyle.Light,
+                      );
+                      onSubtaskToggle(subtask.id, !subtask.completed);
+                    }}
                     style={styles.subtaskRowCompact}
                   >
                     <View
@@ -491,7 +500,12 @@ export function TaskCard({
           )}
         </View>
 
-        <Pressable onPress={onToggle}>
+        <Pressable
+          onPress={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onToggle();
+          }}
+        >
           <View
             className={`h-8 w-8 items-center justify-center rounded-full border-2 ${
               task.completed ? "bg-primary border-primary" : "border-white/30"
@@ -543,7 +557,10 @@ export function TaskCard({
             {subtasks.slice(0, maxVisibleSubtasks).map((subtask) => (
               <Pressable
                 key={subtask.id}
-                onPress={() => onSubtaskToggle(subtask.id, !subtask.completed)}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onSubtaskToggle(subtask.id, !subtask.completed);
+                }}
                 style={styles.subtaskRowCard}
               >
                 <View
@@ -582,7 +599,12 @@ export function TaskCard({
       <View className="items-center">
         {deletePending && (
           <Pressable
-            onPress={onDelete}
+            onPress={() => {
+              void Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Warning,
+              );
+              onDelete();
+            }}
             className="flex-row items-center gap-2 rounded-full bg-red-500/20 px-4 py-2 active:opacity-80"
           >
             <Trash2 size={16} color="#ef4444" />

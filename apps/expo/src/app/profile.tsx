@@ -24,6 +24,8 @@ import {
   Trash2,
 } from "lucide-react-native";
 
+import * as Haptics from "expo-haptics";
+
 import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
 import { queryClient as globalQueryClient, trpc } from "~/utils/api";
@@ -89,6 +91,7 @@ export default function ProfileScreen() {
       setEditedName(user?.name ?? "");
       return;
     }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     updateNameMutation.mutate({ name: trimmed });
   };
 
@@ -99,6 +102,7 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteAccount = () => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
       "Delete Account",
       "This will permanently delete your account and all your data. This action cannot be undone.\n\nAre you sure you want to continue?",
@@ -118,6 +122,7 @@ export default function ProfileScreen() {
 
   const handleConfirmDelete = () => {
     if (deleteConfirmText !== "DELETE") return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     deleteAccountMutation.mutate({ confirmation: "DELETE" });
   };
 

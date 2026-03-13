@@ -12,6 +12,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import * as Haptics from "expo-haptics";
 import { AlarmClock, Calendar, Clock, Moon, Sun } from "lucide-react-native";
 
 import { CustomDatePicker } from "./CustomDatePicker";
@@ -173,7 +174,12 @@ export const SnoozeSheet = forwardRef<SnoozeSheetRef, SnoozeSheetProps>(
                 return (
                   <Pressable
                     key={option.label}
-                    onPress={() => handleSnooze(option.getDate())}
+                    onPress={() => {
+                      void Haptics.impactAsync(
+                        Haptics.ImpactFeedbackStyle.Light,
+                      );
+                      handleSnooze(option.getDate());
+                    }}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
@@ -214,6 +220,7 @@ export const SnoozeSheet = forwardRef<SnoozeSheetRef, SnoozeSheetProps>(
               {/* Pick Date option */}
               <Pressable
                 onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   bottomSheetRef.current?.dismiss();
                   setPendingDate(getTomorrowAt9am());
                   setShowDatePicker(true);

@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 
 interface CustomDatePickerProps {
@@ -97,6 +98,8 @@ export function CustomDatePicker({
     if (minimumDate && isBeforeDay(newDate, minimumDate)) {
       return;
     }
+
+    void Haptics.selectionAsync();
 
     // Preserve time from original selected date
     newDate.setHours(selectedDate.getHours());

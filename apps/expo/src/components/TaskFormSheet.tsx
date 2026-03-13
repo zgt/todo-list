@@ -20,6 +20,7 @@ import {
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
 import {
   AlarmClock,
   Bell,
@@ -342,6 +343,7 @@ export function TaskFormSheet({
 
   // For create mode: trigger opens the sheet
   const handleOpenSheet = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Keyboard.dismiss();
     bottomSheetRef.current?.present();
   }, []);
@@ -372,6 +374,7 @@ export function TaskFormSheet({
   };
 
   const handleDelete = () => {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert("Delete Task", "Are you sure you want to delete this task?", [
       { text: "Cancel", style: "cancel" },
       {

@@ -11,6 +11,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
@@ -18,6 +19,13 @@ import { SwipeOverlay } from "./SwipeOverlay";
 import { TaskCard } from "./TaskCard";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+const hapticLight = () =>
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+const hapticSuccess = () =>
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+const hapticWarning = () =>
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
 
 // Swipe configuration constants
 const SWIPE_THRESHOLD = 100; // Distance to trigger action
@@ -253,12 +261,15 @@ export function SwipeableCard({
             // Right swipe
             if (deletePending) {
               // Cancel delete mode
+              runOnJS(hapticLight)();
               runOnJS(onCancelDelete)();
             } else if (task.completed) {
               // Uncomplete the task
+              runOnJS(hapticLight)();
               runOnJS(onToggle)();
             } else if (onTaskPress) {
               // Open bottom sheet edit form (only for uncompleted tasks)
+              runOnJS(hapticLight)();
               runOnJS(onTaskPress)();
             }
           } else {
@@ -266,13 +277,16 @@ export function SwipeableCard({
             if (task.completed) {
               if (deletePending) {
                 // Third left swipe — actually delete
+                runOnJS(hapticWarning)();
                 runOnJS(onDelete)();
               } else {
                 // Second left swipe — enter delete pending
+                runOnJS(hapticWarning)();
                 runOnJS(onDeletePending)();
               }
             } else {
               // First left swipe — complete the task
+              runOnJS(hapticSuccess)();
               runOnJS(onComplete)();
             }
           }
@@ -297,13 +311,16 @@ export function SwipeableCard({
             // If task is completed, handle delete logic
             if (deletePending) {
               // Second swipe - actually delete
+              runOnJS(hapticWarning)();
               runOnJS(onDelete)();
             } else {
               // First swipe - enter delete pending mode
+              runOnJS(hapticWarning)();
               runOnJS(onDeletePending)();
             }
           } else {
             // Task not completed - complete it
+            runOnJS(hapticSuccess)();
             runOnJS(onComplete)();
           }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -315,12 +332,15 @@ export function SwipeableCard({
           // Down swipe
           if (deletePending) {
             // Cancel delete mode
+            runOnJS(hapticLight)();
             runOnJS(onCancelDelete)();
           } else if (task.completed) {
             // Uncomplete the task
+            runOnJS(hapticLight)();
             runOnJS(onToggle)();
           } else if (onTaskPress) {
             // Open bottom sheet edit form (only for uncompleted tasks)
+            runOnJS(hapticLight)();
             runOnJS(onTaskPress)();
           }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -339,6 +359,7 @@ export function SwipeableCard({
         ) {
           // Left swipe - Next card
           if (canGoNext) {
+            runOnJS(hapticLight)();
             swipeProgress.value = 0;
             translateX.value = withTiming(
               -SCREEN_WIDTH * 1.5,
@@ -364,6 +385,7 @@ export function SwipeableCard({
         ) {
           // Right swipe - Pull previous card back from left
           if (canGoPrevious) {
+            runOnJS(hapticLight)();
             // Animate swipe progress to complete
             swipeProgress.value = withTiming(1, { duration: 200 }, () => {
               runOnJS(onPrevious)();

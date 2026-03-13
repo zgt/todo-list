@@ -27,6 +27,8 @@ import {
   Users,
 } from "lucide-react-native";
 
+import * as Haptics from "expo-haptics";
+
 import type { User } from "~/utils/auth";
 import { UserAvatar } from "~/components/UserAvatar";
 import { queryClient, trpc } from "~/utils/api";
@@ -206,7 +208,12 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                     editable={!updateNameMutation.isPending}
                   />
                   <Pressable
-                    onPress={handleSaveName}
+                    onPress={() => {
+                      void Haptics.impactAsync(
+                        Haptics.ImpactFeedbackStyle.Light,
+                      );
+                      handleSaveName();
+                    }}
                     disabled={updateNameMutation.isPending}
                     className="rounded-2xl bg-[#50C878] p-2 active:bg-[#388E3C]"
                   >
@@ -234,6 +241,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
           <View className="gap-2">
             <Pressable
               onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onClose();
                 router.push("/lists" as never);
               }}
@@ -247,6 +255,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
 
 <Pressable
               onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onClose();
                 router.push("/settings" as never);
               }}
@@ -260,6 +269,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
 
             <Pressable
               onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onClose();
                 router.push("/profile" as never);
               }}
@@ -302,7 +312,10 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             <View className="my-2 h-px bg-[#164B49]" />
 
             <Pressable
-              onPress={handleSignOut}
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void handleSignOut();
+              }}
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Sign out"
               accessibilityRole="button"

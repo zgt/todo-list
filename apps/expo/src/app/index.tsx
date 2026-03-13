@@ -795,7 +795,10 @@ export default function Index() {
               }}
             >
               <Pressable
-                onPress={() => setSelectedListFilter(null)}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedListFilter(null);
+                }}
                 style={{
                   paddingHorizontal: 12,
                   paddingVertical: 5,
@@ -819,7 +822,10 @@ export default function Index() {
                 </RNText>
               </Pressable>
               <Pressable
-                onPress={() => setSelectedListFilter("personal")}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedListFilter("personal");
+                }}
                 style={{
                   paddingHorizontal: 12,
                   paddingVertical: 5,
@@ -846,7 +852,12 @@ export default function Index() {
               {lists.map((list) => (
                 <Pressable
                   key={list.id}
-                  onPress={() => setSelectedListFilter(list.id)}
+                  onPress={() => {
+                    void Haptics.impactAsync(
+                      Haptics.ImpactFeedbackStyle.Light,
+                    );
+                    setSelectedListFilter(list.id);
+                  }}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",

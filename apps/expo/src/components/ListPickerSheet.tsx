@@ -6,6 +6,7 @@ import {
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
+import * as Haptics from "expo-haptics";
 import { Check } from "lucide-react-native";
 
 interface TaskList {
@@ -36,6 +37,7 @@ export function ListPickerSheet({
 
   const handleSelect = useCallback(
     (id: string | null) => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onListChange(id);
       bottomSheetRef.current?.dismiss();
     },

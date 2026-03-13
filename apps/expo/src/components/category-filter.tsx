@@ -33,6 +33,8 @@ import ColorPicker, {
   Preview,
 } from "reanimated-color-picker";
 
+import * as Haptics from "expo-haptics";
+
 import type { CategoryNode } from "./category-tree-item";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
@@ -173,6 +175,7 @@ export function CategoryFilter({
       Alert.alert("Error", "Please enter a category name");
       return;
     }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     createCategory.mutate(
       {
         name: trimmedName,
@@ -188,6 +191,7 @@ export function CategoryFilter({
 
   const toggleCategory = useCallback(
     (id: string) => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       if (mode === "select") {
         onCategoryChange?.(id);
         bottomSheetRef.current?.dismiss();
@@ -216,6 +220,7 @@ export function CategoryFilter({
   }, []);
 
   const handleOpenSheet = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Keyboard.dismiss();
     bottomSheetRef.current?.present();
   }, []);
