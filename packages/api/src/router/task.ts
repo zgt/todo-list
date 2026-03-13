@@ -463,6 +463,13 @@ export const taskRouter = {
             nextReminderAt = new Date(nextDueDate.getTime() - offset);
           }
 
+          // Snooze the next occurrence until its due date if it's in the future
+          // This prevents clutter when completing recurring tasks early
+          const now = new Date();
+          const startOfDueDate = new Date(nextDueDate);
+          startOfDueDate.setHours(0, 0, 0, 0);
+          const snoozedUntil = startOfDueDate > now ? startOfDueDate : null;
+
           void ctx.db
             .insert(Task)
             .values({
@@ -474,6 +481,7 @@ export const taskRouter = {
               dueDate: nextDueDate,
               priority: existing.priority,
               reminderAt: nextReminderAt,
+              snoozedUntil,
               recurrenceRule: existing.recurrenceRule,
               recurrenceInterval: existing.recurrenceInterval,
               recurrenceEndDate: existing.recurrenceEndDate,
