@@ -26,8 +26,8 @@ import {
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
-import { trpc } from "~/utils/api";
-import { authClient } from "~/utils/auth";
+import { queryClient as globalQueryClient, trpc } from "~/utils/api";
+import { authClient, clearAuthStorage } from "~/utils/auth";
 
 const APP_VERSION =
   Constants.expoConfig?.version ??
@@ -71,8 +71,10 @@ export default function ProfileScreen() {
         try {
           await authClient.signOut();
         } catch {
-          // Session already deleted on server, just clear local state
+          // Session already deleted on server, force-clear local state
+          clearAuthStorage();
         }
+        globalQueryClient.clear();
       },
       onError: (error) => {
         Alert.alert("Deletion Failed", error.message);

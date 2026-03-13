@@ -1,19 +1,59 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
 
 import type { AppRouter } from "@acme/api";
 
-import { authClient } from "./auth";
+import { authClient, clearAuthStorage } from "./auth";
 import { getBaseUrl } from "./base-url";
+
+/**
+ * Global handler for UNAUTHORIZED errors from tRPC.
+ * When the server rejects a stale session, we clear local auth tokens
+ * and the query cache so the app falls back to the login screen.
+ */
+let isHandlingUnauthorized = false;
+
+function handleUnauthorizedError() {
+  if (isHandlingUnauthorized) return;
+  isHandlingUnauthorized = true;
+
+  console.warn("[Auth] Session expired — clearing local auth state");
+  clearAuthStorage();
+  queryClient.clear();
+
+  // Force Better Auth to re-evaluate session from (now-empty) storage
+  void authClient.getSession({ query: { disableCookieCache: true } });
+
+  // Reset the guard after a short delay to allow re-triggering if needed
+  setTimeout(() => {
+    isHandlingUnauthorized = false;
+  }, 2000);
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // ...
+      retry: (failureCount, error) => {
+        // Don't retry UNAUTHORIZED — the session is dead
+        if ((error as { data?: { code?: string } })?.data?.code === "UNAUTHORIZED") {
+          return false;
+        }
+        return failureCount < 3;
+      },
     },
   },
+  queryCache: new QueryCache({
+    onError: (_error, query) => {
+      const trpcError = query.state.error as {
+        data?: { code?: string };
+      } | null;
+      if (trpcError?.data?.code === "UNAUTHORIZED") {
+        handleUnauthorizedError();
+      }
+    },
+  }),
 });
 
 /**

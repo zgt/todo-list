@@ -29,8 +29,8 @@ import {
 
 import type { User } from "~/utils/auth";
 import { UserAvatar } from "~/components/UserAvatar";
-import { trpc } from "~/utils/api";
-import { authClient } from "~/utils/auth";
+import { queryClient, trpc } from "~/utils/api";
+import { authClient, clearAuthStorage } from "~/utils/auth";
 
 interface ProfileMenuProps {
   visible: boolean;
@@ -121,10 +121,13 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
-      onClose();
     } catch (error) {
       console.error("Sign-out error:", error);
-      Alert.alert("Sign-out failed", "Could not sign out. Please try again.");
+      // If signOut fails (e.g., session already expired on server),
+      // force-clear local auth tokens so we don't get stuck in a stale state
+      clearAuthStorage();
+    } finally {
+      queryClient.clear();
       onClose();
     }
   };

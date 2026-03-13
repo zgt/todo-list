@@ -96,6 +96,21 @@ const safeStorage = {
   },
 };
 
+/**
+ * Force-clear all auth tokens from SecureStore.
+ * Used when we detect stale sessions (e.g., 401 from server)
+ * or when signOut fails and we need to ensure local state is clean.
+ */
+export function clearAuthStorage(): void {
+  for (const key of AUTH_KEYS) {
+    try {
+      SecureStore.deleteItemAsync(key).catch(() => undefined);
+    } catch {
+      // Ignore — key may not exist
+    }
+  }
+}
+
 export const authClient = createAuthClient({
   baseURL: getBaseUrl(),
   plugins: [
