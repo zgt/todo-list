@@ -254,7 +254,7 @@ struct TodoWidgetProvider: TimelineProvider {
         case .systemMedium:
             return 5
         case .systemLarge:
-            return 11
+            return 10
         case .systemExtraLarge:
             return 10
         case .accessoryInline:
