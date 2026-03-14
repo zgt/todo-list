@@ -395,36 +395,71 @@ struct CategoryCycleButton: View {
 struct SmallWidgetView: View {
     let entry: TodoWidgetEntry
 
+    private var progress: Double {
+        guard entry.totalCount > 0 else { return 0 }
+        return Double(entry.completedCount) / Double(entry.totalCount)
+    }
+
+    private var incompleteTasks: [TaskItem] {
+        entry.tasks.filter { !$0.completed }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Header
+        VStack(spacing: 6) {
+            // Header: category cycle button
             HStack {
                 CategoryCycleButton(currentCategory: entry.currentCategory, compact: true)
                 Spacer()
             }
 
-            Spacer()
+            // Progress ring
+            ZStack {
+                // Background track
+                Circle()
+                    .stroke(Color.borderDefault, lineWidth: 5)
 
-            // Progress
-            if entry.totalCount > 0 {
-                VStack(alignment: .leading, spacing: 4) {
+                // Filled arc
+                Circle()
+                    .trim(from: 0, to: entry.totalCount > 0 ? progress : 0)
+                    .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+
+                // Fraction label inside ring
+                if entry.totalCount > 0 {
                     Text("\(entry.completedCount)/\(entry.totalCount)")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundColor(.primaryEmerald)
-                    Text(entry.currentCategory?.name ?? "Tasks")
+                } else {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.primaryEmerald)
+                }
+            }
+            .frame(width: 52, height: 52)
+
+            // Next tasks preview
+            VStack(alignment: .leading, spacing: 2) {
+                if incompleteTasks.isEmpty {
+                    Text("All caught up!")
                         .font(.caption)
                         .foregroundColor(.textMuted)
-                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    ForEach(incompleteTasks.prefix(2)) { task in
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.primaryEmerald.opacity(0.5))
+                                .frame(width: 4, height: 4)
+                            Text(task.title)
+                                .font(.caption)
+                                .foregroundColor(.textPrimary)
+                                .lineLimit(1)
+                        }
+                    }
                 }
-            } else {
-                Text("No tasks")
-                    .font(.subheadline)
-                    .foregroundColor(.textMuted)
             }
-
-            Spacer()
         }
-        .padding()
+        .padding(12)
         .containerBackground(Color.backgroundDeep, for: .widget)
     }
 }
