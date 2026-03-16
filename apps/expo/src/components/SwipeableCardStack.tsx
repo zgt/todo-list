@@ -261,6 +261,11 @@ export function SwipeableCardStack({
     if (currentIndex < sortedTasks.length - 1) {
       const newIndex = resortWithTarget("next");
       setCurrentIndex(newIndex);
+      // Force re-render even if newIndex === currentIndex (e.g. after completing
+      // top card, the next task slides into the same slot in sorted order)
+      if (newIndex === currentIndex) {
+        setResortTrigger((n) => n + 1);
+      }
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -269,6 +274,9 @@ export function SwipeableCardStack({
     if (currentIndex > 0) {
       const newIndex = resortWithTarget("prev");
       setCurrentIndex(newIndex);
+      if (newIndex === currentIndex) {
+        setResortTrigger((n) => n + 1);
+      }
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
@@ -325,7 +333,7 @@ export function SwipeableCardStack({
             yOffset={isCompact ? yOffsets[mapIndex] : undefined}
             onToggle={() => {
               onToggle(task.id, !task.completed);
-              if (isCompact) scheduleResort();
+              scheduleResort();
             }}
             onComplete={() => handleComplete(task.id)}
             onDelete={() => handleDelete(task.id)}
