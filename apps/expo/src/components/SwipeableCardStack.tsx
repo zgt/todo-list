@@ -351,6 +351,7 @@ export function SwipeableCardStack({
               layout={LinearTransition.springify()
                 .damping(18)
                 .stiffness(120)}
+              style={{ width: "100%" }}
             >
               {card}
             </Animated.View>
