@@ -1,7 +1,6 @@
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Pressable,
   Text,
   View,
@@ -122,71 +121,86 @@ export default function BlockedUsersScreen() {
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={blockedUsers}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingVertical: 12,
-                  borderBottomWidth: 1,
-                  borderBottomColor: "#164B49",
-                }}
-              >
-                <UserAvatar
-                  name={item.user.name}
-                  image={item.user.image}
-                  size={40}
-                />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: "500",
-                      color: "#DCE4E4",
-                    }}
-                  >
-                    {item.user.name}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: "#8FA8A8", marginTop: 2 }}>
-                    Blocked{" "}
-                    {new Date(item.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={() =>
-                    handleUnblock(item.blockedUserId, item.user.name)
-                  }
-                  disabled={unblockMutation.isPending}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+            <View
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#164B49",
+                backgroundColor: "#102A2A",
+                overflow: "hidden",
+              }}
+            >
+              {blockedUsers.map((item, index) => (
+                <View
+                  key={item.id}
                   style={{
-                    paddingHorizontal: 14,
-                    paddingVertical: 8,
-                    borderRadius: 8,
-                    borderWidth: 1,
-                    borderColor: "#164B49",
-                    backgroundColor: "#102A2A",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    padding: 16,
+                    borderBottomWidth:
+                      index < blockedUsers.length - 1 ? 1 : 0,
+                    borderBottomColor: "#164B49",
                   }}
                 >
-                  <Text
+                  <UserAvatar
+                    name={item.user.name}
+                    image={item.user.image}
+                    size={40}
+                  />
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "500",
+                        color: "#DCE4E4",
+                      }}
+                    >
+                      {item.user.name}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: "#8FA8A8",
+                        marginTop: 2,
+                      }}
+                    >
+                      Blocked{" "}
+                      {new Date(item.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() =>
+                      handleUnblock(item.blockedUserId, item.user.name)
+                    }
+                    disabled={unblockMutation.isPending}
                     style={{
-                      fontSize: 13,
-                      fontWeight: "600",
-                      color: "#DCE4E4",
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: "#164B49",
+                      backgroundColor: "#0A1A1A",
                     }}
                   >
-                    Unblock
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-          />
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: "600",
+                        color: "#DCE4E4",
+                      }}
+                    >
+                      Unblock
+                    </Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          </View>
         )}
       </SafeAreaView>
     </GradientBackground>

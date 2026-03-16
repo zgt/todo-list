@@ -35,7 +35,7 @@ Collaborate with anyone. Share lists with friends, family, or teammates. See wha
 
 **Built for You**
 • Beautiful dark theme that's easy on the eyes
-• Sign in with Discord, Google, or Apple
+• Sign in with Discord or Apple
 • Works on iPhone and iPad
 • iOS widgets for quick task access
 • Interactive swipe tutorial to get started fast

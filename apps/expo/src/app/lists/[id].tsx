@@ -2,8 +2,8 @@ import { useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Pressable,
+  ScrollView,
   Share,
   Text,
   View,
@@ -253,307 +253,335 @@ export default function ListDetailScreen() {
       <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <Stack.Screen options={{ headerShown: false }} />
 
-        <FlatList
-          data={members}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 40 }}
-          ListHeaderComponent={
-            <View style={{ paddingHorizontal: 16 }}>
-              {/* Header */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingTop: 8,
-                  paddingBottom: 16,
-                }}
-              >
-                <Pressable
-                  onPress={() => router.back()}
-                  hitSlop={12}
-                  style={{ marginRight: 12 }}
-                  accessibilityLabel="Go back"
-                  accessibilityRole="button"
-                >
-                  <ArrowLeft size={24} color="#DCE4E4" />
-                </Pressable>
-                <View style={{ flex: 1 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 6,
-                        backgroundColor: list.color ?? "#50C878",
-                      }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 24,
-                        fontWeight: "700",
-                        color: "#DCE4E4",
-                      }}
-                      numberOfLines={1}
-                    >
-                      {list.name}
-                    </Text>
-                  </View>
-                  {list.description && (
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        color: "#8FA8A8",
-                        marginTop: 4,
-                        marginLeft: 20,
-                      }}
-                    >
-                      {list.description}
-                    </Text>
-                  )}
-                </View>
-              </View>
-
-              {/* Actions */}
-              <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
-                {isOwner && (
-                  <Pressable
-                    onPress={handleInvite}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                      backgroundColor: "rgba(80, 200, 120, 0.15)",
-                      borderWidth: 1,
-                      borderColor: "#50C878",
-                      borderRadius: 8,
-                      paddingVertical: 10,
-                    }}
-                    accessibilityLabel="Invite members"
-                    accessibilityRole="button"
-                  >
-                    <LinkIcon size={16} color="#50C878" />
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: "#50C878",
-                      }}
-                    >
-                      Invite
-                    </Text>
-                  </Pressable>
-                )}
-                {isOwner ? (
-                  <Pressable
-                    onPress={handleDelete}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                      backgroundColor: "rgba(239, 68, 68, 0.1)",
-                      borderWidth: 1,
-                      borderColor: "rgba(239, 68, 68, 0.3)",
-                      borderRadius: 8,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <Trash2 size={16} color="#ef4444" />
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: "#ef4444",
-                      }}
-                    >
-                      Delete
-                    </Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    onPress={handleLeave}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                      backgroundColor: "rgba(239, 68, 68, 0.1)",
-                      borderWidth: 1,
-                      borderColor: "rgba(239, 68, 68, 0.3)",
-                      borderRadius: 8,
-                      paddingVertical: 10,
-                    }}
-                  >
-                    <LogOut size={16} color="#ef4444" />
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: "#ef4444",
-                      }}
-                    >
-                      Leave
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-
-              {/* Members Header */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 12,
-                }}
-              >
-                <Users size={16} color="#8FA8A8" />
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: "600",
-                    color: "#8FA8A8",
-                  }}
-                >
-                  Members ({members.length})
-                </Text>
-              </View>
-            </View>
-          }
-          renderItem={({ item: member }) => (
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          <View style={{ paddingHorizontal: 16 }}>
+            {/* Header */}
             <View
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                borderBottomWidth: 1,
-                borderBottomColor: "#164B49",
+                paddingTop: 8,
+                paddingBottom: 16,
               }}
             >
-              {/* Avatar */}
-              <View
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: "#102A2A",
-                  borderWidth: 1,
-                  borderColor: "#164B49",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
+              <Pressable
+                onPress={() => router.back()}
+                hitSlop={12}
+                style={{ marginRight: 12 }}
+                accessibilityLabel="Go back"
+                accessibilityRole="button"
               >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: "#DCE4E4",
-                  }}
-                >
-                  {member.user.name.charAt(0)}
-                </Text>
-              </View>
+                <ArrowLeft size={24} color="#DCE4E4" />
+              </Pressable>
               <View style={{ flex: 1 }}>
                 <View
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: 6,
+                    gap: 8,
                   }}
                 >
+                  <View
+                    style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: 6,
+                      backgroundColor: list.color ?? "#50C878",
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 24,
+                      fontWeight: "700",
+                      color: "#DCE4E4",
+                    }}
+                    numberOfLines={1}
+                  >
+                    {list.name}
+                  </Text>
+                </View>
+                {list.description && (
                   <Text
                     style={{
                       fontSize: 14,
-                      fontWeight: "500",
-                      color: "#DCE4E4",
+                      color: "#8FA8A8",
+                      marginTop: 4,
+                      marginLeft: 20,
                     }}
                   >
-                    {member.user.name}
+                    {list.description}
                   </Text>
-                  {member.role === "owner" && (
-                    <Crown size={12} color="#E5A04D" />
-                  )}
-                </View>
-                <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
-                  {member.role}
-                </Text>
+                )}
               </View>
-              {/* Owner actions on non-owner members */}
-              {isOwner && member.role !== "owner" && (
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
-                    onPress={() => handleChangeRole(member.userId, member.role)}
-                    hitSlop={8}
+            </View>
+
+            {/* Actions */}
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
+              {isOwner && (
+                <Pressable
+                  onPress={handleInvite}
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    backgroundColor: "rgba(80, 200, 120, 0.15)",
+                    borderWidth: 1,
+                    borderColor: "#50C878",
+                    borderRadius: 8,
+                    paddingVertical: 10,
+                  }}
+                  accessibilityLabel="Invite members"
+                  accessibilityRole="button"
+                >
+                  <LinkIcon size={16} color="#50C878" />
+                  <Text
                     style={{
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 6,
-                      backgroundColor: "#102A2A",
-                      borderWidth: 1,
-                      borderColor: "#164B49",
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: "#50C878",
                     }}
                   >
-                    <Text style={{ fontSize: 11, color: "#8FA8A8" }}>
-                      {member.role === "editor" ? "→ Viewer" : "→ Editor"}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() =>
-                      handleRemoveMember(member.userId, member.user.name)
-                    }
-                    hitSlop={8}
-                  >
-                    <UserMinus size={16} color="#ef4444" />
-                  </Pressable>
-                </View>
+                    Invite
+                  </Text>
+                </Pressable>
               )}
-              {/* Report/Block menu for other users (non-self) */}
-              {member.userId !== session?.user.id && (
+              {isOwner ? (
                 <Pressable
-                  onPress={() =>
-                    handleMemberMenu(member.userId, member.user.name)
-                  }
-                  hitSlop={12}
-                  style={{ padding: 4, marginLeft: 8 }}
+                  onPress={handleDelete}
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    borderWidth: 1,
+                    borderColor: "rgba(239, 68, 68, 0.3)",
+                    borderRadius: 8,
+                    paddingVertical: 10,
+                  }}
                 >
-                  <MoreHorizontal size={18} color="#8FA8A8" />
+                  <Trash2 size={16} color="#ef4444" />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: "#ef4444",
+                    }}
+                  >
+                    Delete
+                  </Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={handleLeave}
+                  style={{
+                    flex: 1,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    borderWidth: 1,
+                    borderColor: "rgba(239, 68, 68, 0.3)",
+                    borderRadius: 8,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <LogOut size={16} color="#ef4444" />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: "#ef4444",
+                    }}
+                  >
+                    Leave
+                  </Text>
                 </Pressable>
               )}
             </View>
-          )}
-          ListFooterComponent={
-            <View style={{ paddingHorizontal: 16, paddingTop: 20 }}>
+
+            {/* Members Section */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 12,
+              }}
+            >
+              <Users size={16} color="#8FA8A8" />
               <Text
                 style={{
                   fontSize: 15,
                   fontWeight: "600",
                   color: "#8FA8A8",
-                  marginBottom: 12,
+                }}
+              >
+                Members ({members.length})
+              </Text>
+            </View>
+
+            <View
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#164B49",
+                backgroundColor: "#102A2A",
+                overflow: "hidden",
+              }}
+            >
+              {members.map((member, index) => (
+                <View
+                  key={member.id}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 16,
+                    paddingVertical: 12,
+                    borderBottomWidth: index < members.length - 1 ? 1 : 0,
+                    borderBottomColor: "#164B49",
+                  }}
+                >
+                  {/* Avatar */}
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      backgroundColor: "#0A1A1A",
+                      borderWidth: 1,
+                      borderColor: "#164B49",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: 12,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: "#DCE4E4",
+                      }}
+                    >
+                      {member.user.name.charAt(0)}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "500",
+                          color: "#DCE4E4",
+                        }}
+                      >
+                        {member.user.name}
+                      </Text>
+                      {member.role === "owner" && (
+                        <Crown size={12} color="#E5A04D" />
+                      )}
+                    </View>
+                    <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
+                      {member.role}
+                    </Text>
+                  </View>
+                  {/* Owner actions on non-owner members */}
+                  {isOwner && member.role !== "owner" && (
+                    <View style={{ flexDirection: "row", gap: 8 }}>
+                      <Pressable
+                        onPress={() =>
+                          handleChangeRole(member.userId, member.role)
+                        }
+                        hitSlop={8}
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          backgroundColor: "#0A1A1A",
+                          borderWidth: 1,
+                          borderColor: "#164B49",
+                        }}
+                      >
+                        <Text style={{ fontSize: 11, color: "#8FA8A8" }}>
+                          {member.role === "editor" ? "→ Viewer" : "→ Editor"}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() =>
+                          handleRemoveMember(member.userId, member.user.name)
+                        }
+                        hitSlop={8}
+                      >
+                        <UserMinus size={16} color="#ef4444" />
+                      </Pressable>
+                    </View>
+                  )}
+                  {/* Report/Block menu for other users (non-self) */}
+                  {member.userId !== session?.user.id && (
+                    <Pressable
+                      onPress={() =>
+                        handleMemberMenu(member.userId, member.user.name)
+                      }
+                      hitSlop={12}
+                      style={{ padding: 4, marginLeft: 8 }}
+                    >
+                      <MoreHorizontal size={18} color="#8FA8A8" />
+                    </Pressable>
+                  )}
+                </View>
+              ))}
+            </View>
+
+            {/* Tasks Section */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 24,
+                marginBottom: 12,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: "600",
+                  color: "#8FA8A8",
                 }}
               >
                 Tasks ({tasks.length})
               </Text>
+            </View>
+
+            <View
+              style={{
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#164B49",
+                backgroundColor: "#102A2A",
+                overflow: "hidden",
+              }}
+            >
               {tasks.length > 0 ? (
-                tasks.map((task) => (
+                tasks.map((task, index) => (
                   <View
                     key={task.id}
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      paddingVertical: 10,
-                      borderBottomWidth: 1,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      borderBottomWidth: index < tasks.length - 1 ? 1 : 0,
                       borderBottomColor: "#164B49",
                     }}
                   >
@@ -599,8 +627,8 @@ export default function ListDetailScreen() {
                 </Text>
               )}
             </View>
-          }
-        />
+          </View>
+        </ScrollView>
         <ReportSheet ref={reportSheetRef} />
       </SafeAreaView>
     </GradientBackground>
