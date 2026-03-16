@@ -568,36 +568,44 @@ export function TaskCard({
         {subtaskTotal > 0 && onSubtaskToggle && (
           <View style={styles.subtasksContainer}>
             {subtasks.slice(0, maxVisibleSubtasks).map((subtask) => (
-              <Pressable
+              <Animated.View
                 key={subtask.id}
-                onPress={() => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  onSubtaskToggle(subtask.id, !subtask.completed);
-                }}
-                style={styles.subtaskRowCard}
+                layout={LinearTransition.springify()
+                  .damping(18)
+                  .stiffness(120)}
               >
-                <View
-                  style={[
-                    styles.subtaskCheckbox,
-                    subtask.completed
-                      ? styles.subtaskCheckboxChecked
-                      : styles.subtaskCheckboxUnchecked,
-                  ]}
+                <Pressable
+                  onPress={() => {
+                    void Haptics.impactAsync(
+                      Haptics.ImpactFeedbackStyle.Light,
+                    );
+                    onSubtaskToggle(subtask.id, !subtask.completed);
+                  }}
+                  style={styles.subtaskRowCard}
                 >
-                  {subtask.completed && (
-                    <RNText style={styles.subtaskCheckmark}>✓</RNText>
-                  )}
-                </View>
-                <RNText
-                  style={[
-                    styles.subtaskTitle,
-                    subtask.completed && styles.subtaskTitleCompleted,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {subtask.title}
-                </RNText>
-              </Pressable>
+                  <View
+                    style={[
+                      styles.subtaskCheckbox,
+                      subtask.completed
+                        ? styles.subtaskCheckboxChecked
+                        : styles.subtaskCheckboxUnchecked,
+                    ]}
+                  >
+                    {subtask.completed && (
+                      <RNText style={styles.subtaskCheckmark}>✓</RNText>
+                    )}
+                  </View>
+                  <RNText
+                    style={[
+                      styles.subtaskTitle,
+                      subtask.completed && styles.subtaskTitleCompleted,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {subtask.title}
+                  </RNText>
+                </Pressable>
+              </Animated.View>
             ))}
             {subtaskTotal > maxVisibleSubtasks && (
               <RNText style={styles.moreSubtasks}>
