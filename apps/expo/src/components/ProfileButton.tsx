@@ -13,7 +13,7 @@ interface ProfileButtonProps {
   onPress: () => void;
 }
 
-const AVATAR_SIZE = 40;
+const AVATAR_SIZE = 36;
 
 const styles = StyleSheet.create({
   container: {
