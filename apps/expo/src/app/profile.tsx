@@ -20,8 +20,10 @@ import {
   ChevronRight,
   ExternalLink,
   Info,
+  Mail,
   Pencil,
   Shield,
+  ShieldBan,
   Trash2,
 } from "lucide-react-native";
 
@@ -318,6 +320,8 @@ export default function ProfileScreen() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: "#164B49",
               }}
             >
               <Text style={{ fontSize: 16, color: "#DCE4E4" }}>
@@ -325,7 +329,67 @@ export default function ProfileScreen() {
               </Text>
               <ExternalLink size={16} color="#8FA8A8" />
             </Pressable>
+
+            <Pressable
+              onPress={() => void Linking.openURL("mailto:support@calayo.net")}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: 16,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <Mail size={16} color="#8FA8A8" />
+                <Text style={{ fontSize: 16, color: "#DCE4E4" }}>
+                  Contact Support
+                </Text>
+              </View>
+              <ExternalLink size={16} color="#8FA8A8" />
+            </Pressable>
           </View>
+
+          {/* Moderation */}
+          <SectionHeader
+            icon={<ShieldBan size={20} color="#50C878" />}
+            title="Moderation"
+          />
+          <Pressable
+            onPress={() => router.push("/blocked-users" as never)}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: "#164B49",
+              backgroundColor: "#102A2A",
+              padding: 16,
+            }}
+          >
+            <ShieldBan size={20} color="#8FA8A8" />
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: "500",
+                  color: "#DCE4E4",
+                }}
+              >
+                Blocked Users
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: "#8FA8A8",
+                  marginTop: 2,
+                }}
+              >
+                Manage users you've blocked
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#8FA8A8" />
+          </Pressable>
 
           {/* Danger Zone */}
           <SectionHeader
