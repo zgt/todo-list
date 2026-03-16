@@ -183,10 +183,7 @@ export const taskRouter = {
           : eq(Task.userId, userId),
         // Exclude tasks from blocked users in shared lists
         blockedUserIds.length > 0
-          ? or(
-              isNull(Task.listId),
-              notInArray(Task.userId, blockedUserIds),
-            )
+          ? or(isNull(Task.listId), notInArray(Task.userId, blockedUserIds))
           : undefined,
       ),
       orderBy: [

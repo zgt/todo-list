@@ -256,41 +256,45 @@ function SidebarListsSection() {
         </SidebarMenuItem>
 
         {/* User lists (only those with showInFilter enabled) */}
-        {lists?.filter((list) => list.showInFilter).map((list) => (
-          <SidebarMenuItem key={list.id} className="group/list">
-            <SidebarMenuButton
-              isActive={selectedListId === list.id}
-              onClick={() => setSelectedListId(list.id)}
-              className={cn(
-                "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-                selectedListId === list.id
-                  ? "bg-primary/20 text-primary border-primary/20 border"
-                  : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
-              )}
-            >
-              <div className="flex w-full items-center gap-2.5">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: list.color ?? "#8FA8A8" }}
-                />
-                <span className="flex-1 truncate font-medium">{list.name}</span>
-                <div className="flex items-center gap-1.5">
-                  {list.memberCount > 1 && (
-                    <Users className="h-3 w-3 text-[#8FA8A8]" />
-                  )}
-                  <Link
-                    href={`/lists/${list.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="rounded p-0.5 text-[#8FA8A8] opacity-0 transition-all group-hover/list:opacity-100 hover:bg-white/10 hover:text-[#DCE4E4]"
-                    aria-label={`${list.name} settings`}
-                  >
-                    <Settings className="h-3 w-3" />
-                  </Link>
+        {lists
+          ?.filter((list) => list.showInFilter)
+          .map((list) => (
+            <SidebarMenuItem key={list.id} className="group/list">
+              <SidebarMenuButton
+                isActive={selectedListId === list.id}
+                onClick={() => setSelectedListId(list.id)}
+                className={cn(
+                  "h-9 rounded-lg px-3 text-sm transition-all duration-200",
+                  selectedListId === list.id
+                    ? "bg-primary/20 text-primary border-primary/20 border"
+                    : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+                )}
+              >
+                <div className="flex w-full items-center gap-2.5">
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: list.color ?? "#8FA8A8" }}
+                  />
+                  <span className="flex-1 truncate font-medium">
+                    {list.name}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {list.memberCount > 1 && (
+                      <Users className="h-3 w-3 text-[#8FA8A8]" />
+                    )}
+                    <Link
+                      href={`/lists/${list.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded p-0.5 text-[#8FA8A8] opacity-0 transition-all group-hover/list:opacity-100 hover:bg-white/10 hover:text-[#DCE4E4]"
+                      aria-label={`${list.name} settings`}
+                    >
+                      <Settings className="h-3 w-3" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ))}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
       </SidebarMenu>
     </div>
   );

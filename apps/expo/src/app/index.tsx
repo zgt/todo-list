@@ -357,7 +357,13 @@ export default function Index() {
     }
 
     return result;
-  }, [tasks, effectiveCategoryIds, selectedPriorities, selectedListFilter, deletedTasks]);
+  }, [
+    tasks,
+    effectiveCategoryIds,
+    selectedPriorities,
+    selectedListFilter,
+    deletedTasks,
+  ]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);

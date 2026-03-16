@@ -271,10 +271,7 @@ export const TaskListMember = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: t.varchar({ length: 20 }).notNull().default("editor"),
-    showInFilter: t
-      .boolean("show_in_filter")
-      .notNull()
-      .default(true),
+    showInFilter: t.boolean("show_in_filter").notNull().default(true),
     invitedBy: t.text("invited_by").references(() => user.id),
     joinedAt: t
       .timestamp("joined_at", { withTimezone: true, mode: "date" })

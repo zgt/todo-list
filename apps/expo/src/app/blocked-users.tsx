@@ -1,10 +1,4 @@
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
@@ -19,10 +13,9 @@ export default function BlockedUsersScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const {
-    data: blockedUsers,
-    isLoading,
-  } = useQuery(trpc.moderation.getBlockedUsers.queryOptions());
+  const { data: blockedUsers, isLoading } = useQuery(
+    trpc.moderation.getBlockedUsers.queryOptions(),
+  );
 
   const unblockMutation = useMutation(
     trpc.moderation.unblockUser.mutationOptions({
@@ -138,8 +131,7 @@ export default function BlockedUsersScreen() {
                     flexDirection: "row",
                     alignItems: "center",
                     padding: 16,
-                    borderBottomWidth:
-                      index < blockedUsers.length - 1 ? 1 : 0,
+                    borderBottomWidth: index < blockedUsers.length - 1 ? 1 : 0,
                     borderBottomColor: "#164B49",
                   }}
                 >

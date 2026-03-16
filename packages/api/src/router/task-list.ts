@@ -129,9 +129,7 @@ export const taskListRouter = {
       // Filter blocked users from members list
       const filteredMembers =
         blockedUserIds.length > 0
-          ? list.members.filter(
-              (m) => !blockedUserIds.includes(m.userId),
-            )
+          ? list.members.filter((m) => !blockedUserIds.includes(m.userId))
           : list.members;
 
       return {

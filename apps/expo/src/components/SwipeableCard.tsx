@@ -418,9 +418,7 @@ export function SwipeableCard({
     const subtaskCount =
       (task as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
     const expandedExtra =
-      isExpanded && isCompact && subtaskCount > 0
-        ? subtaskCount * 32 + 4
-        : 0;
+      isExpanded && isCompact && subtaskCount > 0 ? subtaskCount * 32 + 4 : 0;
     const targetHeight = isCompact ? 92 + expandedExtra : SCREEN_HEIGHT * 0.65;
 
     return {

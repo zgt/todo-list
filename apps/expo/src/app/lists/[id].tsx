@@ -5,6 +5,7 @@ import {
   Pressable,
   ScrollView,
   Share,
+  Switch,
   Text,
   View,
 } from "react-native";
@@ -12,21 +13,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Switch } from "react-native";
-
 import {
   ArrowLeft,
   Crown,
   Eye,
-  Flag,
   Link as LinkIcon,
   LogOut,
   MoreHorizontal,
-  ShieldBan,
   Trash2,
   UserMinus,
   Users,
 } from "lucide-react-native";
+
+import type { RouterOutputs } from "@acme/api";
 
 import type { ReportSheetRef } from "~/components/ReportSheet";
 import { GradientBackground } from "~/components/GradientBackground";
@@ -110,14 +109,13 @@ export default function ListDetailScreen() {
         );
 
         // Optimistic update on byId (update the member's showInFilter)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         queryClient.setQueryData(
           trpc.taskList.byId.queryKey({ id }),
-          (old: any) => {
+          (old: RouterOutputs["taskList"]["byId"] | undefined) => {
             if (!old) return old;
             return {
               ...old,
-              members: old.members.map((m: any) =>
+              members: old.members.map((m) =>
                 m.userId === session?.user.id
                   ? { ...m, showInFilter: input.showInFilter }
                   : m,
@@ -127,12 +125,11 @@ export default function ListDetailScreen() {
         );
 
         // Optimistic update on all lists
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         queryClient.setQueryData(
           trpc.taskList.all.queryKey(),
-          (old: any) => {
+          (old: RouterOutputs["taskList"]["all"] | undefined) => {
             if (!old) return old;
-            return old.map((l: any) =>
+            return old.map((l) =>
               l.id === id ? { ...l, showInFilter: input.showInFilter } : l,
             );
           },

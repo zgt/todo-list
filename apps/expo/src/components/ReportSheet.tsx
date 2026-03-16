@@ -46,18 +46,7 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_props, ref) => {
   const [details, setDetails] = useState("");
 
   const reportMutation = useMutation(
-    trpc.moderation.reportContent.mutationOptions({
-      onSuccess: () => {
-        bottomSheetRef.current?.dismiss();
-        Alert.alert(
-          "Report Submitted",
-          "Thank you for your report. We will review it shortly.",
-        );
-      },
-      onError: (error) => {
-        Alert.alert("Error", error.message || "Failed to submit report.");
-      },
-    }),
+    trpc.moderation.reportContent.mutationOptions(),
   );
 
   useImperativeHandle(ref, () => ({
@@ -75,14 +64,36 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_props, ref) => {
   const handleSubmit = useCallback(() => {
     if (!selectedReason) return;
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    reportMutation.mutate({
-      contentType,
-      contentId,
-      reportedUserId,
-      reason: selectedReason,
-      details: details.trim() || undefined,
-    });
-  }, [selectedReason, contentType, contentId, reportedUserId, details, reportMutation]);
+    reportMutation.mutate(
+      {
+        contentType,
+        contentId,
+        reportedUserId,
+        reason: selectedReason,
+        details: details.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          bottomSheetRef.current?.dismiss();
+          Alert.alert(
+            "Report Submitted",
+            "Thank you for your report. We will review it shortly.",
+          );
+        },
+        onError: (error) => {
+          Alert.alert("Error", error.message || "Failed to submit report.");
+        },
+      },
+    );
+  }, [
+    selectedReason,
+    contentType,
+    contentId,
+    reportedUserId,
+    details,
+    reportMutation,
+    bottomSheetRef,
+  ]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -245,8 +256,7 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_props, ref) => {
             borderRadius: 12,
             paddingVertical: 14,
             alignItems: "center",
-            opacity:
-              !selectedReason || reportMutation.isPending ? 0.5 : 1,
+            opacity: !selectedReason || reportMutation.isPending ? 0.5 : 1,
             marginBottom: 20,
           }}
         >

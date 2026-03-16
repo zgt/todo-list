@@ -339,7 +339,9 @@ export default function ProfileScreen() {
                 padding: 16,
               }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+              >
                 <Mail size={16} color="#8FA8A8" />
                 <Text style={{ fontSize: 16, color: "#DCE4E4" }}>
                   Contact Support
