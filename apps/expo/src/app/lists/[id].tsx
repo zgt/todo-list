@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,19 +9,25 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Crown,
+  Flag,
   Link as LinkIcon,
   LogOut,
+  MoreHorizontal,
+  ShieldBan,
   Trash2,
   UserMinus,
   Users,
 } from "lucide-react-native";
 
+import type { ReportSheetRef } from "~/components/ReportSheet";
 import { GradientBackground } from "~/components/GradientBackground";
+import { ReportSheet } from "~/components/ReportSheet";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { getBaseUrl } from "~/utils/base-url";
@@ -82,6 +89,22 @@ export default function ListDetailScreen() {
     trpc.taskList.createInvite.mutationOptions(),
   );
 
+  const reportSheetRef = useRef<ReportSheetRef>(null);
+
+  const blockUserMutation = useMutation(
+    trpc.moderation.blockUser.mutationOptions({
+      onSuccess: () => {
+        Alert.alert(
+          "User Blocked",
+          "Their content will be hidden from your view.",
+        );
+      },
+      onError: (error) => {
+        Alert.alert("Error", error.message || "Failed to block user.");
+      },
+    }),
+  );
+
   const handleDelete = () => {
     Alert.alert(
       "Delete List",
@@ -133,6 +156,41 @@ export default function ListDetailScreen() {
         style: "destructive",
         onPress: () => removeMemberMutation.mutate({ listId: id, userId }),
       },
+    ]);
+  };
+
+  const handleMemberMenu = (userId: string, userName: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert(userName, undefined, [
+      {
+        text: "Report User",
+        onPress: () =>
+          reportSheetRef.current?.present({
+            contentType: "USER",
+            contentId: userId,
+            reportedUserId: userId,
+          }),
+      },
+      {
+        text: "Block User",
+        style: "destructive",
+        onPress: () => {
+          Alert.alert(
+            "Block User",
+            `Block ${userName}? Their content will be hidden.`,
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Block",
+                style: "destructive",
+                onPress: () =>
+                  blockUserMutation.mutate({ blockedUserId: userId }),
+              },
+            ],
+          );
+        },
+      },
+      { text: "Cancel", style: "cancel" },
     ]);
   };
 
@@ -461,6 +519,18 @@ export default function ListDetailScreen() {
                   </Pressable>
                 </View>
               )}
+              {/* Report/Block menu for other users (non-self) */}
+              {member.userId !== session?.user.id && (
+                <Pressable
+                  onPress={() =>
+                    handleMemberMenu(member.userId, member.user.name)
+                  }
+                  hitSlop={12}
+                  style={{ padding: 4, marginLeft: 8 }}
+                >
+                  <MoreHorizontal size={18} color="#8FA8A8" />
+                </Pressable>
+              )}
             </View>
           )}
           ListFooterComponent={
@@ -531,6 +601,7 @@ export default function ListDetailScreen() {
             </View>
           }
         />
+        <ReportSheet ref={reportSheetRef} />
       </SafeAreaView>
     </GradientBackground>
   );
