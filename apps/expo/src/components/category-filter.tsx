@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { runOnJS } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetScrollView,
@@ -32,8 +33,6 @@ import ColorPicker, {
   Panel1,
   Preview,
 } from "reanimated-color-picker";
-
-import * as Haptics from "expo-haptics";
 
 import type { CategoryNode } from "./category-tree-item";
 import { trpc } from "~/utils/api";

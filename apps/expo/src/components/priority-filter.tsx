@@ -1,12 +1,12 @@
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import * as Haptics from "expo-haptics";
 import { Filter } from "lucide-react-native";
 
 import type { PriorityLevel } from "~/components/priority-config";

@@ -1,12 +1,12 @@
+import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useCallback, useMemo, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
-import * as Haptics from "expo-haptics";
 import { Check } from "lucide-react-native";
 
 interface TaskList {

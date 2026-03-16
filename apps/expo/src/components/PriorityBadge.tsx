@@ -18,10 +18,25 @@ export const PriorityBadge = memo(
     const Icon = config.Icon;
 
     const sizeStyles = {
-      xs: { paddingHorizontal: 6, paddingVertical: 1, borderWidth: 1, icon: 10 },
-      sm: { paddingHorizontal: 10, paddingVertical: 4, borderWidth: 2, icon: 14 },
-      md: { paddingHorizontal: 10, paddingVertical: 4, borderWidth: 2, icon: 16 },
-    }[size!];
+      xs: {
+        paddingHorizontal: 6,
+        paddingVertical: 1,
+        borderWidth: 1,
+        icon: 10,
+      },
+      sm: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderWidth: 2,
+        icon: 14,
+      },
+      md: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderWidth: 2,
+        icon: 16,
+      },
+    }[size];
 
     return (
       <View

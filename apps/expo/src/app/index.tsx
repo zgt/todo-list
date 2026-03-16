@@ -14,7 +14,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Info, Layers, List, RefreshCw } from "lucide-react-native";
+import {
+  CalendarDays,
+  Info,
+  Layers,
+  List,
+  RefreshCw,
+} from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
@@ -116,7 +122,10 @@ function ViewToggleButton({
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Animated.View className="border-border h-12 w-12 items-center justify-center rounded-full border-2" style={{ backgroundColor: 'rgba(15, 23, 20, 0.85)' }}>
+      <Animated.View
+        className="border-border h-12 w-12 items-center justify-center rounded-full border-2"
+        style={{ backgroundColor: "rgba(15, 23, 20, 0.85)" }}
+      >
         <Icon size={24} color="#DCE4E4" />
       </Animated.View>
     </Pressable>
@@ -144,17 +153,34 @@ export default function Index() {
     }, 500);
   }, []);
   // Swipe tutorial auto-show on first launch
-  const { shouldShow: shouldShowTutorial, isLoading: tutorialLoading, markSeen } = useSwipeTutorial();
+  const {
+    shouldShow: shouldShowTutorial,
+    isLoading: tutorialLoading,
+    markSeen,
+  } = useSwipeTutorial();
   const tutorialShownRef = useRef(false);
   useEffect(() => {
-    if (!tutorialLoading && shouldShowTutorial && session && !isPending && !tutorialShownRef.current) {
+    if (
+      !tutorialLoading &&
+      shouldShowTutorial &&
+      session &&
+      !isPending &&
+      !tutorialShownRef.current
+    ) {
       tutorialShownRef.current = true;
       void markSeen();
       // Delay to ensure layout is stable before presenting modal
       const timer = setTimeout(() => router.push("/swipe-tutorial"), 600);
       return () => clearTimeout(timer);
     }
-  }, [tutorialLoading, shouldShowTutorial, session, isPending, markSeen, router]);
+  }, [
+    tutorialLoading,
+    shouldShowTutorial,
+    session,
+    isPending,
+    markSeen,
+    router,
+  ]);
 
   const { effectiveCategoryIds } = useCategoryFilter();
   const [selectedPriorities, setSelectedPriorities] = useState<PriorityLevel[]>(
@@ -437,7 +463,9 @@ export default function Index() {
     trpc.task.delete.mutationOptions({
       onMutate: async (taskId) => {
         triggerRipple();
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Warning,
+        );
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
         const previousTasks = queryClient.getQueryData<
@@ -853,9 +881,7 @@ export default function Index() {
                 <Pressable
                   key={list.id}
                   onPress={() => {
-                    void Haptics.impactAsync(
-                      Haptics.ImpactFeedbackStyle.Light,
-                    );
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     setSelectedListFilter(list.id);
                   }}
                   style={{
@@ -939,7 +965,13 @@ export default function Index() {
       {/* Bottom button bar */}
       <SafeAreaView
         edges={["bottom"]}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 10 }}
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+        }}
       >
         <View className="flex-row items-center gap-4 px-4 pb-1">
           <View className="ml-2 flex-row gap-2">

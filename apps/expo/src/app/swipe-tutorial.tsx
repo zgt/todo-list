@@ -431,10 +431,10 @@ export default function SwipeTutorialScreen() {
 
   // Disable scroll imperatively (no re-render) so card gestures get priority
   const handleCardTouchStart = useCallback(() => {
-    (scrollRef.current as any)?.setNativeProps?.({ scrollEnabled: false });
+    scrollRef.current?.setNativeProps({ scrollEnabled: false });
   }, []);
   const handleCardTouchEnd = useCallback(() => {
-    (scrollRef.current as any)?.setNativeProps?.({ scrollEnabled: true });
+    scrollRef.current?.setNativeProps({ scrollEnabled: true });
   }, []);
 
   const dismiss = () => {

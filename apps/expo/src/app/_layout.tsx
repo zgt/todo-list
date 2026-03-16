@@ -19,7 +19,6 @@ import "../styles.css";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 const SENTRY_DSN: string =
   process.env.EXPO_PUBLIC_SENTRY_DSN ??
   (Constants.expoConfig?.extra?.sentryDsn as string | undefined) ??

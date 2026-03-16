@@ -4,8 +4,8 @@
 import type { ScrollView } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, RefreshControl } from "react-native";
-import * as Haptics from "expo-haptics";
 import Animated, { useSharedValue } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
@@ -102,7 +102,7 @@ export function SwipeableCardStack({
         if (priorityB !== priorityA) return priorityB - priorityA;
 
         // Tiebreaker: newest first (matches parent sort in index.tsx)
-        return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
+        return b.createdAt.getTime() - a.createdAt.getTime();
       }),
     [],
   );
@@ -279,7 +279,7 @@ export function SwipeableCardStack({
         isCompact && onRefresh ? (
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={async () => {
+            onRefresh={() => {
               setRefreshing(true);
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               onRefresh();

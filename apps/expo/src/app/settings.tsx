@@ -369,7 +369,6 @@ export default function SettingsScreen() {
             )}
           </View>
 
-
           {/* App Version */}
           <Text
             style={{

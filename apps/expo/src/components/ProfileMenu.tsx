@@ -14,6 +14,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,11 +28,9 @@ import {
   Users,
 } from "lucide-react-native";
 
-import * as Haptics from "expo-haptics";
-
 import type { User } from "~/utils/auth";
 import { UserAvatar } from "~/components/UserAvatar";
-import { queryClient, trpc } from "~/utils/api";
+import { trpc } from "~/utils/api";
 import { authClient, clearAuthStorage } from "~/utils/auth";
 
 interface ProfileMenuProps {
@@ -253,7 +252,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
               </RNText>
             </Pressable>
 
-<Pressable
+            <Pressable
               onPress={() => {
                 void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 onClose();
@@ -284,9 +283,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             <View className="my-2 h-px bg-[#164B49]" />
 
             <Pressable
-              onPress={() =>
-                void Linking.openURL("https://calayo.net/privacy")
-              }
+              onPress={() => void Linking.openURL("https://calayo.net/privacy")}
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Privacy Policy"
               accessibilityRole="link"

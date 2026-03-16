@@ -9,8 +9,7 @@ import Animated, {
 import type { LocalTask } from "~/db/client";
 import { SwipeableCard } from "./SwipeableCard";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } =
-  Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const BASE_TASK_FIELDS = {
   userId: "demo-user",
@@ -41,9 +40,30 @@ const makeListTasks = () => [
     description: "Research destinations and book accommodation",
     priority: "medium" as const,
     subtasks: [
-      { id: "sub-1", title: "Check flight prices", completed: true, sortOrder: 0, createdAt: new Date(), updatedAt: new Date() },
-      { id: "sub-2", title: "Book hotel", completed: false, sortOrder: 1, createdAt: new Date(), updatedAt: new Date() },
-      { id: "sub-3", title: "Pack bags", completed: false, sortOrder: 2, createdAt: new Date(), updatedAt: new Date() },
+      {
+        id: "sub-1",
+        title: "Check flight prices",
+        completed: true,
+        sortOrder: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "sub-2",
+        title: "Book hotel",
+        completed: false,
+        sortOrder: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: "sub-3",
+        title: "Pack bags",
+        completed: false,
+        sortOrder: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ],
   } as unknown as LocalTask,
   {
@@ -92,6 +112,7 @@ const makeStackTasks = (): LocalTask[] => [
   } as LocalTask,
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
 // ── List Demo Stack (3 interactive cards) ───────────────────────────
@@ -129,7 +150,12 @@ export function DemoListStack() {
         prev.map((t) => {
           if (t.id !== taskId) return t;
           const withSubs = t as unknown as {
-            subtasks: { id: string; title: string; completed: boolean; sortOrder: number }[];
+            subtasks: {
+              id: string;
+              title: string;
+              completed: boolean;
+              sortOrder: number;
+            }[];
           };
           const updatedSubtasks = withSubs.subtasks.map((s) =>
             s.id === subtaskId ? { ...s, completed } : s,
@@ -139,7 +165,9 @@ export function DemoListStack() {
             ...t,
             subtasks: updatedSubtasks,
             completed: allComplete ? true : t.completed,
-            completedAt: allComplete ? (t.completedAt ?? new Date()) : t.completedAt,
+            completedAt: allComplete
+              ? (t.completedAt ?? new Date())
+              : t.completedAt,
           } as unknown as LocalTask;
         }),
       );
@@ -177,6 +205,7 @@ export function DemoListStack() {
 
   return (
     <Animated.View style={containerStyle}>
+      {/* eslint-disable-next-line react-hooks/refs */}
       {tasks.map((task, idx) => (
         <SwipeableCard
           key={task.id}
@@ -195,7 +224,11 @@ export function DemoListStack() {
             setTasks((prev) =>
               prev.map((t) =>
                 t.id === task.id
-                  ? { ...t, completed: !t.completed, completedAt: t.completed ? null : new Date() }
+                  ? {
+                      ...t,
+                      completed: !t.completed,
+                      completedAt: t.completed ? null : new Date(),
+                    }
                   : t,
               ),
             );
@@ -330,7 +363,11 @@ export function DemoCardStack() {
                 setTasks((prev) =>
                   prev.map((t) =>
                     t.id === task.id
-                      ? { ...t, completed: !t.completed, completedAt: t.completed ? null : new Date() }
+                      ? {
+                          ...t,
+                          completed: !t.completed,
+                          completedAt: t.completed ? null : new Date(),
+                        }
                       : t,
                   ),
                 );

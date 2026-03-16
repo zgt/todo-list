@@ -98,8 +98,8 @@ export function AccountDeletion() {
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-[#DCE4E4]/70">
                   This will permanently delete your account and all associated
-                  data including tasks, lists, and preferences. This action
-                  is irreversible.
+                  data including tasks, lists, and preferences. This action is
+                  irreversible.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 

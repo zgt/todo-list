@@ -37,7 +37,9 @@ export const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error) => {
         // Don't retry UNAUTHORIZED — the session is dead
-        if ((error as { data?: { code?: string } })?.data?.code === "UNAUTHORIZED") {
+        if (
+          (error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED"
+        ) {
           return false;
         }
         return failureCount < 3;
