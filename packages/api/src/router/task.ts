@@ -2,8 +2,21 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, asc, desc, eq, gt, inArray, isNull, lt, or, sql } from "@acme/db";
 import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  lt,
+  notInArray,
+  or,
+  sql,
+} from "@acme/db";
+import {
+  BlockedUser,
   CreateTaskWithSubtasksSchema,
   Subtask,
   Task,
@@ -148,6 +161,13 @@ export const taskRouter = {
     const memberListIds = await getMemberListIds(ctx.db, userId);
     const now = new Date();
 
+    // Fetch blocked user IDs to filter out their shared list content
+    const blockedRows = await ctx.db.query.BlockedUser.findMany({
+      where: eq(BlockedUser.userId, userId),
+      columns: { blockedUserId: true },
+    });
+    const blockedUserIds = blockedRows.map((r) => r.blockedUserId);
+
     const tasks = await ctx.db.query.Task.findMany({
       where: and(
         isNull(Task.deletedAt),
@@ -160,6 +180,13 @@ export const taskRouter = {
               inArray(Task.listId, memberListIds),
             )
           : eq(Task.userId, userId),
+        // Exclude tasks from blocked users in shared lists
+        blockedUserIds.length > 0
+          ? or(
+              isNull(Task.listId),
+              notInArray(Task.userId, blockedUserIds),
+            )
+          : undefined,
       ),
       orderBy: [
         asc(Task.completed),

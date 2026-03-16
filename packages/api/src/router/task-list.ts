@@ -2,8 +2,9 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, eq, inArray, isNull, or, sql } from "@acme/db";
+import { and, eq, inArray, isNull, notInArray, or, sql } from "@acme/db";
 import {
+  BlockedUser,
   CreateTaskListSchema,
   Task,
   TaskList,
@@ -84,7 +85,15 @@ export const taskListRouter = {
   byId: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
-      await assertListAccess(ctx.db, ctx.session.user.id, input.id, "viewer");
+      const userId = ctx.session.user.id;
+      await assertListAccess(ctx.db, userId, input.id, "viewer");
+
+      // Fetch blocked user IDs to filter their content
+      const blockedRows = await ctx.db.query.BlockedUser.findMany({
+        where: eq(BlockedUser.userId, userId),
+        columns: { blockedUserId: true },
+      });
+      const blockedUserIds = blockedRows.map((r) => r.blockedUserId);
 
       const list = await ctx.db.query.TaskList.findFirst({
         where: and(eq(TaskList.id, input.id), isNull(TaskList.deletedAt)),
@@ -97,15 +106,29 @@ export const taskListRouter = {
             },
           },
           tasks: {
-            where: isNull(Task.deletedAt),
+            where: and(
+              isNull(Task.deletedAt),
+              blockedUserIds.length > 0
+                ? notInArray(Task.userId, blockedUserIds)
+                : undefined,
+            ),
           },
         },
       });
 
       if (!list) return null;
 
+      // Filter blocked users from members list
+      const filteredMembers =
+        blockedUserIds.length > 0
+          ? list.members.filter(
+              (m) => !blockedUserIds.includes(m.userId),
+            )
+          : list.members;
+
       return {
         ...list,
+        members: filteredMembers,
         createdAt: new Date(list.createdAt),
         updatedAt: list.updatedAt ? new Date(list.updatedAt) : null,
         deletedAt: list.deletedAt ? new Date(list.deletedAt) : null,
