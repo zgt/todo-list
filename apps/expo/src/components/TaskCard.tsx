@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   Dimensions,
   LayoutAnimation,
@@ -56,6 +56,7 @@ interface TaskCardProps {
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  onTaskPress?: () => void;
 }
 
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
@@ -127,6 +128,7 @@ export function TaskCard({
   onSubtaskToggle,
   isExpanded,
   onToggleExpand,
+  onTaskPress,
 }: TaskCardProps) {
   const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
   const reminderSentAt =
@@ -145,13 +147,45 @@ export function TaskCard({
   const subtaskDone = subtasks.filter((s) => s.completed).length;
   const progress = useSharedValue(isCompact ? 1 : 0);
 
-  const handleCardPress = () => {
-    if (!isCompact) return;
+  // Double-tap detection for compact mode (Pressable intercepts before gesture layer)
+  const lastTapRef = useRef(0);
+  const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Single tap: toggle expand if the task has expandable content
-    if (subtaskTotal > 0 || task.description) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      onToggleExpand();
+  const handleCardPress = () => {
+    if (isCompact) {
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapRef.current;
+
+      if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+        // Double tap → open edit form
+        if (singleTapTimeoutRef.current) {
+          clearTimeout(singleTapTimeoutRef.current);
+          singleTapTimeoutRef.current = null;
+        }
+        if (onTaskPress) {
+          onTaskPress();
+        }
+      } else {
+        // Single tap — wait to confirm it's not a double tap
+        if (singleTapTimeoutRef.current) {
+          clearTimeout(singleTapTimeoutRef.current);
+        }
+        singleTapTimeoutRef.current = setTimeout(() => {
+          if (subtaskTotal > 0 || task.description) {
+            LayoutAnimation.configureNext(
+              LayoutAnimation.Presets.easeInEaseOut,
+            );
+            onToggleExpand();
+          }
+        }, 250);
+      }
+
+      lastTapRef.current = now;
+    } else {
+      // Card view: single tap opens edit if no expandable content
+      if (subtaskTotal === 0 && !task.description && onTaskPress) {
+        onTaskPress();
+      }
     }
   };
 
@@ -412,7 +446,7 @@ export function TaskCard({
 
   // Card layout (column)
   const renderCardLayout = () => (
-    <View className="h-full flex-col justify-between p-6">
+    <Pressable onPress={handleCardPress} className="h-full flex-col justify-between p-6">
       {/* Top Row: Category and Due Date vs Checkbox */}
       <View className="w-full flex-row items-start justify-between">
         <View className="flex-row items-center gap-2">
@@ -580,7 +614,7 @@ export function TaskCard({
 
       {/* Bottom spacer */}
       <View className="items-center" />
-    </View>
+    </Pressable>
   );
 
   return (

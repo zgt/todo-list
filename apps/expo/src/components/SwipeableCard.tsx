@@ -459,6 +459,7 @@ export function SwipeableCard({
           onSubtaskToggle={onSubtaskToggle}
           isExpanded={isExpanded}
           onToggleExpand={onToggleExpand}
+          onTaskPress={onTaskPress}
         />
         <SwipeOverlay
           direction={direction}
