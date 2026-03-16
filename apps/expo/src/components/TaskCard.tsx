@@ -571,14 +571,12 @@ export function TaskCard({
               <Animated.View
                 key={subtask.id}
                 layout={LinearTransition.springify()
-                  .damping(18)
-                  .stiffness(120)}
+                  .damping(150)
+                  .stiffness(2000)}
               >
                 <Pressable
                   onPress={() => {
-                    void Haptics.impactAsync(
-                      Haptics.ImpactFeedbackStyle.Light,
-                    );
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     onSubtaskToggle(subtask.id, !subtask.completed);
                   }}
                   style={styles.subtaskRowCard}
