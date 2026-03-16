@@ -10,7 +10,10 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  FadeIn,
+  FadeOut,
   interpolate,
+  LinearTransition,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -138,7 +141,12 @@ export function TaskCard({
     reminderAt && !task.completed
       ? getReminderDisplay(reminderAt, reminderSentAt)
       : null;
-  const subtasks = (task as unknown as TaskWithSubtasks).subtasks ?? [];
+  const rawSubtasks = (task as unknown as TaskWithSubtasks).subtasks ?? [];
+  // Sort: incomplete first (preserve sortOrder), completed sink to bottom
+  const subtasks = [...rawSubtasks].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    return a.sortOrder - b.sortOrder;
+  });
   const subtaskTotal = subtasks.length;
   const subtaskDone = subtasks.filter((s) => s.completed).length;
   const progress = useSharedValue(isCompact ? 1 : 0);
@@ -389,7 +397,10 @@ export function TaskCard({
           {subtaskTotal > 0 && onSubtaskToggle && (
             <View style={task.description ? { marginTop: 8 } : undefined}>
               {subtasks.map((subtask, index) => (
-                <View key={subtask.id}>
+                <Animated.View
+                  key={subtask.id}
+                  layout={LinearTransition.springify().damping(18).stiffness(120)}
+                >
                   {index > 0 && <View style={styles.subtaskSeparator} />}
                   <Pressable
                     onPress={() => {
@@ -422,7 +433,7 @@ export function TaskCard({
                       {subtask.title}
                     </RNText>
                   </Pressable>
-                </View>
+                </Animated.View>
               ))}
             </View>
           )}
