@@ -565,6 +565,35 @@ export const taskRouter = {
       return { success: true };
     }),
 
+  // Bulk soft delete tasks
+  deleteMany: protectedProcedure
+    .input(z.array(z.uuid()).min(1).max(100))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+      const existingTasks = await ctx.db.query.Task.findMany({
+        where: and(inArray(Task.id, input), isNull(Task.deletedAt)),
+        columns: { id: true, userId: true, listId: true },
+      });
+      for (const task of existingTasks) {
+        if (task.listId) {
+          await assertListAccess(ctx.db, userId, task.listId, "editor");
+        } else if (task.userId !== userId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Not authorized",
+          });
+        }
+      }
+      const validIds = existingTasks.map((t) => t.id);
+      if (validIds.length === 0) return { deletedCount: 0 };
+      const newDate = new Date();
+      await ctx.db
+        .update(Task)
+        .set({ deletedAt: newDate, lastSyncedAt: newDate })
+        .where(inArray(Task.id, validIds));
+      return { deletedCount: validIds.length };
+    }),
+
   // Snooze a task until a specific date
   snooze: protectedProcedure
     .input(

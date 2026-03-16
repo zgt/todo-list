@@ -29,8 +29,6 @@ const COMPLETION_RESORT_DELAY = 500;
 interface SwipeableCardStackProps {
   tasks: LocalTask[];
   onToggle: (id: string, completed: boolean) => void;
-  onComplete: (id: string) => void;
-  onDelete: (id: string) => void;
   isCompact: boolean;
   onUpdate: (
     id: string,
@@ -45,22 +43,23 @@ interface SwipeableCardStackProps {
   onTaskPress?: (id: string) => void;
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
   onRefresh?: () => void;
+  deletePendingIds: Set<string>;
+  onToggleDeletePending: (id: string) => void;
 }
 
 export function SwipeableCardStack({
   tasks,
   onToggle,
-  onComplete,
-  onDelete,
   onUpdate,
   isCompact,
   onTaskPress,
   onSubtaskToggle,
   onRefresh,
+  deletePendingIds,
+  onToggleDeletePending,
 }: SwipeableCardStackProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const swipeProgress = useSharedValue(0); // Track right swipe progress for previous card animation
   const skipAnimationIds = useRef<Set<string>>(new Set());
@@ -89,22 +88,18 @@ export function SwipeableCardStack({
   }, [isCompact, currentIndex]);
 
   // Deferred sort: only re-sort on navigation, delayed completion, or task list changes (add/remove).
-  // Matches parent sort: completed → priority (high first) → createdAt (newest first).
   const sortTasks = useCallback(
     (t: LocalTask[]) =>
       [...t].sort((a, b) => {
-        // First sort by completion status
         const completedDiff = Number(a.completed) - Number(b.completed);
         if (completedDiff !== 0) return completedDiff;
 
-        // Then by priority (descending)
         const priorityA =
           PRIORITY_WEIGHTS[(a.priority ?? "none") as string] ?? 0;
         const priorityB =
           PRIORITY_WEIGHTS[(b.priority ?? "none") as string] ?? 0;
         if (priorityB !== priorityA) return priorityB - priorityA;
 
-        // Tiebreaker: newest first (matches parent sort in index.tsx)
         return b.createdAt.getTime() - a.createdAt.getTime();
       }),
     [],
@@ -112,11 +107,9 @@ export function SwipeableCardStack({
   const prevTaskIdsRef = useRef<string>("");
   const sortedTasksRef = useRef<LocalTask[]>(sortTasks(tasks));
 
-  // Check if a delayed resort was requested (after task completion)
   const shouldForceResort = pendingResortRef.current;
   if (shouldForceResort) pendingResortRef.current = false;
 
-  // Re-sort when tasks are added/removed (ids change) or after completion delay
   const currentTaskIds = tasks
     .map((t) => t.id)
     .sort()
@@ -125,7 +118,6 @@ export function SwipeableCardStack({
     prevTaskIdsRef.current = currentTaskIds;
     sortedTasksRef.current = sortTasks(tasks);
   } else {
-    // Update task data (e.g. completed status) without re-sorting
     const idOrder = new Map(sortedTasksRef.current.map((t, i) => [t.id, i]));
     sortedTasksRef.current = [...tasks].sort((a, b) => {
       const ai = idOrder.get(a.id) ?? tasks.indexOf(a);
@@ -152,7 +144,6 @@ export function SwipeableCardStack({
     : sortedTasks.slice(startIndex, currentIndex + 4);
   const baseIndexOffset = isCompact ? 0 : currentIndex - startIndex;
   const currentSkipIds = skipAnimationIds.current;
-  // Reset after capturing
   skipAnimationIds.current = new Set();
 
   // Calculate Y positions accounting for expansion in compact mode
@@ -166,7 +157,7 @@ export function SwipeableCardStack({
         (task as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
       const isExp = expandedTaskId === task.id && subtaskCount > 0;
       const cardHeight = isExp ? 92 + subtaskCount * 32 + 4 : 92;
-      y += cardHeight + 4; // card height + gap
+      y += cardHeight + 4;
     }
     return offsets;
   }, [displayTasks, expandedTaskId, isCompact]);
@@ -181,7 +172,7 @@ export function SwipeableCardStack({
       (lastTask as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
     const lastIsExp = expandedTaskId === lastTask.id && lastSubtaskCount > 0;
     const lastCardHeight = lastIsExp ? 80 + lastSubtaskCount * 36 + 12 : 80;
-    return lastOffset + lastCardHeight + 200; // last card + padding
+    return lastOffset + lastCardHeight + 200;
   }, [yOffsets, displayTasks, expandedTaskId, isCompact]);
 
   if (sortedTasks.length === 0) {
@@ -194,19 +185,6 @@ export function SwipeableCardStack({
       pendingResortRef.current = true;
       setResortTrigger((n) => n + 1);
     }, COMPLETION_RESORT_DELAY);
-  };
-
-  const handleComplete = (taskId: string) => {
-    onComplete(taskId);
-    // After a brief delay, re-sort so the completed task animates to its new position.
-    // In card mode the next uncompleted task slides into the current index.
-    // In compact mode the completed task slides to the bottom of the list.
-    scheduleResort();
-  };
-
-  const handleDelete = (taskId: string) => {
-    onDelete(taskId);
-    setDeletePendingId(null);
   };
 
   const handleSave = (
@@ -227,17 +205,14 @@ export function SwipeableCardStack({
   };
 
   const resortWithTarget = (targetDirection: "next" | "prev") => {
-    // Cancel any pending delayed resort since we're resorting now via navigation
     if (resortTimerRef.current) clearTimeout(resortTimerRef.current);
 
     const prev = sortedTasksRef.current;
-    // The task we want to land on after navigation
     const targetIdx =
       targetDirection === "next" ? currentIndex + 1 : currentIndex - 1;
     const targetTaskId = prev[targetIdx]?.id;
     const next = sortTasks(tasks);
     sortedTasksRef.current = next;
-    // Track which tasks changed position
     const prevIndexMap = new Map(prev.map((t, i) => [t.id, i]));
     const changed = new Set<string>();
     for (let i = 0; i < next.length; i++) {
@@ -246,10 +221,8 @@ export function SwipeableCardStack({
         changed.add(nextTask.id);
       }
     }
-    // Don't skip animation for the card we're navigating to
     if (targetTaskId) changed.delete(targetTaskId);
     skipAnimationIds.current = changed;
-    // Find where the target task is in the new sorted order
     if (targetTaskId) {
       const newIdx = next.findIndex((t) => t.id === targetTaskId);
       if (newIdx !== -1) return newIdx;
@@ -261,8 +234,6 @@ export function SwipeableCardStack({
     if (currentIndex < sortedTasks.length - 1) {
       const newIndex = resortWithTarget("next");
       setCurrentIndex(newIndex);
-      // Force re-render even if newIndex === currentIndex (e.g. after completing
-      // top card, the next task slides into the same slot in sorted order)
       if (newIndex === currentIndex) {
         setResortTrigger((n) => n + 1);
       }
@@ -311,7 +282,7 @@ export function SwipeableCardStack({
       style={{
         flex: 1,
         width: "100%",
-        overflow: isCompact ? "scroll" : "visible",
+        overflow: "visible",
       }}
     >
       {displayTasks.map((task, mapIndex) => {
@@ -329,17 +300,14 @@ export function SwipeableCardStack({
             canGoNext={currentIndex < sortedTasks.length - 1}
             canGoPrevious={currentIndex > 0}
             swipeProgress={swipeProgress}
-            deletePending={deletePendingId === task.id}
+            deletePending={deletePendingIds.has(task.id)}
             isExpanded={expandedTaskId === task.id}
             yOffset={isCompact ? yOffsets[mapIndex] : undefined}
             onToggle={() => {
               onToggle(task.id, !task.completed);
               scheduleResort();
             }}
-            onComplete={() => handleComplete(task.id)}
-            onDelete={() => handleDelete(task.id)}
-            onDeletePending={() => setDeletePendingId(task.id)}
-            onCancelDelete={() => setDeletePendingId(null)}
+            onToggleDeletePending={() => onToggleDeletePending(task.id)}
             onSave={(
               updates: Partial<{
                 title: string;
@@ -360,9 +328,7 @@ export function SwipeableCardStack({
           return (
             <Animated.View
               key={task.id}
-              layout={LinearTransition.springify()
-                .damping(18)
-                .stiffness(120)}
+              layout={LinearTransition.springify().damping(18).stiffness(120)}
               style={{ width: "100%" }}
             >
               {card}

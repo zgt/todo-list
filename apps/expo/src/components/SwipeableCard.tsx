@@ -46,10 +46,7 @@ interface SwipeableCardProps {
   deletePending: boolean;
   yOffset?: number;
   onToggle: () => void;
-  onComplete: () => void;
-  onDelete: () => void;
-  onDeletePending: () => void;
-  onCancelDelete: () => void;
+  onToggleDeletePending: () => void;
   onSave: (
     updates: Partial<{
       title: string;
@@ -80,10 +77,7 @@ export function SwipeableCard({
   deletePending,
   yOffset,
   onToggle,
-  onComplete,
-  onDelete,
-  onDeletePending,
-  onCancelDelete,
+  onToggleDeletePending,
   onSave,
   skipStackAnimation,
   onNext,
@@ -126,15 +120,13 @@ export function SwipeableCard({
   }, [task.id, index, translateX, translateY, opacity, swipeProgress]);
 
   // Animate stacking properties when index changes
-  // Skip animation when index change is caused by sort reorder (after completion)
-  // useLayoutEffect to avoid 1-frame delay before animation starts
   useLayoutEffect(() => {
     let targetY: number;
     let targetScale: number;
     let targetOpacity: number;
 
     if (isCompact) {
-      targetY = yOffset ?? index * (92 + 4); // Use yOffset or fallback to Height + Gap
+      targetY = yOffset ?? index * (92 + 4);
       targetScale = 1;
       targetOpacity = 1;
     } else {
@@ -175,26 +167,21 @@ export function SwipeableCard({
     .onStart(() => {
       startX.value = translateX.value;
       startY.value = translateY.value;
-      // Reset opacity when gesture starts (in case card was faded out)
       if (opacity.value < 1) {
         opacity.value = withTiming(1, { duration: 200 });
       }
     })
     .onUpdate((event) => {
       if (index === -1 && !isCompact) {
-        // Previous card - don't handle gestures directly in stack mode
         return;
       }
 
       // Update swipe progress for right swipes (to animate previous card)
       if (event.translationX > 0 && canGoPrevious && !isCompact) {
-        // Map translation to progress: 0 at start, 1 at full swipe
         swipeProgress.value = Math.min(event.translationX / SCREEN_WIDTH, 1);
-        // Don't move the top card during right swipe, only the previous card slides in
         translateY.value = startY.value + event.translationY;
       } else {
         swipeProgress.value = 0;
-        // Normal gesture handling for other directions
         translateX.value = startX.value + event.translationX;
         translateY.value = startY.value + event.translationY;
       }
@@ -203,7 +190,6 @@ export function SwipeableCard({
         // Compact mode: Lock vertical movement
         translateY.value = 0;
 
-        // Determine horizontal direction only
         if (event.translationX < -SWIPE_THRESHOLD / 2) {
           direction.value = "left";
         } else if (event.translationX > SWIPE_THRESHOLD / 2) {
@@ -219,7 +205,6 @@ export function SwipeableCard({
       const absY = Math.abs(event.translationY);
 
       if (absY > absX) {
-        // Vertical swipe
         if (event.translationY < -SWIPE_THRESHOLD / 2) {
           direction.value = "up";
         } else if (event.translationY > SWIPE_THRESHOLD / 2) {
@@ -228,7 +213,6 @@ export function SwipeableCard({
           direction.value = null;
         }
       } else {
-        // Horizontal swipe
         if (event.translationX < -SWIPE_THRESHOLD / 2) {
           direction.value = "left";
         } else if (event.translationX > SWIPE_THRESHOLD / 2) {
@@ -257,38 +241,19 @@ export function SwipeableCard({
           absX > SWIPE_THRESHOLD ||
           (absX > 0 && velocityX > SWIPE_VELOCITY)
         ) {
-          if (event.translationX > 0) {
-            // Right swipe
+          if (event.translationX < 0) {
+            // Left swipe → cancel delete-pending if active, otherwise toggle complete
             if (deletePending) {
-              // Cancel delete mode
               runOnJS(hapticLight)();
-              runOnJS(onCancelDelete)();
-            } else if (task.completed) {
-              // Uncomplete the task
-              runOnJS(hapticLight)();
+              runOnJS(onToggleDeletePending)();
+            } else {
+              runOnJS(hapticSuccess)();
               runOnJS(onToggle)();
-            } else if (onTaskPress) {
-              // Open bottom sheet edit form (only for uncompleted tasks)
-              runOnJS(hapticLight)();
-              runOnJS(onTaskPress)();
             }
           } else {
-            // Left swipe — mirrors card view swipe-up behavior
-            if (task.completed) {
-              if (deletePending) {
-                // Third left swipe — actually delete
-                runOnJS(hapticWarning)();
-                runOnJS(onDelete)();
-              } else {
-                // Second left swipe — enter delete pending
-                runOnJS(hapticWarning)();
-                runOnJS(onDeletePending)();
-              }
-            } else {
-              // First left swipe — complete the task
-              runOnJS(hapticSuccess)();
-              runOnJS(onComplete)();
-            }
+            // Right swipe → toggle delete-pending
+            runOnJS(hapticWarning)();
+            runOnJS(onToggleDeletePending)();
           }
         }
 
@@ -299,29 +264,20 @@ export function SwipeableCard({
         return;
       }
 
-      // Check if swipe threshold or velocity threshold is met
+      // Card mode
       if (absY > absX) {
         // Vertical swipe
         if (
           event.translationY < -SWIPE_THRESHOLD ||
           (event.translationY < 0 && velocityY > SWIPE_VELOCITY)
         ) {
-          // Up swipe logic
-          if (task.completed) {
-            // If task is completed, handle delete logic
-            if (deletePending) {
-              // Second swipe - actually delete
-              runOnJS(hapticWarning)();
-              runOnJS(onDelete)();
-            } else {
-              // First swipe - enter delete pending mode
-              runOnJS(hapticWarning)();
-              runOnJS(onDeletePending)();
-            }
+          // Up swipe → cancel delete-pending if active, otherwise toggle complete
+          if (deletePending) {
+            runOnJS(hapticLight)();
+            runOnJS(onToggleDeletePending)();
           } else {
-            // Task not completed - complete it
             runOnJS(hapticSuccess)();
-            runOnJS(onComplete)();
+            runOnJS(onToggle)();
           }
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -329,20 +285,9 @@ export function SwipeableCard({
           event.translationY > SWIPE_THRESHOLD ||
           (event.translationY > 0 && velocityY > SWIPE_VELOCITY)
         ) {
-          // Down swipe
-          if (deletePending) {
-            // Cancel delete mode
-            runOnJS(hapticLight)();
-            runOnJS(onCancelDelete)();
-          } else if (task.completed) {
-            // Uncomplete the task
-            runOnJS(hapticLight)();
-            runOnJS(onToggle)();
-          } else if (onTaskPress) {
-            // Open bottom sheet edit form (only for uncompleted tasks)
-            runOnJS(hapticLight)();
-            runOnJS(onTaskPress)();
-          }
+          // Down swipe → toggle delete-pending
+          runOnJS(hapticWarning)();
+          runOnJS(onToggleDeletePending)();
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         } else {
@@ -352,7 +297,7 @@ export function SwipeableCard({
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
         }
       } else {
-        // Horizontal swipe - only available in non-compact mode (compact mode returns early above)
+        // Horizontal swipe — left/right card navigation (unchanged)
         if (
           event.translationX < -SWIPE_THRESHOLD ||
           (event.translationX < 0 && velocityX > SWIPE_VELOCITY)
@@ -371,7 +316,6 @@ export function SwipeableCard({
             translateY.value = withTiming(0, { duration: 300 });
             opacity.value = withTiming(0, { duration: 250 });
           } else {
-            // At end of list, bounce back
             swipeProgress.value = withSpring(0, {
               damping: 15,
               stiffness: 150,
@@ -383,17 +327,15 @@ export function SwipeableCard({
           event.translationX > SWIPE_THRESHOLD ||
           (event.translationX > 0 && velocityX > SWIPE_VELOCITY)
         ) {
-          // Right swipe - Pull previous card back from left
+          // Right swipe - Pull previous card back
           if (canGoPrevious) {
             runOnJS(hapticLight)();
-            // Animate swipe progress to complete
             swipeProgress.value = withTiming(1, { duration: 200 }, () => {
               runOnJS(onPrevious)();
             });
             translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           } else {
-            // At start of list, bounce back
             swipeProgress.value = withSpring(0, {
               damping: 15,
               stiffness: 150,
@@ -402,7 +344,6 @@ export function SwipeableCard({
             translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
           }
         } else {
-          // Reset position if threshold not met
           swipeProgress.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
           translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
@@ -413,12 +354,22 @@ export function SwipeableCard({
     });
 
   // In compact mode, only activate the pan gesture for horizontal swipes
-  // so vertical drags fall through to the ScrollView for scrolling
   if (isCompact) {
     panGesture.activeOffsetX([-15, 15]).failOffsetY([-15, 15]);
   }
 
-  const composedGesture = panGesture;
+  // Double-tap gesture → open edit form
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onStart(() => {
+      if (onTaskPress) {
+        runOnJS(hapticLight)();
+        runOnJS(onTaskPress)();
+      }
+    });
+
+  // Race: whichever gesture recognizes first wins
+  const composedGesture = Gesture.Race(panGesture, doubleTapGesture);
 
   const cardStyle = useAnimatedStyle(() => {
     if (index === -1 && !isCompact) {
@@ -468,7 +419,7 @@ export function SwipeableCard({
       (task as unknown as { subtasks?: unknown[] }).subtasks?.length ?? 0;
     const expandedExtra =
       isExpanded && isCompact && subtaskCount > 0
-        ? subtaskCount * 32 + 4 // 36px per subtask row + 12px padding
+        ? subtaskCount * 32 + 4
         : 0;
     const targetHeight = isCompact ? 92 + expandedExtra : SCREEN_HEIGHT * 0.65;
 
@@ -501,7 +452,6 @@ export function SwipeableCard({
           task={task}
           isCompact={isCompact}
           onToggle={onToggle}
-          onDelete={onDelete}
           deletePending={deletePending}
           onSave={onSave}
           priority={priority}
@@ -509,13 +459,12 @@ export function SwipeableCard({
           onSubtaskToggle={onSubtaskToggle}
           isExpanded={isExpanded}
           onToggleExpand={onToggleExpand}
-          onTaskPress={onTaskPress}
         />
         <SwipeOverlay
           direction={direction}
           translationX={translateX}
           translationY={translateY}
-          deletePending={deletePending}
+          isDeletePending={deletePending}
           isCompact={isCompact}
           taskCompleted={task.completed}
         />

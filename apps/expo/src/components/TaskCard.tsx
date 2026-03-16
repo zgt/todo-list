@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import {
   Dimensions,
   LayoutAnimation,
@@ -10,8 +10,6 @@ import {
   View,
 } from "react-native";
 import Animated, {
-  FadeIn,
-  FadeOut,
   interpolate,
   LinearTransition,
   useAnimatedStyle,
@@ -19,7 +17,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Bell, Check, Trash2 } from "lucide-react-native";
+import { Bell, Check } from "lucide-react-native";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
@@ -43,7 +41,6 @@ interface TaskCardProps {
   };
   isCompact: boolean;
   onToggle: () => void;
-  onDelete: () => void;
   deletePending: boolean;
   onSave: (
     updates: Partial<{
@@ -59,7 +56,6 @@ interface TaskCardProps {
   onSubtaskToggle?: (subtaskId: string, completed: boolean) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onTaskPress?: () => void;
 }
 
 const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
@@ -124,7 +120,6 @@ export function TaskCard({
   task,
   isCompact,
   onToggle,
-  onDelete,
   deletePending,
   onSave,
   priority,
@@ -132,7 +127,6 @@ export function TaskCard({
   onSubtaskToggle,
   isExpanded,
   onToggleExpand,
-  onTaskPress,
 }: TaskCardProps) {
   const reminderAt = (task as unknown as TaskWithReminder).reminderAt ?? null;
   const reminderSentAt =
@@ -151,44 +145,14 @@ export function TaskCard({
   const subtaskDone = subtasks.filter((s) => s.completed).length;
   const progress = useSharedValue(isCompact ? 1 : 0);
 
-  // Double-tap detection for compact mode
-  const lastTapRef = useRef(0);
-  const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const handleCardPress = () => {
     if (!isCompact) return;
 
-    const now = Date.now();
-    const timeSinceLastTap = now - lastTapRef.current;
-
-    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-      // Double tap → open edit form
-      if (singleTapTimeoutRef.current) {
-        clearTimeout(singleTapTimeoutRef.current);
-        singleTapTimeoutRef.current = null;
-      }
-      if (onTaskPress) {
-        onTaskPress();
-      }
-    } else {
-      // Single tap - wait to see if it's a double tap
-      if (singleTapTimeoutRef.current) {
-        clearTimeout(singleTapTimeoutRef.current);
-      }
-      singleTapTimeoutRef.current = setTimeout(() => {
-        if (isExpanded) {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          onToggleExpand();
-        } else if (subtaskTotal > 0 || task.description) {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          onToggleExpand();
-        } else if (onTaskPress) {
-          onTaskPress();
-        }
-      }, 250);
+    // Single tap: toggle expand if the task has expandable content
+    if (subtaskTotal > 0 || task.description) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      onToggleExpand();
     }
-
-    lastTapRef.current = now;
   };
 
   useEffect(() => {
@@ -614,25 +578,8 @@ export function TaskCard({
         )}
       </View>
 
-      {/* Bottom: Delete Prompt */}
-      <View className="items-center">
-        {deletePending && (
-          <Pressable
-            onPress={() => {
-              void Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Warning,
-              );
-              onDelete();
-            }}
-            className="flex-row items-center gap-2 rounded-full bg-red-500/20 px-4 py-2 active:opacity-80"
-          >
-            <Trash2 size={16} color="#ef4444" />
-            <RNText className="font-bold text-red-500">
-              Swipe up again to delete
-            </RNText>
-          </Pressable>
-        )}
-      </View>
+      {/* Bottom spacer */}
+      <View className="items-center" />
     </View>
   );
 

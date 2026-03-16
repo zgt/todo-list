@@ -20,6 +20,7 @@ import {
   Layers,
   List,
   RefreshCw,
+  Trash2,
 } from "lucide-react-native";
 
 import type { AppRouter, RouterOutputs } from "@acme/api";
@@ -192,6 +193,9 @@ export default function Index() {
   );
 
   const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
+  const [deletePendingIds, setDeletePendingIds] = useState<Set<string>>(
+    new Set(),
+  );
   const snoozeSheetRef = useRef<SnoozeSheetRef>(null);
 
   const queryClient = useQueryClient();
@@ -500,10 +504,67 @@ export default function Index() {
     }),
   );
 
-  const handleDelete = async (id: string) => {
-    await deleteMutation.mutateAsync(id);
-    void cancelTaskReminder(id);
+  // tRPC mutation for bulk deleting tasks with optimistic update
+  const deleteManyMutation = useMutation(
+    trpc.task.deleteMany.mutationOptions({
+      onMutate: async (taskIds) => {
+        triggerRipple();
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Warning,
+        );
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+
+        const previousTasks = queryClient.getQueryData<
+          RouterOutputs["task"]["all"]
+        >(trpc.task.all.queryKey());
+
+        if (previousTasks) {
+          const idSet = new Set(taskIds);
+          queryClient.setQueryData<RouterOutputs["task"]["all"]>(
+            trpc.task.all.queryKey(),
+            previousTasks.filter((task) => !idSet.has(task.id)),
+          );
+        }
+
+        return { previousTasks };
+      },
+      onError: (error: TRPCClientErrorLike<AppRouter>, _taskIds, context) => {
+        if (context?.previousTasks) {
+          queryClient.setQueryData(
+            trpc.task.all.queryKey(),
+            context.previousTasks,
+          );
+        }
+        console.error("Failed to delete tasks:", error);
+        Alert.alert(
+          "Failed to delete tasks",
+          "Your tasks couldn't be deleted. Please try again.",
+        );
+      },
+      onSettled: async () => {
+        await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+      },
+    }),
+  );
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(deletePendingIds);
+    await deleteManyMutation.mutateAsync(ids);
+    for (const id of ids) void cancelTaskReminder(id);
+    setDeletePendingIds(new Set());
   };
+
+  const handleToggleDeletePending = useCallback((id: string) => {
+    setDeletePendingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   // tRPC mutation for snoozing a task
   const snoozeMutation = useMutation(
@@ -939,11 +1000,11 @@ export default function Index() {
               isCompact={viewMode === "stack"}
               tasks={filteredTasks}
               onToggle={handleToggle}
-              onComplete={(id) => handleToggle(id, true)}
-              onDelete={handleDelete}
               onUpdate={handleUpdate}
               onTaskPress={handleTaskPress}
               onSubtaskToggle={handleSubtaskToggle}
+              deletePendingIds={deletePendingIds}
+              onToggleDeletePending={handleToggleDeletePending}
               onRefresh={() => {
                 void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 triggerRipple();
@@ -991,31 +1052,70 @@ export default function Index() {
               );
             }}
           />
-          <TaskFormSheet
-            mode="create"
-            onSubmit={handleCreateSubmit}
-            initialData={{
-              listId:
-                selectedListFilter && selectedListFilter !== "personal"
-                  ? selectedListFilter
-                  : null,
-              dueDate:
-                viewMode === "calendar" && calendarSelectedDate
-                  ? (() => {
-                      const [y, m, d] = calendarSelectedDate
-                        .split("-")
-                        .map(Number);
-                      return new Date(y ?? 0, (m ?? 1) - 1, d);
-                    })()
-                  : null,
-            }}
-            lists={(lists ?? []).map((l) => ({
-              id: l.id,
-              name: l.name,
-              color: l.color,
-            }))}
-            isSubmitting={createMutation.isPending}
-          />
+          {deletePendingIds.size > 0 ? (
+            <Pressable
+              onPress={() => {
+                Alert.alert(
+                  "Delete Tasks",
+                  `Delete ${deletePendingIds.size} task(s)?`,
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      style: "destructive",
+                      onPress: () => void handleBulkDelete(),
+                    },
+                  ],
+                );
+              }}
+            >
+              <Animated.View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: "#ef4444",
+                  borderWidth: 2,
+                  borderColor: "rgba(239, 68, 68, 0.4)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  shadowColor: "#ef4444",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }}
+              >
+                <Trash2 size={32} color="#FFFFFF" />
+              </Animated.View>
+            </Pressable>
+          ) : (
+            <TaskFormSheet
+              mode="create"
+              onSubmit={handleCreateSubmit}
+              initialData={{
+                listId:
+                  selectedListFilter && selectedListFilter !== "personal"
+                    ? selectedListFilter
+                    : null,
+                dueDate:
+                  viewMode === "calendar" && calendarSelectedDate
+                    ? (() => {
+                        const [y, m, d] = calendarSelectedDate
+                          .split("-")
+                          .map(Number);
+                        return new Date(y ?? 0, (m ?? 1) - 1, d);
+                      })()
+                    : null,
+              }}
+              lists={(lists ?? []).map((l) => ({
+                id: l.id,
+                name: l.name,
+                color: l.color,
+              }))}
+              isSubmitting={createMutation.isPending}
+            />
+          )}
         </View>
 
         {/* Edit Task Sheet — controlled by editingTask state */}

@@ -234,34 +234,9 @@ export function DemoListStack() {
             );
             setDeletePendingId((cur) => (cur === task.id ? null : cur));
           }}
-          onComplete={() => {
+          onToggleDeletePending={() => {
             swipeActionFiredRef.current = true;
-            setTasks((prev) =>
-              prev.map((t) =>
-                t.id === task.id
-                  ? { ...t, completed: true, completedAt: new Date() }
-                  : t,
-              ),
-            );
-          }}
-          onDelete={() => {
-            swipeActionFiredRef.current = true;
-            // Reset to original since we can't remove cards from the demo
-            const original = makeListTasks().find((o) => o.id === task.id);
-            if (original) {
-              setTasks((prev) =>
-                prev.map((t) => (t.id === task.id ? original : t)),
-              );
-            }
-            setDeletePendingId((cur) => (cur === task.id ? null : cur));
-          }}
-          onDeletePending={() => {
-            swipeActionFiredRef.current = true;
-            setDeletePendingId(task.id);
-          }}
-          onCancelDelete={() => {
-            swipeActionFiredRef.current = true;
-            setDeletePendingId((cur) => (cur === task.id ? null : cur));
+            setDeletePendingId((cur) => (cur === task.id ? null : task.id));
           }}
           onSave={noop}
           skipStackAnimation={skipAnimationRef.current}
@@ -374,31 +349,10 @@ export function DemoCardStack() {
                 setDeletePendingId(null);
                 scheduleReset(task.id);
               }}
-              onComplete={() => {
-                setTasks((prev) =>
-                  prev.map((t) =>
-                    t.id === task.id
-                      ? { ...t, completed: true, completedAt: new Date() }
-                      : t,
-                  ),
-                );
+              onToggleDeletePending={() => {
+                setDeletePendingId((cur) => (cur === task.id ? null : task.id));
                 scheduleReset(task.id);
               }}
-              onDelete={() => {
-                // Reset instead of deleting
-                const original = makeStackTasks().find((o) => o.id === task.id);
-                if (original) {
-                  setTasks((prev) =>
-                    prev.map((t) => (t.id === task.id ? original : t)),
-                  );
-                }
-                setDeletePendingId(null);
-              }}
-              onDeletePending={() => {
-                setDeletePendingId(task.id);
-                scheduleReset(task.id);
-              }}
-              onCancelDelete={() => setDeletePendingId(null)}
               onSave={noop}
               onNext={handleNext}
               onPrevious={handlePrevious}

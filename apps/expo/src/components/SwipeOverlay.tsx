@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import type { SharedValue } from "react-native-reanimated";
 import React from "react";
 import { Text as RNText } from "react-native";
@@ -6,7 +5,7 @@ import Animated, {
   interpolate,
   useAnimatedStyle,
 } from "react-native-reanimated";
-import { Check, Edit3, Trash2, Undo2, X } from "lucide-react-native";
+import { Check, Trash2, Undo2, X } from "lucide-react-native";
 
 export type SwipeDirection = "up" | "down" | "left" | "right" | null;
 
@@ -14,53 +13,16 @@ interface SwipeOverlayProps {
   direction: SharedValue<SwipeDirection>;
   translationX: SharedValue<number>;
   translationY: SharedValue<number>;
-  deletePending: boolean;
+  isDeletePending: boolean;
   isCompact?: boolean;
   taskCompleted?: boolean;
 }
-
-interface DirectionConfig {
-  color: string;
-  backgroundColor: string;
-  icon: ReactNode;
-  text: string;
-}
-
-const directionConfigs: Record<
-  Exclude<SwipeDirection, null>,
-  DirectionConfig
-> = {
-  up: {
-    color: "#50C878", // Emerald green
-    backgroundColor: "rgba(80, 200, 120, 0.1)",
-    icon: <Check size={48} color="#50C878" strokeWidth={3} />,
-    text: "Complete",
-  },
-  down: {
-    color: "#3B82F6", // Blue
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
-    icon: <Edit3 size={48} color="#3B82F6" strokeWidth={2.5} />,
-    text: "Edit",
-  },
-  left: {
-    color: "#8FA8A8", // Muted gray
-    backgroundColor: "rgba(143, 168, 168, 0.1)",
-    icon: <Check size={48} color="#8FA8A8" strokeWidth={3} />,
-    text: "Next",
-  },
-  right: {
-    color: "#8FA8A8", // Muted gray
-    backgroundColor: "rgba(143, 168, 168, 0.1)",
-    icon: <Check size={48} color="#8FA8A8" strokeWidth={3} />,
-    text: "Previous",
-  },
-};
 
 export function SwipeOverlay({
   direction,
   translationX,
   translationY,
-  deletePending,
+  isDeletePending,
   isCompact,
   taskCompleted,
 }: SwipeOverlayProps) {
@@ -72,7 +34,6 @@ export function SwipeOverlay({
 
     let opacity = 0;
 
-    // Calculate opacity based on translation distance
     if (currentDirection === "up" || currentDirection === "down") {
       const absY = Math.abs(translationY.value);
       opacity = interpolate(absY, [0, 150], [0, 0.8]);
@@ -90,44 +51,38 @@ export function SwipeOverlay({
       return { opacity: 0 };
     }
 
-    // Override for delete pending states
-    if (deletePending) {
-      if (
-        currentDirection === "up" ||
-        (currentDirection === "left" && isCompact)
-      ) {
-        return { backgroundColor: "rgba(239, 68, 68, 0.1)" };
-      }
-      if (currentDirection === "down") {
+    // Action direction (left in compact, up in card): cancel delete-pending OR toggle complete
+    if (
+      (isCompact && currentDirection === "left") ||
+      (!isCompact && currentDirection === "up")
+    ) {
+      if (isDeletePending) {
+        // Unmark → gray
         return { backgroundColor: "rgba(107, 114, 128, 0.1)" };
       }
-    }
-
-    // Compact left swipe: use complete color when task not completed
-    if (isCompact && currentDirection === "left" && !taskCompleted) {
-      return { backgroundColor: "rgba(80, 200, 120, 0.1)" };
-    }
-    // Compact left swipe on completed task: use delete color
-    if (isCompact && currentDirection === "left" && taskCompleted) {
-      return { backgroundColor: "rgba(239, 68, 68, 0.1)" };
-    }
-    // Compact right swipe: uncomplete (completed task) or edit (uncompleted)
-    if (isCompact && currentDirection === "right") {
       if (taskCompleted) {
+        // Undo → amber
         return { backgroundColor: "rgba(229, 160, 77, 0.1)" };
       }
-      return { backgroundColor: "rgba(59, 130, 246, 0.1)" };
+      // Complete → green
+      return { backgroundColor: "rgba(80, 200, 120, 0.1)" };
     }
 
-    // Card down swipe: uncomplete (completed task) or edit (uncompleted)
-    if (currentDirection === "down" && taskCompleted) {
-      return { backgroundColor: "rgba(229, 160, 77, 0.1)" };
+    // Delete direction (right in compact, down in card): toggle delete-pending
+    if (
+      (isCompact && currentDirection === "right") ||
+      (!isCompact && currentDirection === "down")
+    ) {
+      if (isDeletePending) {
+        // Unmark → gray
+        return { backgroundColor: "rgba(107, 114, 128, 0.1)" };
+      }
+      // Delete? → red
+      return { backgroundColor: "rgba(239, 68, 68, 0.1)" };
     }
 
-    const config = directionConfigs[currentDirection];
-    return {
-      backgroundColor: config.backgroundColor,
-    };
+    // Card nav (left/right in card mode)
+    return { backgroundColor: "rgba(143, 168, 168, 0.1)" };
   });
 
   return (
@@ -153,16 +108,16 @@ export function SwipeOverlay({
           {
             alignItems: "center",
             justifyContent: "center",
-            gap: 12, // gap-3
-            borderRadius: 24, // rounded-3xl
-            paddingHorizontal: 48, // px-12
-            paddingVertical: 32, // py-8
+            gap: 12,
+            borderRadius: 24,
+            paddingHorizontal: 48,
+            paddingVertical: 32,
           },
         ]}
       >
         <OverlayContent
           direction={direction}
-          deletePending={deletePending}
+          isDeletePending={isDeletePending}
           isCompact={isCompact}
           taskCompleted={taskCompleted}
         />
@@ -173,46 +128,65 @@ export function SwipeOverlay({
 
 const OverlayContent = React.memo(function OverlayContent({
   direction,
-  deletePending,
+  isDeletePending,
   isCompact,
   taskCompleted,
 }: {
   direction: SharedValue<SwipeDirection>;
-  deletePending: boolean;
+  isDeletePending: boolean;
   isCompact?: boolean;
   taskCompleted?: boolean;
 }) {
-  const upStyle = useAnimatedStyle(() => ({
-    opacity: direction.value === "up" ? 1 : 0,
+  // Action direction: left (compact) / up (card) → toggle complete
+  const actionStyle = useAnimatedStyle(() => ({
+    opacity:
+      (isCompact && direction.value === "left") ||
+      (!isCompact && direction.value === "up")
+        ? 1
+        : 0,
   }));
-  const downStyle = useAnimatedStyle(() => ({
-    opacity: direction.value === "down" ? 1 : 0,
+
+  // Delete direction: right (compact) / down (card) → toggle delete-pending
+  const deleteStyle = useAnimatedStyle(() => ({
+    opacity:
+      (isCompact && direction.value === "right") ||
+      (!isCompact && direction.value === "down")
+        ? 1
+        : 0,
   }));
-  const leftStyle = useAnimatedStyle(() => ({
-    opacity: direction.value === "left" ? 1 : 0,
+
+  // Card nav: left → next, right → previous
+  const leftNavStyle = useAnimatedStyle(() => ({
+    opacity: !isCompact && direction.value === "left" ? 1 : 0,
   }));
-  const rightStyle = useAnimatedStyle(() => ({
-    opacity: direction.value === "right" ? 1 : 0,
+  const rightNavStyle = useAnimatedStyle(() => ({
+    opacity: !isCompact && direction.value === "right" ? 1 : 0,
   }));
 
   const textStyle = {
-    fontSize: 24, // text-2xl
-    fontWeight: "bold" as const, // font-bold
-    letterSpacing: 0.5, // tracking-wide
+    fontSize: 24,
+    fontWeight: "bold" as const,
+    letterSpacing: 0.5,
   };
 
   return (
     <>
+      {/* Cancel delete-pending / Toggle complete/undo */}
       <Animated.View
         style={[
-          upStyle,
+          actionStyle,
           { position: "absolute", alignItems: "center", gap: 12 },
         ]}
       >
-        {deletePending ? (
+        {isDeletePending ? (
           <>
-            <Trash2 size={48} color="#ef4444" strokeWidth={3} />
-            <RNText style={[textStyle, { color: "#ef4444" }]}>Delete</RNText>
+            <X size={48} color="#9ca3af" strokeWidth={3} />
+            <RNText style={[textStyle, { color: "#9ca3af" }]}>Unmark</RNText>
+          </>
+        ) : taskCompleted ? (
+          <>
+            <Undo2 size={48} color="#E5A04D" strokeWidth={2.5} />
+            <RNText style={[textStyle, { color: "#E5A04D" }]}>Undo</RNText>
           </>
         ) : (
           <>
@@ -222,87 +196,46 @@ const OverlayContent = React.memo(function OverlayContent({
         )}
       </Animated.View>
 
+      {/* Toggle delete-pending */}
       <Animated.View
         style={[
-          downStyle,
+          deleteStyle,
           { position: "absolute", alignItems: "center", gap: 12 },
         ]}
       >
-        {deletePending ? (
+        {isDeletePending ? (
           <>
             <X size={48} color="#9ca3af" strokeWidth={3} />
-            <RNText style={[textStyle, { color: "#9ca3af" }]}>Cancel</RNText>
-          </>
-        ) : taskCompleted ? (
-          <>
-            <Undo2 size={48} color="#E5A04D" strokeWidth={2.5} />
-            <RNText style={[textStyle, { color: "#E5A04D" }]}>Undo</RNText>
+            <RNText style={[textStyle, { color: "#9ca3af" }]}>Unmark</RNText>
           </>
         ) : (
           <>
-            <Edit3 size={48} color="#3B82F6" strokeWidth={2.5} />
-            <RNText style={[textStyle, { color: "#3B82F6" }]}>Edit</RNText>
+            <Trash2 size={48} color="#ef4444" strokeWidth={3} />
+            <RNText style={[textStyle, { color: "#ef4444" }]}>Delete?</RNText>
           </>
         )}
       </Animated.View>
 
+      {/* Card nav: Next */}
       <Animated.View
         style={[
-          leftStyle,
+          leftNavStyle,
           { position: "absolute", alignItems: "center", gap: 12 },
         ]}
       >
-        {isCompact ? (
-          deletePending ? (
-            <>
-              <Trash2 size={48} color="#ef4444" strokeWidth={3} />
-              <RNText style={[textStyle, { color: "#ef4444" }]}>Delete</RNText>
-            </>
-          ) : taskCompleted ? (
-            <>
-              <Trash2 size={48} color="#ef4444" strokeWidth={3} />
-              <RNText style={[textStyle, { color: "#ef4444" }]}>Delete?</RNText>
-            </>
-          ) : (
-            <>
-              <Check size={48} color="#50C878" strokeWidth={3} />
-              <RNText style={[textStyle, { color: "#50C878" }]}>
-                Complete
-              </RNText>
-            </>
-          )
-        ) : (
-          <>
-            <Check size={48} color="#8FA8A8" strokeWidth={3} />
-            <RNText style={[textStyle, { color: "#8FA8A8" }]}>Next</RNText>
-          </>
-        )}
+        <Check size={48} color="#8FA8A8" strokeWidth={3} />
+        <RNText style={[textStyle, { color: "#8FA8A8" }]}>Next</RNText>
       </Animated.View>
 
+      {/* Card nav: Previous */}
       <Animated.View
         style={[
-          rightStyle,
+          rightNavStyle,
           { position: "absolute", alignItems: "center", gap: 12 },
         ]}
       >
-        {isCompact ? (
-          taskCompleted ? (
-            <>
-              <Undo2 size={48} color="#E5A04D" strokeWidth={2.5} />
-              <RNText style={[textStyle, { color: "#E5A04D" }]}>Undo</RNText>
-            </>
-          ) : (
-            <>
-              <Edit3 size={48} color="#3B82F6" strokeWidth={2.5} />
-              <RNText style={[textStyle, { color: "#3B82F6" }]}>Edit</RNText>
-            </>
-          )
-        ) : (
-          <>
-            <Check size={48} color="#8FA8A8" strokeWidth={3} />
-            <RNText style={[textStyle, { color: "#8FA8A8" }]}>Previous</RNText>
-          </>
-        )}
+        <Check size={48} color="#8FA8A8" strokeWidth={3} />
+        <RNText style={[textStyle, { color: "#8FA8A8" }]}>Previous</RNText>
       </Animated.View>
     </>
   );
