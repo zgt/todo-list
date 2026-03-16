@@ -4,7 +4,10 @@
 import type { ScrollView } from "react-native";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, RefreshControl } from "react-native";
-import Animated, { useSharedValue } from "react-native-reanimated";
+import Animated, {
+  LinearTransition,
+  useSharedValue,
+} from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import type { PriorityLevel } from "./priority-config";
@@ -305,7 +308,7 @@ export function SwipeableCardStack({
       {displayTasks.map((task, mapIndex) => {
         const relativeIndex = mapIndex - baseIndexOffset;
 
-        return (
+        const card = (
           <SwipeableCard
             key={task.id}
             task={task}
@@ -340,6 +343,21 @@ export function SwipeableCardStack({
             onToggleExpand={() => handleToggleExpand(task.id)}
           />
         );
+
+        if (isCompact) {
+          return (
+            <Animated.View
+              key={task.id}
+              layout={LinearTransition.springify()
+                .damping(18)
+                .stiffness(120)}
+            >
+              {card}
+            </Animated.View>
+          );
+        }
+
+        return card;
       })}
     </Animated.ScrollView>
   );
