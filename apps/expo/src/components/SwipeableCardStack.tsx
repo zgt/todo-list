@@ -323,7 +323,10 @@ export function SwipeableCardStack({
             deletePending={deletePendingId === task.id}
             isExpanded={expandedTaskId === task.id}
             yOffset={isCompact ? yOffsets[mapIndex] : undefined}
-            onToggle={() => onToggle(task.id, !task.completed)}
+            onToggle={() => {
+              onToggle(task.id, !task.completed);
+              if (isCompact) scheduleResort();
+            }}
             onComplete={() => handleComplete(task.id)}
             onDelete={() => handleDelete(task.id)}
             onDeletePending={() => setDeletePendingId(task.id)}
