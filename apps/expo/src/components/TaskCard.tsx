@@ -400,8 +400,8 @@ export function TaskCard({
                 <Animated.View
                   key={subtask.id}
                   layout={LinearTransition.springify()
-                    .damping(18)
-                    .stiffness(120)}
+                    .damping(150)
+                    .stiffness(2000)}
                 >
                   {index > 0 && <View style={styles.subtaskSeparator} />}
                   <Pressable

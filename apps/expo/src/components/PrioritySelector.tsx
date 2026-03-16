@@ -27,7 +27,7 @@ export function PrioritySelector({
   trigger,
 }: PrioritySelectorProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["35%"], []);
+  const snapPoints = useMemo(() => ["55%"], []);
 
   const handleOpen = () => {
     if (disabled) return;
