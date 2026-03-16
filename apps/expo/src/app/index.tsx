@@ -1109,24 +1109,29 @@ export default function Index() {
           zIndex: 10,
         }}
       >
-        <View className="flex-row items-center gap-4 px-4 pb-1">
-          <View className="ml-2 flex-row gap-2">
+        <View className="flex-row items-center px-3 pb-1">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 8 }}
+            style={{ flexShrink: 1 }}
+          >
             <CategoryFilter />
             <PriorityFilter
               selectedPriorities={selectedPriorities}
               onChange={setSelectedPriorities}
             />
-          </View>
-          <View className="flex-1" />
-          <ViewToggleButton
-            viewMode={viewMode}
-            onToggle={() => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setViewMode((v) =>
-                v === "stack" ? "list" : v === "list" ? "calendar" : "stack",
-              );
-            }}
-          />
+          </ScrollView>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginLeft: 8, flexShrink: 0 }}>
+            <ViewToggleButton
+              viewMode={viewMode}
+              onToggle={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setViewMode((v) =>
+                  v === "stack" ? "list" : v === "list" ? "calendar" : "stack",
+                );
+              }}
+            />
           {selectedListFilter === "deleted" ? (
             <View style={{ width: 64, height: 64 }} />
           ) : deletePendingIds.size > 0 ? (
@@ -1193,6 +1198,7 @@ export default function Index() {
               isSubmitting={createMutation.isPending}
             />
           )}
+          </View>
         </View>
 
         {/* Edit Task Sheet — controlled by editingTask state */}
