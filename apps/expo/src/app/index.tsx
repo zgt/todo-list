@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Archive,
   CalendarDays,
   Info,
   Layers,
@@ -211,6 +212,13 @@ export default function Index() {
     }),
   );
 
+  // Fetch deleted/archived tasks
+  const { data: deletedTasks } = useQuery(
+    trpc.task.deleted.queryOptions(undefined, {
+      enabled: !!session && selectedListFilter === "deleted",
+    }),
+  );
+
   // Fetch lists for the form sheet and filter
   const { data: lists } = useQuery(
     trpc.taskList.all.queryOptions(undefined, {
@@ -310,6 +318,24 @@ export default function Index() {
   }, [serverTasks]);
 
   const filteredTasks = useMemo(() => {
+    // When viewing deleted tasks, use the separate query
+    if (selectedListFilter === "deleted") {
+      if (!deletedTasks) return [];
+      return deletedTasks.map((task: ServerTask) => ({
+        ...task,
+        updatedAt: task.updatedAt ?? task.createdAt,
+        category: task.category
+          ? { name: task.category.name, color: task.category.color }
+          : null,
+        syncStatus: "synced" as const,
+        localVersion: task.version,
+        serverVersion: task.version,
+        lastSyncedAt: new Date(),
+        orderIndex: 0,
+        priority: task.priority as "high" | "medium" | "low" | null,
+      }));
+    }
+
     let result = tasks;
     if (effectiveCategoryIds.length > 0) {
       result = tasks.filter(
@@ -331,7 +357,7 @@ export default function Index() {
     }
 
     return result;
-  }, [tasks, effectiveCategoryIds, selectedPriorities, selectedListFilter]);
+  }, [tasks, effectiveCategoryIds, selectedPriorities, selectedListFilter, deletedTasks]);
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
@@ -872,7 +898,7 @@ export default function Index() {
           style={{ minHeight: Dimensions.get("window").height - 50 }}
         >
           {/* List Filter */}
-          {lists && lists.length > 0 && (
+          {lists && (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -938,52 +964,93 @@ export default function Index() {
                   Personal
                 </RNText>
               </Pressable>
-              {lists.map((list) => (
-                <Pressable
-                  key={list.id}
-                  onPress={() => {
-                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setSelectedListFilter(list.id);
-                  }}
+              <Pressable
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedListFilter("deleted");
+                }}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  paddingHorizontal: 12,
+                  paddingVertical: 5,
+                  borderRadius: 9999,
+                  borderWidth: 1,
+                  borderColor:
+                    selectedListFilter === "deleted" ? "#50C878" : "#164B49",
+                  backgroundColor:
+                    selectedListFilter === "deleted"
+                      ? "rgba(80, 200, 120, 0.15)"
+                      : "transparent",
+                }}
+              >
+                <Archive
+                  size={10}
+                  color={
+                    selectedListFilter === "deleted" ? "#50C878" : "#8FA8A8"
+                  }
+                />
+                <RNText
                   style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 4,
-                    paddingHorizontal: 12,
-                    paddingVertical: 5,
-                    borderRadius: 9999,
-                    borderWidth: 1,
-                    borderColor:
-                      selectedListFilter === list.id
-                        ? (list.color ?? "#50C878")
-                        : "#164B49",
-                    backgroundColor:
-                      selectedListFilter === list.id
-                        ? `${list.color ?? "#50C878"}25`
-                        : "transparent",
+                    fontSize: 12,
+                    color:
+                      selectedListFilter === "deleted" ? "#50C878" : "#8FA8A8",
                   }}
                 >
-                  <View
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: list.color ?? "#50C878",
+                  Deleted
+                </RNText>
+              </Pressable>
+              {lists
+                .filter((list) => list.showInFilter)
+                .map((list) => (
+                  <Pressable
+                    key={list.id}
+                    onPress={() => {
+                      void Haptics.impactAsync(
+                        Haptics.ImpactFeedbackStyle.Light,
+                      );
+                      setSelectedListFilter(list.id);
                     }}
-                  />
-                  <RNText
                     style={{
-                      fontSize: 12,
-                      color:
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: 12,
+                      paddingVertical: 5,
+                      borderRadius: 9999,
+                      borderWidth: 1,
+                      borderColor:
                         selectedListFilter === list.id
                           ? (list.color ?? "#50C878")
-                          : "#8FA8A8",
+                          : "#164B49",
+                      backgroundColor:
+                        selectedListFilter === list.id
+                          ? `${list.color ?? "#50C878"}25`
+                          : "transparent",
                     }}
                   >
-                    {list.name}
-                  </RNText>
-                </Pressable>
-              ))}
+                    <View
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        backgroundColor: list.color ?? "#50C878",
+                      }}
+                    />
+                    <RNText
+                      style={{
+                        fontSize: 12,
+                        color:
+                          selectedListFilter === list.id
+                            ? (list.color ?? "#50C878")
+                            : "#8FA8A8",
+                      }}
+                    >
+                      {list.name}
+                    </RNText>
+                  </Pressable>
+                ))}
             </ScrollView>
           )}
           {viewMode === "calendar" ? (
@@ -1014,9 +1081,11 @@ export default function Index() {
           ) : (
             <View className="mt-10 items-center">
               <RNText className="text-muted-foreground text-center italic">
-                {tasks.length === 0
-                  ? "No tasks yet. Tap + to create one!"
-                  : "No matching tasks."}
+                {selectedListFilter === "deleted"
+                  ? "No deleted tasks."
+                  : tasks.length === 0
+                    ? "No tasks yet. Tap + to create one!"
+                    : "No matching tasks."}
               </RNText>
             </View>
           )}
@@ -1052,7 +1121,9 @@ export default function Index() {
               );
             }}
           />
-          {deletePendingIds.size > 0 ? (
+          {selectedListFilter === "deleted" ? (
+            <View style={{ width: 64, height: 64 }} />
+          ) : deletePendingIds.size > 0 ? (
             <Pressable
               onPress={() => {
                 Alert.alert(

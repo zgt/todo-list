@@ -12,9 +12,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Switch } from "react-native";
+
 import {
   ArrowLeft,
   Crown,
+  Eye,
   Flag,
   Link as LinkIcon,
   LogOut,
@@ -87,6 +90,72 @@ export default function ListDetailScreen() {
 
   const createInviteMutation = useMutation(
     trpc.taskList.createInvite.mutationOptions(),
+  );
+
+  const updateFilterVisibilityMutation = useMutation(
+    trpc.taskList.updateFilterVisibility.mutationOptions({
+      onMutate: async (input) => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Cancel outgoing refetches so they don't overwrite optimistic update
+        await queryClient.cancelQueries(trpc.taskList.byId.queryFilter());
+        await queryClient.cancelQueries(trpc.taskList.all.queryFilter());
+
+        // Snapshot previous values for rollback
+        const previousById = queryClient.getQueryData(
+          trpc.taskList.byId.queryKey({ id }),
+        );
+        const previousAll = queryClient.getQueryData(
+          trpc.taskList.all.queryKey(),
+        );
+
+        // Optimistic update on byId (update the member's showInFilter)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        queryClient.setQueryData(
+          trpc.taskList.byId.queryKey({ id }),
+          (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              members: old.members.map((m: any) =>
+                m.userId === session?.user.id
+                  ? { ...m, showInFilter: input.showInFilter }
+                  : m,
+              ),
+            };
+          },
+        );
+
+        // Optimistic update on all lists
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        queryClient.setQueryData(
+          trpc.taskList.all.queryKey(),
+          (old: any) => {
+            if (!old) return old;
+            return old.map((l: any) =>
+              l.id === id ? { ...l, showInFilter: input.showInFilter } : l,
+            );
+          },
+        );
+
+        return { previousById, previousAll };
+      },
+      onError: (_err, _input, context) => {
+        // Rollback on error
+        if (context?.previousById) {
+          queryClient.setQueryData(
+            trpc.taskList.byId.queryKey({ id }),
+            context.previousById,
+          );
+        }
+        if (context?.previousAll) {
+          queryClient.setQueryData(
+            trpc.taskList.all.queryKey(),
+            context.previousAll,
+          );
+        }
+      },
+    }),
   );
 
   const reportSheetRef = useRef<ReportSheetRef>(null);
@@ -314,6 +383,70 @@ export default function ListDetailScreen() {
                 )}
               </View>
             </View>
+
+            {/* Show in Filter Toggle */}
+            {(() => {
+              const currentMember = list.members.find(
+                (m) => m.userId === session?.user.id,
+              );
+              if (!currentMember) return null;
+              return (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: "#102A2A",
+                    borderWidth: 1,
+                    borderColor: "#164B49",
+                    borderRadius: 12,
+                    padding: 14,
+                    marginBottom: 16,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 10,
+                      flex: 1,
+                    }}
+                  >
+                    <Eye size={18} color="#50C878" />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "600",
+                          color: "#DCE4E4",
+                        }}
+                      >
+                        Show in filter
+                      </Text>
+                      <Text style={{ fontSize: 12, color: "#8FA8A8" }}>
+                        Display in the top filter bar
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={currentMember.showInFilter}
+                    onValueChange={(value) =>
+                      updateFilterVisibilityMutation.mutate({
+                        listId: id,
+                        showInFilter: value,
+                      })
+                    }
+                    trackColor={{
+                      false: "#164B49",
+                      true: "rgba(80, 200, 120, 0.4)",
+                    }}
+                    thumbColor={
+                      currentMember.showInFilter ? "#50C878" : "#8FA8A8"
+                    }
+                  />
+                </View>
+              );
+            })()}
 
             {/* Actions */}
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>

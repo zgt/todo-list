@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { List, User } from "lucide-react";
+import { Archive, List, User } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -73,27 +73,45 @@ export function ListFilter() {
             )}
           </button>
 
-          {/* User's lists */}
-          {lists.map((list) => (
-            <button
-              key={list.id}
-              onClick={() => setSelectedListId(list.id)}
-              className={cn(
-                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
-                selectedListId === list.id && "bg-[#102A2A] text-white",
-              )}
-            >
-              <div
-                className="size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
-                style={{ backgroundColor: list.color ?? "#50C878" }}
-              />
-              <span className="flex-1 truncate text-left">{list.name}</span>
-              {selectedListId === list.id && (
-                <div className="size-2 rounded-full bg-emerald-400" />
-              )}
-            </button>
-          ))}
+          {/* Deleted / Archived */}
+          <button
+            onClick={() => setSelectedListId("deleted")}
+            className={cn(
+              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+              "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
+              selectedListId === "deleted" && "bg-[#102A2A] text-white",
+            )}
+          >
+            <Archive className="size-3.5 text-[#8FA8A8]" />
+            <span className="flex-1 text-left">Deleted</span>
+            {selectedListId === "deleted" && (
+              <div className="size-2 rounded-full bg-emerald-400" />
+            )}
+          </button>
+
+          {/* User's lists (only those with showInFilter enabled) */}
+          {lists
+            .filter((list) => list.showInFilter)
+            .map((list) => (
+              <button
+                key={list.id}
+                onClick={() => setSelectedListId(list.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+                  "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
+                  selectedListId === list.id && "bg-[#102A2A] text-white",
+                )}
+              >
+                <div
+                  className="size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
+                  style={{ backgroundColor: list.color ?? "#50C878" }}
+                />
+                <span className="flex-1 truncate text-left">{list.name}</span>
+                {selectedListId === list.id && (
+                  <div className="size-2 rounded-full bg-emerald-400" />
+                )}
+              </button>
+            ))}
         </div>
       </PopoverContent>
     </Popover>

@@ -34,9 +34,16 @@ export const taskListRouter = {
         isDefault: TaskList.isDefault,
         createdAt: TaskList.createdAt,
         updatedAt: TaskList.updatedAt,
+        showInFilter: TaskListMember.showInFilter,
       })
       .from(TaskList)
-      .leftJoin(TaskListMember, eq(TaskList.id, TaskListMember.listId))
+      .leftJoin(
+        TaskListMember,
+        and(
+          eq(TaskList.id, TaskListMember.listId),
+          eq(TaskListMember.userId, userId),
+        ),
+      )
       .where(
         and(
           isNull(TaskList.deletedAt),
@@ -77,6 +84,7 @@ export const taskListRouter = {
       ...list,
       createdAt: new Date(list.createdAt),
       updatedAt: list.updatedAt ? new Date(list.updatedAt) : null,
+      showInFilter: list.showInFilter ?? true,
       memberCount: memberCountMap.get(list.id) ?? 0,
       taskCount: taskCountMap.get(list.id) ?? 0,
     }));
@@ -433,6 +441,31 @@ export const taskListRouter = {
 
       await ctx.db
         .delete(TaskListMember)
+        .where(
+          and(
+            eq(TaskListMember.listId, input.listId),
+            eq(TaskListMember.userId, userId),
+          ),
+        );
+
+      return { success: true };
+    }),
+
+  // ── Filter Visibility ───────────────────────────────────────────────
+
+  updateFilterVisibility: protectedProcedure
+    .input(
+      z.object({
+        listId: z.string().uuid(),
+        showInFilter: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      await ctx.db
+        .update(TaskListMember)
+        .set({ showInFilter: input.showInFilter })
         .where(
           and(
             eq(TaskListMember.listId, input.listId),

@@ -8,6 +8,7 @@ import {
   Check,
   Copy,
   Crown,
+  Eye,
   LinkIcon,
   LogOut,
   Trash2,
@@ -35,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@acme/ui/select";
+import { Switch } from "@acme/ui/switch";
 import { toast } from "@acme/ui/toast";
 
 import { useSession } from "~/auth/client";
@@ -93,6 +95,20 @@ export function ListDetail() {
       },
       onError: (err) => {
         toast.error(err.message);
+      },
+    }),
+  );
+
+  const updateFilterVisibility = useMutation(
+    trpc.taskList.updateFilterVisibility.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.taskList.byId.queryFilter({ id: params.id }),
+        );
+        await queryClient.invalidateQueries(trpc.taskList.all.queryFilter());
+      },
+      onError: () => {
+        toast.error("Failed to update filter visibility");
       },
     }),
   );
@@ -156,6 +172,40 @@ export function ListDetail() {
           </div>
         </div>
       </div>
+
+      {/* Filter Visibility */}
+      {(() => {
+        const currentMember = list.members.find(
+          (m) => m.userId === session?.user.id,
+        );
+        if (!currentMember) return null;
+        return (
+          <div className="glass-card rounded-2xl border border-white/10 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-[#50C878]" />
+                <div>
+                  <h2 className="text-sm font-semibold text-white">
+                    Show in filter
+                  </h2>
+                  <p className="text-xs text-[#8FA8A8]">
+                    Display this list in the top filter bar and sidebar
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={currentMember.showInFilter}
+                onCheckedChange={(checked) =>
+                  updateFilterVisibility.mutate({
+                    listId: params.id,
+                    showInFilter: checked,
+                  })
+                }
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Members Section */}
       <div className="glass-card rounded-2xl border border-white/10 p-6">

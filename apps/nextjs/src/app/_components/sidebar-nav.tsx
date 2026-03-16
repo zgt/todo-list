@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Archive,
   HelpCircle,
   Home,
   Settings,
@@ -235,8 +236,27 @@ function SidebarListsSection() {
           </SidebarMenuButton>
         </SidebarMenuItem>
 
-        {/* User lists */}
-        {lists?.map((list) => (
+        {/* Deleted / Archived */}
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            isActive={selectedListId === "deleted"}
+            onClick={() => setSelectedListId("deleted")}
+            className={cn(
+              "h-9 rounded-lg px-3 text-sm transition-all duration-200",
+              selectedListId === "deleted"
+                ? "bg-primary/20 text-primary border-primary/20 border"
+                : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+            )}
+          >
+            <div className="flex w-full items-center gap-2.5">
+              <Archive className="h-3.5 w-3.5" />
+              <span className="flex-1 truncate font-medium">Deleted</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {/* User lists (only those with showInFilter enabled) */}
+        {lists?.filter((list) => list.showInFilter).map((list) => (
           <SidebarMenuItem key={list.id} className="group/list">
             <SidebarMenuButton
               isActive={selectedListId === list.id}

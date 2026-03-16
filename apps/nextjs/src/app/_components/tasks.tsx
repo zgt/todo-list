@@ -997,6 +997,56 @@ export function InlineCreateTask({
 // --- Task list ---
 
 export function TaskList() {
+  const { selectedListId } = useListFilter();
+
+  if (selectedListId === "deleted") {
+    return <DeletedTaskList />;
+  }
+
+  return <ActiveTaskList />;
+}
+
+function DeletedTaskList() {
+  const trpc = useTRPC();
+  const { data: tasks } = useSuspenseQuery(trpc.task.deleted.queryOptions());
+
+  if (tasks.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <p className="text-xl font-semibold text-white">No deleted tasks</p>
+        <p className="text-muted-foreground mt-2">
+          Tasks you delete will appear here
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <AnimatePresence mode="popLayout">
+        {tasks.map((task, i) => (
+          <motion.div
+            key={task.id}
+            initial={{ opacity: 0, y: -12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{
+              type: "spring",
+              stiffness: 380,
+              damping: 30,
+              delay: i * 0.04,
+            }}
+            layout
+          >
+            <TaskCard task={task} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function ActiveTaskList() {
   const trpc = useTRPC();
   const { data: tasks } = useSuspenseQuery(trpc.task.all.queryOptions());
   const { isCreating } = useCreateTask();

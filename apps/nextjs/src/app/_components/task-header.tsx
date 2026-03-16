@@ -15,6 +15,7 @@ import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { useCreateTask } from "./create-task-context";
 import { ListFilter } from "./list-filter";
+import { useListFilter } from "./list-filter-context";
 import { PriorityFilter } from "./priority-filter";
 import { useViewToggle } from "./view-toggle-context";
 
@@ -24,6 +25,8 @@ export function TaskHeader() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { setIsCreating } = useCreateTask();
   const { viewMode, setViewMode } = useViewToggle();
+  const { selectedListId } = useListFilter();
+  const isDeletedView = selectedListId === "deleted";
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -119,15 +122,17 @@ export function TaskHeader() {
           />
         </Button>
 
-        {/* New Task button */}
-        <Button
-          size="lg"
-          className="bg-primary shadow-glow hover:shadow-glowHover gap-1 rounded-full px-3 text-sm sm:gap-2 sm:px-4 sm:text-base lg:px-6"
-          onClick={() => setIsCreating(true)}
-        >
-          <span className="hidden font-semibold lg:inline">New Task</span>
-          <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
+        {/* New Task button (hidden when viewing deleted tasks) */}
+        {!isDeletedView && (
+          <Button
+            size="lg"
+            className="bg-primary shadow-glow hover:shadow-glowHover gap-1 rounded-full px-3 text-sm sm:gap-2 sm:px-4 sm:text-base lg:px-6"
+            onClick={() => setIsCreating(true)}
+          >
+            <span className="hidden font-semibold lg:inline">New Task</span>
+            <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+        )}
       </div>
     </header>
   );

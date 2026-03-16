@@ -9,6 +9,7 @@ import {
   eq,
   gt,
   inArray,
+  isNotNull,
   isNull,
   lt,
   notInArray,
@@ -196,6 +197,22 @@ export const taskRouter = {
         desc(Task.createdAt),
       ],
       limit: 100,
+      with: { category: true, subtasks: true, list: true },
+    });
+
+    return tasks.map(serializeTaskDates);
+  }),
+
+  // Get deleted/archived tasks for current user
+  deleted: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    const tasks = await ctx.db.query.Task.findMany({
+      where: and(
+        eq(Task.userId, userId),
+        or(isNotNull(Task.deletedAt), isNotNull(Task.archivedAt)),
+      ),
+      orderBy: [desc(Task.deletedAt), desc(Task.archivedAt)],
       with: { category: true, subtasks: true, list: true },
     });
 
