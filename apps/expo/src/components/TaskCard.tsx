@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  FadeIn,
+  FadeOut,
   interpolate,
   LinearTransition,
   useAnimatedStyle,
@@ -63,8 +65,8 @@ const CARD_HEIGHT = SCREEN_HEIGHT * 0.65;
 const COMPACT_HEIGHT = 92;
 
 const SPRING_CONFIG = {
-  damping: 400,
-  stiffness: 800,
+  damping: 150,
+  stiffness: 2000,
 };
 
 // Server tasks include reminderAt/reminderSentAt but LocalTask type doesn't
@@ -386,7 +388,11 @@ export function TaskCard({
 
       {/* Expanded description and subtasks section */}
       {isExpanded && (!!task.description || subtaskTotal > 0) && (
-        <View style={styles.expandedSubtasksContainer}>
+        <Animated.View
+          entering={FadeIn.duration(200).delay(50)}
+          exiting={FadeOut.duration(100)}
+          style={styles.expandedSubtasksContainer}
+        >
           {task.description && (
             <RNText style={styles.expandedDescription}>
               {task.description}
@@ -437,7 +443,7 @@ export function TaskCard({
               ))}
             </View>
           )}
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -446,7 +452,10 @@ export function TaskCard({
 
   // Card layout (column)
   const renderCardLayout = () => (
-    <Pressable onPress={handleCardPress} className="h-full flex-col justify-between p-6">
+    <Pressable
+      onPress={handleCardPress}
+      className="h-full flex-col justify-between p-6"
+    >
       {/* Top Row: Category and Due Date vs Checkbox */}
       <View className="w-full flex-row items-start justify-between">
         <View className="flex-row items-center gap-2">
