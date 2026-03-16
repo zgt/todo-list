@@ -11,11 +11,7 @@ export const moderationRouter = {
   reportContent: protectedProcedure
     .input(
       z.object({
-        contentType: z.enum([
-          "TASK",
-          "USER",
-          "COMMENT",
-        ]),
+        contentType: z.enum(["TASK", "USER", "COMMENT"]),
         contentId: z.string().min(1),
         reportedUserId: z.string().optional(),
         reason: z.enum(["SPAM", "OFFENSIVE", "HARASSMENT", "OTHER"]),

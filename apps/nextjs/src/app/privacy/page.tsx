@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage() {
             <ul>
               <li>Tasks and task lists</li>
               <li>Categories</li>
-<li>Shared list memberships</li>
+              <li>Shared list memberships</li>
             </ul>
 
             <h3 className="text-lg font-semibold text-[#DCE4E4]">

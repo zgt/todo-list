@@ -179,7 +179,7 @@ export function TaskCard({
         if (isExpanded) {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           onToggleExpand();
-        } else if ((subtaskTotal > 0 || task.description)) {
+        } else if (subtaskTotal > 0 || task.description) {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           onToggleExpand();
         } else if (onTaskPress) {
@@ -399,7 +399,9 @@ export function TaskCard({
               {subtasks.map((subtask, index) => (
                 <Animated.View
                   key={subtask.id}
-                  layout={LinearTransition.springify().damping(18).stiffness(120)}
+                  layout={LinearTransition.springify()
+                    .damping(18)
+                    .stiffness(120)}
                 >
                   {index > 0 && <View style={styles.subtaskSeparator} />}
                   <Pressable
@@ -630,11 +632,7 @@ export function TaskCard({
 
   return (
     <Animated.View
-      style={[
-        styles.container,
-        containerStyle,
-        getBackgroundStyle(),
-      ]}
+      style={[styles.container, containerStyle, getBackgroundStyle()]}
     >
       <View
         style={[

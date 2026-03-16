@@ -14,13 +14,13 @@ import {
   TextInput,
   View,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetScrollView,
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import * as Haptics from "expo-haptics";
 import {
   AlarmClock,
   Bell,

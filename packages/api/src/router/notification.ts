@@ -73,16 +73,15 @@ export const notificationRouter = {
   }),
 
   /** Send a test push notification to the current user's devices */
-  sendTestPush: protectedProcedure
-    .mutation(async ({ ctx }) => {
-      await sendPushToUser(ctx.session.user.id, {
-        title: "🔔 Test Notification",
-        body: "If you see this, push notifications are working!",
-        data: { type: "test" },
-      });
+  sendTestPush: protectedProcedure.mutation(async ({ ctx }) => {
+    await sendPushToUser(ctx.session.user.id, {
+      title: "🔔 Test Notification",
+      body: "If you see this, push notifications are working!",
+      data: { type: "test" },
+    });
 
-      return { success: true };
-    }),
+    return { success: true };
+  }),
 
   /** Get the current user's notification preferences (with defaults) */
   getUserPreferences: protectedProcedure.query(async ({ ctx }) => {

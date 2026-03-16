@@ -7,12 +7,12 @@ import {
   useState,
 } from "react";
 import { Pressable, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import * as Haptics from "expo-haptics";
 import { AlarmClock, Calendar, Clock, Moon, Sun } from "lucide-react-native";
 
 import { CustomDatePicker } from "./CustomDatePicker";

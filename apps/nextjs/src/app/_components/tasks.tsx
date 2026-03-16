@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   useMutation,
   useQuery,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlarmClock,
   Bell,
@@ -1903,9 +1903,7 @@ export function TaskCard(props: {
       </div>
 
       {/* Expanded area */}
-      <AnimatePresence
-        onExitComplete={() => setIsAnimatingExpand(false)}
-      >
+      <AnimatePresence onExitComplete={() => setIsAnimatingExpand(false)}>
         {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
@@ -1918,291 +1916,294 @@ export function TaskCard(props: {
             onAnimationStart={() => setIsAnimatingExpand(true)}
             className="overflow-hidden"
           >
-          <div className="space-y-0 px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
-            {/* Description section */}
-            {(isEditing || props.task.description) && (
-              <div className="border-t border-[#164B49]/60 pt-3">
-                {isEditing ? (
-                  <div className="max-w-2xl">
-                    <label className="mb-1.5 block text-[10px] font-semibold tracking-wider text-[#8FA8A8]/70 uppercase">
-                      Description
-                    </label>
-                    <textarea
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") handleCancel();
-                        // Don't handle Enter in textarea — allow newlines
-                      }}
-                      placeholder="Add a description..."
-                      rows={3}
-                      className={cn(
-                        "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
-                        "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-                        "rounded-lg px-3 py-2.5 text-sm leading-relaxed",
-                      )}
-                      aria-label="Edit task description"
-                      disabled={updateTask.isPending}
-                    />
-                  </div>
-                ) : props.task.description ? (
-                  <p className="max-w-2xl text-sm leading-relaxed whitespace-pre-wrap text-[#C8D6D6]">
-                    {props.task.description}
-                  </p>
-                ) : null}
-              </div>
-            )}
-
-            {/* Subtask section */}
-            <SubtaskSection task={props.task} />
-
-            {/* Field controls row */}
-            {isEditing && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
-                <PrioritySelectorPill
-                  value={editedPriority}
-                  onChange={setEditedPriority}
-                  disabled={updateTask.isPending}
-                />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
-                        "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
-                        "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
-                      )}
-                      disabled={updateTask.isPending}
-                    >
-                      <Calendar className="h-3.5 w-3.5" />
-                      {editedDueDate
-                        ? new Date(editedDueDate).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "Set due date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="flex flex-col">
-                      <CalendarPicker
-                        date={editedDueDate}
-                        onDateChange={setEditedDueDate}
+            <div className="space-y-0 px-3 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-6">
+              {/* Description section */}
+              {(isEditing || props.task.description) && (
+                <div className="border-t border-[#164B49]/60 pt-3">
+                  {isEditing ? (
+                    <div className="max-w-2xl">
+                      <label className="mb-1.5 block text-[10px] font-semibold tracking-wider text-[#8FA8A8]/70 uppercase">
+                        Description
+                      </label>
+                      <textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") handleCancel();
+                          // Don't handle Enter in textarea — allow newlines
+                        }}
+                        placeholder="Add a description..."
+                        rows={3}
+                        className={cn(
+                          "w-full resize-y border border-[#164B49] bg-[#102A2A] text-[#DCE4E4] placeholder:text-[#8FA8A8]",
+                          "focus:border-[#21716C] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                          "rounded-lg px-3 py-2.5 text-sm leading-relaxed",
+                        )}
+                        aria-label="Edit task description"
+                        disabled={updateTask.isPending}
                       />
-                      {editedDueDate && (
-                        <div className="border-t border-[#164B49] p-2">
-                          <button
-                            onClick={() => setEditedDueDate(undefined)}
-                            className={cn(
-                              "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
-                              "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
-                              "transition-all",
-                            )}
-                          >
-                            <X className="h-3 w-3" />
-                            Clear date
-                          </button>
-                        </div>
-                      )}
                     </div>
-                  </PopoverContent>
-                </Popover>
-                <CategoryTreePicker
-                  categories={categories ?? []}
-                  value={editedCategoryId}
-                  onChange={setEditedCategoryId}
-                  disabled={updateTask.isPending}
-                />
-                <ReminderPill
-                  value={editedReminderAt}
-                  onChange={setEditedReminderAt}
-                  disabled={updateTask.isPending}
-                />
-                <ListPickerPill
-                  value={editedListId}
-                  onChange={setEditedListId}
-                  disabled={updateTask.isPending}
-                />
-                <RecurrencePill
-                  rule={editedRecurrenceRule}
-                  interval={editedRecurrenceInterval}
-                  onRuleChange={setEditedRecurrenceRule}
-                  onIntervalChange={setEditedRecurrenceInterval}
-                  disabled={updateTask.isPending}
-                />
-                <SnoozePill taskId={props.task.id} />
-              </div>
-            )}
+                  ) : props.task.description ? (
+                    <p className="max-w-2xl text-sm leading-relaxed whitespace-pre-wrap text-[#C8D6D6]">
+                      {props.task.description}
+                    </p>
+                  ) : null}
+                </div>
+              )}
 
-            {/* Read-only badges when expanded but not editing */}
-            {!isEditing && (
-              <div className="mt-4 border-t border-[#164B49]/40 pt-3">
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                  <PriorityBadge
-                    priority={props.task.priority}
-                    variant="compact"
+              {/* Subtask section */}
+              <SubtaskSection task={props.task} />
+
+              {/* Field controls row */}
+              {isEditing && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-3">
+                  <PrioritySelectorPill
+                    value={editedPriority}
+                    onChange={setEditedPriority}
+                    disabled={updateTask.isPending}
                   />
-                  {props.task.dueDate && (
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                        isDueDateOverdue
-                          ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                          : "border-[#164B49] bg-[#102A2A]/80 text-[#8FA8A8]",
-                      )}
-                    >
-                      <Calendar className="h-3 w-3" />
-                      {new Date(props.task.dueDate).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        },
-                      )}
-                      {isDueDateOverdue && (
-                        <span className="font-semibold text-amber-400">
-                          Overdue
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {editedCategory && (
-                    <div
-                      className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
-                      style={{
-                        backgroundColor: `${editedCategory.color}20`,
-                        borderColor: `${editedCategory.color}40`,
-                        color: editedCategory.color,
-                      }}
-                    >
-                      {editedCategory.name}
-                    </div>
-                  )}
-                  {props.task.reminderAt &&
-                    !(
-                      props.task.completed &&
-                      getReminderStatus(
-                        props.task.reminderAt,
-                        props.task.reminderSentAt ?? null,
-                      ) === "overdue"
-                    ) && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        className={cn(
+                          "flex items-center gap-2 rounded-full border border-[#164B49] bg-[#102A2A]/80 px-4 py-1.5 text-xs font-medium text-[#DCE4E4] backdrop-blur-md",
+                          "transition-all hover:border-[#21716C] hover:bg-[#102A2A]",
+                          "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+                        )}
+                        disabled={updateTask.isPending}
+                      >
+                        <Calendar className="h-3.5 w-3.5" />
+                        {editedDueDate
+                          ? new Date(editedDueDate).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )
+                          : "Set due date"}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <div className="flex flex-col">
+                        <CalendarPicker
+                          date={editedDueDate}
+                          onDateChange={setEditedDueDate}
+                        />
+                        {editedDueDate && (
+                          <div className="border-t border-[#164B49] p-2">
+                            <button
+                              onClick={() => setEditedDueDate(undefined)}
+                              className={cn(
+                                "flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-medium",
+                                "bg-[#102A2A] text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]",
+                                "transition-all",
+                              )}
+                            >
+                              <X className="h-3 w-3" />
+                              Clear date
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <CategoryTreePicker
+                    categories={categories ?? []}
+                    value={editedCategoryId}
+                    onChange={setEditedCategoryId}
+                    disabled={updateTask.isPending}
+                  />
+                  <ReminderPill
+                    value={editedReminderAt}
+                    onChange={setEditedReminderAt}
+                    disabled={updateTask.isPending}
+                  />
+                  <ListPickerPill
+                    value={editedListId}
+                    onChange={setEditedListId}
+                    disabled={updateTask.isPending}
+                  />
+                  <RecurrencePill
+                    rule={editedRecurrenceRule}
+                    interval={editedRecurrenceInterval}
+                    onRuleChange={setEditedRecurrenceRule}
+                    onIntervalChange={setEditedRecurrenceInterval}
+                    disabled={updateTask.isPending}
+                  />
+                  <SnoozePill taskId={props.task.id} />
+                </div>
+              )}
+
+              {/* Read-only badges when expanded but not editing */}
+              {!isEditing && (
+                <div className="mt-4 border-t border-[#164B49]/40 pt-3">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <PriorityBadge
+                      priority={props.task.priority}
+                      variant="compact"
+                    />
+                    {props.task.dueDate && (
                       <div
                         className={cn(
                           "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                          getReminderBadgeClasses(
-                            props.task.reminderAt,
-                            props.task.reminderSentAt,
-                          ),
+                          isDueDateOverdue
+                            ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                            : "border-[#164B49] bg-[#102A2A]/80 text-[#8FA8A8]",
                         )}
                       >
-                        <Bell className="h-3 w-3" />
-                        {formatReminder(
-                          props.task.reminderAt,
-                          props.task.reminderSentAt,
+                        <Calendar className="h-3 w-3" />
+                        {new Date(props.task.dueDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}
+                        {isDueDateOverdue && (
+                          <span className="font-semibold text-amber-400">
+                            Overdue
+                          </span>
                         )}
                       </div>
                     )}
-                  {props.task.recurrenceRule && (
-                    <div className="flex items-center gap-1.5 rounded-full border border-[#50C878]/20 bg-[#50C878]/5 px-2.5 py-1 text-[11px] font-medium text-[#50C878]">
-                      <Repeat className="h-3 w-3" />
-                      {(props.task.recurrenceInterval ?? 1) === 1
-                        ? props.task.recurrenceRule.charAt(0).toUpperCase() +
-                          props.task.recurrenceRule.slice(1)
-                        : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
-                    </div>
-                  )}
-                  {props.task.list && (
-                    <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#8FA8A8]">
-                      <span
-                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                    {editedCategory && (
+                      <div
+                        className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
                         style={{
-                          backgroundColor: props.task.list.color ?? "#8FA8A8",
+                          backgroundColor: `${editedCategory.color}20`,
+                          borderColor: `${editedCategory.color}40`,
+                          color: editedCategory.color,
                         }}
-                      />
-                      {props.task.list.name}
-                    </div>
-                  )}
+                      >
+                        {editedCategory.name}
+                      </div>
+                    )}
+                    {props.task.reminderAt &&
+                      !(
+                        props.task.completed &&
+                        getReminderStatus(
+                          props.task.reminderAt,
+                          props.task.reminderSentAt ?? null,
+                        ) === "overdue"
+                      ) && (
+                        <div
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                            getReminderBadgeClasses(
+                              props.task.reminderAt,
+                              props.task.reminderSentAt,
+                            ),
+                          )}
+                        >
+                          <Bell className="h-3 w-3" />
+                          {formatReminder(
+                            props.task.reminderAt,
+                            props.task.reminderSentAt,
+                          )}
+                        </div>
+                      )}
+                    {props.task.recurrenceRule && (
+                      <div className="flex items-center gap-1.5 rounded-full border border-[#50C878]/20 bg-[#50C878]/5 px-2.5 py-1 text-[11px] font-medium text-[#50C878]">
+                        <Repeat className="h-3 w-3" />
+                        {(props.task.recurrenceInterval ?? 1) === 1
+                          ? props.task.recurrenceRule.charAt(0).toUpperCase() +
+                            props.task.recurrenceRule.slice(1)
+                          : `Every ${props.task.recurrenceInterval} ${getRecurrenceUnitLabel(props.task.recurrenceRule as RecurrenceRuleType)}s`}
+                      </div>
+                    )}
+                    {props.task.list && (
+                      <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-[#8FA8A8]">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{
+                            backgroundColor: props.task.list.color ?? "#8FA8A8",
+                          }}
+                        />
+                        {props.task.list.name}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Action buttons - expanded non-editing view */}
-            {!isEditing && (
-              <div className="mt-3 flex items-center justify-end gap-1 border-t border-[#164B49]/40 pt-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-amber-500/10 hover:text-amber-400"
-                      aria-label="Snooze task"
-                    >
-                      <AlarmClock className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Snooze</span>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2" align="end">
-                    <SnoozePopoverContent taskId={props.task.id} />
-                  </PopoverContent>
-                </Popover>
-                <button
-                  onClick={handleEditClick}
-                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-[#50C878]/10 hover:text-[#50C878]"
-                  aria-label="Edit task"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Edit</span>
-                </button>
-                <button
-                  onClick={() => deleteTask.mutate(props.task.id)}
-                  disabled={deleteTask.isPending}
-                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
-                  aria-label="Delete task"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Delete</span>
-                </button>
-              </div>
-            )}
+              {/* Action buttons - expanded non-editing view */}
+              {!isEditing && (
+                <div className="mt-3 flex items-center justify-end gap-1 border-t border-[#164B49]/40 pt-3">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-amber-500/10 hover:text-amber-400"
+                        aria-label="Snooze task"
+                      >
+                        <AlarmClock className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Snooze</span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="end">
+                      <SnoozePopoverContent taskId={props.task.id} />
+                    </PopoverContent>
+                  </Popover>
+                  <button
+                    onClick={handleEditClick}
+                    className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-[#50C878]/10 hover:text-[#50C878]"
+                    aria-label="Edit task"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </button>
+                  <button
+                    onClick={() => deleteTask.mutate(props.task.id)}
+                    disabled={deleteTask.isPending}
+                    className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                    aria-label="Delete task"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
+                </div>
+              )}
 
-            {/* Save/Cancel buttons inside expanded area */}
-            {isEditing && (
-              <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-[#164B49]/40 pt-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancel}
-                  disabled={updateTask.isPending}
-                  className="h-8 px-3 text-xs text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={
-                    updateTask.isPending || !hasChanges || !editedTitle.trim()
-                  }
-                  className={cn(
-                    "h-8 bg-[#50C878] px-4 text-xs text-[#0A1A1A] hover:bg-[#66D99A]",
-                    "disabled:cursor-not-allowed disabled:opacity-50",
-                  )}
-                >
-                  {updateTask.isPending ? (
-                    "..."
-                  ) : (
-                    <>
-                      <Check className="mr-1 h-3.5 w-3.5" />
-                      Save
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </div>
+              {/* Save/Cancel buttons inside expanded area */}
+              {isEditing && (
+                <div className="mt-3 flex items-center justify-end gap-1.5 border-t border-[#164B49]/40 pt-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={updateTask.isPending}
+                    className="h-8 px-3 text-xs text-[#8FA8A8] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={
+                      updateTask.isPending || !hasChanges || !editedTitle.trim()
+                    }
+                    className={cn(
+                      "h-8 bg-[#50C878] px-4 text-xs text-[#0A1A1A] hover:bg-[#66D99A]",
+                      "disabled:cursor-not-allowed disabled:opacity-50",
+                    )}
+                  >
+                    {updateTask.isPending ? (
+                      "..."
+                    ) : (
+                      <>
+                        <Check className="mr-1 h-3.5 w-3.5" />
+                        Save
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

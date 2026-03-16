@@ -33,8 +33,8 @@ export default function TermsOfServicePage() {
               not agree to these Terms, you may not use the Service.
             </p>
             <p>
-              The Service is operated by Calayo (&quot;we&quot;, &quot;our&quot;,
-              or &quot;us&quot;).
+              The Service is operated by Calayo (&quot;we&quot;,
+              &quot;our&quot;, or &quot;us&quot;).
             </p>
           </Section>
 
@@ -83,8 +83,8 @@ export default function TermsOfServicePage() {
                 or its systems
               </li>
               <li>
-                Use automated means (bots, scrapers, etc.) to access the
-                Service without our express written permission
+                Use automated means (bots, scrapers, etc.) to access the Service
+                without our express written permission
               </li>
               <li>Impersonate any person or entity</li>
             </ul>
@@ -92,11 +92,11 @@ export default function TermsOfServicePage() {
 
           <Section title="5. User Content">
             <p>
-              You retain ownership of all content you create through the Service,
-              including tasks, lists, and categories (&quot;User Content&quot;).
-              By using the Service, you grant us a limited, non-exclusive license
-              to store, process, and display your User Content solely for the
-              purpose of providing the Service to you.
+              You retain ownership of all content you create through the
+              Service, including tasks, lists, and categories (&quot;User
+              Content&quot;). By using the Service, you grant us a limited,
+              non-exclusive license to store, process, and display your User
+              Content solely for the purpose of providing the Service to you.
             </p>
             <p>
               You are solely responsible for your User Content. We do not
@@ -115,9 +115,7 @@ export default function TermsOfServicePage() {
                 Other members of the shared list can view, edit, and delete
                 tasks within that list
               </li>
-              <li>
-                You can remove members or leave a shared list at any time
-              </li>
+              <li>You can remove members or leave a shared list at any time</li>
               <li>
                 The list owner may delete the list, which will remove it for all
                 members

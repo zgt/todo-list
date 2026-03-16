@@ -42,7 +42,7 @@ const navigation = [
     href: "/categories",
     icon: Tag,
   },
-{
+  {
     name: "Settings",
     href: "/settings",
     icon: Settings,

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
+import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -23,8 +24,6 @@ import {
   Shield,
   Trash2,
 } from "lucide-react-native";
-
-import * as Haptics from "expo-haptics";
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
@@ -296,9 +295,7 @@ export default function ProfileScreen() {
             </View>
 
             <Pressable
-              onPress={() =>
-                void Linking.openURL("https://calayo.net/privacy")
-              }
+              onPress={() => void Linking.openURL("https://calayo.net/privacy")}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
