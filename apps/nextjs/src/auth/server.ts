@@ -8,18 +8,18 @@ import { initAuth } from "@acme/auth";
 
 import { env } from "~/env";
 
+const PRODUCTION_DOMAIN = "https://calayo.net";
+
 const baseUrl =
   env.VERCEL_ENV === "production"
-    ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
+    ? PRODUCTION_DOMAIN
     : env.VERCEL_ENV === "preview"
       ? `https://${env.VERCEL_URL}`
       : (env.AUTH_REDIRECT_PROXY_URL ?? `http://localhost:3000`);
 
 export const auth = initAuth({
   baseUrl,
-  productionUrl:
-    env.AUTH_REDIRECT_PROXY_URL ??
-    `https://${env.VERCEL_PROJECT_PRODUCTION_URL ?? "https://calayo.net"}`,
+  productionUrl: env.AUTH_REDIRECT_PROXY_URL ?? PRODUCTION_DOMAIN,
   secret: env.AUTH_SECRET,
   discordClientId: env.AUTH_DISCORD_ID,
   discordClientSecret: env.AUTH_DISCORD_SECRET,
