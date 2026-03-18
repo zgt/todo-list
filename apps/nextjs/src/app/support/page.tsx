@@ -9,98 +9,106 @@ export const metadata: Metadata = {
 
 export default function SupportPage() {
   return (
-    <main className="flex min-h-screen flex-col bg-[#0A1A1A]">
-      <div className="mx-auto w-full max-w-3xl px-6 py-12">
-        <Link
-          href="/"
-          className="mb-8 inline-block text-sm text-[#8FA8A8] transition-colors hover:text-[#50C878]"
-        >
-          &larr; Back to Tokilist
-        </Link>
+    <main className="flex min-h-screen items-center justify-center p-6">
+      <div className="glass-panel relative w-full max-w-3xl overflow-hidden rounded-3xl p-8">
+        {/* Aurora effect */}
+        <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
+          <div className="bg-primary/10 absolute top-[-50%] left-[-20%] h-[80%] w-[80%] rounded-full mix-blend-screen blur-[100px]"></div>
+          <div className="absolute right-[-10%] bottom-[-20%] h-[60%] w-[60%] rounded-full bg-emerald-600/10 mix-blend-screen blur-[80px]"></div>
+        </div>
 
-        <article className="prose prose-invert max-w-none">
-          <h1 className="mb-2 text-4xl font-bold text-white">Support</h1>
-          <p className="mb-10 text-[#DCE4E4]">
-            Need help with Tokilist? We are here to help.
-          </p>
+        <div className="relative z-10">
+          <Link
+            href="/"
+            className="mb-8 inline-block text-sm text-[#8FA8A8] transition-colors hover:text-[#50C878]"
+          >
+            &larr; Back to Tokilist
+          </Link>
 
-          <Section title="Contact Us">
-            <p>
-              For any questions, issues, or feedback, reach out to us at:
+          <article className="prose prose-invert max-w-none">
+            <h1 className="mb-2 text-4xl font-bold text-white">Support</h1>
+            <p className="mb-10 text-[#DCE4E4]">
+              Need help with Tokilist? We are here to help.
             </p>
-            <p>
-              <a
-                href="mailto:support@calayo.net"
-                className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
-              >
-                support@calayo.net
-              </a>
-            </p>
-          </Section>
 
-          <Section title="Frequently Asked Questions">
-            <FAQ question="How do I create a task?">
+            <Section title="Contact Us">
               <p>
-                Tap the green <strong>+</strong> button at the bottom right.
-              </p>
-            </FAQ>
-
-            <FAQ question="How do swipe gestures work?">
-              <p>
-                In <strong>card view</strong>: swipe up to complete, down to
-                mark for delete.
+                For any questions, issues, or feedback, reach out to us at:
               </p>
               <p>
-                In <strong>list view</strong>: swipe left to complete, right to
-                mark for delete.
-              </p>
-              <p>Double-tap to edit.</p>
-            </FAQ>
-
-            <FAQ question="How do I share a list?">
-              <p>
-                Go to your lists, open a list, and tap{" "}
-                <strong>Invite</strong> to generate a share link.
-              </p>
-            </FAQ>
-
-            <FAQ question="How do I delete my account?">
-              <p>
-                Go to <strong>Profile</strong> &gt;{" "}
-                <strong>Danger Zone</strong> &gt;{" "}
-                <strong>Delete Account</strong>.
-              </p>
-            </FAQ>
-
-            <FAQ question="How do I report or block a user?">
-              <p>
-                On a shared list, tap the <strong>...</strong> icon next to a
-                member name.
-              </p>
-            </FAQ>
-          </Section>
-
-          <Section title="Links">
-            <ul>
-              <li>
-                <Link
-                  href="/privacy"
+                <a
+                  href="mailto:support@calayo.net"
                   className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
                 >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </Section>
-        </article>
+                  support@calayo.net
+                </a>
+              </p>
+            </Section>
+
+            <Section title="Frequently Asked Questions">
+              <FAQ question="How do I create a task?">
+                <p>
+                  Tap the green <strong>+</strong> button at the bottom right.
+                </p>
+              </FAQ>
+
+              <FAQ question="How do swipe gestures work?">
+                <p>
+                  In <strong>card view</strong>: swipe up to complete, down to
+                  mark for delete.
+                </p>
+                <p>
+                  In <strong>list view</strong>: swipe left to complete, right to
+                  mark for delete.
+                </p>
+                <p>Double-tap to edit.</p>
+              </FAQ>
+
+              <FAQ question="How do I share a list?">
+                <p>
+                  Go to your lists, open a list, and tap{" "}
+                  <strong>Invite</strong> to generate a share link.
+                </p>
+              </FAQ>
+
+              <FAQ question="How do I delete my account?">
+                <p>
+                  Go to <strong>Profile</strong> &gt;{" "}
+                  <strong>Danger Zone</strong> &gt;{" "}
+                  <strong>Delete Account</strong>.
+                </p>
+              </FAQ>
+
+              <FAQ question="How do I report or block a user?">
+                <p>
+                  On a shared list, tap the <strong>...</strong> icon next to a
+                  member name.
+                </p>
+              </FAQ>
+            </Section>
+
+            <Section title="Links">
+              <ul>
+                <li>
+                  <Link
+                    href="/privacy"
+                    className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/terms"
+                    className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                  >
+                    Terms of Service
+                  </Link>
+                </li>
+              </ul>
+            </Section>
+          </article>
+        </div>
       </div>
     </main>
   );
