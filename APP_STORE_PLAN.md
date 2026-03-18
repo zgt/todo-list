@@ -16,72 +16,102 @@
 | App icon (light + dark) | ✅ | Both `icon-light.png` and `icon-dark.png` configured |
 | Splash screen | ✅ | Configured with expo-splash-screen |
 | Bundle ID | ✅ | `com.zgtf.todolist` |
+| Responsive layout | ✅ | Bottom bar responsive on small (375pt) and large screens |
+| Auth working in production | ✅ | Fixed baseURL mismatch (was using Vercel domain instead of calayo.net) |
+| `ITSAppUsesNonExemptEncryption` | ✅ | Set to `false` in app.config.ts |
 
 ## 2. Account & Privacy (CRITICAL — top rejection reasons)
 
-| Item | Status | Action Needed |
-|------|--------|---------------|
-| **Privacy Policy** | ❌ | Need a privacy policy URL hosted somewhere + linked in App Store Connect + accessible inside the app (Settings) |
-| **Account Deletion** | ❌ | Apple **requires** in-app account deletion if you support account creation. Need a "Delete Account" option in profile/settings |
-| **Privacy Nutrition Labels** | ❌ | Must declare what data you collect in App Store Connect (email, name, usage data, push tokens, etc.) |
+| Item | Status | Notes |
+|------|--------|-------|
+| **Privacy Policy** | ✅ | Hosted at calayo.net/privacy, linked in app profile/settings |
+| **Terms of Service** | ✅ | Hosted at calayo.net/terms, linked in app profile/settings |
+| **Account Deletion** | ✅ | "Delete Account" in profile with confirmation dialog, full data wipe |
+| **Privacy Nutrition Labels** | ✅ | Documented below — ready to enter in App Store Connect |
+| **Contact Support** | ✅ | support@calayo.net linked in profile settings with mail icon |
 
 ## 3. User-Generated Content (UGC)
 
-Music leagues have user-submitted content (song submissions, comments, league names). Apple requires:
-
-| Item | Status | Action Needed |
-|------|--------|---------------|
-| **Report content** | ❌ | Need report buttons on leagues, submissions, user profiles |
-| **Block users** | ❌ | Need ability to block abusive users |
-| **Content filtering** | ❌ | Basic profanity/content filter or moderation queue |
-| **Published contact info** | ❌ | Support email accessible from Settings/Help in the app |
+| Item | Status | Notes |
+|------|--------|-------|
+| **Report content** | ✅ | ReportSheet component — report users with reason picker + details |
+| **Block users** | ✅ | Block from shared list member menu, confirmation alert |
+| **Blocked users management** | ✅ | Dedicated blocked-users screen accessible from profile settings |
+| **Content filtering** | ✅ | Server-side: blocked users' tasks + members filtered from shared lists |
+| **Published contact info** | ✅ | support@calayo.net in profile settings |
+| **Moderation backend** | ✅ | Full moderation router: report, block/unblock, admin report listing |
 
 ## 4. App Store Metadata
 
-| Item | Status | Action Needed |
-|------|--------|---------------|
-| App name & subtitle | ⚠️ | Need to finalize |
-| Description | ❌ | Write compelling App Store description |
-| Screenshots | ❌ | Need iPhone screenshots for required device sizes (6.7", 6.1", 5.5") |
-| App category | ⚠️ | Productivity + Social? |
-| Age rating | ❌ | Fill out age rating questionnaire (updated Jan 2026) |
-| Keywords | ❌ | Research and set App Store keywords |
+| Item | Status | Notes |
+|------|--------|-------|
+| App name & subtitle | ✅ | "Tokilist" / "Tasks, Lists & Collaboration" |
+| Description | ✅ | Written in APP_STORE_METADATA.md |
+| Screenshots | ❌ | Need iPhone screenshots for 6.7" and 6.1". No Mac/Xcode — take on device and resize with ffmpeg |
+| App category | ✅ | Primary: Productivity, Secondary: Lifestyle |
+| Age rating | ✅ | Documented — 4+ or 9+ (UGC) |
+| Keywords | ✅ | 100 chars of comma-separated keywords ready |
+| What's New text | ✅ | Version 1.0.0 release notes written |
+| App Review Notes | ⚠️ | Needs update — swipe gestures changed (see below) |
 
 ## 5. In-App Purchases
 
 | Item | Status | Notes |
 |------|--------|-------|
-| IAP needed? | ✅ (N/A) | No paid features currently — no IAP needed |
-| Restore Purchases | ✅ (N/A) | Not applicable if no IAP |
+| IAP needed? | ✅ (N/A) | No paid features — no IAP needed |
+| Restore Purchases | ✅ (N/A) | Not applicable |
 
 ## 6. Apple Developer Account
 
-| Item | Status | Action Needed |
-|------|--------|---------------|
+| Item | Status | Notes |
+|------|--------|-------|
 | Apple Developer Program ($99/yr) | ⚠️ | Need active membership |
-| EAS Submit configured | ⚠️ | Check `eas.json` for production profile |
-| Certificates & provisioning | ⚠️ | EAS handles this, but verify |
+| EAS Submit configured | ✅ | Production profile + submit config in eas.json |
+| Certificates & provisioning | ✅ | EAS handles this |
+
+## 7. iOS Widgets
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Small widget | ✅ | Circular progress ring with task preview |
+| Calendar week/month widgets | ✅ | Added |
+| Large widget | ✅ | Shows up to 10 tasks |
 
 ---
 
-## 🎯 Recommended Action Plan (Priority Order)
+## 🎯 Remaining Action Items
 
-### Phase 1 — Blockers (must have)
-1. **Add Privacy Policy** — host it (even a simple GitHub Pages site), link in app Settings
-2. **Add Account Deletion** — add "Delete My Account" to profile menu with confirmation
-3. **Add basic UGC moderation** — report buttons + block user + support email in Settings
-4. **Privacy Nutrition Labels** — document all data collected for App Store Connect
+### Blockers
+1. **Screenshots** — Take on your phone, resize to 1290×2796 (6.7") and 1179×2556 (6.1") with ffmpeg
+2. **Apple Developer membership** — Verify active
 
-### Phase 2 — Polish
-5. Full QA pass on clean device (every screen, every flow)
-6. Fix any remaining UI bugs
-7. Write App Store description + prepare screenshots
-8. Fill out age rating questionnaire
+### Polish
+3. **Full QA pass** on clean device (fresh install, no dev data)
+4. **Update App Review Notes** — Swipe gestures changed: left/up = complete, right/down = pending delete, double-tap = edit
+5. Fill out age rating questionnaire in App Store Connect
+6. Enter Privacy Nutrition Labels in App Store Connect
 
-### Phase 3 — Submit
-9. Create production EAS build
-10. Submit via EAS Submit or App Store Connect
-11. Include demo account credentials in App Review Notes
+### Submit
+7. Create production EAS build: `eas build --profile production --platform ios`
+8. Submit: `eas submit --platform ios`
+9. Include demo account credentials in App Review Notes
+
+---
+
+## Recent Changes (March 2026)
+- Music league fully split out to standalone chumbaleague app
+- Swipe gestures redesigned: left/up = toggle complete, right/down = pending delete, double-tap = edit
+- Multi-delete: pending-delete tasks collected, FAB turns into red trash button for bulk delete
+- Animated task reordering in list view (completed tasks slide to bottom)
+- Animated subtask reordering in both list and card view
+- Report/block moderation UI on shared list members
+- Blocked users screen in profile settings
+- Server-side filtering of blocked users' content
+- Contact Support (support@calayo.net) in profile
+- Responsive bottom bar for small iPhones
+- iOS widgets: circular progress ring, calendar widgets
+- Auth fix: production baseURL mismatch resolved
+- Deleted tasks list view with restore
 
 ---
 

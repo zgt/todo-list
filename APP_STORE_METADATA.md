@@ -24,6 +24,8 @@ Organize your life with a clean, fast task manager built for how you actually wo
 • Smart categories and filters to find anything fast
 • Push notification reminders so nothing slips
 • Auto-complete tasks when all subtasks are done
+• Snooze tasks to deal with them later
+• Recurring tasks with flexible schedules
 
 **Shared Lists**
 Collaborate with anyone. Share lists with friends, family, or teammates. See what's been completed, get notified when someone checks off a task, and stay in sync without the group chat chaos.
@@ -32,13 +34,21 @@ Collaborate with anyone. Share lists with friends, family, or teammates. See wha
 • Real-time updates when collaborators complete tasks
 • Push notifications for shared list activity
 • Role-based access — control who can view or edit
+• Report and block users for a safe experience
+
+**iOS Widgets**
+Glance at your tasks without opening the app. Tokilist includes widgets for your home screen — see your progress at a glance with the circular progress ring, preview upcoming tasks, or check your calendar view.
+
+• Small widget with progress ring and task preview
+• Calendar week and month widgets
+• Large widget showing up to 10 tasks
 
 **Built for You**
 • Beautiful dark theme that's easy on the eyes
 • Sign in with Discord or Apple
 • Works on iPhone and iPad
-• iOS widgets for quick task access
 • Interactive swipe tutorial to get started fast
+• Smooth animations throughout
 • Your data stays yours — read our privacy policy
 
 Whether you're managing your daily to-dos, coordinating a grocery list with your partner, or keeping a shared project on track with your team — Tokilist has you covered.
@@ -47,14 +57,14 @@ Whether you're managing your daily to-dos, coordinating a grocery list with your
 
 ## Keywords (100 characters max, comma-separated)
 
-tasks,todo,list,shared,collaborate,reminders,productivity,organizer,calendar,subtasks,categories
+tasks,todo,list,shared,collaborate,reminders,productivity,organizer,calendar,subtasks,widgets
 
 ---
 
 ## Promotional Text (170 characters max)
 *Can be updated anytime without app review*
 
-The task manager that does more. Manage tasks, share lists with friends, and stay on top of everything. Try it free.
+The task manager that does more. Manage tasks, share lists with friends, track progress with widgets. Try it free.
 
 ---
 
@@ -65,8 +75,10 @@ Welcome to Tokilist! 🎉
 • Smart task management with subtasks, priorities, and reminders
 • Swipeable card view, classic list view, or calendar view
 • Shared lists with real-time collaboration
-• iOS widgets for quick task access
+• iOS widgets — progress ring, calendar, and task list
+• Snooze and recurring tasks
 • Push notifications for reminders and shared list activity
+• Report and block users on shared lists
 • Interactive swipe tutorial to learn the ropes
 • Dark theme designed for comfort
 
@@ -76,15 +88,23 @@ Welcome to Tokilist! 🎉
 *(Include with submission to help Apple reviewers test the app)*
 
 To test the app:
-1. Sign in with Discord or Apple (both OAuth flows are functional)
-2. Create a task from the main screen — you can add subtasks inline
-3. Try swiping tasks left to complete, right to edit
-4. Shared lists can be tested by creating a list and sharing via the list detail page
-5. Switch between card view, list view, and calendar view using the toggle button
+1. Sign in with Apple (recommended) or Discord — both OAuth flows are functional
+2. Create a task from the green "+" button at bottom right
+3. Swipe gestures:
+   - Card view: swipe UP to complete/uncomplete, swipe DOWN to mark for deletion
+   - List view: swipe LEFT to complete/uncomplete, swipe RIGHT to mark for deletion
+   - Double-tap any task to edit
+4. Tasks marked for deletion turn the "+" button into a red trash icon for bulk delete
+5. Shared lists: create a list from the list picker, share via invite link on the list detail page
+6. Report/block: on a shared list, tap "..." next to a member to report or block them
+7. Widgets: add from the iOS home screen widget picker
+8. Switch between card view, list view, and calendar view using the toggle button at bottom
 
 Demo account: No credentials needed. Please use "Sign in with Apple" to create a test account. All features are available immediately after sign-in.
 
 The app requires an internet connection for all features.
+
+Support: support@calayo.net
 
 ---
 
@@ -111,15 +131,15 @@ The app requires an internet connection for all features.
 
 ## Screenshots Needed
 
-### iPhone 6.7" (required — iPhone 15 Pro Max / 16 Pro Max)
+### iPhone 6.7" (required — 1290×2796px)
 1. Main task view (card stack with tasks)
-2. List view with tasks
+2. List view with tasks and expanded subtasks
 3. Calendar view
-4. Task detail with subtasks expanded
-5. Shared list view
+4. Shared list detail with members
+5. iOS widget on home screen
 
-### iPhone 6.1" (required — iPhone 15 Pro / 16 Pro)
-Same 5 screenshots, captured on 6.1" device/simulator
+### iPhone 6.1" (required — 1179×2556px)
+Same 5 screenshots, resized from device captures
 
 ### iPad (optional but recommended)
 Same key screens if tablet layout looks good
