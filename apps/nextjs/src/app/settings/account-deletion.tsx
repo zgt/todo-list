@@ -60,7 +60,7 @@ export function AccountDeletion() {
   };
 
   return (
-    <div className="glass-card rounded-2xl border-[#E57373]/20 p-6">
+    <div className="rounded-2xl border border-[#E57373]/20 bg-[#102A2A]/80 p-6 backdrop-blur-sm">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-[#E57373]">Danger Zone</h2>
         <p className="text-muted-foreground mt-1 text-sm">

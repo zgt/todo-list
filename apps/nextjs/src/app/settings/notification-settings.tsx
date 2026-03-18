@@ -85,7 +85,7 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="glass-card rounded-2xl p-6">
+    <div className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-6 backdrop-blur-sm">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-white">Notification Settings</h2>
         <p className="text-muted-foreground mt-1 text-sm">

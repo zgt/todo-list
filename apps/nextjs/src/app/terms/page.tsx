@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center px-6 py-12">
+    <main className="flex min-h-screen w-full flex-col items-center px-6 py-12">
       <div className="glass-panel relative mx-auto w-full max-w-3xl overflow-hidden rounded-3xl p-8">
         {/* Aurora effect */}
         <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
