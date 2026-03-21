@@ -9,6 +9,29 @@ import { authClient, clearAuthStorage } from "./auth";
 import { getBaseUrl } from "./base-url";
 
 /**
+ * Fix malformed cookies from the Better Auth expo client.
+ * The expo client's splitSetCookieHeader can leave trailing commas on values
+ * and produce duplicate cookie names. This deduplicates (keeping the last value)
+ * and strips trailing commas.
+ */
+function sanitizeCookies(raw: string): string {
+  const cookieMap = new Map<string, string>();
+  raw.split(";").forEach((c) => {
+    const trimmed = c.trim();
+    if (!trimmed) return;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx === -1) return;
+    const name = trimmed.substring(0, eqIdx);
+    let value = trimmed.substring(eqIdx + 1);
+    value = value.replace(/,+$/, "");
+    cookieMap.set(name, value);
+  });
+  return Array.from(cookieMap.entries())
+    .map(([k, v]) => `${k}=${v}`)
+    .join("; ");
+}
+
+/**
  * Global handler for UNAUTHORIZED errors from tRPC.
  * When the server rejects a stale session, we clear local auth tokens
  * and the query cache so the app falls back to the login screen.
@@ -79,7 +102,7 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
 
         const cookies = authClient.getCookie();
         if (cookies) {
-          headers.Cookie = cookies;
+          headers.Cookie = sanitizeCookies(cookies);
         }
         return headers;
       },
@@ -108,10 +131,8 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
           };
 
           const cookies = authClient.getCookie();
-          console.log(`[AUTH DEBUG CLIENT] baseUrl: ${getBaseUrl()}`);
-          console.log(`[AUTH DEBUG CLIENT] getCookie() returned: ${cookies ? `"${cookies.substring(0, 80)}..."` : "null/empty"}`);
           if (cookies) {
-            headers.Cookie = cookies;
+            headers.Cookie = sanitizeCookies(cookies);
           }
           return headers;
         },
