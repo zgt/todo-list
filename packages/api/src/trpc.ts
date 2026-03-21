@@ -31,9 +31,26 @@ export const createTRPCContext = async (opts: {
   auth: Auth;
 }) => {
   const authApi = opts.auth.api;
+
+  // DEBUG: log what cookies/headers are arriving
+  const cookie = opts.headers.get("cookie");
+  const expoOrigin = opts.headers.get("expo-origin");
+  const trpcSource = opts.headers.get("x-trpc-source");
+  console.log(`[AUTH DEBUG] x-trpc-source: ${trpcSource}`);
+  console.log(`[AUTH DEBUG] expo-origin: ${expoOrigin}`);
+  console.log(`[AUTH DEBUG] cookie present: ${!!cookie}, length: ${cookie?.length ?? 0}`);
+  if (cookie) {
+    // Log cookie names (not values) for security
+    const cookieNames = cookie.split(";").map((c) => c.trim().split("=")[0]).filter(Boolean);
+    console.log(`[AUTH DEBUG] cookie names: ${JSON.stringify(cookieNames)}`);
+  }
+
   const session = await authApi.getSession({
     headers: opts.headers,
   });
+
+  console.log(`[AUTH DEBUG] session result: ${session ? `user=${session.user?.id}, expires=${session.session?.expiresAt}` : "null"}`);
+
   return {
     authApi,
     session,

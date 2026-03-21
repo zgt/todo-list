@@ -17,6 +17,8 @@ const CURRENT_BUILD =
   "unknown";
 const BUILD_VERSION_KEY = "expo_auth_build_version";
 const AUTH_KEYS = [
+  "expo_cookie",                      // actual cookie storage key used by expo client
+  "expo_session_data",                // cached session data
   "expo_better-auth.session_token",
   "expo_better-auth.refresh_token",
   "expo_session_token",

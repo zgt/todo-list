@@ -108,6 +108,8 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
           };
 
           const cookies = authClient.getCookie();
+          console.log(`[AUTH DEBUG CLIENT] baseUrl: ${getBaseUrl()}`);
+          console.log(`[AUTH DEBUG CLIENT] getCookie() returned: ${cookies ? `"${cookies.substring(0, 80)}..."` : "null/empty"}`);
           if (cookies) {
             headers.Cookie = cookies;
           }
