@@ -11,6 +11,7 @@ import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
 import type { Auth } from "@acme/auth";
+import { sql } from "@acme/db";
 import { db } from "@acme/db/client";
 
 /**
@@ -43,6 +44,14 @@ export const createTRPCContext = async (opts: {
     // Log cookie names (not values) for security
     const cookieNames = cookie.split(";").map((c) => c.trim().split("=")[0]).filter(Boolean);
     console.log(`[AUTH DEBUG] cookie names: ${JSON.stringify(cookieNames)}`);
+    // Log first 8 chars of each cookie value to identify duplicates/corruption
+    const cookiePreviews = cookie.split(";").map((c) => {
+      const [name, ...rest] = c.trim().split("=");
+      const val = rest.join("=");
+      return `${name}=${val?.substring(0, 8)}...`;
+    });
+    console.log(`[AUTH DEBUG] cookie previews: ${JSON.stringify(cookiePreviews)}`);
+    console.log(`[AUTH DEBUG] raw cookie: ${cookie}`);
   }
 
   const session = await authApi.getSession({
@@ -50,6 +59,28 @@ export const createTRPCContext = async (opts: {
   });
 
   console.log(`[AUTH DEBUG] session result: ${session ? `user=${session.user?.id}, expires=${session.session?.expiresAt}` : "null"}`);
+
+  // If session is null but cookie exists, try to understand why
+  if (!session && cookie) {
+    // Check if the token exists in DB directly
+    const tokenCookie = cookie.split(";").find((c) => c.trim().startsWith("__Secure-better-auth.session_token=") || c.trim().startsWith("better-auth.session_token="));
+    if (tokenCookie) {
+      const tokenValue = tokenCookie.trim().split("=").slice(1).join("=");
+      console.log(`[AUTH DEBUG] token length: ${tokenValue.length}, first8: ${tokenValue.substring(0, 8)}`);
+      // Direct DB lookup
+      try {
+        const dbSession = await db.execute(
+          sql`SELECT id, "userId", "expiresAt", substring(token, 1, 8) as token_prefix FROM session WHERE token = ${tokenValue}`
+        );
+        console.log(`[AUTH DEBUG] direct DB lookup rows: ${dbSession.rowCount}, result: ${JSON.stringify(dbSession.rows?.[0] ?? "no rows")}`);
+        // Also count total sessions
+        const totalSessions = await db.execute(sql`SELECT count(*) as cnt FROM session`);
+        console.log(`[AUTH DEBUG] total sessions in DB: ${JSON.stringify(totalSessions.rows?.[0])}`);
+      } catch (e) {
+        console.log(`[AUTH DEBUG] DB lookup failed: ${e}`);
+      }
+    }
+  }
 
   return {
     authApi,
