@@ -31,7 +31,8 @@ import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
 import { useSwipeTutorial } from "~/hooks/useSwipeTutorial";
-import { useWidgetSync } from "~/hooks/useWidgetSync";
+import { useWidgetActions, useWidgetSync } from "~/hooks/useWidgetSync";
+import { vanillaTrpc } from "~/utils/api";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import {
@@ -367,6 +368,16 @@ export default function Index() {
 
   // Sync tasks to iOS widget whenever they change
   useWidgetSync(tasks, !!session);
+
+  // Process pending widget actions (task toggles from iOS widget)
+  useWidgetActions(
+    async ({ id, completed }) => {
+      await vanillaTrpc.task.update.mutate({ id, completed });
+    },
+    async () => {
+      await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+    },
+  );
 
   // tRPC mutation for toggling task completion with optimistic update
   const toggleMutation = useMutation(
