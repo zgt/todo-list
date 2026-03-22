@@ -152,13 +152,14 @@ export function TaskFormSheet({
 }: TaskFormSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
-  const snapPoints = useMemo(() => ["90%"], []);
+  const snapPoints = useMemo(() => ["100%"], []);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingSubtasksScrollRef = useRef<ScrollView>(null);
   const subtaskSectionY = useRef(0);
   const addSubtaskRowY = useRef(0);
   const scrollViewHeight = useRef(0);
   const keyboardHeightRef = useRef(0);
+  const [subtaskInputFocused, setSubtaskInputFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -338,6 +339,7 @@ export function TaskFormSheet({
     setNewSubtaskTitle("");
     setEditingSubtaskId(null);
     setEditingSubtaskTitle("");
+    setSubtaskInputFocused(false);
   }, [initialData]);
 
   // For edit mode: controlled by isOpen prop
@@ -441,7 +443,7 @@ export function TaskFormSheet({
           style={styles.contentContainer}
           contentContainerStyle={[
             styles.scrollContent,
-            keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+            subtaskInputFocused && keyboardHeight > 0 && { paddingBottom: keyboardHeight },
           ]}
           keyboardShouldPersistTaps="handled"
           onLayout={(e) => {
@@ -664,8 +666,10 @@ export function TaskFormSheet({
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onFocus={() => {
+                    setSubtaskInputFocused(true);
                     setTimeout(() => scrollToSubtaskInput(), 400);
                   }}
+                  onBlur={() => setSubtaskInputFocused(false)}
                   onSubmitEditing={handleAddSubtask}
                   style={styles.addSubtaskInput}
                 />
@@ -750,8 +754,10 @@ export function TaskFormSheet({
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onFocus={() => {
+                    setSubtaskInputFocused(true);
                     setTimeout(() => scrollToSubtaskInput(), 400);
                   }}
+                  onBlur={() => setSubtaskInputFocused(false)}
                   onSubmitEditing={handleAddSubtask}
                   style={[
                     styles.addSubtaskInput,
