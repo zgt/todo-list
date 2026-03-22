@@ -154,6 +154,7 @@ export function TaskFormSheet({
   const titleInputRef = useRef<TextInput>(null);
   const snapPoints = useMemo(() => ["90%"], []);
   const scrollViewRef = useRef<ScrollView>(null);
+  const pendingSubtasksScrollRef = useRef<ScrollView>(null);
   const subtaskSectionY = useRef(0);
   const addSubtaskRowY = useRef(0);
   const scrollViewHeight = useRef(0);
@@ -272,6 +273,14 @@ export function TaskFormSheet({
     trpc.subtask.delete.mutationOptions({ onSuccess: invalidateTasks }),
   );
 
+  const scrollToSubtaskInput = useCallback(() => {
+    setTimeout(() => {
+      const targetY = Math.max(0, addSubtaskRowY.current - scrollViewHeight.current + 80);
+      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+      pendingSubtasksScrollRef.current?.scrollToEnd({ animated: true });
+    }, 200);
+  }, []);
+
   const handleAddSubtask = useCallback(() => {
     const trimmed = newSubtaskTitle.trim();
     if (!trimmed) return;
@@ -284,10 +293,7 @@ export function TaskFormSheet({
       ]);
       setNewSubtaskTitle("");
       newSubtaskInputRef.current?.focus();
-      setTimeout(
-        () => scrollViewRef.current?.scrollToEnd({ animated: true }),
-        200,
-      );
+      scrollToSubtaskInput();
       return;
     }
 
@@ -307,14 +313,11 @@ export function TaskFormSheet({
           ]);
           setNewSubtaskTitle("");
           newSubtaskInputRef.current?.focus();
-          setTimeout(
-            () => scrollViewRef.current?.scrollToEnd({ animated: true }),
-            200,
-          );
+          scrollToSubtaskInput();
         },
       },
     );
-  }, [newSubtaskTitle, mode, taskId, createSubtask]);
+  }, [newSubtaskTitle, mode, taskId, createSubtask, scrollToSubtaskInput]);
 
   const resetForm = useCallback(() => {
     setTitle(initialData?.title ?? "");
@@ -661,10 +664,7 @@ export function TaskFormSheet({
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onFocus={() => {
-                    setTimeout(() => {
-                      const targetY = Math.max(0, addSubtaskRowY.current - scrollViewHeight.current + 80);
-                      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
-                    }, 400);
+                    setTimeout(() => scrollToSubtaskInput(), 400);
                   }}
                   onSubmitEditing={handleAddSubtask}
                   style={styles.addSubtaskInput}
@@ -706,6 +706,7 @@ export function TaskFormSheet({
 
               {pendingSubtasks.length > 0 && (
                 <ScrollView
+                  ref={pendingSubtasksScrollRef}
                   style={styles.pendingSubtasksList}
                   nestedScrollEnabled
                 >
@@ -749,10 +750,7 @@ export function TaskFormSheet({
                   autoCapitalize="sentences"
                   returnKeyType="done"
                   onFocus={() => {
-                    setTimeout(() => {
-                      const targetY = Math.max(0, addSubtaskRowY.current - scrollViewHeight.current + 80);
-                      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
-                    }, 400);
+                    setTimeout(() => scrollToSubtaskInput(), 400);
                   }}
                   onSubmitEditing={handleAddSubtask}
                   style={[
