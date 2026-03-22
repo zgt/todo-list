@@ -18,6 +18,7 @@ import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetScrollView,
+  BottomSheetTextInput,
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -280,7 +281,7 @@ export function TaskFormSheet({
       newSubtaskInputRef.current?.focus();
       setTimeout(
         () => scrollViewRef.current?.scrollToEnd({ animated: true }),
-        100,
+        200,
       );
       return;
     }
@@ -303,7 +304,7 @@ export function TaskFormSheet({
           newSubtaskInputRef.current?.focus();
           setTimeout(
             () => scrollViewRef.current?.scrollToEnd({ animated: true }),
-            100,
+            200,
           );
         },
       },
@@ -452,8 +453,8 @@ export function TaskFormSheet({
           {/* Title */}
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Title</Text>
-            <TextInput
-              ref={titleInputRef}
+            <BottomSheetTextInput
+              ref={titleInputRef as React.RefObject<any>}
               value={title}
               onChangeText={setTitle}
               placeholder="What needs to be done?"
@@ -467,7 +468,7 @@ export function TaskFormSheet({
           {/* Description */}
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Description</Text>
-            <TextInput
+            <BottomSheetTextInput
               value={description}
               onChangeText={setDescription}
               placeholder="Add details..."
@@ -558,7 +559,7 @@ export function TaskFormSheet({
 
                   {/* Title — tap to edit inline */}
                   {editingSubtaskId === subtask.id ? (
-                    <TextInput
+                    <BottomSheetTextInput
                       value={editingSubtaskTitle}
                       onChangeText={setEditingSubtaskTitle}
                       autoFocus
@@ -637,8 +638,8 @@ export function TaskFormSheet({
 
               {/* Add subtask input */}
               <View style={styles.addSubtaskRow}>
-                <TextInput
-                  ref={newSubtaskInputRef}
+                <BottomSheetTextInput
+                  ref={newSubtaskInputRef as React.RefObject<any>}
                   value={newSubtaskTitle}
                   onChangeText={setNewSubtaskTitle}
                   placeholder="Add a subtask..."
@@ -648,11 +649,8 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({
-                        y: subtaskSectionY.current,
-                        animated: true,
-                      });
-                    }, 300);
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 400);
                   }}
                   onSubmitEditing={handleAddSubtask}
                   style={styles.addSubtaskInput}
@@ -722,8 +720,8 @@ export function TaskFormSheet({
 
               {/* Add subtask input */}
               <View style={styles.addSubtaskRow}>
-                <TextInput
-                  ref={newSubtaskInputRef}
+                <BottomSheetTextInput
+                  ref={newSubtaskInputRef as React.RefObject<any>}
                   value={newSubtaskTitle}
                   onChangeText={setNewSubtaskTitle}
                   placeholder="Add a subtask..."
@@ -733,11 +731,8 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollTo({
-                        y: subtaskSectionY.current,
-                        animated: true,
-                      });
-                    }, 300);
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 400);
                   }}
                   onSubmitEditing={handleAddSubtask}
                   style={[

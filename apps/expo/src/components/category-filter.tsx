@@ -10,7 +10,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { runOnJS } from "react-native-reanimated";
@@ -18,6 +17,7 @@ import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
   BottomSheetScrollView,
+  BottomSheetTextInput,
   BottomSheetModal as BSModal,
 } from "@gorhom/bottom-sheet";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -330,7 +330,7 @@ export function CategoryFilter({
                 </Pressable>
               </View>
 
-              <TextInput
+              <BottomSheetTextInput
                 style={styles.input}
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
