@@ -406,58 +406,57 @@ struct SmallWidgetView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            // Header: category cycle button
-            HStack {
-                CategoryCycleButton(currentCategory: entry.currentCategory, compact: true)
-                Spacer()
-            }
+            // Top row: category on left, progress ring on right
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 6) {
+                    CategoryCycleButton(currentCategory: entry.currentCategory, compact: true)
 
-            // Progress ring
-            ZStack {
-                // Background track
-                Circle()
-                    .stroke(Color.borderDefault, lineWidth: 5)
-
-                // Filled arc
-                Circle()
-                    .trim(from: 0, to: entry.totalCount > 0 ? progress : 0)
-                    .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-
-                // Fraction label inside ring
-                if entry.totalCount > 0 {
-                    Text("\(entry.completedCount)/\(entry.totalCount)")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .foregroundColor(.primaryEmerald)
-                } else {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.primaryEmerald)
-                }
-            }
-            .frame(width: 52, height: 52)
-
-            // Next tasks preview
-            VStack(alignment: .leading, spacing: 2) {
-                if incompleteTasks.isEmpty {
-                    Text("All caught up!")
-                        .font(.caption)
-                        .foregroundColor(.textMuted)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                } else {
-                    ForEach(incompleteTasks.prefix(2)) { task in
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.primaryEmerald.opacity(0.5))
-                                .frame(width: 4, height: 4)
-                            Text(task.title)
-                                .font(.caption)
-                                .foregroundColor(.textPrimary)
-                                .lineLimit(1)
+                    // Next tasks preview
+                    if incompleteTasks.isEmpty {
+                        Text("All caught up!")
+                            .font(.caption)
+                            .foregroundColor(.textMuted)
+                    } else {
+                        ForEach(incompleteTasks.prefix(2)) { task in
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(Color.primaryEmerald.opacity(0.5))
+                                    .frame(width: 4, height: 4)
+                                Text(task.title)
+                                    .font(.caption)
+                                    .foregroundColor(.textPrimary)
+                                    .lineLimit(1)
+                            }
                         }
                     }
                 }
+
+                Spacer()
+
+                // Progress ring
+                ZStack {
+                    Circle()
+                        .stroke(Color.borderDefault, lineWidth: 6)
+
+                    Circle()
+                        .trim(from: 0, to: entry.totalCount > 0 ? progress : 0)
+                        .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+
+                    if entry.totalCount > 0 {
+                        Text("\(entry.completedCount)/\(entry.totalCount)")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(.primaryEmerald)
+                    } else {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(.primaryEmerald)
+                    }
+                }
+                .frame(width: 70, height: 70)
             }
+
+            Spacer(minLength: 0)
         }
         .padding(12)
         .containerBackground(Color.backgroundDeep, for: .widget)

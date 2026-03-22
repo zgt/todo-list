@@ -131,6 +131,20 @@ struct CalendarMediumView: View {
 
     var body: some View {
         VStack(spacing: 8) {
+            // Date header
+            HStack {
+                Text(entry.date, format: .dateTime.weekday(.wide).month(.abbreviated).day())
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.textPrimary)
+                Spacer()
+                if entry.totalCount > 0 {
+                    Text("\(entry.completedCount)/\(entry.totalCount)")
+                        .font(.caption)
+                        .foregroundColor(.primaryEmerald)
+                }
+            }
+
             // Week row
             HStack(spacing: 0) {
                 ForEach(Array(weekDays.enumerated()), id: \.offset) { index, day in
