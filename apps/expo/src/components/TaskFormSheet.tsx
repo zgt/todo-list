@@ -152,7 +152,7 @@ export function TaskFormSheet({
 }: TaskFormSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
-  const snapPoints = useMemo(() => ["90%"], []);
+  const snapPoints = useMemo(() => ["35%", "90%"], []);
   const scrollViewRef = useRef<ScrollView>(null);
   const subtaskSectionY = useRef(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);

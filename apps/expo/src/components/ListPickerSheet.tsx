@@ -27,7 +27,7 @@ export function ListPickerSheet({
   lists,
 }: ListPickerSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["50%"], []);
+  const snapPoints = useMemo(() => ["60%"], []);
 
   const selectedList = lists.find((l) => l.id === selectedListId);
 
