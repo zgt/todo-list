@@ -254,9 +254,9 @@ struct TodoWidgetProvider: TimelineProvider {
         case .systemMedium:
             return 5
         case .systemLarge:
-            return 10
+            return 9
         case .systemExtraLarge:
-            return 10
+            return 9
         case .accessoryInline:
             return 0  // Just shows count
         case .accessoryCircular:
