@@ -152,9 +152,12 @@ export function TaskFormSheet({
 }: TaskFormSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
-  const snapPoints = useMemo(() => ["35%", "90%"], []);
+  const snapPoints = useMemo(() => ["90%"], []);
   const scrollViewRef = useRef<ScrollView>(null);
   const subtaskSectionY = useRef(0);
+  const addSubtaskRowY = useRef(0);
+  const scrollViewHeight = useRef(0);
+  const keyboardHeightRef = useRef(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -164,9 +167,11 @@ export function TaskFormSheet({
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
+      keyboardHeightRef.current = e.endCoordinates.height;
       setKeyboardHeight(e.endCoordinates.height);
     });
     const hideSub = Keyboard.addListener(hideEvent, () => {
+      keyboardHeightRef.current = 0;
       setKeyboardHeight(0);
     });
 
@@ -436,6 +441,9 @@ export function TaskFormSheet({
             keyboardHeight > 0 && { paddingBottom: keyboardHeight },
           ]}
           keyboardShouldPersistTaps="handled"
+          onLayout={(e) => {
+            scrollViewHeight.current = e.nativeEvent.layout.height;
+          }}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -637,7 +645,12 @@ export function TaskFormSheet({
               ))}
 
               {/* Add subtask input */}
-              <View style={styles.addSubtaskRow}>
+              <View
+                style={styles.addSubtaskRow}
+                onLayout={(e) => {
+                  addSubtaskRowY.current = subtaskSectionY.current + e.nativeEvent.layout.y;
+                }}
+              >
                 <BottomSheetTextInput
                   ref={newSubtaskInputRef as React.RefObject<any>}
                   value={newSubtaskTitle}
@@ -649,7 +662,8 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                      const targetY = Math.max(0, addSubtaskRowY.current - scrollViewHeight.current + 80);
+                      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
                     }, 400);
                   }}
                   onSubmitEditing={handleAddSubtask}
@@ -719,7 +733,12 @@ export function TaskFormSheet({
               )}
 
               {/* Add subtask input */}
-              <View style={styles.addSubtaskRow}>
+              <View
+                style={styles.addSubtaskRow}
+                onLayout={(e) => {
+                  addSubtaskRowY.current = subtaskSectionY.current + e.nativeEvent.layout.y;
+                }}
+              >
                 <BottomSheetTextInput
                   ref={newSubtaskInputRef as React.RefObject<any>}
                   value={newSubtaskTitle}
@@ -731,7 +750,8 @@ export function TaskFormSheet({
                   returnKeyType="done"
                   onFocus={() => {
                     setTimeout(() => {
-                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                      const targetY = Math.max(0, addSubtaskRowY.current - scrollViewHeight.current + 80);
+                      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
                     }, 400);
                   }}
                   onSubmitEditing={handleAddSubtask}
