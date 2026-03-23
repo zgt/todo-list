@@ -431,7 +431,7 @@ export function TaskFormSheet({
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
-        keyboardBehavior="interactive"
+        keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
         onDismiss={handleDismiss}
         backdropComponent={renderBackdrop}

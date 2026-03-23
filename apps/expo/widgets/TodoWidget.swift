@@ -405,55 +405,53 @@ struct SmallWidgetView: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 6) {
             // Top row: category on left, progress ring on right
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 6) {
-                    CategoryCycleButton(currentCategory: entry.currentCategory, compact: true)
-
-                    // Next tasks preview
-                    if incompleteTasks.isEmpty {
-                        Text("All caught up!")
-                            .font(.caption)
-                            .foregroundColor(.textMuted)
-                    } else {
-                        ForEach(incompleteTasks.prefix(2)) { task in
-                            HStack(spacing: 4) {
-                                Circle()
-                                    .fill(Color.primaryEmerald.opacity(0.5))
-                                    .frame(width: 4, height: 4)
-                                Text(task.title)
-                                    .font(.caption)
-                                    .foregroundColor(.textPrimary)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                }
+            HStack(alignment: .top) {
+                CategoryCycleButton(currentCategory: entry.currentCategory, compact: true)
 
                 Spacer()
 
                 // Progress ring
                 ZStack {
                     Circle()
-                        .stroke(Color.borderDefault, lineWidth: 6)
+                        .stroke(Color.borderDefault, lineWidth: 4)
 
                     Circle()
                         .trim(from: 0, to: entry.totalCount > 0 ? progress : 0)
-                        .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                         .rotationEffect(.degrees(-90))
 
                     if entry.totalCount > 0 {
                         Text("\(entry.completedCount)/\(entry.totalCount)")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
                             .foregroundColor(.primaryEmerald)
                     } else {
                         Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 18))
+                            .font(.system(size: 14))
                             .foregroundColor(.primaryEmerald)
                     }
                 }
-                .frame(width: 70, height: 70)
+                .frame(width: 42, height: 42)
+            }
+
+            // Task list below
+            if incompleteTasks.isEmpty {
+                Text("All caught up!")
+                    .font(.caption)
+                    .foregroundColor(.textMuted)
+            } else {
+                ForEach(incompleteTasks.prefix(2)) { task in
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color.primaryEmerald.opacity(0.5))
+                            .frame(width: 4, height: 4)
+                        Text(task.title)
+                            .font(.caption)
+                            .foregroundColor(.textPrimary)
+                            .lineLimit(1)
+                    }
+                }
             }
 
             Spacer(minLength: 0)
