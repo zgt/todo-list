@@ -2,6 +2,7 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
+import type { LayoutChangeEvent, TextInput } from "react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -11,7 +12,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import * as Haptics from "expo-haptics";
@@ -276,7 +276,10 @@ export function TaskFormSheet({
 
   const scrollToSubtaskInput = useCallback(() => {
     setTimeout(() => {
-      const targetY = Math.max(0, addSubtaskRowY.current - scrollViewHeight.current + 80);
+      const targetY = Math.max(
+        0,
+        addSubtaskRowY.current - scrollViewHeight.current + 80,
+      );
       scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
       pendingSubtasksScrollRef.current?.scrollToEnd({ animated: true });
     }, 200);
@@ -443,10 +446,11 @@ export function TaskFormSheet({
           style={styles.contentContainer}
           contentContainerStyle={[
             styles.scrollContent,
-            subtaskInputFocused && keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+            subtaskInputFocused &&
+              keyboardHeight > 0 && { paddingBottom: keyboardHeight },
           ]}
           keyboardShouldPersistTaps="handled"
-          onLayout={(e) => {
+          onLayout={(e: LayoutChangeEvent) => {
             scrollViewHeight.current = e.nativeEvent.layout.height;
           }}
         >
@@ -467,7 +471,11 @@ export function TaskFormSheet({
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Title</Text>
             <BottomSheetTextInput
-              ref={titleInputRef as React.RefObject<any>}
+              ref={
+                titleInputRef as React.RefObject<
+                  React.ComponentRef<typeof BottomSheetTextInput>
+                >
+              }
               value={title}
               onChangeText={setTitle}
               placeholder="What needs to be done?"
@@ -653,11 +661,16 @@ export function TaskFormSheet({
               <View
                 style={styles.addSubtaskRow}
                 onLayout={(e) => {
-                  addSubtaskRowY.current = subtaskSectionY.current + e.nativeEvent.layout.y;
+                  addSubtaskRowY.current =
+                    subtaskSectionY.current + e.nativeEvent.layout.y;
                 }}
               >
                 <BottomSheetTextInput
-                  ref={newSubtaskInputRef as React.RefObject<any>}
+                  ref={
+                    newSubtaskInputRef as React.RefObject<
+                      React.ComponentRef<typeof BottomSheetTextInput>
+                    >
+                  }
                   value={newSubtaskTitle}
                   onChangeText={setNewSubtaskTitle}
                   placeholder="Add a subtask..."
@@ -741,11 +754,16 @@ export function TaskFormSheet({
               <View
                 style={styles.addSubtaskRow}
                 onLayout={(e) => {
-                  addSubtaskRowY.current = subtaskSectionY.current + e.nativeEvent.layout.y;
+                  addSubtaskRowY.current =
+                    subtaskSectionY.current + e.nativeEvent.layout.y;
                 }}
               >
                 <BottomSheetTextInput
-                  ref={newSubtaskInputRef as React.RefObject<any>}
+                  ref={
+                    newSubtaskInputRef as React.RefObject<
+                      React.ComponentRef<typeof BottomSheetTextInput>
+                    >
+                  }
                   value={newSubtaskTitle}
                   onChangeText={setNewSubtaskTitle}
                   placeholder="Add a subtask..."

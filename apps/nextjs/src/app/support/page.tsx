@@ -32,9 +32,7 @@ export default function SupportPage() {
             </p>
 
             <Section title="Contact Us">
-              <p>
-                For any questions, issues, or feedback, reach out to us at:
-              </p>
+              <p>For any questions, issues, or feedback, reach out to us at:</p>
               <p>
                 <a
                   href="mailto:support@calayo.net"
@@ -58,16 +56,16 @@ export default function SupportPage() {
                   mark for delete.
                 </p>
                 <p>
-                  In <strong>list view</strong>: swipe left to complete, right to
-                  mark for delete.
+                  In <strong>list view</strong>: swipe left to complete, right
+                  to mark for delete.
                 </p>
                 <p>Double-tap to edit.</p>
               </FAQ>
 
               <FAQ question="How do I share a list?">
                 <p>
-                  Go to your lists, open a list, and tap{" "}
-                  <strong>Invite</strong> to generate a share link.
+                  Go to your lists, open a list, and tap <strong>Invite</strong>{" "}
+                  to generate a share link.
                 </p>
               </FAQ>
 

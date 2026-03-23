@@ -35,9 +35,9 @@ export default function TermsOfServicePage() {
             <Section title="1. Acceptance of Terms">
               <p>
                 By accessing or using the Tokilist mobile application and web
-                application (collectively, the &quot;Service&quot;), you agree to
-                be bound by these Terms of Service (&quot;Terms&quot;). If you do
-                not agree to these Terms, you may not use the Service.
+                application (collectively, the &quot;Service&quot;), you agree
+                to be bound by these Terms of Service (&quot;Terms&quot;). If
+                you do not agree to these Terms, you may not use the Service.
               </p>
               <p>
                 The Service is operated by Calayo (&quot;we&quot;,
@@ -47,28 +47,30 @@ export default function TermsOfServicePage() {
 
             <Section title="2. Eligibility">
               <p>
-                You must be at least 13 years of age to use the Service. By using
-                the Service, you represent and warrant that you meet this age
-                requirement.
+                You must be at least 13 years of age to use the Service. By
+                using the Service, you represent and warrant that you meet this
+                age requirement.
               </p>
             </Section>
 
             <Section title="3. Account Registration">
               <p>
-                To use certain features of the Service, you must create an account
-                by signing in through a supported third-party authentication
-                provider (Discord or Google). You are responsible for:
+                To use certain features of the Service, you must create an
+                account by signing in through a supported third-party
+                authentication provider (Discord or Google). You are responsible
+                for:
               </p>
               <ul>
                 <li>Maintaining the security of your account credentials</li>
                 <li>All activity that occurs under your account</li>
                 <li>
-                  Notifying us immediately of any unauthorized use of your account
+                  Notifying us immediately of any unauthorized use of your
+                  account
                 </li>
               </ul>
               <p>
-                We reserve the right to suspend or terminate accounts that violate
-                these Terms.
+                We reserve the right to suspend or terminate accounts that
+                violate these Terms.
               </p>
             </Section>
 
@@ -90,8 +92,8 @@ export default function TermsOfServicePage() {
                   or its systems
                 </li>
                 <li>
-                  Use automated means (bots, scrapers, etc.) to access the Service
-                  without our express written permission
+                  Use automated means (bots, scrapers, etc.) to access the
+                  Service without our express written permission
                 </li>
                 <li>Impersonate any person or entity</li>
               </ul>
@@ -107,8 +109,8 @@ export default function TermsOfServicePage() {
               </p>
               <p>
                 You are solely responsible for your User Content. We do not
-                monitor or endorse User Content and are not liable for any content
-                created by users.
+                monitor or endorse User Content and are not liable for any
+                content created by users.
               </p>
             </Section>
 
@@ -122,10 +124,12 @@ export default function TermsOfServicePage() {
                   Other members of the shared list can view, edit, and delete
                   tasks within that list
                 </li>
-                <li>You can remove members or leave a shared list at any time</li>
                 <li>
-                  The list owner may delete the list, which will remove it for all
-                  members
+                  You can remove members or leave a shared list at any time
+                </li>
+                <li>
+                  The list owner may delete the list, which will remove it for
+                  all members
                 </li>
               </ul>
               <p>
@@ -136,9 +140,9 @@ export default function TermsOfServicePage() {
 
             <Section title="7. Push Notifications">
               <p>
-                The Service may send you push notifications for task reminders and
-                due dates. You can manage your notification preferences within the
-                app or through your device settings at any time.
+                The Service may send you push notifications for task reminders
+                and due dates. You can manage your notification preferences
+                within the app or through your device settings at any time.
               </p>
             </Section>
 
@@ -147,7 +151,8 @@ export default function TermsOfServicePage() {
                 The Service, including its design, features, code, and branding,
                 is owned by Calayo and protected by applicable intellectual
                 property laws. These Terms do not grant you any right to use our
-                trademarks, logos, or branding without our prior written consent.
+                trademarks, logos, or branding without our prior written
+                consent.
               </p>
             </Section>
 
@@ -167,11 +172,11 @@ export default function TermsOfServicePage() {
 
             <Section title="10. Limitation of Liability">
               <p>
-                To the maximum extent permitted by applicable law, Calayo and its
-                officers, employees, and affiliates shall not be liable for any
-                indirect, incidental, special, consequential, or punitive damages,
-                or any loss of data, profits, or goodwill, arising out of or
-                related to your use of the Service.
+                To the maximum extent permitted by applicable law, Calayo and
+                its officers, employees, and affiliates shall not be liable for
+                any indirect, incidental, special, consequential, or punitive
+                damages, or any loss of data, profits, or goodwill, arising out
+                of or related to your use of the Service.
               </p>
               <p>
                 Our total liability for any claim arising from or related to the
@@ -183,8 +188,8 @@ export default function TermsOfServicePage() {
             <Section title="11. Account Termination">
               <p>
                 You may delete your account at any time through the app. Upon
-                deletion, your data will be permanently removed in accordance with
-                our{" "}
+                deletion, your data will be permanently removed in accordance
+                with our{" "}
                 <Link
                   href="/privacy"
                   className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
@@ -201,9 +206,9 @@ export default function TermsOfServicePage() {
 
             <Section title="12. Changes to These Terms">
               <p>
-                We may update these Terms from time to time. We will notify you of
-                significant changes by posting the updated Terms within the app.
-                Your continued use of the Service after changes are posted
+                We may update these Terms from time to time. We will notify you
+                of significant changes by posting the updated Terms within the
+                app. Your continued use of the Service after changes are posted
                 constitutes your acceptance of the revised Terms.
               </p>
               <p>
@@ -214,16 +219,16 @@ export default function TermsOfServicePage() {
 
             <Section title="13. Governing Law">
               <p>
-                These Terms shall be governed by and construed in accordance with
-                the laws of the United States, without regard to conflict of law
-                principles.
+                These Terms shall be governed by and construed in accordance
+                with the laws of the United States, without regard to conflict
+                of law principles.
               </p>
             </Section>
 
             <Section title="14. Contact Us">
               <p>
-                If you have questions about these Terms of Service, please contact
-                us at:
+                If you have questions about these Terms of Service, please
+                contact us at:
               </p>
               <p>
                 <a

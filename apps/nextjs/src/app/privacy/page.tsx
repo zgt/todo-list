@@ -35,10 +35,10 @@ export default function PrivacyPolicyPage() {
             <Section title="1. Introduction">
               <p>
                 Welcome to Tokilist (&quot;we&quot;, &quot;our&quot;, or
-                &quot;us&quot;). This Privacy Policy explains how we collect, use,
-                and protect your personal information when you use the Tokilist
-                mobile application and web application (collectively, the
-                &quot;Service&quot;).
+                &quot;us&quot;). This Privacy Policy explains how we collect,
+                use, and protect your personal information when you use the
+                Tokilist mobile application and web application (collectively,
+                the &quot;Service&quot;).
               </p>
               <p>
                 By using Tokilist, you agree to the collection and use of
@@ -63,7 +63,9 @@ export default function PrivacyPolicyPage() {
               <h3 className="text-lg font-semibold text-[#DCE4E4]">
                 User-Generated Content
               </h3>
-              <p>We store data you create while using the Service, including:</p>
+              <p>
+                We store data you create while using the Service, including:
+              </p>
               <ul>
                 <li>Tasks and task lists</li>
                 <li>Categories</li>
@@ -90,7 +92,8 @@ export default function PrivacyPolicyPage() {
                 <li>Provide, maintain, and improve the Service</li>
                 <li>Authenticate your identity and manage your account</li>
                 <li>
-                  Send push notifications and email reminders you have opted into
+                  Send push notifications and email reminders you have opted
+                  into
                 </li>
                 <li>Enable shared lists and collaborative features</li>
               </ul>
@@ -101,14 +104,17 @@ export default function PrivacyPolicyPage() {
             </Section>
 
             <Section title="4. Third-Party Services">
-              <p>Tokilist integrates with the following third-party services:</p>
+              <p>
+                Tokilist integrates with the following third-party services:
+              </p>
               <ul>
                 <li>
                   <strong>Discord OAuth</strong> &mdash; for account
                   authentication
                 </li>
                 <li>
-                  <strong>Google OAuth</strong> &mdash; for account authentication
+                  <strong>Google OAuth</strong> &mdash; for account
+                  authentication
                 </li>
                 <li>
                   <strong>Expo Push Notification Service</strong> &mdash; for
@@ -137,8 +143,9 @@ export default function PrivacyPolicyPage() {
 
             <Section title="6. Data Retention & Deletion">
               <p>
-                We retain your data for as long as your account is active. You may
-                delete your account at any time, which will permanently remove:
+                We retain your data for as long as your account is active. You
+                may delete your account at any time, which will permanently
+                remove:
               </p>
               <ul>
                 <li>Your profile information</li>
@@ -155,9 +162,9 @@ export default function PrivacyPolicyPage() {
             <Section title="7. Children's Privacy">
               <p>
                 Tokilist is not intended for children under 13. We do not
-                knowingly collect personal information from children under 13. If
-                we discover that we have collected such data, we will delete it
-                promptly.
+                knowingly collect personal information from children under 13.
+                If we discover that we have collected such data, we will delete
+                it promptly.
               </p>
             </Section>
 

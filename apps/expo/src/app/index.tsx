@@ -32,8 +32,7 @@ import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
 import { useSwipeTutorial } from "~/hooks/useSwipeTutorial";
 import { useWidgetActions, useWidgetSync } from "~/hooks/useWidgetSync";
-import { vanillaTrpc } from "~/utils/api";
-import { trpc } from "~/utils/api";
+import { trpc, vanillaTrpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import {
   cancelTaskReminder,
@@ -1124,7 +1123,12 @@ export default function Index() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ alignItems: "center", gap: 8, paddingLeft: 4, paddingRight: 8 }}
+            contentContainerStyle={{
+              alignItems: "center",
+              gap: 8,
+              paddingLeft: 4,
+              paddingRight: 8,
+            }}
             style={{ flexShrink: 1 }}
           >
             <CategoryFilter />
@@ -1133,7 +1137,15 @@ export default function Index() {
               onChange={setSelectedPriorities}
             />
           </ScrollView>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginLeft: 8, flexShrink: 0 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              marginLeft: 8,
+              flexShrink: 0,
+            }}
+          >
             <ViewToggleButton
               viewMode={viewMode}
               onToggle={() => {
@@ -1143,72 +1155,72 @@ export default function Index() {
                 );
               }}
             />
-          {selectedListFilter === "deleted" ? (
-            <View style={{ width: 64, height: 64 }} />
-          ) : deletePendingIds.size > 0 ? (
-            <Pressable
-              onPress={() => {
-                Alert.alert(
-                  "Delete Tasks",
-                  `Delete ${deletePendingIds.size} task(s)?`,
-                  [
-                    { text: "Cancel", style: "cancel" },
-                    {
-                      text: "Delete",
-                      style: "destructive",
-                      onPress: () => void handleBulkDelete(),
-                    },
-                  ],
-                );
-              }}
-            >
-              <Animated.View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: "#ef4444",
-                  borderWidth: 2,
-                  borderColor: "rgba(239, 68, 68, 0.4)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  shadowColor: "#ef4444",
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 6,
+            {selectedListFilter === "deleted" ? (
+              <View style={{ width: 64, height: 64 }} />
+            ) : deletePendingIds.size > 0 ? (
+              <Pressable
+                onPress={() => {
+                  Alert.alert(
+                    "Delete Tasks",
+                    `Delete ${deletePendingIds.size} task(s)?`,
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => void handleBulkDelete(),
+                      },
+                    ],
+                  );
                 }}
               >
-                <Trash2 size={32} color="#FFFFFF" />
-              </Animated.View>
-            </Pressable>
-          ) : (
-            <TaskFormSheet
-              mode="create"
-              onSubmit={handleCreateSubmit}
-              initialData={{
-                listId:
-                  selectedListFilter && selectedListFilter !== "personal"
-                    ? selectedListFilter
-                    : null,
-                dueDate:
-                  viewMode === "calendar" && calendarSelectedDate
-                    ? (() => {
-                        const [y, m, d] = calendarSelectedDate
-                          .split("-")
-                          .map(Number);
-                        return new Date(y ?? 0, (m ?? 1) - 1, d);
-                      })()
-                    : null,
-              }}
-              lists={(lists ?? []).map((l) => ({
-                id: l.id,
-                name: l.name,
-                color: l.color,
-              }))}
-              isSubmitting={createMutation.isPending}
-            />
-          )}
+                <Animated.View
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 32,
+                    backgroundColor: "#ef4444",
+                    borderWidth: 2,
+                    borderColor: "rgba(239, 68, 68, 0.4)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    shadowColor: "#ef4444",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 6,
+                  }}
+                >
+                  <Trash2 size={32} color="#FFFFFF" />
+                </Animated.View>
+              </Pressable>
+            ) : (
+              <TaskFormSheet
+                mode="create"
+                onSubmit={handleCreateSubmit}
+                initialData={{
+                  listId:
+                    selectedListFilter && selectedListFilter !== "personal"
+                      ? selectedListFilter
+                      : null,
+                  dueDate:
+                    viewMode === "calendar" && calendarSelectedDate
+                      ? (() => {
+                          const [y, m, d] = calendarSelectedDate
+                            .split("-")
+                            .map(Number);
+                          return new Date(y ?? 0, (m ?? 1) - 1, d);
+                        })()
+                      : null,
+                }}
+                lists={(lists ?? []).map((l) => ({
+                  id: l.id,
+                  name: l.name,
+                  color: l.color,
+                }))}
+                isSubmitting={createMutation.isPending}
+              />
+            )}
           </View>
         </View>
 
