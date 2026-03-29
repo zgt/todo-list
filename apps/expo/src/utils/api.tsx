@@ -33,14 +33,18 @@ function sanitizeCookies(raw: string): string {
 
 /**
  * Global handler for UNAUTHORIZED errors from tRPC.
- * When the server rejects a stale session, we attempt a silent refresh first.
- * If refresh succeeds, queries are invalidated. If it fails, we clear auth
- * storage and the query cache so the app falls back to the login screen.
- * A shared promise ensures concurrent 401s coalesce into a single refresh attempt.
+ * Uses a shared promise so concurrent 401s coalesce into one refresh attempt.
+ * Only clears auth state if the refresh truly fails.
+ * Once signed out, stops retrying until the user logs in again.
  */
 let refreshPromise: Promise<boolean> | null = null;
+let hasSignedOut = false;
 
-async function handleUnauthorizedError() {
+async function handleUnauthorizedError(): Promise<void> {
+  // If we already signed out this app lifecycle, don't keep retrying
+  if (hasSignedOut) return;
+
+  // If a refresh is already in progress, wait for it
   if (refreshPromise) {
     await refreshPromise;
     return;
@@ -62,44 +66,40 @@ async function handleUnauthorizedError() {
       console.warn("[Auth] Session refresh failed", e);
     }
 
+    // Refresh failed — sign out once and stop
     console.warn("[Auth] Session unrecoverable — clearing local auth state");
+    hasSignedOut = true;
     clearAuthStorage();
     queryClient.clear();
-    // Force Better Auth to re-evaluate from (now-empty) storage
-    void authClient.getSession({ query: { disableCookieCache: true } });
     return false;
   })();
 
   try {
     await refreshPromise;
   } finally {
-    // Reset after a short delay to allow re-triggering for future expirations
-    setTimeout(() => {
-      refreshPromise = null;
-    }, 2000);
+    refreshPromise = null;
   }
+}
+
+/**
+ * Reset the sign-out guard when the user successfully logs in again.
+ * Call this after a successful sign-in.
+ */
+export function resetAuthGuard(): void {
+  hasSignedOut = false;
 }
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
-        // Allow one retry for UNAUTHORIZED so the refresh attempt can take effect
+        // Never retry UNAUTHORIZED — the handler deals with it
         if (
           (error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED"
         ) {
-          return failureCount < 1;
+          return false;
         }
         return failureCount < 3;
-      },
-      retryDelay: (failureCount, error) => {
-        // Give the refresh promise time to resolve before retrying a 401
-        if (
-          (error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED"
-        ) {
-          return 1500;
-        }
-        return Math.min(1000 * 2 ** failureCount, 30000);
       },
     },
   },

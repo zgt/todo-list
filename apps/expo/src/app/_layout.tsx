@@ -7,6 +7,7 @@ import * as Sentry from "@sentry/react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthGuard } from "~/components/AuthGuard";
+import { resetAuthGuard } from "~/utils/api";
 import { DotBackground } from "~/components/DotBackground";
 import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
@@ -45,6 +46,12 @@ function RootLayout() {
 
   if (isPending) {
     return <DotBackground trigger={1} />;
+  }
+
+  // Reset the sign-out guard when we have a valid session
+  // (user just logged in or session was refreshed successfully)
+  if (session) {
+    resetAuthGuard();
   }
 
   if (error || !session) {
