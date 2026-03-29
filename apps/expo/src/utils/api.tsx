@@ -33,39 +33,73 @@ function sanitizeCookies(raw: string): string {
 
 /**
  * Global handler for UNAUTHORIZED errors from tRPC.
- * When the server rejects a stale session, we clear local auth tokens
- * and the query cache so the app falls back to the login screen.
+ * When the server rejects a stale session, we attempt a silent refresh first.
+ * If refresh succeeds, queries are invalidated. If it fails, we clear auth
+ * storage and the query cache so the app falls back to the login screen.
+ * A shared promise ensures concurrent 401s coalesce into a single refresh attempt.
  */
-let isHandlingUnauthorized = false;
+let refreshPromise: Promise<boolean> | null = null;
 
-function handleUnauthorizedError() {
-  if (isHandlingUnauthorized) return;
-  isHandlingUnauthorized = true;
+async function handleUnauthorizedError() {
+  if (refreshPromise) {
+    await refreshPromise;
+    return;
+  }
 
-  console.warn("[Auth] Session expired — clearing local auth state");
-  clearAuthStorage();
-  queryClient.clear();
+  refreshPromise = (async () => {
+    try {
+      console.warn("[Auth] Session expired — attempting silent refresh");
+      const { data: session } = await authClient.getSession({
+        query: { disableCookieCache: true },
+      });
 
-  // Force Better Auth to re-evaluate session from (now-empty) storage
-  void authClient.getSession({ query: { disableCookieCache: true } });
+      if (session) {
+        console.log("[Auth] Session refreshed successfully");
+        void queryClient.invalidateQueries();
+        return true;
+      }
+    } catch (e) {
+      console.warn("[Auth] Session refresh failed", e);
+    }
 
-  // Reset the guard after a short delay to allow re-triggering if needed
-  setTimeout(() => {
-    isHandlingUnauthorized = false;
-  }, 2000);
+    console.warn("[Auth] Session unrecoverable — clearing local auth state");
+    clearAuthStorage();
+    queryClient.clear();
+    // Force Better Auth to re-evaluate from (now-empty) storage
+    void authClient.getSession({ query: { disableCookieCache: true } });
+    return false;
+  })();
+
+  try {
+    await refreshPromise;
+  } finally {
+    // Reset after a short delay to allow re-triggering for future expirations
+    setTimeout(() => {
+      refreshPromise = null;
+    }, 2000);
+  }
 }
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
-        // Don't retry UNAUTHORIZED — the session is dead
+        // Allow one retry for UNAUTHORIZED so the refresh attempt can take effect
         if (
           (error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED"
         ) {
-          return false;
+          return failureCount < 1;
         }
         return failureCount < 3;
+      },
+      retryDelay: (failureCount, error) => {
+        // Give the refresh promise time to resolve before retrying a 401
+        if (
+          (error as { data?: { code?: string } }).data?.code === "UNAUTHORIZED"
+        ) {
+          return 1500;
+        }
+        return Math.min(1000 * 2 ** failureCount, 30000);
       },
     },
   },
@@ -75,7 +109,7 @@ export const queryClient = new QueryClient({
         data?: { code?: string };
       } | null;
       if (trpcError?.data?.code === "UNAUTHORIZED") {
-        handleUnauthorizedError();
+        void handleUnauthorizedError();
       }
     },
   }),
