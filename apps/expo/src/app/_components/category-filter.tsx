@@ -111,7 +111,11 @@ export function CategoryFilter({
 
   useEffect(() => {
     if (isCreating) {
-      bottomSheetRef.current?.expand();
+      Keyboard.dismiss();
+      const timer = setTimeout(() => {
+        bottomSheetRef.current?.expand();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isCreating]);
 
@@ -287,6 +291,7 @@ export function CategoryFilter({
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
+        enableDynamicSizing={false}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         onDismiss={handleDismiss}

@@ -31,9 +31,22 @@ export const createTRPCContext = async (opts: {
   auth: Auth;
 }) => {
   const authApi = opts.auth.api;
+
+  const cookieHeader = opts.headers.get("cookie");
+  const hasCookie = !!cookieHeader && cookieHeader.length > 0;
+
   const session = await authApi.getSession({
     headers: opts.headers,
   });
+
+  if (!session && hasCookie) {
+    // TODO: Remove after confirming auth fix (added 2026-03-31)
+    console.warn(
+      "[TRPC Context] Session null despite cookie present. Cookie length:",
+      cookieHeader?.length,
+    );
+  }
+
   return {
     authApi,
     session,

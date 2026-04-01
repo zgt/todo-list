@@ -38,21 +38,42 @@ function sanitizeCookies(raw: string): string {
  */
 let isHandlingUnauthorized = false;
 
-function handleUnauthorizedError() {
+async function handleUnauthorizedError() {
   if (isHandlingUnauthorized) return;
   isHandlingUnauthorized = true;
 
-  console.warn("[Auth] Session expired — clearing local auth state");
-  clearAuthStorage();
-  queryClient.clear();
+  try {
+    // Attempt to refresh the session through Better Auth's fetch pipeline.
+    // This processes Set-Cookie responses and updates SecureStore.
+    console.warn("[Auth] Got 401 — attempting session refresh before logout");
+    const result = await authClient.getSession({
+      query: { disableCookieCache: true },
+    });
 
-  // Force Better Auth to re-evaluate session from (now-empty) storage
-  void authClient.getSession({ query: { disableCookieCache: true } });
+    if (result.data?.session) {
+      console.log(
+        "[Auth] Session refresh succeeded — refetching with fresh cookies",
+      );
+      void queryClient.invalidateQueries();
+      return;
+    }
 
-  // Reset the guard after a short delay to allow re-triggering if needed
-  setTimeout(() => {
-    isHandlingUnauthorized = false;
-  }, 2000);
+    // Session is truly dead
+    console.warn("[Auth] Session refresh failed — clearing local auth state");
+    clearAuthStorage();
+    queryClient.clear();
+  } catch (error) {
+    console.warn(
+      "[Auth] Session refresh threw — clearing local auth state",
+      error,
+    );
+    clearAuthStorage();
+    queryClient.clear();
+  } finally {
+    setTimeout(() => {
+      isHandlingUnauthorized = false;
+    }, 2000);
+  }
 }
 
 export const queryClient = new QueryClient({
