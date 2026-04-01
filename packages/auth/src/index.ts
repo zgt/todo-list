@@ -68,8 +68,8 @@ export function initAuth<
         }),
     },
     session: {
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24,      // refresh session token every 24h
+      expiresIn: 60 * 60 * 24 * 30, // 30 days
+      updateAge: 60 * 60 * 24, // 1 day — refresh session after 1 day of activity
     },
     trustedOrigins: [
       "tokilist://",

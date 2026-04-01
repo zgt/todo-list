@@ -9,7 +9,14 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import Animated from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  Easing,
+  cancelAnimation,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -56,12 +63,45 @@ function Header({
   onProfilePress,
   onRefresh,
   onInfoPress,
+  isFetching,
 }: {
   onProfilePress: () => void;
   onRefresh: () => void;
   onInfoPress: () => void;
+  isFetching: boolean;
 }) {
   const { data: session } = authClient.useSession();
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (isFetching) {
+      rotation.value = 0;
+      rotation.value = withRepeat(
+        withTiming(360, { duration: 1000, easing: Easing.linear }),
+        -1,
+      );
+    } else {
+      // Complete the current rotation to 360° so it stops smoothly
+      cancelAnimation(rotation);
+      const current = rotation.value % 360;
+      if (current > 1) {
+        // Finish the remaining arc, then reset to 0
+        const remaining = 360 - current;
+        const remainingDuration = (remaining / 360) * 1000;
+        rotation.value = withTiming(360, {
+          duration: remainingDuration,
+          easing: Easing.out(Easing.quad),
+        });
+      } else {
+        rotation.value = 0;
+      }
+    }
+  }, [isFetching, rotation]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
   return (
     <View className="mb-6 flex-row items-center justify-between px-4 pt-2">
       <RNText className="text-foreground text-4xl font-bold">
@@ -85,7 +125,9 @@ function Header({
             accessibilityRole="button"
             className="h-10 w-10 items-center justify-center rounded-full"
           >
-            <RefreshCw size={20} color="#8FA8A8" />
+            <Animated.View style={animatedStyle}>
+              <RefreshCw size={20} color="#8FA8A8" />
+            </Animated.View>
           </Pressable>
         )}
         {session ? (
@@ -907,6 +949,7 @@ export default function Index() {
             void queryClient.invalidateQueries(trpc.task.all.queryFilter());
           }}
           onInfoPress={() => router.push("/swipe-tutorial")}
+          isFetching={isFetching}
         />
 
         <View

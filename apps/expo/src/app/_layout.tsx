@@ -11,6 +11,7 @@ import { resetAuthGuard } from "~/utils/api";
 import { DotBackground } from "~/components/DotBackground";
 import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
+import { useSessionRefresh } from "~/hooks/useSessionRefresh";
 import { queryClient } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
@@ -43,6 +44,9 @@ function RootLayout() {
 
   // Register push token with server when authenticated
   usePushTokenRegistration();
+
+  // Proactively refresh session cookies to prevent 401 errors
+  useSessionRefresh();
 
   if (isPending) {
     return <DotBackground trigger={1} />;

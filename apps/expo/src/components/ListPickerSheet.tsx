@@ -1,6 +1,6 @@
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import { useCallback, useMemo, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Keyboard, Pressable, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import {
   BottomSheetBackdrop,
@@ -32,6 +32,7 @@ export function ListPickerSheet({
   const selectedList = lists.find((l) => l.id === selectedListId);
 
   const handleOpen = useCallback(() => {
+    Keyboard.dismiss();
     bottomSheetRef.current?.present();
   }, []);
 

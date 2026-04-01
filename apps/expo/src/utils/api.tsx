@@ -52,18 +52,22 @@ async function handleUnauthorizedError(): Promise<void> {
 
   refreshPromise = (async () => {
     try {
-      console.warn("[Auth] Session expired — attempting silent refresh");
-      const { data: session } = await authClient.getSession({
+      // Attempt to refresh the session through Better Auth's fetch pipeline.
+      // This processes Set-Cookie responses and updates SecureStore.
+      console.warn("[Auth] Got 401 — attempting session refresh before logout");
+      const result = await authClient.getSession({
         query: { disableCookieCache: true },
       });
 
-      if (session) {
-        console.log("[Auth] Session refreshed successfully");
+      if (result.data?.session) {
+        console.log(
+          "[Auth] Session refresh succeeded — refetching with fresh cookies",
+        );
         void queryClient.invalidateQueries();
         return true;
       }
-    } catch (e) {
-      console.warn("[Auth] Session refresh failed", e);
+    } catch (error) {
+      console.warn("[Auth] Session refresh threw", error);
     }
 
     // Refresh failed — sign out once and stop
