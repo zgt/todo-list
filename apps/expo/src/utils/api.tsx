@@ -5,7 +5,7 @@ import superjson from "superjson";
 
 import type { AppRouter } from "@acme/api";
 
-import { authClient, clearAuthStorage } from "./auth";
+import { authClient, clearAuthStorage, syncSetCookieToStorage } from "./auth";
 import { getBaseUrl } from "./base-url";
 
 /**
@@ -30,6 +30,26 @@ function sanitizeCookies(raw: string): string {
     .map(([k, v]) => `${k}=${v}`)
     .join("; ");
 }
+
+/**
+ * Custom fetch that captures Set-Cookie headers from tRPC responses and
+ * syncs them to SecureStore. Without this, session token refreshes triggered
+ * by Better Auth's updateAge (via Set-Cookie on normal API responses) are
+ * silently dropped — the expo plugin only intercepts authClient.$fetch, not
+ * tRPC's httpBatchLink fetch.
+ */
+const trpcFetch: typeof fetch = async (input, init) => {
+  const response = await fetch(input, init);
+  try {
+    const setCookie = response.headers.get("set-cookie");
+    if (setCookie) {
+      syncSetCookieToStorage(setCookie);
+    }
+  } catch (e) {
+    console.warn("[Auth] Failed to sync Set-Cookie from tRPC response:", e);
+  }
+  return response;
+};
 
 /**
  * Global handler for UNAUTHORIZED errors from tRPC.
@@ -133,6 +153,7 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
     httpBatchLink({
       transformer: superjson,
       url: `${getBaseUrl()}/api/trpc`,
+      fetch: trpcFetch,
       headers() {
         const headers: Record<string, string> = {
           "x-trpc-source": "expo-vanilla",
@@ -163,6 +184,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
       httpBatchLink({
         transformer: superjson,
         url: `${getBaseUrl()}/api/trpc`,
+        fetch: trpcFetch,
         headers() {
           const headers: Record<string, string> = {
             "x-trpc-source": "expo-react",

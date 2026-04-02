@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-import { expoClient } from "@better-auth/expo/client";
+import { expoClient, getSetCookie } from "@better-auth/expo/client";
 import * as Sentry from "@sentry/react-native";
 import { createAuthClient } from "better-auth/react";
 
@@ -16,8 +16,10 @@ const CURRENT_BUILD =
   Constants.manifest2?.extra?.expoClient?.version ??
   "unknown";
 const BUILD_VERSION_KEY = "expo_auth_build_version";
+const COOKIE_STORAGE_KEY = "expo_cookie";
+
 const AUTH_KEYS = [
-  "expo_cookie", // actual cookie storage key used by expo client
+  COOKIE_STORAGE_KEY, // actual cookie storage key used by expo client
   "expo_session_data", // cached session data
   "expo_better-auth.session_token",
   "expo_better-auth.refresh_token",
@@ -111,6 +113,17 @@ export function clearAuthStorage(): void {
       // Ignore — key may not exist
     }
   }
+}
+
+/**
+ * Sync a Set-Cookie header into SecureStore using the same merge logic
+ * as the expo plugin's fetch interceptor. This ensures session token
+ * refreshes from tRPC responses (which bypass the expo plugin) are captured.
+ */
+export function syncSetCookieToStorage(setCookieHeader: string): void {
+  const prevCookie = safeStorage.getItem(COOKIE_STORAGE_KEY);
+  const merged = getSetCookie(setCookieHeader, prevCookie ?? undefined);
+  safeStorage.setItem(COOKIE_STORAGE_KEY, merged);
 }
 
 export const authClient = createAuthClient({
