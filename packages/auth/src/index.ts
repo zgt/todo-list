@@ -69,7 +69,7 @@ export function initAuth<
     },
     session: {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
-      updateAge: 60 * 60 * 24, // 1 day — refresh session after 1 day of activity
+      updateAge: 10, // TEMP: 10s for testing session refresh (revert to 60 * 60 * 24)
     },
     trustedOrigins: [
       "tokilist://",

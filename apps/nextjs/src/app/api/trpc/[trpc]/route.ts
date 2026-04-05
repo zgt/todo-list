@@ -25,6 +25,15 @@ export const OPTIONS = () => {
 };
 
 const handler = async (req: NextRequest) => {
+  // Pre-resolve the session with returnHeaders so we can capture Set-Cookie
+  // headers from Better Auth's session token refresh (updateAge). Without this,
+  // the refreshed token is written to the DB but never sent to the client,
+  // causing 401 loops after updateAge (24h) on Expo.
+  const authResult = await auth.api.getSession({
+    headers: req.headers,
+    returnHeaders: true,
+  });
+
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
@@ -33,6 +42,7 @@ const handler = async (req: NextRequest) => {
       createTRPCContext({
         auth: auth,
         headers: req.headers,
+        session: authResult.response,
       }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);
@@ -40,6 +50,19 @@ const handler = async (req: NextRequest) => {
   });
 
   setCorsHeaders(response);
+
+  // Forward Set-Cookie from auth session refresh to the client.
+  // This ensures the Expo app receives the refreshed session token.
+  const setCookies = authResult.headers?.getSetCookie?.();
+  if (setCookies?.length) {
+    console.log(
+      `[Auth] Forwarding ${setCookies.length} Set-Cookie header(s) to tRPC response`,
+    );
+    for (const cookie of setCookies) {
+      response.headers.append("set-cookie", cookie);
+    }
+  }
+
   return response;
 };
 

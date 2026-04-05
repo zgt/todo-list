@@ -10,7 +10,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod/v4";
 
-import type { Auth } from "@acme/auth";
+import type { Auth, Session, User } from "@acme/auth";
 import { db } from "@acme/db/client";
 
 /**
@@ -29,23 +29,23 @@ import { db } from "@acme/db/client";
 export const createTRPCContext = async (opts: {
   headers: Headers;
   auth: Auth;
+  /**
+   * Pre-resolved session from the route handler (when using returnHeaders
+   * to capture Set-Cookie for session token refresh). When provided, skips
+   * the internal getSession call.
+   */
+  session?: { session: Session; user: User } | null;
 }) => {
   const authApi = opts.auth.api;
 
-  const cookieHeader = opts.headers.get("cookie");
-  const hasCookie = !!cookieHeader && cookieHeader.length > 0;
-
-  const session = await authApi.getSession({
-    headers: opts.headers,
-  });
-
-  if (!session && hasCookie) {
-    // TODO: Remove after confirming auth fix (added 2026-03-31)
-    console.warn(
-      "[TRPC Context] Session null despite cookie present. Cookie length:",
-      cookieHeader?.length,
-    );
-  }
+  // Use pre-resolved session if provided, otherwise resolve it here.
+  // The HTTP route handler pre-resolves with returnHeaders: true so it can
+  // forward Set-Cookie headers for session token refresh. The RSC caller
+  // doesn't need this because Next.js handles cookies automatically.
+  const session =
+    opts.session !== undefined
+      ? opts.session
+      : await authApi.getSession({ headers: opts.headers });
 
   return {
     authApi,
