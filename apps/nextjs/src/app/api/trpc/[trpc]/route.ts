@@ -24,15 +24,66 @@ export const OPTIONS = () => {
   return response;
 };
 
+/**
+ * Coalesce concurrent getSession calls for the same session token.
+ * When Better Auth refreshes a session (past updateAge), it rotates the token
+ * in the DB — invalidating the old one. Without coalescing, concurrent requests
+ * with the same old token would fail because only the first call finds the token.
+ *
+ * By sharing one Promise per token, all concurrent requests get the same session
+ * result and the same Set-Cookie header with the new token.
+ */
+const pendingSessionResolves = new Map<
+  string,
+  Promise<{ response: Awaited<ReturnType<typeof auth.api.getSession>>; headers: Headers }>
+>();
+
+function extractSessionToken(headers: Headers): string | null {
+  const cookie = headers.get("cookie");
+  if (!cookie) return null;
+  // Better Auth stores the session token in a cookie named "better-auth.session_token"
+  const match = cookie.match(/better-auth\.session_token=([^;]+)/);
+  return match?.[1]?.trim() ?? null;
+}
+
+async function resolveSessionCoalesced(
+  reqHeaders: Headers,
+): Promise<{ response: Awaited<ReturnType<typeof auth.api.getSession>>; headers: Headers }> {
+  const token = extractSessionToken(reqHeaders);
+
+  // No token → no session, skip coalescing
+  if (!token) {
+    const result = await auth.api.getSession({
+      headers: reqHeaders,
+      returnHeaders: true,
+    });
+    return result;
+  }
+
+  // If another request is already resolving this exact token, reuse its result
+  const pending = pendingSessionResolves.get(token);
+  if (pending) return pending;
+
+  const promise = auth.api
+    .getSession({ headers: reqHeaders, returnHeaders: true })
+    .finally(() => {
+      // Clean up after resolution so future requests (with new token) aren't stale
+      pendingSessionResolves.delete(token);
+    });
+
+  pendingSessionResolves.set(token, promise);
+  return promise;
+}
+
 const handler = async (req: NextRequest) => {
   // Pre-resolve the session with returnHeaders so we can capture Set-Cookie
   // headers from Better Auth's session token refresh (updateAge). Without this,
   // the refreshed token is written to the DB but never sent to the client,
   // causing 401 loops after updateAge (24h) on Expo.
-  const authResult = await auth.api.getSession({
-    headers: req.headers,
-    returnHeaders: true,
-  });
+  //
+  // Coalesced so concurrent requests with the same token share one DB call,
+  // avoiding races where the first call rotates the token and the rest fail.
+  const authResult = await resolveSessionCoalesced(req.headers);
 
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
