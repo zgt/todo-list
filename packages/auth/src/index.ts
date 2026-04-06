@@ -18,6 +18,8 @@ export function initAuth<
   appleClientId?: string;
   appleClientSecret?: string;
   appleBundleId?: string;
+  googleClientId?: string;
+  googleClientSecret?: string;
   extraPlugins?: TExtraPlugins;
   /**
    * Enable OAuth proxy for Expo mobile app support.
@@ -57,6 +59,14 @@ export function initAuth<
         // Use baseUrl for local and production, it defaults to production on Vercel
         redirectURI: `${options.productionUrl}/api/auth/callback/discord`,
       },
+      ...(options.googleClientId &&
+        options.googleClientSecret && {
+          google: {
+            clientId: options.googleClientId,
+            clientSecret: options.googleClientSecret,
+            redirectURI: `${options.productionUrl}/api/auth/callback/google`,
+          },
+        }),
       ...(options.appleClientId &&
         options.appleClientSecret && {
           apple: {

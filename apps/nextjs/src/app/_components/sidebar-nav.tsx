@@ -158,6 +158,12 @@ export function AppSidebar({
                       >
                         Privacy Policy
                       </Link>
+                      <Link
+                        href="/terms"
+                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#8FA8A8] transition-colors hover:bg-white/5"
+                      >
+                        Terms of Service
+                      </Link>
                       <form>
                         <button
                           type="submit"

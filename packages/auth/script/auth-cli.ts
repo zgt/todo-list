@@ -27,5 +27,7 @@ export const auth = initAuth({
   appleClientId: "com.example.app",
   appleClientSecret: "1234567890",
   appleBundleId: "com.example.app",
+  googleClientId: "1234567890",
+  googleClientSecret: "1234567890",
   enableOAuthProxy: false, // Not needed for schema generation
 });

@@ -18,6 +18,19 @@ export async function signInWithDiscord() {
   redirect(res.url);
 }
 
+export async function signInWithGoogle() {
+  const res = await auth.api.signInSocial({
+    body: {
+      provider: "google",
+      callbackURL: "/",
+    },
+  });
+  if (!res.url) {
+    throw new Error("No URL returned from signInSocial");
+  }
+  redirect(res.url);
+}
+
 export async function signInWithApple() {
   const res = await auth.api.signInSocial({
     body: {

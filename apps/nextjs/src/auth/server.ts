@@ -26,6 +26,8 @@ export const auth = initAuth({
   appleClientId: env.AUTH_APPLE_ID,
   appleClientSecret: env.AUTH_APPLE_SECRET,
   appleBundleId: env.AUTH_APPLE_BUNDLE_ID,
+  googleClientId: env.AUTH_GOOGLE_ID,
+  googleClientSecret: env.AUTH_GOOGLE_SECRET,
   extraPlugins: [nextCookies()],
   enableOAuthProxy: true, // Enable OAuth proxy for Expo OAuth support
 });
