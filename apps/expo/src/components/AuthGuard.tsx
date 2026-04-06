@@ -34,7 +34,7 @@ export function AuthGuard() {
         {/* Subtle Footer */}
         <View className="absolute bottom-12">
           <RNText className="text-center text-xs text-white">
-            Sign in with Apple or Discord
+            Sign in with Apple, Google, or Discord
           </RNText>
         </View>
       </View>
