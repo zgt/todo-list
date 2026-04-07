@@ -79,10 +79,10 @@ export function initAuth<
     },
     session: {
       expiresIn: 60 * 60 * 24 * 30, // 30 days
-      updateAge: 10, // TEMP: 10s for testing (revert to 60 * 60 * 24)
+      updateAge: 60 * 60 * 24, // 24 hours
       cookieCache: {
         enabled: true,
-        maxAge: 10, // TEMP: 10s for testing (revert to 5 * 60)
+        maxAge: 5 * 60, // 5 minutes
       },
     },
     trustedOrigins: [

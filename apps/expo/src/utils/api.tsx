@@ -83,6 +83,8 @@ async function handleUnauthorizedError(): Promise<void> {
         console.log(
           "[Auth] Session refresh succeeded — refetching with fresh cookies",
         );
+        // Small delay to let cookie sync to SecureStore before queries fire
+        await new Promise((resolve) => setTimeout(resolve, 150));
         void queryClient.invalidateQueries();
         return true;
       }
