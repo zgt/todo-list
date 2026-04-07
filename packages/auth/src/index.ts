@@ -83,6 +83,7 @@ export function initAuth<
       cookieCache: {
         enabled: true,
         maxAge: 5 * 60, // 5 minutes
+        refreshCache: true,
       },
     },
     trustedOrigins: [
