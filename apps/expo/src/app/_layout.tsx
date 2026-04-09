@@ -14,7 +14,7 @@ import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { useSessionRefresh } from "~/hooks/useSessionRefresh";
 import { queryClient } from "~/utils/api";
-import { authClient, clearAuthStorage } from "~/utils/auth";
+import { authClient } from "~/utils/auth";
 import type { Session } from "~/utils/auth";
 import { beginAuthTransition, endAuthTransition } from "~/utils/auth-gate";
 import { authTrace, nextTraceId } from "~/utils/auth-debug";
@@ -79,19 +79,25 @@ function RootLayout() {
 
         if (cancelled) return;
 
-        setServerSession(validatedSession);
+        if (validatedSession) {
+          setServerSession(validatedSession);
+          return;
+        }
 
-        if (!validatedSession && session) {
+        if (session) {
           authTrace(
             "layout",
-            "clearing stale local session after server validation failed",
+            "preserving existing session while server validation is inconclusive",
             {
               traceId,
+              hadServerSession: !!serverSession,
             },
           );
-          clearAuthStorage();
-          queryClient.clear();
+          setServerSession((currentSession) => currentSession ?? session);
+          return;
         }
+
+        setServerSession(null);
       } catch (validationError) {
         authTrace("layout", "initial auth validation failed", {
           traceId,
@@ -100,7 +106,7 @@ function RootLayout() {
               ? validationError.message
               : "non-error auth validation failure",
         });
-        if (!cancelled) {
+        if (!cancelled && !session) {
           setServerSession(null);
         }
       } finally {
