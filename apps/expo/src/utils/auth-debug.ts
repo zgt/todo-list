@@ -7,7 +7,7 @@ function djb2(input: string): string {
 }
 
 export function isAuthTraceEnabled(): boolean {
-  return true;
+  return process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 }
 
 export function cookieFingerprint(cookie: string | null | undefined): string {
@@ -24,6 +24,10 @@ export function authTrace(
   message: string,
   details?: Record<string, unknown>,
 ): void {
+  if (!isAuthTraceEnabled()) {
+    return;
+  }
+
   if (details) {
     console.log(`[AuthTrace][${scope}] ${message}`, details);
     return;

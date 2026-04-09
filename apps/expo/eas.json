@@ -34,10 +34,7 @@
     },
     "production": {
       "extends": "base",
-      "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_AUTH_TRACE": "1"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {
