@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 
 import { authClient } from "~/utils/auth";
+import { beginAuthTransition, endAuthTransition } from "~/utils/auth-gate";
 import { authTrace, nextTraceId } from "~/utils/auth-debug";
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
@@ -16,11 +17,13 @@ const DEDUP_MS = 5 * 60 * 1000; // 5 minutes — skip if refreshed recently
  * calling authClient.getSession(), which goes through Better Auth's fetch
  * pipeline and updates the stored cookie with a new expiry.
  */
-export function useSessionRefresh() {
+export function useSessionRefresh(enabled = true) {
   const lastRefreshRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
+
     const refreshSession = async () => {
       const traceId = nextTraceId("session-refresh");
       const now = Date.now();
@@ -33,6 +36,7 @@ export function useSessionRefresh() {
       }
 
       lastRefreshRef.current = now;
+      beginAuthTransition("session-refresh");
       try {
         authTrace("session-refresh", "starting proactive refresh", {
           traceId,
@@ -52,6 +56,8 @@ export function useSessionRefresh() {
           error:
             error instanceof Error ? error.message : "non-error refresh failure",
         });
+      } finally {
+        endAuthTransition("session-refresh");
       }
     };
 
@@ -77,5 +83,5 @@ export function useSessionRefresh() {
       sub.remove();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, []);
+  }, [enabled]);
 }

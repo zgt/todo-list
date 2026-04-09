@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
@@ -13,8 +14,10 @@ import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { useSessionRefresh } from "~/hooks/useSessionRefresh";
 import { queryClient } from "~/utils/api";
-import { authClient } from "~/utils/auth";
-import { authTrace } from "~/utils/auth-debug";
+import { authClient, clearAuthStorage } from "~/utils/auth";
+import type { Session } from "~/utils/auth";
+import { beginAuthTransition, endAuthTransition } from "~/utils/auth-gate";
+import { authTrace, nextTraceId } from "~/utils/auth-debug";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
 
 import "../styles.css";
@@ -39,33 +42,101 @@ if (SENTRY_DSN) {
 function RootLayout() {
   const colorScheme = useColorScheme();
   const { data: session, isPending, error } = authClient.useSession();
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [serverSession, setServerSession] = useState<Session | null>(null);
+  const sessionUserId = session?.user?.id ?? null;
+  const sessionId = session?.session?.id ?? null;
 
   // Set up notification handlers and permissions
   useNotifications();
 
   // Register push token with server when authenticated
-  usePushTokenRegistration();
+  usePushTokenRegistration(isAuthReady && !!serverSession && !isPending);
 
   // Proactively refresh session cookies to prevent 401 errors
-  useSessionRefresh();
+  useSessionRefresh(isAuthReady && !!serverSession);
+
+  useEffect(() => {
+    let cancelled = false;
+    const traceId = nextTraceId("layout-auth-ready");
+    setIsAuthReady(false);
+
+    const validateInitialSession = async () => {
+      beginAuthTransition("layout-initial-auth");
+      try {
+        authTrace("layout", "starting initial auth validation", {
+          traceId,
+          hasSession: !!session,
+        });
+        const result = await authClient.getSession({
+          query: { disableCookieCache: true },
+        });
+        const validatedSession = result.data ?? null;
+        authTrace("layout", "completed initial auth validation", {
+          traceId,
+          hasSession: !!validatedSession,
+        });
+
+        if (cancelled) return;
+
+        setServerSession(validatedSession);
+
+        if (!validatedSession && session) {
+          authTrace(
+            "layout",
+            "clearing stale local session after server validation failed",
+            {
+              traceId,
+            },
+          );
+          clearAuthStorage();
+          queryClient.clear();
+        }
+      } catch (validationError) {
+        authTrace("layout", "initial auth validation failed", {
+          traceId,
+          error:
+            validationError instanceof Error
+              ? validationError.message
+              : "non-error auth validation failure",
+        });
+        if (!cancelled) {
+          setServerSession(null);
+        }
+      } finally {
+        endAuthTransition("layout-initial-auth");
+        if (!cancelled) {
+          setIsAuthReady(true);
+        }
+      }
+    };
+
+    void validateInitialSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, sessionUserId]);
 
   authTrace("layout", "root layout auth state", {
+    isAuthReady,
     isPending,
+    hasServerSession: !!serverSession,
     hasSession: !!session,
     hasError: !!error,
   });
 
-  if (isPending) {
+  if (isPending || !isAuthReady) {
     return <DotBackground trigger={1} />;
   }
 
   // Reset the sign-out guard when we have a valid session
   // (user just logged in or session was refreshed successfully)
-  if (session) {
+  if (serverSession) {
     resetAuthGuard();
   }
 
-  if (error || !session) {
+  if (error || !serverSession) {
     if (error) {
       console.error("[Auth] Session error:", error);
       Sentry.captureException(error, { tags: { component: "auth_session" } });

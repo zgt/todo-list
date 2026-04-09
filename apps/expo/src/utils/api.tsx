@@ -1,3 +1,4 @@
+import * as Linking from "expo-linking";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
@@ -5,52 +6,82 @@ import superjson from "superjson";
 
 import type { AppRouter } from "@acme/api";
 
-import { authClient, clearAuthStorage, syncSetCookieToStorage } from "./auth";
+import { authClient, clearAuthStorage, getTrpcCookieHeader } from "./auth";
+import { beginAuthTransition, endAuthTransition, waitForAuthReady } from "./auth-gate";
 import { authTrace, cookieFingerprint, nextTraceId } from "./auth-debug";
 import { getBaseUrl } from "./base-url";
 
-/**
- * Fix malformed cookies from the Better Auth expo client.
- * The expo client's splitSetCookieHeader can leave trailing commas on values
- * and produce duplicate cookie names. This deduplicates (keeping the last value)
- * and strips trailing commas.
- */
-function sanitizeCookies(raw: string): string {
-  const cookieMap = new Map<string, string>();
-  raw.split(";").forEach((c) => {
-    const trimmed = c.trim();
-    if (!trimmed) return;
-    const eqIdx = trimmed.indexOf("=");
-    if (eqIdx === -1) return;
-    const name = trimmed.substring(0, eqIdx);
-    let value = trimmed.substring(eqIdx + 1);
-    value = value.replace(/,+$/, "");
-    cookieMap.set(name, value);
-  });
-  return Array.from(cookieMap.entries())
-    .map(([k, v]) => `${k}=${v}`)
-    .join("; ");
+const EXPO_ORIGIN = Linking.createURL("", { scheme: "tokilist" });
+let trpcSessionSyncPromise: Promise<void> | null = null;
+
+async function reconcileSessionFromAuthRoute(reason: string): Promise<void> {
+  if (trpcSessionSyncPromise) {
+    authTrace("trpc-fetch", "joining post-response auth reconcile", {
+      reason,
+    });
+    await trpcSessionSyncPromise;
+    return;
+  }
+
+  trpcSessionSyncPromise = (async () => {
+    beginAuthTransition("trpc-session-reconcile");
+    const traceId = nextTraceId("trpc-session-reconcile");
+
+    try {
+      authTrace("trpc-fetch", "starting post-response auth reconcile", {
+        reason,
+        traceId,
+        cookieBeforeReconcile: cookieFingerprint(getTrpcCookieHeader()),
+      });
+      await authClient.getSession({
+        query: { disableCookieCache: true },
+      });
+      authTrace("trpc-fetch", "completed post-response auth reconcile", {
+        reason,
+        traceId,
+        cookieAfterReconcile: cookieFingerprint(getTrpcCookieHeader()),
+      });
+    } finally {
+      endAuthTransition("trpc-session-reconcile");
+      trpcSessionSyncPromise = null;
+    }
+  })();
+
+  await trpcSessionSyncPromise;
 }
 
 /**
- * Custom fetch that captures Set-Cookie headers from tRPC responses and
- * syncs them to SecureStore. Without this, session token refreshes triggered
- * by Better Auth's updateAge (via Set-Cookie on normal API responses) are
- * silently dropped — the expo plugin only intercepts authClient.$fetch, not
- * tRPC's httpBatchLink fetch.
+ * Custom fetch that treats Set-Cookie from tRPC as a signal to reconcile the
+ * canonical Better Auth session via authClient.getSession(). We intentionally
+ * avoid manually merging flattened Set-Cookie headers from tRPC into storage.
  */
 const trpcFetch: typeof fetch = async (input, init) => {
   const traceId = nextTraceId("trpc-fetch");
   const requestHeaders = new Headers(init?.headers);
+  const cookieBeforeWait = requestHeaders.get("cookie");
+  await waitForAuthReady("trpc-fetch");
+
+  const latestCookie = getTrpcCookieHeader();
+  if (latestCookie) {
+    requestHeaders.set("cookie", latestCookie);
+  } else {
+    requestHeaders.delete("cookie");
+  }
+
   const outgoingCookie = requestHeaders.get("cookie");
   authTrace("trpc-fetch", "dispatching tRPC request", {
     traceId,
     url: typeof input === "string" ? input : input instanceof URL ? input.href : "request",
     method: init?.method ?? "GET",
+    cookieBeforeWait: cookieFingerprint(cookieBeforeWait),
     outgoingCookie: cookieFingerprint(outgoingCookie),
   });
 
-  const response = await fetch(input, init);
+  const response = await fetch(input, {
+    ...init,
+    credentials: "omit",
+    headers: requestHeaders,
+  });
   try {
     const setCookie = response.headers.get("set-cookie");
     authTrace("trpc-fetch", "received tRPC response", {
@@ -59,10 +90,10 @@ const trpcFetch: typeof fetch = async (input, init) => {
       setCookie: cookieFingerprint(setCookie),
     });
     if (setCookie) {
-      syncSetCookieToStorage(setCookie);
+      await reconcileSessionFromAuthRoute("trpc-set-cookie");
     }
   } catch (e) {
-    console.warn("[Auth] Failed to sync Set-Cookie from tRPC response:", e);
+    console.warn("[Auth] Failed to reconcile auth state from tRPC response:", e);
   }
   return response;
 };
@@ -97,13 +128,16 @@ async function handleUnauthorizedError(): Promise<void> {
   }
 
   refreshPromise = (async () => {
+    beginAuthTransition("unauthorized-refresh");
+    let recovered = false;
+
     try {
       // Attempt to refresh the session through Better Auth's fetch pipeline.
       // This processes Set-Cookie responses and updates SecureStore.
       console.warn("[Auth] Got 401 — attempting session refresh before logout");
       authTrace("unauthorized", "starting recovery refresh", {
         traceId,
-        cookieBeforeRefresh: cookieFingerprint(authClient.getCookie()),
+        cookieBeforeRefresh: cookieFingerprint(getTrpcCookieHeader()),
       });
       const result = await authClient.getSession({
         query: { disableCookieCache: true },
@@ -115,12 +149,12 @@ async function handleUnauthorizedError(): Promise<void> {
         );
         authTrace("unauthorized", "recovery refresh succeeded", {
           traceId,
-          cookieAfterRefresh: cookieFingerprint(authClient.getCookie()),
+          cookieAfterRefresh: cookieFingerprint(getTrpcCookieHeader()),
         });
         // Small delay to let cookie sync to SecureStore before queries fire
         await new Promise((resolve) => setTimeout(resolve, 150));
+        recovered = true;
         void queryClient.invalidateQueries();
-        return true;
       }
     } catch (error) {
       console.warn("[Auth] Session refresh threw", error);
@@ -129,13 +163,18 @@ async function handleUnauthorizedError(): Promise<void> {
         error:
           error instanceof Error ? error.message : "non-error refresh failure",
       });
+    } finally {
+      endAuthTransition("unauthorized-refresh");
     }
 
-    // Refresh failed — sign out once and stop
+    if (recovered) {
+      return true;
+    }
+
     console.warn("[Auth] Session unrecoverable — clearing local auth state");
     authTrace("unauthorized", "recovery refresh failed; clearing auth state", {
       traceId,
-      cookieAfterFailure: cookieFingerprint(authClient.getCookie()),
+      cookieAfterFailure: cookieFingerprint(getTrpcCookieHeader()),
     });
     hasSignedOut = true;
     clearAuthStorage();
@@ -205,15 +244,17 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
       headers() {
         const headers: Record<string, string> = {
           "x-trpc-source": "expo-vanilla",
+          "expo-origin": EXPO_ORIGIN,
+          "x-skip-oauth-proxy": "true",
         };
 
-        const cookies = authClient.getCookie();
+        const cookies = getTrpcCookieHeader();
         if (cookies) {
-          headers.Cookie = sanitizeCookies(cookies);
+          headers.cookie = cookies;
         }
         authTrace("trpc-headers", "prepared vanilla tRPC headers", {
           source: headers["x-trpc-source"],
-          cookie: cookieFingerprint(headers.Cookie),
+          cookie: cookieFingerprint(headers.cookie),
         });
         return headers;
       },
@@ -240,15 +281,17 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         headers() {
           const headers: Record<string, string> = {
             "x-trpc-source": "expo-react",
+            "expo-origin": EXPO_ORIGIN,
+            "x-skip-oauth-proxy": "true",
           };
 
-          const cookies = authClient.getCookie();
+          const cookies = getTrpcCookieHeader();
           if (cookies) {
-            headers.Cookie = sanitizeCookies(cookies);
+            headers.cookie = cookies;
           }
           authTrace("trpc-headers", "prepared react tRPC headers", {
             source: headers["x-trpc-source"],
-            cookie: cookieFingerprint(headers.Cookie),
+            cookie: cookieFingerprint(headers.cookie),
           });
           return headers;
         },

@@ -68,6 +68,9 @@ const handler = async (req: NextRequest) => {
   // has passed — dramatically reducing the concurrent-rotation race window.
   const authResult = await auth.api.getSession({
     headers: req.headers,
+    query: {
+      disableCookieCache: true,
+    },
     returnHeaders: true,
   });
   authTrace("resolved Better Auth session for tRPC request", {

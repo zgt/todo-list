@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-import { expoClient, getSetCookie } from "@better-auth/expo/client";
+import { expoClient, parseSetCookieHeader } from "@better-auth/expo/client";
 import * as Sentry from "@sentry/react-native";
 import { createAuthClient } from "better-auth/react";
 
@@ -22,6 +22,9 @@ const CURRENT_BUILD =
   "unknown";
 const BUILD_VERSION_KEY = "expo_auth_build_version";
 const COOKIE_STORAGE_KEY = "expo_cookie";
+const BETTER_AUTH_COOKIE_PREFIXES = ["better-auth.", "__Secure-better-auth."];
+const SESSION_DATA_SUFFIX = "session_data";
+const SESSION_TOKEN_SUFFIX = "session_token";
 
 const AUTH_KEYS = [
   COOKIE_STORAGE_KEY, // actual cookie storage key used by expo client
@@ -84,7 +87,26 @@ const safeStorage = {
   getItem: (key: string): string | null => {
     try {
       ensureKeychainClean();
-      return SecureStore.getItem(key);
+      const value = SecureStore.getItem(key);
+
+      if (key !== COOKIE_STORAGE_KEY) {
+        return value;
+      }
+
+      const sanitized = sanitizeStoredCookieState(value);
+      if (sanitized !== value) {
+        authTrace("storage", "rewriting sanitized cookie storage on read", {
+          previousCookie: cookieFingerprint(value),
+          nextCookie: cookieFingerprint(sanitized),
+        });
+        if (sanitized) {
+          SecureStore.setItem(key, sanitized);
+        } else {
+          SecureStore.deleteItemAsync(key).catch(() => undefined);
+        }
+      }
+
+      return sanitized;
     } catch (error) {
       console.error("[Auth] SecureStore.getItem failed:", key, error);
       Sentry.captureException(error, {
@@ -95,7 +117,13 @@ const safeStorage = {
   },
   setItem: (key: string, value: string): void => {
     try {
-      SecureStore.setItem(key, value);
+      const nextValue =
+        key === COOKIE_STORAGE_KEY ? sanitizeStoredCookieState(value) : value;
+      if (nextValue === null) {
+        SecureStore.deleteItemAsync(key).catch(() => undefined);
+        return;
+      }
+      SecureStore.setItem(key, nextValue);
     } catch (error) {
       console.error("[Auth] SecureStore.setItem failed:", key, error);
       Sentry.captureException(error, {
@@ -123,6 +151,30 @@ export function clearAuthStorage(): void {
   }
 }
 
+export function getTrpcCookieHeader(): string | null {
+  const storedCookie = safeStorage.getItem(COOKIE_STORAGE_KEY);
+  const state = parseStoredCookie(storedCookie);
+  const cookieEntries = Object.entries(state)
+    .filter(([name, entry]) => {
+      if (!entry?.value) return false;
+      const baseName = getChunkBaseName(name);
+      return isBetterAuthCookie(baseName) && isSessionTokenCookie(baseName);
+    })
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, entry]) => `${name}=${entry.value}`);
+
+  if (cookieEntries.length === 0) {
+    return null;
+  }
+
+  const cookieHeader = cookieEntries.join("; ");
+  authTrace("storage", "built canonical tRPC cookie header", {
+    cookie: cookieFingerprint(cookieHeader),
+    cookieNames: cookieEntries.map((entry) => entry.split("=")[0]),
+  });
+  return cookieHeader;
+}
+
 /**
  * Sync a Set-Cookie header into SecureStore using the same merge logic
  * as the expo plugin's fetch interceptor. This ensures session token
@@ -130,13 +182,185 @@ export function clearAuthStorage(): void {
  */
 export function syncSetCookieToStorage(setCookieHeader: string): void {
   const prevCookie = safeStorage.getItem(COOKIE_STORAGE_KEY);
-  const merged = getSetCookie(setCookieHeader, prevCookie ?? undefined);
+  const merged = mergeBetterAuthCookies(prevCookie, setCookieHeader);
   authTrace("storage", "syncing set-cookie to storage", {
     previousCookie: cookieFingerprint(prevCookie),
     nextCookie: cookieFingerprint(merged),
     headerFingerprint: cookieFingerprint(setCookieHeader),
   });
   safeStorage.setItem(COOKIE_STORAGE_KEY, merged);
+}
+
+function mergeBetterAuthCookies(
+  prevCookie: string | null,
+  setCookieHeader: string,
+): string {
+  const nextState = parseStoredCookie(prevCookie);
+  const incomingCookies = parseSetCookieHeader(setCookieHeader);
+  let touchedSessionToken = false;
+
+  for (const [incomingName, incomingCookie] of incomingCookies.entries()) {
+    const chunkBase = getChunkBaseName(incomingName);
+    if (!isBetterAuthCookie(chunkBase)) continue;
+
+    // Never persist session_data chunks from tRPC's flattened Set-Cookie header.
+    // Better Auth's own /api/auth/get-session flow can rebuild them safely.
+    if (isSessionDataCookie(chunkBase)) {
+      removeCookiesByBaseName(nextState, chunkBase);
+      continue;
+    }
+
+    if (!isSessionTokenCookie(chunkBase)) continue;
+    touchedSessionToken = true;
+
+    for (const existingName of Object.keys(nextState)) {
+      if (getChunkBaseName(existingName) === chunkBase) {
+        delete nextState[existingName];
+      }
+    }
+
+    const maxAgeValue = getNumericMaxAge(incomingCookie["max-age"]);
+    const expiresValue =
+      maxAgeValue !== null
+        ? new Date(Date.now() + maxAgeValue * 1000).toISOString()
+        : incomingCookie.expires
+          ? new Date(String(incomingCookie.expires)).toISOString()
+          : null;
+
+    nextState[incomingName] = {
+      value: sanitizeCookieValue(incomingCookie.value),
+      expires: expiresValue,
+    };
+  }
+
+  // If the session token changed, force session_data to be rebuilt by the auth route.
+  if (touchedSessionToken) {
+    removeCookiesBySuffix(nextState, SESSION_DATA_SUFFIX);
+  }
+
+  return JSON.stringify(nextState);
+}
+
+function parseStoredCookie(
+  prevCookie: string | null,
+): Record<string, { value: string; expires: string | null }> {
+  if (!prevCookie) return {};
+
+  try {
+    const parsed = JSON.parse(prevCookie) as Record<
+      string,
+      { value: string; expires: string | null }
+    >;
+    return sanitizeStoredCookieEntries(parsed);
+  } catch {
+    return {};
+  }
+}
+
+function sanitizeStoredCookieState(prevCookie: string | null): string | null {
+  if (!prevCookie) return prevCookie;
+
+  try {
+    const parsed = JSON.parse(prevCookie) as Record<
+      string,
+      { value: string; expires: string | null }
+    >;
+    const sanitized = sanitizeStoredCookieEntries(parsed);
+    const nextValue = JSON.stringify(sanitized);
+    return nextValue === "{}" ? null : nextValue;
+  } catch {
+    authTrace("storage", "dropping unreadable cookie storage state", {
+      previousCookie: cookieFingerprint(prevCookie),
+    });
+    return null;
+  }
+}
+
+function sanitizeStoredCookieEntries(
+  state: Record<string, { value: string; expires: string | null }>,
+): Record<string, { value: string; expires: string | null }> {
+  const sanitizedState: Record<
+    string,
+    { value: string; expires: string | null }
+  > = {};
+
+  for (const [name, entry] of Object.entries(state)) {
+    if (!entry || typeof entry.value !== "string") continue;
+
+    const baseName = getChunkBaseName(name);
+    if (isBetterAuthCookie(baseName) && entry.value.includes(",")) {
+      authTrace("storage", "dropping malformed better auth cookie from storage", {
+        cookieName: name,
+        cookieValue: cookieFingerprint(entry.value),
+      });
+      continue;
+    }
+
+    sanitizedState[name] = {
+      value: sanitizeCookieValue(entry.value),
+      expires:
+        typeof entry.expires === "string" || entry.expires === null
+          ? entry.expires
+          : null,
+    };
+  }
+
+  return sanitizedState;
+}
+
+function getChunkBaseName(cookieName: string): string {
+  return cookieName.replace(/\.\d+$/, "");
+}
+
+function isBetterAuthCookie(cookieName: string): boolean {
+  return BETTER_AUTH_COOKIE_PREFIXES.some((prefix) =>
+    cookieName.startsWith(prefix),
+  );
+}
+
+function isSessionDataCookie(cookieName: string): boolean {
+  return cookieName.endsWith(SESSION_DATA_SUFFIX);
+}
+
+function isSessionTokenCookie(cookieName: string): boolean {
+  return cookieName.endsWith(SESSION_TOKEN_SUFFIX);
+}
+
+function removeCookiesByBaseName(
+  state: Record<string, { value: string; expires: string | null }>,
+  baseName: string,
+): void {
+  for (const existingName of Object.keys(state)) {
+    if (getChunkBaseName(existingName) === baseName) {
+      delete state[existingName];
+    }
+  }
+}
+
+function removeCookiesBySuffix(
+  state: Record<string, { value: string; expires: string | null }>,
+  suffix: string,
+): void {
+  for (const existingName of Object.keys(state)) {
+    if (getChunkBaseName(existingName).endsWith(suffix)) {
+      delete state[existingName];
+    }
+  }
+}
+
+function sanitizeCookieValue(value: string): string {
+  // Better Auth session cookies are base64/base64url-ish and should not contain commas.
+  // If headers were flattened, chunk values can pick up a stray comma separator.
+  return value.replace(/,+$/g, "").replace(/,/g, "");
+}
+
+function getNumericMaxAge(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
 }
 
 export const authClient = createAuthClient({

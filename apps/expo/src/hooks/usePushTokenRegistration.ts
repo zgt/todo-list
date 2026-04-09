@@ -8,10 +8,11 @@ import { getExpoPushToken } from "~/utils/notifications";
  * Registers the device's Expo push token with the server on mount.
  * Should be called once when the user is authenticated.
  */
-export function usePushTokenRegistration() {
+export function usePushTokenRegistration(enabled: boolean) {
   const registered = useRef(false);
 
   useEffect(() => {
+    if (!enabled) return;
     if (registered.current) return;
 
     const register = async () => {
@@ -32,5 +33,5 @@ export function usePushTokenRegistration() {
     };
 
     void register();
-  }, []);
+  }, [enabled]);
 }
