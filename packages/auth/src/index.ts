@@ -21,6 +21,9 @@ export function initAuth<
   googleClientId?: string;
   googleClientSecret?: string;
   extraPlugins?: TExtraPlugins;
+  sessionExpiresIn?: number;
+  sessionUpdateAge?: number;
+  sessionCookieCacheMaxAge?: number;
   /**
    * Enable OAuth proxy for Expo mobile app support.
    * Set to true only if you need to support OAuth redirects from Expo.
@@ -78,11 +81,11 @@ export function initAuth<
         }),
     },
     session: {
-      expiresIn: 60 * 60 * 24 * 30, // 30 days
-      updateAge: 60 * 60 * 24, // 24 hours
+      expiresIn: options.sessionExpiresIn ?? 60 * 60 * 24 * 30, // 30 days
+      updateAge: options.sessionUpdateAge ?? 60 * 60 * 24, // 24 hours
       cookieCache: {
         enabled: true,
-        maxAge: 5 * 60, // 5 minutes
+        maxAge: options.sessionCookieCacheMaxAge ?? 5 * 60, // 5 minutes
         refreshCache: true,
       },
     },

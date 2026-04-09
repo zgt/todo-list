@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { AppState, type AppStateStatus } from "react-native";
 
 import { authClient } from "~/utils/auth";
+import { authTrace, nextTraceId } from "~/utils/auth-debug";
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 const DEDUP_MS = 5 * 60 * 1000; // 5 minutes — skip if refreshed recently
@@ -21,16 +22,36 @@ export function useSessionRefresh() {
 
   useEffect(() => {
     const refreshSession = async () => {
+      const traceId = nextTraceId("session-refresh");
       const now = Date.now();
-      if (now - lastRefreshRef.current < DEDUP_MS) return;
+      if (now - lastRefreshRef.current < DEDUP_MS) {
+        authTrace("session-refresh", "skipping refresh due to dedup window", {
+          traceId,
+          elapsedMs: now - lastRefreshRef.current,
+        });
+        return;
+      }
 
       lastRefreshRef.current = now;
       try {
-        await authClient.getSession({
+        authTrace("session-refresh", "starting proactive refresh", {
+          traceId,
+          appState: AppState.currentState,
+        });
+        const result = await authClient.getSession({
           query: { disableCookieCache: true },
+        });
+        authTrace("session-refresh", "completed proactive refresh", {
+          traceId,
+          hasSession: !!result.data?.session,
         });
       } catch (error) {
         console.warn("[SessionRefresh] Failed to refresh session:", error);
+        authTrace("session-refresh", "refresh failed", {
+          traceId,
+          error:
+            error instanceof Error ? error.message : "non-error refresh failure",
+        });
       }
     };
 

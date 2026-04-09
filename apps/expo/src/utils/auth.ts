@@ -5,6 +5,11 @@ import * as Sentry from "@sentry/react-native";
 import { createAuthClient } from "better-auth/react";
 
 import { getBaseUrl } from "./base-url";
+import {
+  authTrace,
+  cookieFingerprint,
+  isAuthTraceEnabled,
+} from "./auth-debug";
 
 /**
  * Clears stale Keychain auth entries when the app build number changes.
@@ -106,6 +111,9 @@ const safeStorage = {
  * or when signOut fails and we need to ensure local state is clean.
  */
 export function clearAuthStorage(): void {
+  authTrace("storage", "clearing auth storage", {
+    keys: AUTH_KEYS,
+  });
   for (const key of AUTH_KEYS) {
     try {
       SecureStore.deleteItemAsync(key).catch(() => undefined);
@@ -123,6 +131,11 @@ export function clearAuthStorage(): void {
 export function syncSetCookieToStorage(setCookieHeader: string): void {
   const prevCookie = safeStorage.getItem(COOKIE_STORAGE_KEY);
   const merged = getSetCookie(setCookieHeader, prevCookie ?? undefined);
+  authTrace("storage", "syncing set-cookie to storage", {
+    previousCookie: cookieFingerprint(prevCookie),
+    nextCookie: cookieFingerprint(merged),
+    headerFingerprint: cookieFingerprint(setCookieHeader),
+  });
   safeStorage.setItem(COOKIE_STORAGE_KEY, merged);
 }
 
@@ -136,6 +149,13 @@ export const authClient = createAuthClient({
     }),
   ],
 });
+
+if (isAuthTraceEnabled()) {
+  authTrace("client", "better auth expo client configured", {
+    baseUrl: getBaseUrl(),
+    storageKey: COOKIE_STORAGE_KEY,
+  });
+}
 
 export type Auth = typeof authClient;
 export type Session = Auth["$Infer"]["Session"];

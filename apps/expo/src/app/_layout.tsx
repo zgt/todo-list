@@ -14,6 +14,7 @@ import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { useSessionRefresh } from "~/hooks/useSessionRefresh";
 import { queryClient } from "~/utils/api";
 import { authClient } from "~/utils/auth";
+import { authTrace } from "~/utils/auth-debug";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
 
 import "../styles.css";
@@ -47,6 +48,12 @@ function RootLayout() {
 
   // Proactively refresh session cookies to prevent 401 errors
   useSessionRefresh();
+
+  authTrace("layout", "root layout auth state", {
+    isPending,
+    hasSession: !!session,
+    hasError: !!error,
+  });
 
   if (isPending) {
     return <DotBackground trigger={1} />;

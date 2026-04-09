@@ -6,6 +6,7 @@ import superjson from "superjson";
 import type { AppRouter } from "@acme/api";
 
 import { authClient, clearAuthStorage, syncSetCookieToStorage } from "./auth";
+import { authTrace, cookieFingerprint, nextTraceId } from "./auth-debug";
 import { getBaseUrl } from "./base-url";
 
 /**
@@ -39,9 +40,24 @@ function sanitizeCookies(raw: string): string {
  * tRPC's httpBatchLink fetch.
  */
 const trpcFetch: typeof fetch = async (input, init) => {
+  const traceId = nextTraceId("trpc-fetch");
+  const requestHeaders = new Headers(init?.headers);
+  const outgoingCookie = requestHeaders.get("cookie");
+  authTrace("trpc-fetch", "dispatching tRPC request", {
+    traceId,
+    url: typeof input === "string" ? input : input instanceof URL ? input.href : "request",
+    method: init?.method ?? "GET",
+    outgoingCookie: cookieFingerprint(outgoingCookie),
+  });
+
   const response = await fetch(input, init);
   try {
     const setCookie = response.headers.get("set-cookie");
+    authTrace("trpc-fetch", "received tRPC response", {
+      traceId,
+      status: response.status,
+      setCookie: cookieFingerprint(setCookie),
+    });
     if (setCookie) {
       syncSetCookieToStorage(setCookie);
     }
@@ -61,11 +77,21 @@ let refreshPromise: Promise<boolean> | null = null;
 let hasSignedOut = false;
 
 async function handleUnauthorizedError(): Promise<void> {
+  const traceId = nextTraceId("unauthorized");
+
   // If we already signed out this app lifecycle, don't keep retrying
-  if (hasSignedOut) return;
+  if (hasSignedOut) {
+    authTrace("unauthorized", "ignoring 401 after sign-out guard tripped", {
+      traceId,
+    });
+    return;
+  }
 
   // If a refresh is already in progress, wait for it
   if (refreshPromise) {
+    authTrace("unauthorized", "joining existing refresh promise", {
+      traceId,
+    });
     await refreshPromise;
     return;
   }
@@ -75,6 +101,10 @@ async function handleUnauthorizedError(): Promise<void> {
       // Attempt to refresh the session through Better Auth's fetch pipeline.
       // This processes Set-Cookie responses and updates SecureStore.
       console.warn("[Auth] Got 401 — attempting session refresh before logout");
+      authTrace("unauthorized", "starting recovery refresh", {
+        traceId,
+        cookieBeforeRefresh: cookieFingerprint(authClient.getCookie()),
+      });
       const result = await authClient.getSession({
         query: { disableCookieCache: true },
       });
@@ -83,6 +113,10 @@ async function handleUnauthorizedError(): Promise<void> {
         console.log(
           "[Auth] Session refresh succeeded — refetching with fresh cookies",
         );
+        authTrace("unauthorized", "recovery refresh succeeded", {
+          traceId,
+          cookieAfterRefresh: cookieFingerprint(authClient.getCookie()),
+        });
         // Small delay to let cookie sync to SecureStore before queries fire
         await new Promise((resolve) => setTimeout(resolve, 150));
         void queryClient.invalidateQueries();
@@ -90,10 +124,19 @@ async function handleUnauthorizedError(): Promise<void> {
       }
     } catch (error) {
       console.warn("[Auth] Session refresh threw", error);
+      authTrace("unauthorized", "recovery refresh threw", {
+        traceId,
+        error:
+          error instanceof Error ? error.message : "non-error refresh failure",
+      });
     }
 
     // Refresh failed — sign out once and stop
     console.warn("[Auth] Session unrecoverable — clearing local auth state");
+    authTrace("unauthorized", "recovery refresh failed; clearing auth state", {
+      traceId,
+      cookieAfterFailure: cookieFingerprint(authClient.getCookie()),
+    });
     hasSignedOut = true;
     clearAuthStorage();
     queryClient.clear();
@@ -112,6 +155,9 @@ async function handleUnauthorizedError(): Promise<void> {
  * Call this after a successful sign-in.
  */
 export function resetAuthGuard(): void {
+  authTrace("unauthorized", "resetting sign-out guard", {
+    hadSignedOut: hasSignedOut,
+  });
   hasSignedOut = false;
 }
 
@@ -165,6 +211,10 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
         if (cookies) {
           headers.Cookie = sanitizeCookies(cookies);
         }
+        authTrace("trpc-headers", "prepared vanilla tRPC headers", {
+          source: headers["x-trpc-source"],
+          cookie: cookieFingerprint(headers.Cookie),
+        });
         return headers;
       },
     }),
@@ -196,6 +246,10 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
           if (cookies) {
             headers.Cookie = sanitizeCookies(cookies);
           }
+          authTrace("trpc-headers", "prepared react tRPC headers", {
+            source: headers["x-trpc-source"],
+            cookie: cookieFingerprint(headers.Cookie),
+          });
           return headers;
         },
       }),
