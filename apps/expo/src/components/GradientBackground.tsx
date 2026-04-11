@@ -5,9 +5,15 @@ import { DotBackground } from "./DotBackground";
 export function GradientBackground({
   children,
   rippleTrigger,
+  loopRippleWhileVisible = false,
+  ripplePulseIntervalMs,
+  continuousRippleWhileVisible = false,
 }: {
   children: React.ReactNode;
   rippleTrigger?: number;
+  loopRippleWhileVisible?: boolean;
+  ripplePulseIntervalMs?: number;
+  continuousRippleWhileVisible?: boolean;
 }) {
   return (
     <View style={styles.container}>
@@ -18,7 +24,12 @@ export function GradientBackground({
       />
 
       {/* Dot pattern overlay */}
-      <DotBackground trigger={rippleTrigger} />
+      <DotBackground
+        trigger={rippleTrigger}
+        loopWhileVisible={loopRippleWhileVisible}
+        pulseIntervalMs={ripplePulseIntervalMs}
+        continuousWhileVisible={continuousRippleWhileVisible}
+      />
 
       {/* Aurora effects (subtle overlays) */}
       <View

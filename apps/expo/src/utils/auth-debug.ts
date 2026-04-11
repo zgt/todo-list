@@ -7,7 +7,7 @@ function djb2(input: string): string {
 }
 
 export function isAuthTraceEnabled(): boolean {
-  return process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
+  return __DEV__ || process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 }
 
 export function cookieFingerprint(cookie: string | null | undefined): string {

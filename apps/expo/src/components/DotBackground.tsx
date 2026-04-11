@@ -1,14 +1,19 @@
 import { useEffect } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import {
+  cancelAnimation,
   Easing,
   useDerivedValue,
   useSharedValue,
+  withRepeat,
   withTiming,
 } from "react-native-reanimated";
 import { Canvas, Fill, Shader, Skia } from "@shopify/react-native-skia";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const CONTINUOUS_RIPPLE_CYCLE_MS = 3000;
+const CONTINUOUS_RIPPLE_MAX_TIME = 10;
+const CONTINUOUS_RIPPLE_EPOCH = Date.now();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- static shader source is always valid
 const source = Skia.RuntimeEffect.Make(`
@@ -57,30 +62,103 @@ const source = Skia.RuntimeEffect.Make(`
 
 interface DotBackgroundProps {
   trigger?: number;
+  loopWhileVisible?: boolean;
+  pulseIntervalMs?: number;
+  continuousWhileVisible?: boolean;
 }
 
-export function DotBackground({ trigger }: DotBackgroundProps) {
+function startRipple(
+  rippleTime: { value: number },
+  rippleIntensity: { value: number },
+): void {
+  rippleTime.value = 0;
+  rippleIntensity.value = 1;
+  rippleTime.value = withTiming(10, {
+    duration: 5000,
+    easing: Easing.linear,
+  });
+  rippleIntensity.value = withTiming(0, {
+    duration: 6000,
+    easing: Easing.out(Easing.quad),
+  });
+}
+
+export function DotBackground({
+  trigger,
+  loopWhileVisible = false,
+  pulseIntervalMs = 4200,
+  continuousWhileVisible = false,
+}: DotBackgroundProps) {
   const rippleTime = useSharedValue(0);
   const rippleIntensity = useSharedValue(0);
 
   useEffect(() => {
+    if (continuousWhileVisible) {
+      return;
+    }
     if (trigger === undefined) return;
-    // Skip if a ripple is already playing (intensity > 0.1 means still visible)
     if (rippleIntensity.value > 0.1) return;
 
-    // Reset and start ripple
-    rippleTime.value = 0;
-    rippleIntensity.value = 1;
-    rippleTime.value = withTiming(10, {
-      duration: 5000,
-      easing: Easing.linear,
-    });
-    // Fade out intensity
-    rippleIntensity.value = withTiming(0, {
-      duration: 6000,
-      easing: Easing.out(Easing.quad),
-    });
-  }, [trigger, rippleTime, rippleIntensity]);
+    startRipple(rippleTime, rippleIntensity);
+  }, [continuousWhileVisible, trigger, rippleTime, rippleIntensity]);
+
+  useEffect(() => {
+    if (continuousWhileVisible) {
+      return;
+    }
+    if (!loopWhileVisible) {
+      return;
+    }
+
+    startRipple(rippleTime, rippleIntensity);
+
+    const interval = setInterval(() => {
+      startRipple(rippleTime, rippleIntensity);
+    }, pulseIntervalMs);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [
+    continuousWhileVisible,
+    loopWhileVisible,
+    pulseIntervalMs,
+    rippleTime,
+    rippleIntensity,
+  ]);
+
+  useEffect(() => {
+    if (!continuousWhileVisible) {
+      return;
+    }
+
+    rippleIntensity.value = 0.9;
+    const elapsedMs =
+      (Date.now() - CONTINUOUS_RIPPLE_EPOCH) % CONTINUOUS_RIPPLE_CYCLE_MS;
+    const initialTime =
+      (elapsedMs / CONTINUOUS_RIPPLE_CYCLE_MS) * CONTINUOUS_RIPPLE_MAX_TIME;
+    const remainingDuration =
+      ((CONTINUOUS_RIPPLE_MAX_TIME - initialTime) /
+        CONTINUOUS_RIPPLE_MAX_TIME) *
+      CONTINUOUS_RIPPLE_CYCLE_MS;
+
+    rippleTime.value = initialTime;
+    rippleTime.value = withRepeat(
+      withTiming(CONTINUOUS_RIPPLE_MAX_TIME, {
+        duration: Math.max(1, Math.round(remainingDuration)),
+        easing: Easing.linear,
+      }),
+      -1,
+      false,
+    );
+
+    return () => {
+      cancelAnimation(rippleTime);
+      cancelAnimation(rippleIntensity);
+      rippleTime.value = 0;
+      rippleIntensity.value = 0;
+    };
+  }, [continuousWhileVisible, rippleIntensity, rippleTime]);
 
   const uniforms = useDerivedValue(() => ({
     resolution: [SCREEN_WIDTH, SCREEN_HEIGHT] as const,

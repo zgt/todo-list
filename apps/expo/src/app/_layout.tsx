@@ -9,7 +9,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthGuard } from "~/components/AuthGuard";
 import { resetAuthGuard } from "~/utils/api";
-import { DotBackground } from "~/components/DotBackground";
+import { GradientBackground } from "~/components/GradientBackground";
 import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { useSessionRefresh } from "~/hooks/useSessionRefresh";
@@ -46,6 +46,7 @@ function RootLayout() {
   const [serverSession, setServerSession] = useState<Session | null>(null);
   const sessionUserId = session?.user?.id ?? null;
   const sessionId = session?.session?.id ?? null;
+  const isLoadingAuth = isPending || !isAuthReady;
 
   // Set up notification handlers and permissions
   useNotifications();
@@ -132,8 +133,12 @@ function RootLayout() {
     hasError: !!error,
   });
 
-  if (isPending || !isAuthReady) {
-    return <DotBackground trigger={1} />;
+  if (isLoadingAuth) {
+    return (
+      <GradientBackground continuousRippleWhileVisible>
+        <></>
+      </GradientBackground>
+    );
   }
 
   // Reset the sign-out guard when we have a valid session

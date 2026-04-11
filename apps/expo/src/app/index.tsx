@@ -187,11 +187,13 @@ export default function Index() {
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<
     string | null
   >(null);
-  const [rippleTrigger, setRippleTrigger] = useState(0);
+  const [rippleTrigger, setRippleTrigger] = useState<number | undefined>(
+    undefined,
+  );
   const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRipple = useCallback(() => {
     if (rippleDebounceRef.current) return;
-    setRippleTrigger((prev) => prev + 1);
+    setRippleTrigger((prev) => (prev ?? 0) + 1);
     rippleDebounceRef.current = setTimeout(() => {
       rippleDebounceRef.current = null;
     }, 500);
@@ -912,7 +914,7 @@ export default function Index() {
   // Show loading state while session or tasks are loading
   if (isPending || isLoadingTasks) {
     return (
-      <GradientBackground>
+      <GradientBackground continuousRippleWhileVisible>
         <SafeAreaView className="flex-1" edges={["top"]}>
           <View className="flex-1 items-center justify-center">
             <RNText className="text-foreground text-lg">
