@@ -2,10 +2,15 @@ import type { NextRequest } from "next/server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import { appRouter, createTRPCContext } from "@acme/api";
+import {
+  getMobileSessionTokenFromHeaders,
+  resolveSessionByToken,
+} from "@acme/auth";
 
 import { auth } from "~/auth/server";
+import { env } from "~/env";
 
-const DEBUG_AUTH = process.env.AUTH_TRACE === "1";
+const DEBUG_AUTH = env.AUTH_TRACE === "1";
 
 function djb2(input: string): string {
   let hash = 5381;
@@ -56,30 +61,31 @@ const handler = async (req: NextRequest) => {
     path: req.nextUrl.pathname,
     source: req.headers.get("x-trpc-source") ?? "unknown",
     incomingCookie: cookieFingerprint(req.headers.get("cookie")),
+    mobileToken: cookieFingerprint(getMobileSessionTokenFromHeaders(req.headers)),
   });
 
-  // Pre-resolve the session with returnHeaders so we can capture Set-Cookie
-  // headers from Better Auth's session token refresh (updateAge). Without this,
-  // the refreshed token is written to the DB but never sent to the client,
-  // causing 401 loops after updateAge (24h) on Expo.
-  //
-  // With cookieCache enabled, most calls read from the signed cookie (no DB hit,
-  // no token rotation). Rotation only occurs when the cache expires AND updateAge
-  // has passed — dramatically reducing the concurrent-rotation race window.
-  const authResult = await auth.api.getSession({
-    headers: req.headers,
-    query: {
-      disableCookieCache: true,
-    },
-    returnHeaders: true,
-  });
-  authTrace("resolved Better Auth session for tRPC request", {
+  const mobileSessionToken = getMobileSessionTokenFromHeaders(req.headers);
+  const mobileSession = mobileSessionToken
+    ? await resolveSessionByToken(mobileSessionToken)
+    : null;
+
+  const authResult = mobileSessionToken
+    ? null
+    : await auth.api.getSession({
+        headers: req.headers,
+        query: {
+          disableCookieCache: true,
+        },
+        returnHeaders: true,
+      });
+
+  authTrace("resolved auth state for tRPC request", {
     traceId,
-    hasSession: !!authResult.response?.session,
+    authSource: mobileSessionToken ? "mobile-token" : "better-auth-cookie",
+    hasSession: !!(mobileSession ?? authResult?.response?.session),
     setCookies:
-      authResult.headers?.getSetCookie?.().map((cookie) =>
-        cookieFingerprint(cookie),
-      ) ?? [],
+      authResult?.headers.getSetCookie().map((cookie) => cookieFingerprint(cookie)) ??
+      [],
   });
 
   const response = await fetchRequestHandler({
@@ -90,7 +96,7 @@ const handler = async (req: NextRequest) => {
       createTRPCContext({
         auth: auth,
         headers: req.headers,
-        session: authResult.response,
+        session: mobileSession ?? authResult?.response ?? null,
       }),
     onError({ error, path }) {
       authTrace("tRPC handler error", {
@@ -106,7 +112,7 @@ const handler = async (req: NextRequest) => {
 
   // Forward Set-Cookie from auth session refresh to the client.
   // This ensures the Expo app receives the refreshed session token.
-  const setCookies = authResult.headers?.getSetCookie?.();
+  const setCookies = authResult?.headers.getSetCookie();
   if (setCookies?.length) {
     console.log(
       `[Auth] Forwarding ${setCookies.length} Set-Cookie header(s) to tRPC response`,

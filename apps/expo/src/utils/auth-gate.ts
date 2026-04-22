@@ -5,18 +5,16 @@ let authReadyPromise: Promise<void> | null = null;
 let resolveAuthReady: (() => void) | null = null;
 
 function ensurePendingPromise(): Promise<void> {
-  if (!authReadyPromise) {
-    authReadyPromise = new Promise<void>((resolve) => {
+  authReadyPromise ??= new Promise<void>((resolve) => {
       resolveAuthReady = resolve;
     });
-  }
 
   return authReadyPromise;
 }
 
 export function beginAuthTransition(source: string): void {
   activeAuthTransitions += 1;
-  ensurePendingPromise();
+  void ensurePendingPromise();
   authTrace("auth-gate", "begin auth transition", {
     source,
     activeAuthTransitions,

@@ -16,6 +16,10 @@ export function authEnv() {
           ? z.string().min(1)
           : z.string().min(1).optional(),
       AUTH_REDIRECT_PROXY_URL: z.string().url().optional(),
+      AUTH_TRACE: z.enum(["0", "1"]).optional(),
+      AUTH_DEBUG_SESSION_EXPIRES_IN_SEC: z.string().optional(),
+      AUTH_DEBUG_UPDATE_AGE_SEC: z.string().optional(),
+      AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC: z.string().optional(),
       NODE_ENV: z.enum(["development", "production"]).optional(),
     },
     runtimeEnv: process.env,

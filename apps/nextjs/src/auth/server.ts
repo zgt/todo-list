@@ -28,14 +28,14 @@ export const auth = initAuth({
   appleBundleId: env.AUTH_APPLE_BUNDLE_ID,
   googleClientId: env.AUTH_GOOGLE_ID,
   googleClientSecret: env.AUTH_GOOGLE_SECRET,
-  sessionExpiresIn: process.env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC
-    ? Number(process.env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC)
+  sessionExpiresIn: env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC
+    ? Number(env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC)
     : undefined,
-  sessionUpdateAge: process.env.AUTH_DEBUG_UPDATE_AGE_SEC
-    ? Number(process.env.AUTH_DEBUG_UPDATE_AGE_SEC)
+  sessionUpdateAge: env.AUTH_DEBUG_UPDATE_AGE_SEC
+    ? Number(env.AUTH_DEBUG_UPDATE_AGE_SEC)
     : undefined,
-  sessionCookieCacheMaxAge: process.env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC
-    ? Number(process.env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC)
+  sessionCookieCacheMaxAge: env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC
+    ? Number(env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC)
     : undefined,
   extraPlugins: [nextCookies()],
   enableOAuthProxy: true, // Enable OAuth proxy for Expo OAuth support

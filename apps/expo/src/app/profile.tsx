@@ -74,7 +74,8 @@ export default function ProfileScreen() {
         try {
           await authClient.signOut();
         } catch {
-          // Session already deleted on server, force-clear local state
+          clearAuthStorage();
+        } finally {
           clearAuthStorage();
         }
         globalQueryClient.clear();

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ComponentRef } from "react";
 import { Alert, Linking, Pressable, Text as RNText, View } from "react-native";
 import {
   BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
   BottomSheetModal,
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
+import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,7 +40,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(user.name);
-  const inputRef = useRef<any>(null);
+  const inputRef = useRef<ComponentRef<typeof BottomSheetTextInput>>(null);
 
   const updateNameMutation = useMutation(
     trpc.user.updateDisplayName.mutationOptions({
@@ -93,10 +94,8 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
       await authClient.signOut();
     } catch (error) {
       console.error("Sign-out error:", error);
-      // If signOut fails (e.g., session already expired on server),
-      // force-clear local auth tokens so we don't get stuck in a stale state
-      clearAuthStorage();
     } finally {
+      clearAuthStorage();
       queryClient.clear();
       onClose();
     }

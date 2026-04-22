@@ -6,7 +6,14 @@ import superjson from "superjson";
 
 import type { AppRouter } from "@acme/api";
 
-import { authClient, clearAuthStorage, getTrpcCookieHeader } from "./auth";
+import {
+  authClient,
+  clearAuthStorage,
+  fetchMobileSession,
+  getMobileSessionToken,
+  getTrpcCookieHeader,
+  syncMobileSessionTokenFromCookieStorage,
+} from "./auth";
 import { beginAuthTransition, endAuthTransition, waitForAuthReady } from "./auth-gate";
 import { authTrace, cookieFingerprint, nextTraceId } from "./auth-debug";
 import { getBaseUrl } from "./base-url";
@@ -36,6 +43,7 @@ async function reconcileSessionFromAuthRoute(reason: string): Promise<void> {
       await authClient.getSession({
         query: { disableCookieCache: true },
       });
+      syncMobileSessionTokenFromCookieStorage();
       authTrace("trpc-fetch", "completed post-response auth reconcile", {
         reason,
         traceId,
@@ -62,10 +70,16 @@ const trpcFetch: typeof fetch = async (input, init) => {
   await waitForAuthReady("trpc-fetch");
 
   const latestCookie = getTrpcCookieHeader();
-  if (latestCookie) {
+  const mobileSessionToken = getMobileSessionToken();
+  if (mobileSessionToken) {
+    requestHeaders.set("x-mobile-session-token", mobileSessionToken);
+    requestHeaders.delete("cookie");
+  } else if (latestCookie) {
+    requestHeaders.delete("x-mobile-session-token");
     requestHeaders.set("cookie", latestCookie);
   } else {
     requestHeaders.delete("cookie");
+    requestHeaders.delete("x-mobile-session-token");
   }
 
   const outgoingCookie = requestHeaders.get("cookie");
@@ -75,6 +89,7 @@ const trpcFetch: typeof fetch = async (input, init) => {
     method: init?.method ?? "GET",
     cookieBeforeWait: cookieFingerprint(cookieBeforeWait),
     outgoingCookie: cookieFingerprint(outgoingCookie),
+    mobileToken: cookieFingerprint(mobileSessionToken),
   });
 
   const response = await fetch(input, {
@@ -142,6 +157,7 @@ async function handleUnauthorizedError(): Promise<void> {
       const result = await authClient.getSession({
         query: { disableCookieCache: true },
       });
+      syncMobileSessionTokenFromCookieStorage();
 
       if (result.data?.session) {
         console.log(
@@ -168,6 +184,17 @@ async function handleUnauthorizedError(): Promise<void> {
     }
 
     if (recovered) {
+      return true;
+    }
+
+    const mobileSession = await fetchMobileSession();
+    if (mobileSession?.session) {
+      authTrace("unauthorized", "recovered from stored mobile token", {
+        traceId,
+        userId: mobileSession.user.id,
+      });
+      recovered = true;
+      void queryClient.invalidateQueries();
       return true;
     }
 
@@ -248,13 +275,20 @@ export const vanillaTrpc = createTRPCClient<AppRouter>({
           "x-skip-oauth-proxy": "true",
         };
 
-        const cookies = getTrpcCookieHeader();
-        if (cookies) {
-          headers.cookie = cookies;
+        const mobileToken = getMobileSessionToken();
+        if (mobileToken) {
+          headers["x-mobile-session-token"] = mobileToken;
+        } else {
+          const cookies = getTrpcCookieHeader();
+          if (cookies) {
+            headers.cookie = cookies;
+          }
         }
+
         authTrace("trpc-headers", "prepared vanilla tRPC headers", {
           source: headers["x-trpc-source"],
           cookie: cookieFingerprint(headers.cookie),
+          mobileToken: cookieFingerprint(headers["x-mobile-session-token"]),
         });
         return headers;
       },
@@ -279,19 +313,25 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         url: `${getBaseUrl()}/api/trpc`,
         fetch: trpcFetch,
         headers() {
-          const headers: Record<string, string> = {
-            "x-trpc-source": "expo-react",
-            "expo-origin": EXPO_ORIGIN,
-            "x-skip-oauth-proxy": "true",
-          };
+        const headers: Record<string, string> = {
+          "x-trpc-source": "expo-react",
+          "expo-origin": EXPO_ORIGIN,
+          "x-skip-oauth-proxy": "true",
+        };
 
-          const cookies = getTrpcCookieHeader();
-          if (cookies) {
-            headers.cookie = cookies;
+          const mobileToken = getMobileSessionToken();
+          if (mobileToken) {
+            headers["x-mobile-session-token"] = mobileToken;
+          } else {
+            const cookies = getTrpcCookieHeader();
+            if (cookies) {
+              headers.cookie = cookies;
+            }
           }
           authTrace("trpc-headers", "prepared react tRPC headers", {
             source: headers["x-trpc-source"],
             cookie: cookieFingerprint(headers.cookie),
+            mobileToken: cookieFingerprint(headers["x-mobile-session-token"]),
           });
           return headers;
         },

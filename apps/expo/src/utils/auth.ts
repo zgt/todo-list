@@ -22,6 +22,7 @@ const CURRENT_BUILD =
   "unknown";
 const BUILD_VERSION_KEY = "expo_auth_build_version";
 const COOKIE_STORAGE_KEY = "expo_cookie";
+const MOBILE_SESSION_TOKEN_KEY = "expo_mobile_session_token";
 const BETTER_AUTH_COOKIE_PREFIXES = ["better-auth.", "__Secure-better-auth."];
 const SESSION_DATA_SUFFIX = "session_data";
 const SESSION_TOKEN_SUFFIX = "session_token";
@@ -33,6 +34,7 @@ const AUTH_KEYS = [
   "expo_better-auth.refresh_token",
   "expo_session_token",
   "expo_refresh_token",
+  MOBILE_SESSION_TOKEN_KEY,
 ];
 
 let keychainCleaned = false;
@@ -151,12 +153,28 @@ export function clearAuthStorage(): void {
   }
 }
 
+export function getMobileSessionToken(): string | null {
+  return safeStorage.getItem(MOBILE_SESSION_TOKEN_KEY);
+}
+
+export function setMobileSessionToken(token: string): void {
+  safeStorage.setItem(MOBILE_SESSION_TOKEN_KEY, token);
+}
+
+export function clearMobileSessionToken(): void {
+  try {
+    SecureStore.deleteItemAsync(MOBILE_SESSION_TOKEN_KEY).catch(() => undefined);
+  } catch {
+    // Ignore — key may not exist
+  }
+}
+
 export function getTrpcCookieHeader(): string | null {
   const storedCookie = safeStorage.getItem(COOKIE_STORAGE_KEY);
   const state = parseStoredCookie(storedCookie);
   const cookieEntries = Object.entries(state)
     .filter(([name, entry]) => {
-      if (!entry?.value) return false;
+      if (!entry.value) return false;
       const baseName = getChunkBaseName(name);
       return isBetterAuthCookie(baseName) && isSessionTokenCookie(baseName);
     })
@@ -175,6 +193,42 @@ export function getTrpcCookieHeader(): string | null {
   return cookieHeader;
 }
 
+export function getStoredSessionTokenFromCookieState(): string | null {
+  const storedCookie = safeStorage.getItem(COOKIE_STORAGE_KEY);
+  const state = parseStoredCookie(storedCookie);
+  const cookieEntries = Object.entries(state)
+    .filter(([name, entry]) => {
+      if (!entry.value) return false;
+      const baseName = getChunkBaseName(name);
+      return isBetterAuthCookie(baseName) && isSessionTokenCookie(baseName);
+    })
+    .sort(([left], [right]) => left.localeCompare(right));
+
+  if (cookieEntries.length === 0) {
+    return null;
+  }
+
+  return cookieEntries.map(([, entry]) => entry.value).join("");
+}
+
+export function syncMobileSessionTokenFromCookieStorage(): string | null {
+  const cookieToken = getStoredSessionTokenFromCookieState();
+  if (!cookieToken) {
+    return null;
+  }
+
+  const currentToken = getMobileSessionToken();
+  if (currentToken !== cookieToken) {
+    authTrace("storage", "syncing mobile token from cookie storage", {
+      previousToken: cookieFingerprint(currentToken),
+      nextToken: cookieFingerprint(cookieToken),
+    });
+    setMobileSessionToken(cookieToken);
+  }
+
+  return cookieToken;
+}
+
 /**
  * Sync a Set-Cookie header into SecureStore using the same merge logic
  * as the expo plugin's fetch interceptor. This ensures session token
@@ -189,6 +243,52 @@ export function syncSetCookieToStorage(setCookieHeader: string): void {
     headerFingerprint: cookieFingerprint(setCookieHeader),
   });
   safeStorage.setItem(COOKIE_STORAGE_KEY, merged);
+  syncMobileSessionTokenFromCookieStorage();
+}
+
+export async function fetchMobileSession(
+  token = getMobileSessionToken(),
+): Promise<Session | null> {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${getBaseUrl()}/api/mobile/session`, {
+      method: "GET",
+      headers: {
+        "x-mobile-session-token": token,
+        "expo-origin": "tokilist://",
+        "x-skip-oauth-proxy": "true",
+      },
+    });
+
+    if (!response.ok) {
+      authTrace("mobile-session", "mobile session fetch failed", {
+        status: response.status,
+        token: cookieFingerprint(token),
+      });
+      return null;
+    }
+
+    const data = (await response.json()) as Session | null;
+    if (data?.session) {
+      authTrace("mobile-session", "resolved mobile session", {
+        token: cookieFingerprint(token),
+        userId: data.user.id,
+      });
+      return data;
+    }
+
+    return null;
+  } catch (error) {
+    authTrace("mobile-session", "mobile session fetch threw", {
+      token: cookieFingerprint(token),
+      error:
+        error instanceof Error ? error.message : "non-error mobile session failure",
+    });
+    return null;
+  }
 }
 
 function mergeBetterAuthCookies(
@@ -285,7 +385,7 @@ function sanitizeStoredCookieEntries(
   > = {};
 
   for (const [name, entry] of Object.entries(state)) {
-    if (!entry || typeof entry.value !== "string") continue;
+    if (typeof entry.value !== "string") continue;
 
     const baseName = getChunkBaseName(name);
     if (isBetterAuthCookie(baseName) && entry.value.includes(",")) {
@@ -298,10 +398,7 @@ function sanitizeStoredCookieEntries(
 
     sanitizedState[name] = {
       value: sanitizeCookieValue(entry.value),
-      expires:
-        typeof entry.expires === "string" || entry.expires === null
-          ? entry.expires
-          : null,
+      expires: entry.expires,
     };
   }
 

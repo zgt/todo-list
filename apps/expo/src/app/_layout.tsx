@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
+import * as Linking from "expo-linking";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Sentry from "@sentry/react-native";
@@ -14,7 +15,13 @@ import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { useSessionRefresh } from "~/hooks/useSessionRefresh";
 import { queryClient } from "~/utils/api";
-import { authClient } from "~/utils/auth";
+import {
+  authClient,
+  clearAuthStorage,
+  fetchMobileSession,
+  setMobileSessionToken,
+  syncMobileSessionTokenFromCookieStorage,
+} from "~/utils/auth";
 import type { Session } from "~/utils/auth";
 import { beginAuthTransition, endAuthTransition } from "~/utils/auth-gate";
 import { authTrace, nextTraceId } from "~/utils/auth-debug";
@@ -42,10 +49,12 @@ if (SENTRY_DSN) {
 function RootLayout() {
   const colorScheme = useColorScheme();
   const { data: session, isPending, error } = authClient.useSession();
+  const authCallbackUrl = Linking.useURL();
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [serverSession, setServerSession] = useState<Session | null>(null);
-  const sessionUserId = session?.user?.id ?? null;
-  const sessionId = session?.session?.id ?? null;
+  const [authBootstrapNonce, setAuthBootstrapNonce] = useState(0);
+  const sessionUserId = session?.user.id ?? null;
+  const sessionId = session?.session.id ?? null;
   const isLoadingAuth = isPending || !isAuthReady;
 
   // Set up notification handlers and permissions
@@ -56,6 +65,25 @@ function RootLayout() {
 
   // Proactively refresh session cookies to prevent 401 errors
   useSessionRefresh(isAuthReady && !!serverSession);
+
+  useEffect(() => {
+    if (!authCallbackUrl) {
+      return;
+    }
+
+    const parsedUrl = Linking.parse(authCallbackUrl);
+    const token =
+      typeof parsedUrl.queryParams?.token === "string"
+        ? parsedUrl.queryParams.token
+        : null;
+
+    if (!token) {
+      return;
+    }
+
+    setMobileSessionToken(token);
+    setAuthBootstrapNonce((current) => current + 1);
+  }, [authCallbackUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,10 +97,24 @@ function RootLayout() {
           traceId,
           hasSession: !!session,
         });
+
+        const mobileSession = await fetchMobileSession();
+        if (mobileSession?.session) {
+          authTrace("layout", "restored auth from mobile token", {
+            traceId,
+            userId: mobileSession.user.id,
+          });
+          if (!cancelled) {
+            setServerSession(mobileSession);
+          }
+          return;
+        }
+
         const result = await authClient.getSession({
           query: { disableCookieCache: true },
         });
         const validatedSession = result.data ?? null;
+        syncMobileSessionTokenFromCookieStorage();
         authTrace("layout", "completed initial auth validation", {
           traceId,
           hasSession: !!validatedSession,
@@ -98,6 +140,7 @@ function RootLayout() {
           return;
         }
 
+        clearAuthStorage();
         setServerSession(null);
       } catch (validationError) {
         authTrace("layout", "initial auth validation failed", {
@@ -123,7 +166,7 @@ function RootLayout() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, sessionUserId]);
+  }, [authBootstrapNonce, serverSession, session, sessionId, sessionUserId]);
 
   authTrace("layout", "root layout auth state", {
     isAuthReady,

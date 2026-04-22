@@ -41,6 +41,8 @@ build
 
 .gemini/
 
+.codex/
+
 crashlogs/
 
 GEMINI.md
@@ -71,3 +73,6 @@ dist/
 
 # tanstack
 .tanstack
+
+# app store screenshots
+screenshots/

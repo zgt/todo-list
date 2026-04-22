@@ -15,7 +15,11 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 import * as AppleAuthentication from "expo-apple-authentication";
 
-import { authClient } from "~/utils/auth";
+import {
+  authClient,
+  syncMobileSessionTokenFromCookieStorage,
+} from "~/utils/auth";
+import { getBaseUrl } from "~/utils/base-url";
 
 type Provider = "apple" | "discord" | "google";
 
@@ -127,6 +131,10 @@ export function SignInButton({
         provider: "apple",
         idToken: { token: credential.identityToken },
       });
+      await authClient.getSession({
+        query: { disableCookieCache: true },
+      });
+      syncMobileSessionTokenFromCookieStorage();
     } catch (error: unknown) {
       console.error("Sign-in error:", error);
       Alert.alert(
@@ -146,7 +154,7 @@ export function SignInButton({
       } else {
         await authClient.signIn.social({
           provider,
-          callbackURL: "tokilist://",
+          callbackURL: `${getBaseUrl()}/api/mobile-auth/callback`,
         });
       }
     } catch (error: unknown) {

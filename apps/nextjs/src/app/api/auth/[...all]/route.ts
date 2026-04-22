@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
 
 import { auth } from "~/auth/server";
+import { env } from "~/env";
 
-const DEBUG_AUTH = process.env.AUTH_TRACE === "1";
+const DEBUG_AUTH = env.AUTH_TRACE === "1";
 
 function djb2(input: string): string {
   let hash = 5381;

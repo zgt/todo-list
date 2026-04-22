@@ -6,6 +6,13 @@ import { oAuthProxy } from "better-auth/plugins";
 
 import { db } from "@acme/db/client";
 
+const BETTER_AUTH_SESSION_COOKIE_NAMES = [
+  "better-auth.session_token",
+  "__Secure-better-auth.session_token",
+];
+
+export const MOBILE_SESSION_HEADER = "x-mobile-session-token";
+
 export function initAuth<
   TExtraPlugins extends BetterAuthPlugin[] = [],
 >(options: {
@@ -112,3 +119,177 @@ export function initAuth<
 export type Auth = ReturnType<typeof initAuth>;
 export type Session = Auth["$Infer"]["Session"]["session"];
 export type User = Auth["$Infer"]["Session"]["user"];
+export interface ResolvedSession {
+  session: Session;
+  user: User;
+}
+
+export function getMobileSessionTokenFromHeaders(headers: Headers): string | null {
+  const explicitHeader = headers.get(MOBILE_SESSION_HEADER)?.trim();
+  if (explicitHeader) {
+    return explicitHeader;
+  }
+
+  const authorization = headers.get("authorization")?.trim();
+  if (!authorization) {
+    return null;
+  }
+
+  const match = /^Bearer\s+(.+)$/i.exec(authorization);
+  return match?.[1]?.trim() ?? null;
+}
+
+export function getBetterAuthSessionTokenFromCookieHeader(
+  cookieHeader: string | null,
+): string | null {
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const cookieMap = new Map<string, string>();
+  for (const part of cookieHeader.split(";")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex === -1) continue;
+
+    const name = trimmed.slice(0, separatorIndex).trim();
+    const value = trimmed.slice(separatorIndex + 1).trim();
+    if (!name || !value) continue;
+
+    cookieMap.set(name, value);
+  }
+
+  for (const baseName of BETTER_AUTH_SESSION_COOKIE_NAMES) {
+    const chunkEntries = Array.from(cookieMap.entries())
+      .filter(([name]) => name === baseName || name.startsWith(`${baseName}.`))
+      .sort(([left], [right]) => {
+        const leftChunk = Number(left.slice(baseName.length + 1) || "0");
+        const rightChunk = Number(right.slice(baseName.length + 1) || "0");
+        return leftChunk - rightChunk;
+      });
+
+    if (chunkEntries.length > 0) {
+      return chunkEntries.map(([, value]) => value).join("");
+    }
+  }
+
+  return null;
+}
+
+export async function resolveSessionByToken(
+  rawToken: string,
+): Promise<ResolvedSession | null> {
+  const token = rawToken.trim();
+  if (!token) {
+    return null;
+  }
+
+  const result = await db.query.session.findFirst({
+    where: (session, { and, eq, gt }) =>
+      and(eq(session.token, token), gt(session.expiresAt, new Date())),
+    with: {
+      user: true,
+    },
+  });
+
+  if (!result?.user) {
+    return null;
+  }
+
+  const { user, ...session } = result;
+  return {
+    session: session as Session,
+    user,
+  };
+}
+
+export async function resolveLatestSessionForUser(input: {
+  userId: string;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+}): Promise<ResolvedSession | null> {
+  const { userId, userAgent, ipAddress } = input;
+  const now = new Date();
+
+  const candidateSessions = [
+    userAgent && ipAddress
+      ? await db.query.session.findFirst({
+          where: (session, { and, eq, gt }) =>
+            and(
+              eq(session.userId, userId),
+              eq(session.userAgent, userAgent),
+              eq(session.ipAddress, ipAddress),
+              gt(session.expiresAt, now),
+            ),
+          with: { user: true },
+          orderBy: (session, { desc }) => [
+            desc(session.createdAt),
+            desc(session.updatedAt),
+          ],
+        })
+      : null,
+    userAgent
+      ? await db.query.session.findFirst({
+          where: (session, { and, eq, gt }) =>
+            and(
+              eq(session.userId, userId),
+              eq(session.userAgent, userAgent),
+              gt(session.expiresAt, now),
+            ),
+          with: { user: true },
+          orderBy: (session, { desc }) => [
+            desc(session.createdAt),
+            desc(session.updatedAt),
+          ],
+        })
+      : null,
+    ipAddress
+      ? await db.query.session.findFirst({
+          where: (session, { and, eq, gt }) =>
+            and(
+              eq(session.userId, userId),
+              eq(session.ipAddress, ipAddress),
+              gt(session.expiresAt, now),
+            ),
+          with: { user: true },
+          orderBy: (session, { desc }) => [
+            desc(session.createdAt),
+            desc(session.updatedAt),
+          ],
+        })
+      : null,
+  ];
+
+  for (const candidate of candidateSessions) {
+    if (candidate?.user) {
+      const { user, ...session } = candidate;
+      return {
+        session: session as Session,
+        user,
+      };
+    }
+  }
+
+  const activeSessions = await db.query.session.findMany({
+    where: (session, { and, eq, gt }) =>
+      and(eq(session.userId, userId), gt(session.expiresAt, now)),
+    with: { user: true },
+    orderBy: (session, { desc }) => [
+      desc(session.createdAt),
+      desc(session.updatedAt),
+    ],
+    limit: 2,
+  });
+
+  if (activeSessions.length === 1 && activeSessions[0]?.user) {
+    const { user, ...session } = activeSessions[0];
+    return {
+      session: session as Session,
+      user,
+    };
+  }
+
+  return null;
+}
