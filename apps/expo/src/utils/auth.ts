@@ -227,16 +227,33 @@ export function syncMobileSessionTokenFromCookieStorage(): string | null {
     return null;
   }
 
-  const currentToken = getMobileSessionToken();
-  if (currentToken !== cookieToken) {
-    authTrace("storage", "syncing mobile token from cookie storage", {
-      previousToken: cookieFingerprint(currentToken),
-      nextToken: cookieFingerprint(cookieToken),
+  authTrace("storage", "observed cookie-backed session token", {
+    cookieToken: cookieFingerprint(cookieToken),
+  });
+  return cookieToken;
+}
+
+export function syncMobileSessionTokenFromSession(
+  sessionData: Session | null | undefined,
+): string | null {
+  const sessionToken = sessionData?.session.token.trim();
+  if (!sessionToken) {
+    authTrace("storage", "skipping session-based mobile token sync", {
+      hasSessionData: !!sessionData,
     });
-    setMobileSessionToken(cookieToken);
+    return null;
   }
 
-  return cookieToken;
+  const currentToken = getMobileSessionToken();
+  if (currentToken !== sessionToken) {
+    authTrace("storage", "syncing mobile token from session payload", {
+      previousToken: cookieFingerprint(currentToken),
+      nextToken: cookieFingerprint(sessionToken),
+    });
+    setMobileSessionToken(sessionToken);
+  }
+
+  return sessionToken;
 }
 
 /**

@@ -6,6 +6,11 @@ import Constants from "expo-constants";
  * - Development: Uses the Expo debugger host with port 3000
  */
 export const getBaseUrl = () => {
+  const productionUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (productionUrl) {
+    return productionUrl;
+  }
+
   // Use environment variable for production builds (set in eas.json)
 
   // Development: use debugger host

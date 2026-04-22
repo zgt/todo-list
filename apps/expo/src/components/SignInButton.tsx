@@ -20,7 +20,7 @@ import * as WebBrowser from "expo-web-browser";
 import {
   authClient,
   setMobileSessionToken,
-  syncMobileSessionTokenFromCookieStorage,
+  syncMobileSessionTokenFromSession,
 } from "~/utils/auth";
 import { authTrace, nextTraceId } from "~/utils/auth-debug";
 import { getBaseUrl } from "~/utils/base-url";
@@ -135,10 +135,10 @@ export function SignInButton({
         provider: "apple",
         idToken: { token: credential.identityToken },
       });
-      await authClient.getSession({
+      const sessionResult = await authClient.getSession({
         query: { disableCookieCache: true },
       });
-      syncMobileSessionTokenFromCookieStorage();
+      syncMobileSessionTokenFromSession(sessionResult.data);
     } catch (error: unknown) {
       console.error("Sign-in error:", error);
       Alert.alert(

@@ -40,7 +40,58 @@ function buildMobileRedirect(params: Record<string, string>) {
   for (const [key, value] of Object.entries(params)) {
     redirectUrl.searchParams.set(key, value);
   }
-  return NextResponse.redirect(redirectUrl, { status: 302 });
+  const redirectTarget = redirectUrl.toString();
+  const escapedRedirectTarget = redirectTarget
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;");
+
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opening Tokilist</title>
+    <meta http-equiv="refresh" content="0;url=${escapedRedirectTarget}" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f1720;
+        color: #e5efe9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 24px;
+        text-align: center;
+      }
+      .card {
+        max-width: 420px;
+      }
+      a {
+        color: #50c878;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Opening Tokilist…</h1>
+      <p>If the app does not open automatically, tap the link below.</p>
+      <p><a href="${escapedRedirectTarget}">Open Tokilist</a></p>
+    </div>
+    <script>
+      window.location.replace(${JSON.stringify(redirectTarget)});
+    </script>
+  </body>
+</html>`;
+
+  return new NextResponse(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
 function getClientIpAddress(request: NextRequest): string | null {

@@ -4,7 +4,7 @@ import type { AppStateStatus } from "react-native";
 
 import {
   authClient,
-  syncMobileSessionTokenFromCookieStorage,
+  syncMobileSessionTokenFromSession,
 } from "~/utils/auth";
 import { beginAuthTransition, endAuthTransition } from "~/utils/auth-gate";
 import { authTrace, nextTraceId } from "~/utils/auth-debug";
@@ -49,7 +49,7 @@ export function useSessionRefresh(enabled = true) {
         const result = await authClient.getSession({
           query: { disableCookieCache: true },
         });
-        syncMobileSessionTokenFromCookieStorage();
+        syncMobileSessionTokenFromSession(result.data);
         authTrace("session-refresh", "completed proactive refresh", {
           traceId,
           hasSession: !!result.data?.session,

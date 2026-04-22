@@ -20,7 +20,7 @@ import {
   clearAuthStorage,
   fetchMobileSession,
   setMobileSessionToken,
-  syncMobileSessionTokenFromCookieStorage,
+  syncMobileSessionTokenFromSession,
 } from "~/utils/auth";
 import type { Session } from "~/utils/auth";
 import { beginAuthTransition, endAuthTransition } from "~/utils/auth-gate";
@@ -114,6 +114,7 @@ function RootLayout() {
 
         const mobileSession = await fetchMobileSession();
         if (mobileSession?.session) {
+          syncMobileSessionTokenFromSession(mobileSession);
           authTrace("layout", "restored auth from mobile token", {
             traceId,
             userId: mobileSession.user.id,
@@ -128,7 +129,7 @@ function RootLayout() {
           query: { disableCookieCache: true },
         });
         const validatedSession = result.data ?? null;
-        const syncedToken = syncMobileSessionTokenFromCookieStorage();
+        const syncedToken = syncMobileSessionTokenFromSession(validatedSession);
         authTrace("layout", "completed initial auth validation", {
           traceId,
           hasSession: !!validatedSession,

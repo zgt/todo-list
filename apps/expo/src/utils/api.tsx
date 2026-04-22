@@ -12,7 +12,7 @@ import {
   fetchMobileSession,
   getMobileSessionToken,
   getTrpcCookieHeader,
-  syncMobileSessionTokenFromCookieStorage,
+  syncMobileSessionTokenFromSession,
 } from "./auth";
 import { beginAuthTransition, endAuthTransition, waitForAuthReady } from "./auth-gate";
 import { authTrace, cookieFingerprint, nextTraceId } from "./auth-debug";
@@ -40,10 +40,10 @@ async function reconcileSessionFromAuthRoute(reason: string): Promise<void> {
         traceId,
         cookieBeforeReconcile: cookieFingerprint(getTrpcCookieHeader()),
       });
-      await authClient.getSession({
+      const sessionResult = await authClient.getSession({
         query: { disableCookieCache: true },
       });
-      syncMobileSessionTokenFromCookieStorage();
+      syncMobileSessionTokenFromSession(sessionResult.data);
       authTrace("trpc-fetch", "completed post-response auth reconcile", {
         reason,
         traceId,
@@ -160,7 +160,7 @@ async function handleUnauthorizedError(): Promise<void> {
       const result = await authClient.getSession({
         query: { disableCookieCache: true },
       });
-      syncMobileSessionTokenFromCookieStorage();
+      syncMobileSessionTokenFromSession(result.data);
 
       if (result.data?.session) {
         console.log(
