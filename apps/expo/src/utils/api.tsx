@@ -90,6 +90,9 @@ const trpcFetch: typeof fetch = async (input, init) => {
     cookieBeforeWait: cookieFingerprint(cookieBeforeWait),
     outgoingCookie: cookieFingerprint(outgoingCookie),
     mobileToken: cookieFingerprint(mobileSessionToken),
+    outgoingMobileHeader: cookieFingerprint(
+      requestHeaders.get("x-mobile-session-token"),
+    ),
   });
 
   const response = await fetch(input, {

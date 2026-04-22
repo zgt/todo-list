@@ -154,14 +154,24 @@ export function clearAuthStorage(): void {
 }
 
 export function getMobileSessionToken(): string | null {
-  return safeStorage.getItem(MOBILE_SESSION_TOKEN_KEY);
+  const token = safeStorage.getItem(MOBILE_SESSION_TOKEN_KEY);
+  authTrace("storage", "read mobile session token", {
+    token: cookieFingerprint(token),
+  });
+  return token;
 }
 
 export function setMobileSessionToken(token: string): void {
+  authTrace("storage", "writing mobile session token", {
+    token: cookieFingerprint(token),
+  });
   safeStorage.setItem(MOBILE_SESSION_TOKEN_KEY, token);
 }
 
 export function clearMobileSessionToken(): void {
+  authTrace("storage", "clearing mobile session token", {
+    key: MOBILE_SESSION_TOKEN_KEY,
+  });
   try {
     SecureStore.deleteItemAsync(MOBILE_SESSION_TOKEN_KEY).catch(() => undefined);
   } catch {
@@ -250,10 +260,15 @@ export async function fetchMobileSession(
   token = getMobileSessionToken(),
 ): Promise<Session | null> {
   if (!token) {
+    authTrace("mobile-session", "skipping mobile session fetch with no token");
     return null;
   }
 
   try {
+    authTrace("mobile-session", "requesting mobile session from server", {
+      token: cookieFingerprint(token),
+      url: `${getBaseUrl()}/api/mobile/session`,
+    });
     const response = await fetch(`${getBaseUrl()}/api/mobile/session`, {
       method: "GET",
       headers: {

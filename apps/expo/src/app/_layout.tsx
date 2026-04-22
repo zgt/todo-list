@@ -71,11 +71,25 @@ function RootLayout() {
       return;
     }
 
+    authTrace("layout", "received auth callback url", {
+      authCallbackUrl,
+    });
     const parsedUrl = Linking.parse(authCallbackUrl);
     const token =
       typeof parsedUrl.queryParams?.token === "string"
         ? parsedUrl.queryParams.token
         : null;
+    const errorParam =
+      typeof parsedUrl.queryParams?.error === "string"
+        ? parsedUrl.queryParams.error
+        : null;
+
+    authTrace("layout", "parsed auth callback url", {
+      hasToken: !!token,
+      token: token ? `${token.length}` : "none",
+      error: errorParam,
+      path: parsedUrl.path ?? null,
+    });
 
     if (!token) {
       return;
@@ -114,10 +128,11 @@ function RootLayout() {
           query: { disableCookieCache: true },
         });
         const validatedSession = result.data ?? null;
-        syncMobileSessionTokenFromCookieStorage();
+        const syncedToken = syncMobileSessionTokenFromCookieStorage();
         authTrace("layout", "completed initial auth validation", {
           traceId,
           hasSession: !!validatedSession,
+          syncedToken: syncedToken ? `${syncedToken.length}` : "none",
         });
 
         if (cancelled) return;
