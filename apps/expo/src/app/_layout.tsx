@@ -131,20 +131,28 @@ function RootLayout() {
       typeof parsedUrl.queryParams?.error === "string"
         ? parsedUrl.queryParams.error
         : null;
+    const cookieParam =
+      typeof parsedUrl.queryParams?.cookie === "string"
+        ? parsedUrl.queryParams.cookie
+        : null;
+    const callbackPath = parsedUrl.path ?? null;
+    const isAuthCallback = callbackPath === "auth/callback";
 
     authTrace("layout", "parsed auth callback url", {
       hasToken: !!token,
       token: token ? `${token.length}` : "none",
+      hasCookie: !!cookieParam,
       error: errorParam,
-      path: parsedUrl.path ?? null,
+      path: callbackPath,
     });
 
-    if (!token) {
-      return;
+    if (token) {
+      setMobileSessionToken(token);
     }
 
-    setMobileSessionToken(token);
-    setAuthBootstrapNonce((current) => current + 1);
+    if (token || isAuthCallback) {
+      setAuthBootstrapNonce((current) => current + 1);
+    }
   }, [authCallbackUrl]);
 
   useEffect(() => {

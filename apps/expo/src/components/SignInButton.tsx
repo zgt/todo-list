@@ -14,16 +14,9 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Path } from "react-native-svg";
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as ExpoLinking from "expo-linking";
-import * as WebBrowser from "expo-web-browser";
 
-import {
-  authClient,
-  setMobileSessionToken,
-  syncMobileSessionTokenFromSession,
-} from "~/utils/auth";
+import { authClient, syncMobileSessionTokenFromSession } from "~/utils/auth";
 import { authTrace, nextTraceId } from "~/utils/auth-debug";
-import { getBaseUrl } from "~/utils/base-url";
 
 type Provider = "apple" | "discord" | "google";
 
@@ -157,71 +150,31 @@ export function SignInButton({
         await handleAppleNativeSignIn();
       } else {
         const traceId = nextTraceId("mobile-sign-in");
-        const appCallbackUrl = ExpoLinking.createURL("auth/callback", {
-          scheme: "tokilist",
-        });
         const result = await authClient.signIn.social({
           provider,
-          callbackURL: `${getBaseUrl()}/api/mobile-auth/callback`,
-          disableRedirect: true,
+          callbackURL: "/auth/callback",
         });
-        const authUrl = result.data?.url ?? null;
 
-        authTrace("mobile-sign-in", "received social sign-in payload", {
+        authTrace("mobile-sign-in", "completed Better Auth social sign-in", {
           traceId,
           provider,
-          hasUrl: !!result.data?.url,
-          callbackUrl: appCallbackUrl,
+          hasError: !!result.error,
         });
 
-        if (!authUrl) {
-          throw new Error("No OAuth URL returned from Better Auth");
+        if (result.error) {
+          throw new Error(result.error.message ?? "OAuth sign-in failed");
         }
 
-        const browserResult = await WebBrowser.openAuthSessionAsync(
-          authUrl,
-          appCallbackUrl,
-        );
-
-        authTrace("mobile-sign-in", "completed auth browser session", {
+        const sessionResult = await authClient.getSession({
+          query: { disableCookieCache: true },
+        });
+        const syncedToken = syncMobileSessionTokenFromSession(sessionResult.data);
+        authTrace("mobile-sign-in", "synced session after social sign-in", {
           traceId,
           provider,
-          resultType: browserResult.type,
-          returnedUrl:
-            browserResult.type === "success" ? browserResult.url : null,
+          hasSession: !!sessionResult.data?.session,
+          hasMobileToken: !!syncedToken,
         });
-
-        if (browserResult.type !== "success") {
-          throw Object.assign(new Error("OAuth flow was cancelled"), {
-            code: "ERR_REQUEST_CANCELED",
-          });
-        }
-
-        const returnedUrl = browserResult.url;
-        const parsedUrl = ExpoLinking.parse(returnedUrl);
-        const token =
-          typeof parsedUrl.queryParams?.token === "string"
-            ? parsedUrl.queryParams.token
-            : null;
-        const errorParam =
-          typeof parsedUrl.queryParams?.error === "string"
-            ? parsedUrl.queryParams.error
-            : null;
-
-        if (errorParam) {
-          throw new Error(errorParam);
-        }
-
-        if (!token) {
-          throw new Error("Mobile auth callback did not include a session token");
-        }
-
-        authTrace("mobile-sign-in", "storing token from mobile auth callback", {
-          traceId,
-          provider,
-          tokenLength: token.length,
-        });
-        setMobileSessionToken(token);
       }
     } catch (error: unknown) {
       const code =
