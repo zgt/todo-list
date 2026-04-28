@@ -77,12 +77,12 @@ export function TextCleanerForm() {
   return (
     <div className="custom-scrollbar flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
       <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-5 backdrop-blur-sm">
-          <div className="mb-3 flex items-start justify-between gap-4">
+        <section className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-6 backdrop-blur-sm">
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <label
                 htmlFor="text-cleaner-input"
-                className="text-lg font-semibold text-white"
+                className="text-xl font-bold text-white"
               >
                 Paste text here
               </label>
@@ -90,7 +90,7 @@ export function TextCleanerForm() {
                 Keep paragraph breaks; clean only the invisible trailing spaces.
               </p>
             </div>
-            <div className="text-muted-foreground shrink-0 text-right text-xs">
+            <div className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-right text-xs text-[#8FA8A8]">
               <div>{stats.lineCount} lines</div>
               <div>{stats.linesWithTrailingWhitespace} dirty lines</div>
             </div>
@@ -104,14 +104,14 @@ export function TextCleanerForm() {
               setCopyStatus("idle");
             }}
             placeholder="Paste the email text here..."
-            className="min-h-[360px] resize-y rounded-xl border-[#164B49] bg-[#0A1A1A]/60 text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#50C878]"
+            className="min-h-[360px] resize-y rounded-xl border-[#164B49] bg-[#0A1A1A] text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#21716C]"
           />
 
           <div className="mt-4 flex flex-wrap gap-3">
             <Button
               type="button"
               onClick={handleClean}
-              className="bg-[#50C878] text-[#071313] hover:bg-[#6EE08F]"
+              className="bg-primary hover:bg-primary/90 text-black"
             >
               <WandSparkles className="mr-2 size-4" />
               Clean & Copy
@@ -128,12 +128,12 @@ export function TextCleanerForm() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-5 backdrop-blur-sm">
-          <div className="mb-3 flex items-start justify-between gap-4">
+        <section className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-6 backdrop-blur-sm">
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <label
                 htmlFor="text-cleaner-output"
-                className="text-lg font-semibold text-white"
+                className="text-xl font-bold text-white"
               >
                 Cleaned text
               </label>
@@ -148,7 +148,7 @@ export function TextCleanerForm() {
             value={cleanedText}
             readOnly
             placeholder="Cleaned text will appear here..."
-            className="min-h-[360px] resize-y rounded-xl border-[#164B49] bg-[#0A1A1A]/60 text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#50C878]"
+            className="min-h-[360px] resize-y rounded-xl border-[#164B49] bg-[#0A1A1A] text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#21716C]"
           />
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
