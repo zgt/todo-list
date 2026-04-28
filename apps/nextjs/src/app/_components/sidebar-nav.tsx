@@ -11,6 +11,7 @@ import {
   Settings,
   ShieldAlert,
   Tag,
+  TextCursorInput,
   Users,
 } from "lucide-react";
 
@@ -42,6 +43,11 @@ const navigation = [
     name: "Categories",
     href: "/categories",
     icon: Tag,
+  },
+  {
+    name: "Text Cleaner",
+    href: "/text-cleaner",
+    icon: TextCursorInput,
   },
   {
     name: "Settings",
