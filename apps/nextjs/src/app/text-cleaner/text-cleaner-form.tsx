@@ -104,7 +104,7 @@ export function TextCleanerForm() {
               setCopyStatus("idle");
             }}
             placeholder="Paste the email text here..."
-            className="min-h-[220px] resize-y rounded-xl border-[#164B49] bg-[#0A1A1A] text-sm text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#21716C] md:min-h-[360px] md:text-base"
+            className="field-sizing-fixed h-[220px] resize-none overflow-y-auto rounded-xl border-[#164B49] bg-[#0A1A1A] text-sm text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#21716C] md:h-[360px] md:text-base"
           />
 
           <div className="mt-4 flex flex-col gap-3 md:flex-row md:flex-wrap">
@@ -148,7 +148,7 @@ export function TextCleanerForm() {
             value={cleanedText}
             readOnly
             placeholder="Cleaned text will appear here..."
-            className="min-h-[220px] resize-y rounded-xl border-[#164B49] bg-[#0A1A1A] text-sm text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#21716C] md:min-h-[360px] md:text-base"
+            className="field-sizing-fixed h-[220px] resize-none overflow-y-auto rounded-xl border-[#164B49] bg-[#0A1A1A] text-sm text-[#DCE4E4] placeholder:text-[#8FA8A8] focus-visible:border-[#21716C] md:h-[360px] md:text-base"
           />
 
           <div className="mt-4 flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
