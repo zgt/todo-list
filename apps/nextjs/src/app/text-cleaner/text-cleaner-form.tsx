@@ -19,8 +19,6 @@ function cleanEmailText(text: string) {
 }
 
 async function copyToClipboard(text: string) {
-  if (!navigator.clipboard?.writeText) return false;
-
   try {
     await navigator.clipboard.writeText(text);
     return true;
