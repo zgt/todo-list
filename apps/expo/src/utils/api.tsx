@@ -63,7 +63,9 @@ async function reconcileSessionFromAuthRoute(reason: string): Promise<void> {
  * canonical Better Auth session via authClient.getSession(). We intentionally
  * avoid manually merging flattened Set-Cookie headers from tRPC into storage.
  */
-const trpcFetch: typeof fetch = async (input, init) => {
+type TrpcFetch = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+const trpcFetch: TrpcFetch = async (input, init) => {
   const traceId = nextTraceId("trpc-fetch");
   const requestHeaders = new Headers(init?.headers);
   const cookieBeforeWait = requestHeaders.get("cookie");
@@ -85,7 +87,12 @@ const trpcFetch: typeof fetch = async (input, init) => {
   const outgoingCookie = requestHeaders.get("cookie");
   authTrace("trpc-fetch", "dispatching tRPC request", {
     traceId,
-    url: typeof input === "string" ? input : input instanceof URL ? input.href : "request",
+    url:
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : "request",
     method: init?.method ?? "GET",
     cookieBeforeWait: cookieFingerprint(cookieBeforeWait),
     outgoingCookie: cookieFingerprint(outgoingCookie),
@@ -95,7 +102,7 @@ const trpcFetch: typeof fetch = async (input, init) => {
     ),
   });
 
-  const response = await fetch(input, {
+  const response = await fetch(input instanceof URL ? input.href : input, {
     ...init,
     credentials: "omit",
     headers: requestHeaders,
@@ -171,7 +178,9 @@ async function handleUnauthorizedError(): Promise<void> {
           cookieAfterRefresh: cookieFingerprint(getTrpcCookieHeader()),
         });
         // Small delay to let cookie sync to SecureStore before queries fire
-        await new Promise((resolve) => setTimeout(resolve, 150));
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 150);
+        });
         recovered = true;
         void queryClient.invalidateQueries();
       }
@@ -316,11 +325,11 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         url: `${getBaseUrl()}/api/trpc`,
         fetch: trpcFetch,
         headers() {
-        const headers: Record<string, string> = {
-          "x-trpc-source": "expo-react",
-          "expo-origin": EXPO_ORIGIN,
-          "x-skip-oauth-proxy": "true",
-        };
+          const headers: Record<string, string> = {
+            "x-trpc-source": "expo-react",
+            "expo-origin": EXPO_ORIGIN,
+            "x-skip-oauth-proxy": "true",
+          };
 
           const mobileToken = getMobileSessionToken();
           if (mobileToken) {

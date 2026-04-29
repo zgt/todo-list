@@ -190,13 +190,8 @@ export default function Index() {
   const [rippleTrigger, setRippleTrigger] = useState<number | undefined>(
     undefined,
   );
-  const rippleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerRipple = useCallback(() => {
-    if (rippleDebounceRef.current) return;
     setRippleTrigger((prev) => (prev ?? 0) + 1);
-    rippleDebounceRef.current = setTimeout(() => {
-      rippleDebounceRef.current = null;
-    }, 500);
   }, []);
   // Swipe tutorial auto-show on first launch
   const {
@@ -272,7 +267,15 @@ export default function Index() {
 
   // Trigger ripple when any query fetch starts
   useEffect(() => {
-    if (isFetching) triggerRipple();
+    if (!isFetching) return;
+
+    const timeout = setTimeout(() => {
+      triggerRipple();
+    }, 0);
+
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [isFetching, triggerRipple]);
 
   // Fetch server notification prefs for local scheduling
@@ -313,9 +316,11 @@ export default function Index() {
     if (!openTask || !serverTasks) return;
     const task = serverTasks.find((t) => t.id === openTask);
     if (task) {
-      setEditingTask(task);
-      // Clear the param so re-renders don't re-open
-      router.setParams({ openTask: undefined });
+      setTimeout(() => {
+        setEditingTask(task);
+        // Clear the param so re-renders don't re-open
+        router.setParams({ openTask: undefined });
+      }, 0);
     }
   }, [openTask, serverTasks, router]);
 
@@ -390,7 +395,7 @@ export default function Index() {
 
     if (selectedPriorities.length > 0) {
       result = result.filter((task) =>
-        selectedPriorities.includes(task.priority as PriorityLevel),
+        selectedPriorities.includes(task.priority),
       );
     }
 

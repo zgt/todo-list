@@ -53,11 +53,11 @@ export function CustomTimePicker({
       const h = getInitialHour(date);
       const m = date.getMinutes();
       const p = getInitialPeriod(date);
-      setSelectedHour(h);
-      setSelectedMinute(m);
-      setSelectedPeriod(p);
 
       setTimeout(() => {
+        setSelectedHour(h);
+        setSelectedMinute(m);
+        setSelectedPeriod(p);
         programmatic.current = true;
         hourRef.current?.scrollTo({
           y: (h - 1) * ITEM_HEIGHT,

@@ -92,12 +92,14 @@ export function SwipeableCard({
   const opacity = useSharedValue(1);
   const direction = useSharedValue<SwipeDirection>(null);
   const [priority, setPriority] = useState<PriorityLevel>(
-    (task.priority as PriorityLevel) ?? "medium",
+    task.priority ?? "medium",
   );
 
   // Reset priority when task changes
   useEffect(() => {
-    setPriority((task.priority as PriorityLevel) ?? "medium");
+    setTimeout(() => {
+      setPriority(task.priority ?? "medium");
+    }, 0);
   }, [task.priority]);
 
   // Animated values for stacking effect

@@ -203,7 +203,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             onPress={() => {
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onClose();
-              router.push("/lists" as never);
+              router.push("/lists");
             }}
             className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
           >
@@ -217,7 +217,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             onPress={() => {
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onClose();
-              router.push("/settings" as never);
+              router.push("/settings");
             }}
             className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
           >
@@ -231,7 +231,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
             onPress={() => {
               void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               onClose();
-              router.push("/profile" as never);
+              router.push("/profile");
             }}
             className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
           >

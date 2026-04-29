@@ -95,21 +95,21 @@ const makeStackTasks = (): LocalTask[] => [
     title: "Buy groceries",
     description: "Milk, bread, eggs, and vegetables",
     priority: "high" as const,
-  } as LocalTask,
+  },
   {
     ...BASE_TASK_FIELDS,
     id: "demo-stack-2",
     title: "Schedule meeting",
     description: "Team sync for Q2 planning",
     priority: "medium" as const,
-  } as LocalTask,
+  },
   {
     ...BASE_TASK_FIELDS,
     id: "demo-stack-3",
     title: "Read article",
     description: "New React Native features",
     priority: "low" as const,
-  } as LocalTask,
+  },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function

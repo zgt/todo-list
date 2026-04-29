@@ -59,7 +59,7 @@ export default function ListsScreen() {
             My Lists
           </Text>
           <Pressable
-            onPress={() => router.push("/lists/create" as never)}
+            onPress={() => router.push("/lists/create")}
             style={{
               width: 40,
               height: 40,
@@ -93,7 +93,7 @@ export default function ListsScreen() {
             <Users
               size={48}
               color="#8FA8A8"
-              style={{ marginBottom: 16 } as never}
+              style={{ marginBottom: 16 }}
             />
             <Text
               style={{

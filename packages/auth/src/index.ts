@@ -124,7 +124,13 @@ export interface ResolvedSession {
   user: User;
 }
 
-export function getMobileSessionTokenFromHeaders(headers: Headers): string | null {
+interface HeaderReader {
+  get(name: string): string | null;
+}
+
+export function getMobileSessionTokenFromHeaders(
+  headers: HeaderReader,
+): string | null {
   const explicitHeader = headers.get(MOBILE_SESSION_HEADER)?.trim();
   if (explicitHeader) {
     return explicitHeader;
@@ -200,7 +206,7 @@ export async function resolveSessionByToken(
 
   const { user, ...session } = result;
   return {
-    session: session as Session,
+    session: session,
     user,
   };
 }
@@ -266,7 +272,7 @@ export async function resolveLatestSessionForUser(input: {
     if (candidate?.user) {
       const { user, ...session } = candidate;
       return {
-        session: session as Session,
+        session: session,
         user,
       };
     }
@@ -286,7 +292,7 @@ export async function resolveLatestSessionForUser(input: {
   if (activeSessions.length === 1 && activeSessions[0]?.user) {
     const { user, ...session } = activeSessions[0];
     return {
-      session: session as Session,
+      session: session,
       user,
     };
   }

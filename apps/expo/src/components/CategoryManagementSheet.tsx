@@ -24,6 +24,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CopyPlus, Trash2, X } from "lucide-react-native";
 
+import type { RouterOutputs } from "@acme/api";
+
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 
@@ -45,6 +47,7 @@ const PRESET_COLORS = [
 
 type PresetColor = (typeof PRESET_COLORS)[number];
 const DEFAULT_COLOR: PresetColor = PRESET_COLORS[0];
+type Category = RouterOutputs["category"]["all"][number];
 
 export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
   (_, ref) => {
@@ -123,7 +126,7 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
     };
 
     const handleDeleteCategory = useCallback(
-      (category: NonNullable<typeof categories>[number]) => {
+      (category: Category) => {
         Alert.alert(
           "Delete Category",
           `Are you sure you want to delete "${category.name}"?`,
@@ -153,7 +156,7 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
     );
 
     const renderCategoryItem = useCallback(
-      ({ item }: { item: NonNullable<typeof categories>[number] }) => (
+      ({ item }: { item: Category }) => (
         <View style={styles.categoryItem}>
           <View style={styles.categoryInfo}>
             <View style={[styles.colorDot, { backgroundColor: item.color }]} />
@@ -283,9 +286,9 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
           )}
 
           {/* Category List */}
-          <BottomSheetFlatList
+          <BottomSheetFlatList<Category>
             data={categories ?? []}
-            keyExtractor={(item: { id: string }) => item.id}
+            keyExtractor={(item) => item.id}
             renderItem={renderCategoryItem}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={isLoading ? null : ListEmptyComponent}

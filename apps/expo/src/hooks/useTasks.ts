@@ -124,7 +124,13 @@ export function useTasks(
 
   // Load tasks on mount and when filter changes
   useEffect(() => {
-    void loadTasks();
+    const timeout = setTimeout(() => {
+      void loadTasks();
+    }, 0);
+
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [loadTasks]);
 
   // Create task

@@ -151,14 +151,20 @@ function RootLayout() {
     }
 
     if (token || isAuthCallback) {
-      setAuthBootstrapNonce((current) => current + 1);
+      setTimeout(() => {
+        setAuthBootstrapNonce((current) => current + 1);
+      }, 0);
     }
   }, [authCallbackUrl]);
 
   useEffect(() => {
     let cancelled = false;
     const traceId = nextTraceId("layout-auth-ready");
-    setIsAuthReady(false);
+    setTimeout(() => {
+      if (!cancelled) {
+        setIsAuthReady(false);
+      }
+    }, 0);
 
     const validateInitialSession = async () => {
       beginAuthTransition("layout-initial-auth");

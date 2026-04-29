@@ -166,7 +166,7 @@ export default function InviteScreen() {
                 {error}
               </Text>
               <Pressable
-                onPress={() => router.replace("/" as never)}
+                onPress={() => router.replace("/")}
                 style={{
                   backgroundColor: "#102A2A",
                   borderWidth: 1,

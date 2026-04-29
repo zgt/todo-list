@@ -4,7 +4,6 @@ import { CalendarList } from "react-native-calendars";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Check } from "lucide-react-native";
 
-import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
 import { PriorityBadge } from "./PriorityBadge";
 
@@ -113,7 +112,7 @@ const AgendaTaskRow = memo(
 
         {/* Priority badge */}
         <PriorityBadge
-          priority={task.priority as PriorityLevel}
+          priority={task.priority}
           size="sm"
           showLabel={false}
         />

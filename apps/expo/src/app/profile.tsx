@@ -358,7 +358,7 @@ export default function ProfileScreen() {
             title="Moderation"
           />
           <Pressable
-            onPress={() => router.push("/blocked-users" as never)}
+            onPress={() => router.push("/blocked-users")}
             style={{
               flexDirection: "row",
               alignItems: "center",

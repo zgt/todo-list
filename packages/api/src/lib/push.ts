@@ -41,7 +41,7 @@ export async function sendPushToUsers(
         title: message.title,
         body: message.body,
         data: message.data,
-        sound: (message.sound ?? "default") as "default",
+        sound: (message.sound ?? "default"),
       }));
 
     if (messages.length === 0) return;

@@ -796,6 +796,7 @@ export const CreateTaskSchema = createInsertSchema(Task, {
 }).omit({
   id: true,
   userId: true,
+  completed: true,
   createdAt: true,
   updatedAt: true,
   completedAt: true,

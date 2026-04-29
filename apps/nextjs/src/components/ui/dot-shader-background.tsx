@@ -1,7 +1,7 @@
 "use client";
 
 import type { ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { shaderMaterial, useTrailTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
@@ -147,27 +147,27 @@ function Scene() {
     },
   });
 
-  const dotMaterial = useMemo(() => {
+  const [dotMaterial] = useState(() => {
     return new DotMaterial({
       transparent: true,
       depthWrite: false,
-    });
-  }, []) as unknown as THREE.ShaderMaterial & {
-    uniforms: {
-      time: { value: number };
-      resolution: { value: THREE.Vector2 };
-      dotColor: { value: THREE.Color };
-      bgColor: { value: THREE.Color };
-      mouseTrail: { value: THREE.Texture | null };
-      render: { value: number };
-      rotation: { value: number };
-      gridSize: { value: number };
-      dotOpacity: { value: number };
-      rippleTime: { value: number };
-      rippleCenter: { value: THREE.Vector2 };
-      rippleIntensity: { value: number };
+    }) as unknown as THREE.ShaderMaterial & {
+      uniforms: {
+        time: { value: number };
+        resolution: { value: THREE.Vector2 };
+        dotColor: { value: THREE.Color };
+        bgColor: { value: THREE.Color };
+        mouseTrail: { value: THREE.Texture | null };
+        render: { value: number };
+        rotation: { value: number };
+        gridSize: { value: number };
+        dotOpacity: { value: number };
+        rippleTime: { value: number };
+        rippleCenter: { value: THREE.Vector2 };
+        rippleIntensity: { value: number };
+      };
     };
-  };
+  });
 
   useEffect(() => {
     dotMaterial.uniforms.dotColor.value.setHex(0x4ade80);
@@ -183,6 +183,7 @@ function Scene() {
   const prevIsMutating = useRef(0);
   const prevIsFetching = useRef(0);
 
+  // eslint-disable-next-line react-hooks/immutability -- Three.js shader uniforms are updated inside the render loop.
   useFrame((state, delta) => {
     // Clamp delta to prevent large jumps when tab is backgrounded and refocused
     const clampedDelta = Math.min(delta, 0.05);

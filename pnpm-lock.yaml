@@ -535,6 +535,9 @@ importers:
       '@acme/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
       eslint:
         specifier: 'catalog:'
         version: 9.39.2(jiti@2.6.1)
@@ -569,6 +572,9 @@ importers:
       '@acme/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
       drizzle-kit:
         specifier: ^0.31.8
         version: 0.31.10

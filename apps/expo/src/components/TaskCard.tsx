@@ -151,7 +151,9 @@ export function TaskCard({
 
   // Double-tap detection for compact mode (Pressable intercepts before gesture layer)
   const lastTapRef = useRef(0);
-  const singleTapTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const handleCardPress = () => {
     if (isCompact) {
