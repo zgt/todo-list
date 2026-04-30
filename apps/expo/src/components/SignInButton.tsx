@@ -15,8 +15,7 @@ import Animated, {
 import Svg, { Path } from "react-native-svg";
 import * as AppleAuthentication from "expo-apple-authentication";
 
-import { authClient, syncMobileSessionTokenFromSession } from "~/utils/auth";
-import { authTrace, nextTraceId } from "~/utils/auth-debug";
+import { authClient } from "~/utils/auth";
 
 type Provider = "apple" | "discord" | "google";
 
@@ -128,10 +127,6 @@ export function SignInButton({
         provider: "apple",
         idToken: { token: credential.identityToken },
       });
-      const sessionResult = await authClient.getSession({
-        query: { disableCookieCache: true },
-      });
-      syncMobileSessionTokenFromSession(sessionResult.data);
     } catch (error: unknown) {
       console.error("Sign-in error:", error);
       Alert.alert(
@@ -149,32 +144,14 @@ export function SignInButton({
       if (provider === "apple" && Platform.OS === "ios") {
         await handleAppleNativeSignIn();
       } else {
-        const traceId = nextTraceId("mobile-sign-in");
         const result = await authClient.signIn.social({
           provider,
           callbackURL: "/auth/callback",
         });
 
-        authTrace("mobile-sign-in", "completed Better Auth social sign-in", {
-          traceId,
-          provider,
-          hasError: !!result.error,
-        });
-
         if (result.error) {
           throw new Error(result.error.message ?? "OAuth sign-in failed");
         }
-
-        const sessionResult = await authClient.getSession({
-          query: { disableCookieCache: true },
-        });
-        const syncedToken = syncMobileSessionTokenFromSession(sessionResult.data);
-        authTrace("mobile-sign-in", "synced session after social sign-in", {
-          traceId,
-          provider,
-          hasSession: !!sessionResult.data?.session,
-          hasMobileToken: !!syncedToken,
-        });
       }
     } catch (error: unknown) {
       const code =

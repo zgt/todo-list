@@ -25,7 +25,7 @@ import {
 import type { User } from "~/utils/auth";
 import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
-import { authClient, clearAuthStorage } from "~/utils/auth";
+import { authClient } from "~/utils/auth";
 
 interface ProfileMenuProps {
   visible: boolean;
@@ -47,7 +47,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
       onSuccess: () => {
         setIsEditingName(false);
         void queryClient.invalidateQueries();
-        void authClient.getSession({ query: { disableCookieCache: true } });
+        void authClient.getSession();
       },
       onError: () => {
         Alert.alert(
@@ -95,7 +95,6 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
     } catch (error) {
       console.error("Sign-out error:", error);
     } finally {
-      clearAuthStorage();
       queryClient.clear();
       onClose();
     }

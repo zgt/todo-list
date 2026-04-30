@@ -30,7 +30,7 @@ import {
 import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
 import { queryClient as globalQueryClient, trpc } from "~/utils/api";
-import { authClient, clearAuthStorage } from "~/utils/auth";
+import { authClient } from "~/utils/auth";
 
 const APP_VERSION =
   Constants.expoConfig?.version ??
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
       onSuccess: () => {
         setIsEditingName(false);
         void queryClient.invalidateQueries();
-        void authClient.getSession({ query: { disableCookieCache: true } });
+        void authClient.getSession();
       },
       onError: () => {
         Alert.alert(
@@ -73,10 +73,8 @@ export default function ProfileScreen() {
       onSuccess: async () => {
         try {
           await authClient.signOut();
-        } catch {
-          clearAuthStorage();
-        } finally {
-          clearAuthStorage();
+        } catch (error) {
+          console.error("Sign-out error:", error);
         }
         globalQueryClient.clear();
       },
