@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "[ -f ../../.env ] && pnpm with-env next build || next build",
+    "build": "if [ -f ../../.env ]; then pnpm with-env next build; else next build; fi",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "pnpm with-env next dev",
     "format": "prettier --check . --ignore-path ../../.gitignore",

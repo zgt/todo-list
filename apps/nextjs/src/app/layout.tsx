@@ -6,7 +6,7 @@ import { SidebarProvider } from "@acme/ui/sidebar";
 import { ThemeProvider } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
-import { DotScreenShader } from "~/components/ui/dot-shader-background";
+import { DotScreenShader } from "~/components/ui/dot-shader-background-client";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
 

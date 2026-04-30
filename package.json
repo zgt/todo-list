@@ -2,7 +2,7 @@
   "name": "tokilist",
   "private": true,
   "engines": {
-    "node": "^25.2.1",
+    "node": ">=24.14.1 <26",
     "pnpm": "^10.27.0"
   },
   "packageManager": "pnpm@10.33.2",
