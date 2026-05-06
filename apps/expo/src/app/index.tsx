@@ -10,12 +10,12 @@ import {
   View,
 } from "react-native";
 import Animated, {
+  cancelAnimation,
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
-  Easing,
-  cancelAnimation,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -27,6 +27,7 @@ import {
   Info,
   Layers,
   List,
+  Plus,
   RefreshCw,
   Trash2,
 } from "lucide-react-native";
@@ -176,6 +177,42 @@ function ViewToggleButton({
   );
 }
 
+function CreateTaskButton({
+  disabled,
+  onPress,
+}: {
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityLabel="Create task"
+      accessibilityRole="button"
+      style={disabled && { opacity: 0.6 }}
+    >
+      <View
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 32,
+          backgroundColor: "#50C878",
+          alignItems: "center",
+          justifyContent: "center",
+          shadowColor: "#50C878",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 6,
+        }}
+      >
+        <Plus size={32} color="#0A1A1A" />
+      </View>
+    </Pressable>
+  );
+}
+
 export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const { openTask } = useLocalSearchParams<{ openTask?: string }>();
@@ -233,6 +270,7 @@ export default function Index() {
   );
 
   const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [deletePendingIds, setDeletePendingIds] = useState<Set<string>>(
     new Set(),
   );
@@ -1245,34 +1283,45 @@ export default function Index() {
                 </Animated.View>
               </Pressable>
             ) : (
-              <TaskFormSheet
-                mode="create"
-                onSubmit={handleCreateSubmit}
-                initialData={{
-                  listId:
-                    selectedListFilter && selectedListFilter !== "personal"
-                      ? selectedListFilter
-                      : null,
-                  dueDate:
-                    viewMode === "calendar" && calendarSelectedDate
-                      ? (() => {
-                          const [y, m, d] = calendarSelectedDate
-                            .split("-")
-                            .map(Number);
-                          return new Date(y ?? 0, (m ?? 1) - 1, d);
-                        })()
-                      : null,
+              <CreateTaskButton
+                disabled={isCreateTaskOpen}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setIsCreateTaskOpen(true);
                 }}
-                lists={(lists ?? []).map((l) => ({
-                  id: l.id,
-                  name: l.name,
-                  color: l.color,
-                }))}
-                isSubmitting={createMutation.isPending}
               />
             )}
           </View>
         </View>
+
+        {/* Create Task Sheet — controlled by isCreateTaskOpen state */}
+        <TaskFormSheet
+          mode="create"
+          isOpen={isCreateTaskOpen}
+          onClose={() => setIsCreateTaskOpen(false)}
+          onSubmit={handleCreateSubmit}
+          initialData={{
+            listId:
+              selectedListFilter && selectedListFilter !== "personal"
+                ? selectedListFilter
+                : null,
+            dueDate:
+              viewMode === "calendar" && calendarSelectedDate
+                ? (() => {
+                    const [y, m, d] = calendarSelectedDate
+                      .split("-")
+                      .map(Number);
+                    return new Date(y ?? 0, (m ?? 1) - 1, d);
+                  })()
+                : null,
+          }}
+          lists={(lists ?? []).map((l) => ({
+            id: l.id,
+            name: l.name,
+            color: l.color,
+          }))}
+          isSubmitting={createMutation.isPending}
+        />
 
         {/* Edit Task Sheet — controlled by editingTask state */}
         <TaskFormSheet

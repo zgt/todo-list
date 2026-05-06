@@ -76,7 +76,7 @@ interface TaskList {
 
 interface TaskFormSheetProps {
   onClose?: () => void;
-  onSubmit: (data: TaskFormData) => void;
+  onSubmit: (data: TaskFormData) => void | Promise<void>;
   initialData?: Partial<TaskFormData> & {
     id?: string;
     subtasks?: SubtaskData[];
@@ -86,7 +86,7 @@ interface TaskFormSheetProps {
   mode: "create" | "edit";
   onDelete?: () => void;
   onSnooze?: (taskId: string) => void;
-  /** For edit mode: controlled open state (e.g. !!editingTask) */
+  /** Controlled open state (e.g. !!editingTask or create sheet parent state) */
   isOpen?: boolean;
 }
 
@@ -345,7 +345,7 @@ export function TaskFormSheet({
     setSubtaskInputFocused(false);
   }, [initialData]);
 
-  // For edit mode: controlled by isOpen prop
+  // Controlled by parent state when isOpen is provided.
   useEffect(() => {
     if (isOpen === undefined) return;
     if (isOpen) {
@@ -367,24 +367,28 @@ export function TaskFormSheet({
     onClose?.();
   }, [resetForm, onClose]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim()) return;
-    onSubmit({
-      title: title.trim(),
-      description: description.trim(),
-      categoryId,
-      listId,
-      priority,
-      dueDate,
-      reminderAt,
-      recurrenceRule,
-      recurrenceInterval: recurrenceRule ? recurrenceInterval : null,
-      newSubtasks:
-        mode === "create" && pendingSubtasks.length > 0
-          ? pendingSubtasks.map((s) => ({ title: s.title }))
-          : undefined,
-    });
-    bottomSheetRef.current?.dismiss();
+    try {
+      await onSubmit({
+        title: title.trim(),
+        description: description.trim(),
+        categoryId,
+        listId,
+        priority,
+        dueDate,
+        reminderAt,
+        recurrenceRule,
+        recurrenceInterval: recurrenceRule ? recurrenceInterval : null,
+        newSubtasks:
+          mode === "create" && pendingSubtasks.length > 0
+            ? pendingSubtasks.map((s) => ({ title: s.title }))
+            : undefined,
+      });
+      bottomSheetRef.current?.dismiss();
+    } catch {
+      // Mutation handlers surface errors; keep the sheet open so the user can retry.
+    }
   };
 
   const handleDelete = () => {
@@ -416,7 +420,7 @@ export function TaskFormSheet({
   return (
     <>
       {/* FAB trigger for create mode */}
-      {mode === "create" && (
+      {mode === "create" && isOpen === undefined && (
         <Pressable
           onPress={handleOpenSheet}
           accessibilityLabel="Create task"
