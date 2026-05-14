@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import type { ComponentRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Linking, Pressable, Text as RNText, View } from "react-native";
+import * as Haptics from "expo-haptics";
+import { useRouter } from "expo-router";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
   BottomSheetScrollView,
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
-import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
-import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
@@ -117,6 +117,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
+      stackBehavior="push"
       snapPoints={snapPoints}
       enablePanDownToClose
       keyboardBehavior="interactive"
@@ -168,9 +169,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
                 />
                 <Pressable
                   onPress={() => {
-                    void Haptics.impactAsync(
-                      Haptics.ImpactFeedbackStyle.Light,
-                    );
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     handleSaveName();
                   }}
                   disabled={updateNameMutation.isPending}

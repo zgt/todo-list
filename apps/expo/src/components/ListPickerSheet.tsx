@@ -99,6 +99,7 @@ export function ListPickerSheet({
 
       <BottomSheetModal
         ref={bottomSheetRef}
+        stackBehavior="push"
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.sheetBackground}

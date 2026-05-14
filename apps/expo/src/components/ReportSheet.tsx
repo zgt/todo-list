@@ -110,6 +110,7 @@ export const ReportSheet = forwardRef<ReportSheetRef>((_props, ref) => {
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
+      stackBehavior="push"
       enableDynamicSizing
       enablePanDownToClose
       backdropComponent={renderBackdrop}

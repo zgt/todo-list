@@ -2,10 +2,10 @@
   "name": "tokilist",
   "private": true,
   "engines": {
-    "node": ">=24.14.1 <26",
-    "pnpm": "^10.27.0"
+    "node": ">=26.1.0 <27",
+    "pnpm": "^11.1.1"
   },
-  "packageManager": "pnpm@10.33.2",
+  "packageManager": "pnpm@11.1.1",
   "scripts": {
     "build": "turbo run build",
     "clean": "git clean -xdf node_modules",

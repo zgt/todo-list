@@ -3,7 +3,14 @@ import type {
   BottomSheetModal,
 } from "@gorhom/bottom-sheet";
 import type { LayoutChangeEvent, TextInput } from "react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Keyboard,
@@ -139,6 +146,14 @@ const RECURRENCE_OPTIONS: {
   { value: "yearly", label: "Yearly" },
 ];
 
+const DISMISS_GUARD_MS = 500;
+function debugTaskFormSheet(event: string, details?: Record<string, unknown>) {
+  console.log(
+    `[TaskFormSheet ${new Date().toISOString()}] ${event}`,
+    details ?? "",
+  );
+}
+
 export function TaskFormSheet({
   onClose,
   onSubmit,
@@ -155,12 +170,47 @@ export function TaskFormSheet({
   const snapPoints = useMemo(() => ["100%"], []);
   const scrollViewRef = useRef<ScrollView>(null);
   const pendingSubtasksScrollRef = useRef<ScrollView>(null);
+  const reactInstanceId = useId();
+  const instanceId = `${mode}-${reactInstanceId}`;
+  const initialModeRef = useRef(mode);
+  const initialIsControlledRef = useRef(isOpen !== undefined);
   const subtaskSectionY = useRef(0);
   const addSubtaskRowY = useRef(0);
   const scrollViewHeight = useRef(0);
   const keyboardHeightRef = useRef(0);
   const [subtaskInputFocused, setSubtaskInputFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const triggerGuardUntilRef = useRef(0);
+  const triggerGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const initialMode = initialModeRef.current;
+    const initialIsControlled = initialIsControlledRef.current;
+
+    debugTaskFormSheet("mounted", {
+      instanceId,
+      mode: initialMode,
+      isControlled: initialIsControlled,
+    });
+
+    return () => {
+      debugTaskFormSheet("unmounted", {
+        instanceId,
+        mode: initialMode,
+      });
+    };
+  }, [instanceId]);
+
+  useEffect(() => {
+    debugTaskFormSheet("render state", {
+      instanceId,
+      mode,
+      isControlled: isOpen !== undefined,
+      isOpen,
+    });
+  });
 
   useEffect(() => {
     const showEvent =
@@ -180,6 +230,9 @@ export function TaskFormSheet({
     return () => {
       showSub.remove();
       hideSub.remove();
+      if (triggerGuardTimerRef.current) {
+        clearTimeout(triggerGuardTimerRef.current);
+      }
     };
   }, []);
 
@@ -348,27 +401,111 @@ export function TaskFormSheet({
   // Controlled by parent state when isOpen is provided.
   useEffect(() => {
     if (isOpen === undefined) return;
+    debugTaskFormSheet("controlled isOpen changed", { mode, isOpen });
     if (isOpen) {
+      debugTaskFormSheet("controlled present()", { mode });
       bottomSheetRef.current?.present();
     } else {
+      debugTaskFormSheet("controlled dismiss()", { mode });
       bottomSheetRef.current?.dismiss();
     }
-  }, [isOpen]);
+  }, [mode, isOpen]);
 
   // For create mode: trigger opens the sheet
   const handleOpenSheet = useCallback(() => {
+    const now = Date.now();
+    const guardRemainingMs = Math.max(0, triggerGuardUntilRef.current - now);
+    debugTaskFormSheet("trigger press", {
+      instanceId,
+      mode,
+      isControlled: isOpen !== undefined,
+      isTriggerGuarded: now < triggerGuardUntilRef.current,
+      guardRemainingMs,
+    });
+    if (now < triggerGuardUntilRef.current) {
+      debugTaskFormSheet("trigger ignored by dismiss guard", {
+        instanceId,
+        mode,
+        guardRemainingMs,
+      });
+      return;
+    }
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Keyboard.dismiss();
-    bottomSheetRef.current?.present();
-  }, []);
+    if (mode === "create" && isOpen === undefined) {
+      resetForm();
+    }
+    debugTaskFormSheet("imperative present scheduled", {
+      instanceId,
+      mode,
+    });
+    requestAnimationFrame(() => {
+      debugTaskFormSheet("imperative present()", {
+        instanceId,
+        mode,
+      });
+      bottomSheetRef.current?.present();
+    });
+  }, [instanceId, mode, isOpen, resetForm]);
 
   const handleDismiss = useCallback(() => {
+    debugTaskFormSheet("onDismiss", {
+      instanceId,
+      mode,
+      isControlled: isOpen !== undefined,
+      willGuardTrigger: mode === "create" && isOpen === undefined,
+    });
+    if (mode === "create" && isOpen === undefined) {
+      triggerGuardUntilRef.current = Date.now() + DISMISS_GUARD_MS;
+      if (triggerGuardTimerRef.current) {
+        clearTimeout(triggerGuardTimerRef.current);
+      }
+      triggerGuardTimerRef.current = setTimeout(() => {
+        debugTaskFormSheet("dismiss guard expired", {
+          instanceId,
+          mode,
+        });
+        triggerGuardTimerRef.current = null;
+      }, DISMISS_GUARD_MS);
+      return;
+    }
     resetForm();
     onClose?.();
-  }, [resetForm, onClose]);
+  }, [instanceId, mode, isOpen, resetForm, onClose]);
+
+  const handleSheetChange = useCallback(
+    (index: number) => {
+      debugTaskFormSheet("sheet onChange", {
+        instanceId,
+        mode,
+        index,
+      });
+    },
+    [instanceId, mode],
+  );
+
+  const handleSheetAnimate = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      debugTaskFormSheet("sheet onAnimate", {
+        instanceId,
+        mode,
+        fromIndex,
+        toIndex,
+      });
+    },
+    [instanceId, mode],
+  );
 
   const handleSubmit = async () => {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      debugTaskFormSheet("submit ignored: empty title", { mode });
+      return;
+    }
+    debugTaskFormSheet("submit start", {
+      mode,
+      titleLength: title.trim().length,
+      pendingSubtaskCount: pendingSubtasks.length,
+    });
     try {
       await onSubmit({
         title: title.trim(),
@@ -385,8 +522,13 @@ export function TaskFormSheet({
             ? pendingSubtasks.map((s) => ({ title: s.title }))
             : undefined,
       });
+      debugTaskFormSheet("submit success, dismiss()", { mode });
       bottomSheetRef.current?.dismiss();
-    } catch {
+    } catch (error) {
+      debugTaskFormSheet("submit error, keeping sheet open", {
+        mode,
+        error,
+      });
       // Mutation handlers surface errors; keep the sheet open so the user can retry.
     }
   };
@@ -422,6 +564,22 @@ export function TaskFormSheet({
       {/* FAB trigger for create mode */}
       {mode === "create" && isOpen === undefined && (
         <Pressable
+          onPressIn={() => {
+            const now = Date.now();
+            debugTaskFormSheet("trigger press in", {
+              instanceId,
+              mode,
+              isTriggerGuarded: now < triggerGuardUntilRef.current,
+            });
+          }}
+          onPressOut={() => {
+            const now = Date.now();
+            debugTaskFormSheet("trigger press out", {
+              instanceId,
+              mode,
+              isTriggerGuarded: now < triggerGuardUntilRef.current,
+            });
+          }}
           onPress={handleOpenSheet}
           accessibilityLabel="Create task"
           accessibilityRole="button"
@@ -435,11 +593,13 @@ export function TaskFormSheet({
       {/* Bottom Sheet */}
       <BSModal
         ref={bottomSheetRef}
-        index={0}
+        stackBehavior="push"
         snapPoints={snapPoints}
         enablePanDownToClose
         keyboardBehavior="extend"
         keyboardBlurBehavior="restore"
+        onAnimate={handleSheetAnimate}
+        onChange={handleSheetChange}
         onDismiss={handleDismiss}
         backdropComponent={renderBackdrop}
         backgroundStyle={styles.sheetBackground}

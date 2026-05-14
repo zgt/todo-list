@@ -41,6 +41,8 @@ build
 
 .gemini/
 
+creds.txt
+
 .codex/
 
 crashlogs/

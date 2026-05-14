@@ -95,6 +95,7 @@ export function PrioritySelector({
 
       <BottomSheetModal
         ref={bottomSheetRef}
+        stackBehavior="push"
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose

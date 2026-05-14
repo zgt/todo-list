@@ -64,6 +64,7 @@ export function PriorityFilter({
 
       <BottomSheetModal
         ref={bottomSheetRef}
+        stackBehavior="push"
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose

@@ -190,6 +190,7 @@ export const CategoryManagementSheet = forwardRef<CategoryManagementSheetRef>(
     return (
       <BottomSheetModal
         ref={bottomSheetRef}
+        stackBehavior="push"
         snapPoints={snapPoints}
         enableDynamicSizing={false}
         backdropComponent={renderBackdrop}

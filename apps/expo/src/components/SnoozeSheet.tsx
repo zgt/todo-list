@@ -139,6 +139,7 @@ export const SnoozeSheet = forwardRef<SnoozeSheetRef, SnoozeSheetProps>(
       <>
         <BottomSheetModal
           ref={bottomSheetRef}
+          stackBehavior="push"
           enableDynamicSizing
           enablePanDownToClose
           backdropComponent={renderBackdrop}

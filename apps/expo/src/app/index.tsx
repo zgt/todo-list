@@ -27,7 +27,6 @@ import {
   Info,
   Layers,
   List,
-  Plus,
   RefreshCw,
   Trash2,
 } from "lucide-react-native";
@@ -59,6 +58,10 @@ import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
 
 type ServerTask = RouterOutputs["task"]["all"][number];
+
+function debugIndex(event: string, details?: Record<string, unknown>) {
+  console.log(`[Index ${new Date().toISOString()}] ${event}`, details ?? "");
+}
 
 function Header({
   onProfilePress,
@@ -177,42 +180,6 @@ function ViewToggleButton({
   );
 }
 
-function CreateTaskButton({
-  disabled,
-  onPress,
-}: {
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityLabel="Create task"
-      accessibilityRole="button"
-      style={disabled && { opacity: 0.6 }}
-    >
-      <View
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: 32,
-          backgroundColor: "#50C878",
-          alignItems: "center",
-          justifyContent: "center",
-          shadowColor: "#50C878",
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 6,
-        }}
-      >
-        <Plus size={32} color="#0A1A1A" />
-      </View>
-    </Pressable>
-  );
-}
-
 export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const { openTask } = useLocalSearchParams<{ openTask?: string }>();
@@ -270,7 +237,6 @@ export default function Index() {
   );
 
   const [editingTask, setEditingTask] = useState<ServerTask | null>(null);
-  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [deletePendingIds, setDeletePendingIds] = useState<Set<string>>(
     new Set(),
   );
@@ -824,6 +790,13 @@ export default function Index() {
   const createMutation = useMutation(
     trpc.task.create.mutationOptions({
       onMutate: async (newTask) => {
+        debugIndex("createMutation onMutate", {
+          titleLength: newTask.title.length,
+          categoryId: newTask.categoryId ?? null,
+          listId: newTask.listId ?? null,
+          hasDueDate: !!newTask.dueDate,
+          subtaskCount: newTask.subtasks?.length ?? 0,
+        });
         triggerRipple();
         await queryClient.cancelQueries(trpc.task.all.queryFilter());
 
@@ -874,6 +847,10 @@ export default function Index() {
         return { previousTasks };
       },
       onError: (error: TRPCClientErrorLike<AppRouter>, _newTask, context) => {
+        debugIndex("createMutation onError", {
+          message: error.message,
+          hadPreviousTasks: !!context?.previousTasks,
+        });
         if (context?.previousTasks) {
           queryClient.setQueryData(
             trpc.task.all.queryKey(),
@@ -887,14 +864,27 @@ export default function Index() {
         );
       },
       onSettled: async () => {
+        debugIndex("createMutation onSettled: invalidate start");
         await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+        debugIndex("createMutation onSettled: invalidate complete");
       },
     }),
   );
 
   // Sheet handlers
   const handleCreateSubmit = async (data: TaskFormData) => {
-    if (!session?.user) return;
+    debugIndex("handleCreateSubmit start", {
+      hasSessionUser: !!session?.user,
+      titleLength: data.title.length,
+      categoryId: data.categoryId,
+      listId: data.listId,
+      hasDueDate: !!data.dueDate,
+      subtaskCount: data.newSubtasks?.length ?? 0,
+    });
+    if (!session?.user) {
+      debugIndex("handleCreateSubmit ignored: no session user");
+      return;
+    }
 
     await createMutation.mutateAsync({
       title: data.title,
@@ -908,6 +898,7 @@ export default function Index() {
       recurrenceRule: data.recurrenceRule ?? undefined,
       recurrenceInterval: data.recurrenceInterval ?? undefined,
     });
+    debugIndex("handleCreateSubmit mutateAsync resolved");
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     // Reminder scheduling is handled by the rescheduleAllReminders useEffect
@@ -1283,45 +1274,34 @@ export default function Index() {
                 </Animated.View>
               </Pressable>
             ) : (
-              <CreateTaskButton
-                disabled={isCreateTaskOpen}
-                onPress={() => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setIsCreateTaskOpen(true);
+              <TaskFormSheet
+                mode="create"
+                onSubmit={handleCreateSubmit}
+                initialData={{
+                  listId:
+                    selectedListFilter && selectedListFilter !== "personal"
+                      ? selectedListFilter
+                      : null,
+                  dueDate:
+                    viewMode === "calendar" && calendarSelectedDate
+                      ? (() => {
+                          const [y, m, d] = calendarSelectedDate
+                            .split("-")
+                            .map(Number);
+                          return new Date(y ?? 0, (m ?? 1) - 1, d);
+                        })()
+                      : null,
                 }}
+                lists={(lists ?? []).map((l) => ({
+                  id: l.id,
+                  name: l.name,
+                  color: l.color,
+                }))}
+                isSubmitting={createMutation.isPending}
               />
             )}
           </View>
         </View>
-
-        {/* Create Task Sheet — controlled by isCreateTaskOpen state */}
-        <TaskFormSheet
-          mode="create"
-          isOpen={isCreateTaskOpen}
-          onClose={() => setIsCreateTaskOpen(false)}
-          onSubmit={handleCreateSubmit}
-          initialData={{
-            listId:
-              selectedListFilter && selectedListFilter !== "personal"
-                ? selectedListFilter
-                : null,
-            dueDate:
-              viewMode === "calendar" && calendarSelectedDate
-                ? (() => {
-                    const [y, m, d] = calendarSelectedDate
-                      .split("-")
-                      .map(Number);
-                    return new Date(y ?? 0, (m ?? 1) - 1, d);
-                  })()
-                : null,
-          }}
-          lists={(lists ?? []).map((l) => ({
-            id: l.id,
-            name: l.name,
-            color: l.color,
-          }))}
-          isSubmitting={createMutation.isPending}
-        />
 
         {/* Edit Task Sheet — controlled by editingTask state */}
         <TaskFormSheet
