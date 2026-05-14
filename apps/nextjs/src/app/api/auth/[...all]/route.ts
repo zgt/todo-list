@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { auth } from "~/auth/server";
 import { env } from "~/env";
 
-const DEBUG_AUTH = env.AUTH_TRACE === "1";
+const DEBUG_AUTH = env.NODE_ENV === "production" || env.AUTH_TRACE === "1";
 
 function djb2(input: string): string {
   let hash = 5381;
@@ -16,6 +16,24 @@ function djb2(input: string): string {
 function cookieFingerprint(cookie: string | null): string {
   if (!cookie) return "none";
   return `${cookie.length}:${djb2(cookie)}`;
+}
+
+function getCookieNames(cookie: string | null): string[] {
+  if (!cookie) return [];
+
+  return cookie
+    .split(";")
+    .map((part) => part.trim().split("=", 1)[0])
+    .filter((name): name is string => !!name);
+}
+
+function getSetCookieNames(setCookie: string | null): string[] {
+  if (!setCookie) return [];
+
+  return setCookie
+    .split(/,(?=\s*[^;,=\s]+=)/)
+    .map((cookie) => cookie.trim().split("=", 1)[0])
+    .filter((name): name is string => !!name);
 }
 
 function authTrace(message: string, details?: Record<string, unknown>): void {
@@ -34,6 +52,7 @@ const handler = async (req: NextRequest) => {
     method: req.method,
     path: req.nextUrl.pathname,
     query: req.nextUrl.search,
+    incomingCookieNames: getCookieNames(req.headers.get("cookie")),
     incomingCookie: cookieFingerprint(req.headers.get("cookie")),
   });
 
@@ -42,6 +61,7 @@ const handler = async (req: NextRequest) => {
   authTrace("completed auth request", {
     traceId,
     status: response.status,
+    setCookieNames: getSetCookieNames(response.headers.get("set-cookie")),
     setCookie: cookieFingerprint(response.headers.get("set-cookie")),
   });
 

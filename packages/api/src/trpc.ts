@@ -13,6 +13,40 @@ import { z, ZodError } from "zod/v4";
 import type { Auth } from "@acme/auth";
 import { db } from "@acme/db/client";
 
+const DEBUG_AUTH =
+  process.env.NODE_ENV === "production" || process.env.AUTH_TRACE === "1";
+
+function djb2(input: string): string {
+  let hash = 5381;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash * 33) ^ input.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function cookieFingerprint(cookie: string | null): string {
+  if (!cookie) return "none";
+  return `${cookie.length}:${djb2(cookie)}`;
+}
+
+function getCookieNames(cookie: string | null): string[] {
+  if (!cookie) return [];
+
+  return cookie
+    .split(";")
+    .map((part) => part.trim().split("=", 1)[0])
+    .filter((name): name is string => !!name);
+}
+
+function authTrace(message: string, details: Record<string, unknown>): void {
+  if (!DEBUG_AUTH) return;
+  console.log(`[AuthTrace][trpc] ${message}`, details);
+}
+
+function authError(message: string, details: Record<string, unknown>): void {
+  console.error(`[AuthTrace][trpc] ${message}`, details);
+}
+
 /**
  * 1. CONTEXT
  *
@@ -31,10 +65,30 @@ export const createTRPCContext = async (opts: {
   auth: Auth;
 }) => {
   const authApi = opts.auth.api;
-  const session = await authApi.getSession({ headers: opts.headers });
+  const incomingCookie = opts.headers.get("cookie");
+  authTrace("resolving session", {
+    cookieNames: getCookieNames(incomingCookie),
+    incomingCookie: cookieFingerprint(incomingCookie),
+    disableCookieCache: true,
+  });
+
+  const session = await authApi.getSession({
+    headers: opts.headers,
+    query: { disableCookieCache: true },
+  });
+
+  authTrace("resolved session", {
+    hasSession: !!session?.session,
+    hasUser: !!session?.user,
+  });
 
   return {
     authApi,
+    authTrace: {
+      cookieNames: getCookieNames(incomingCookie),
+      incomingCookie: cookieFingerprint(incomingCookie),
+      disableCookieCache: true,
+    },
     session,
     db,
   };
@@ -114,8 +168,16 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  */
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
-  .use(({ ctx, next }) => {
+  .use(({ ctx, next, path }) => {
     if (!ctx.session?.user) {
+      if (DEBUG_AUTH) {
+        authError("protected procedure missing session", {
+          path,
+          hasSession: !!ctx.session?.session,
+          hasUser: !!ctx.session?.user,
+          ...ctx.authTrace,
+        });
+      }
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
     return next({
