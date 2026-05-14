@@ -43,10 +43,16 @@ catalogs:
 linkWorkspacePackages: true
 
 onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
   - '@sentry/cli'
   - '@shopify/react-native-skia'
   - '@tailwindcss/oxide'
+  - better-sqlite3
+  - bufferutil
   - esbuild
+  - prisma
+  - sharp
 
 overrides:
   '@better-auth/utils': 0.4.0
