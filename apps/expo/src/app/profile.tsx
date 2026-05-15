@@ -31,6 +31,7 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
 import { queryClient as globalQueryClient, trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
+import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
 
 const APP_VERSION =
   Constants.expoConfig?.version ??
@@ -76,6 +77,7 @@ export default function ProfileScreen() {
         } catch (error) {
           console.error("Sign-out error:", error);
         }
+        clearSessionTokenCookieMirror();
         globalQueryClient.clear();
       },
       onError: (error) => {

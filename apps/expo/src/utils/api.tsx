@@ -7,8 +7,8 @@ import superjson from "superjson";
 
 import type { AppRouter } from "@acme/api";
 
-import type { AuthCookieTraceDetails } from "./auth-cookies";
-import { getSessionTokenCookieHeaderResult } from "./auth-cookies";
+import type { AuthCookieTraceDetails } from "./auth-storage";
+import { getSessionTokenCookieHeaderResult } from "./auth-storage";
 import { getBaseUrl } from "./base-url";
 
 const EXPO_ORIGIN = Linking.createURL("", { scheme: "tokilist" });

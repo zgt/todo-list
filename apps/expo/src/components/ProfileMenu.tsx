@@ -26,6 +26,7 @@ import type { User } from "~/utils/auth";
 import { UserAvatar } from "~/components/UserAvatar";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
+import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
 
 interface ProfileMenuProps {
   visible: boolean;
@@ -95,6 +96,7 @@ export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
     } catch (error) {
       console.error("Sign-out error:", error);
     } finally {
+      clearSessionTokenCookieMirror();
       queryClient.clear();
       onClose();
     }
