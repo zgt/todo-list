@@ -47,6 +47,13 @@ interface SwipeableCardStackProps {
   onToggleDeletePending: (id: string) => void;
 }
 
+interface TaskWithSubtasks {
+  subtasks?: {
+    id: string;
+    completed: boolean;
+  }[];
+}
+
 export function SwipeableCardStack({
   tasks,
   onToggle,
@@ -204,6 +211,26 @@ export function SwipeableCardStack({
     setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
   };
 
+  const handleSubtaskToggle = (
+    task: LocalTask,
+    subtaskId: string,
+    completed: boolean,
+  ) => {
+    const subtasks = (task as unknown as TaskWithSubtasks).subtasks ?? [];
+    const updatedSubtasks = subtasks.map((subtask) =>
+      subtask.id === subtaskId ? { ...subtask, completed } : subtask,
+    );
+    const allCompleted =
+      updatedSubtasks.length > 0 &&
+      updatedSubtasks.every((subtask) => subtask.completed);
+
+    onSubtaskToggle?.(subtaskId, completed);
+
+    if (allCompleted !== task.completed) {
+      scheduleResort();
+    }
+  };
+
   const resortWithTarget = (targetDirection: "next" | "prev") => {
     if (resortTimerRef.current) clearTimeout(resortTimerRef.current);
 
@@ -319,7 +346,12 @@ export function SwipeableCardStack({
             onNext={handleNext}
             onPrevious={handlePrevious}
             onTaskPress={onTaskPress ? () => onTaskPress(task.id) : undefined}
-            onSubtaskToggle={onSubtaskToggle}
+            onSubtaskToggle={
+              onSubtaskToggle
+                ? (subtaskId, completed) =>
+                    handleSubtaskToggle(task, subtaskId, completed)
+                : undefined
+            }
             onToggleExpand={() => handleToggleExpand(task.id)}
           />
         );
