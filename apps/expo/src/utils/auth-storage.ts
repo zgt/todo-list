@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
 const AUTH_COOKIE_KEY = "expo_cookie";
+const AUTH_SESSION_DATA_KEY = "expo_session_data";
 const SESSION_TOKEN_MIRROR_KEY = "expo_session_token_cookie";
 const DEBUG_AUTH =
   process.env.NODE_ENV === "production" ||
@@ -30,6 +31,10 @@ export interface AuthCookieTraceDetails {
   sentCookieNames: string[];
   sentCookie: string;
   fallbackUsed: boolean;
+  hasSessionDataCache: boolean;
+  sessionDataCacheExpiresInSec: number | null;
+  hasTokenMirror: boolean;
+  tokenMirrorExpiresInSec: number | null;
 }
 
 export interface SessionTokenCookieHeaderResult {
@@ -195,14 +200,48 @@ function getMirror(raw: string | null): SessionTokenMirror | null {
   }
 }
 
+function secondsUntil(expires: string | null): number | null {
+  if (!expires) return null;
+  const expiresAt = new Date(expires).getTime();
+  if (Number.isNaN(expiresAt)) return null;
+  return Math.floor((expiresAt - Date.now()) / 1000);
+}
+
+function getSessionDataCacheExpiresInSec(): number | null {
+  const raw = SecureStore.getItem(AUTH_SESSION_DATA_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed)) return null;
+    const session = parsed.session;
+    if (!isRecord(session)) return null;
+    const expiresAt = session.expiresAt;
+    if (typeof expiresAt !== "string") return null;
+    return secondsUntil(expiresAt);
+  } catch {
+    return null;
+  }
+}
+
+function getBaseTraceDetails(cookies: StoredCookies): {
+  storedCookieNames: string[];
+  hasSessionDataCache: boolean;
+  sessionDataCacheExpiresInSec: number | null;
+} {
+  const sessionDataCacheExpiresInSec = getSessionDataCacheExpiresInSec();
+  return {
+    storedCookieNames: Object.keys(cookies),
+    hasSessionDataCache: sessionDataCacheExpiresInSec !== null,
+    sessionDataCacheExpiresInSec,
+  };
+}
+
 function updateSessionTokenMirror(cookies: StoredCookies): void {
   const sessionTokenCookies = getSessionTokenCookies(cookies);
   const cookieHeader = toCookieHeader(sessionTokenCookies);
 
   if (!cookieHeader) {
-    SecureStore.deleteItemAsync(SESSION_TOKEN_MIRROR_KEY).catch(
-      () => undefined,
-    );
     return;
   }
 
@@ -259,25 +298,30 @@ export function getSessionTokenCookieHeaderResult(): SessionTokenCookieHeaderRes
   const { cookies } = sanitizeStoredCookies(cookieJson);
   const sessionTokenCookies = getSessionTokenCookies(cookies);
   const cookieHeader = toCookieHeader(sessionTokenCookies);
+  const baseTraceDetails = getBaseTraceDetails(cookies);
+  const mirror = getMirror(SecureStore.getItem(SESSION_TOKEN_MIRROR_KEY));
 
   if (cookieHeader) {
     const traceDetails = {
-      storedCookieNames: Object.keys(cookies),
+      ...baseTraceDetails,
       sentCookieNames: sessionTokenCookies.map(([name]) => name),
       sentCookie: cookieFingerprint(cookieHeader),
       fallbackUsed: false,
+      hasTokenMirror: !!mirror,
+      tokenMirrorExpiresInSec: secondsUntil(mirror?.expires ?? null),
     };
 
     traceAuthCookies("prepared tRPC cookies", traceDetails);
     return { cookieHeader, traceDetails };
   }
 
-  const mirror = getMirror(SecureStore.getItem(SESSION_TOKEN_MIRROR_KEY));
   const traceDetails = {
-    storedCookieNames: Object.keys(cookies),
+    ...baseTraceDetails,
     sentCookieNames: mirror?.cookieNames ?? [],
     sentCookie: cookieFingerprint(mirror?.cookieHeader ?? null),
     fallbackUsed: !!mirror,
+    hasTokenMirror: !!mirror,
+    tokenMirrorExpiresInSec: secondsUntil(mirror?.expires ?? null),
   };
 
   traceAuthCookies("prepared tRPC cookies", traceDetails);
@@ -285,4 +329,8 @@ export function getSessionTokenCookieHeaderResult(): SessionTokenCookieHeaderRes
     cookieHeader: mirror?.cookieHeader ?? null,
     traceDetails,
   };
+}
+
+export function hasSessionTokenCookie(): boolean {
+  return !!getSessionTokenCookieHeaderResult().cookieHeader;
 }

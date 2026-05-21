@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
@@ -13,6 +13,7 @@ import { useNotifications } from "~/hooks/useNotifications";
 import { usePushTokenRegistration } from "~/hooks/usePushTokenRegistration";
 import { queryClient } from "~/utils/api";
 import { authClient } from "~/utils/auth";
+import { hasSessionTokenCookie } from "~/utils/auth-storage";
 import { CategoryFilterProvider } from "./_components/category-filter-context";
 
 import "../styles.css";
@@ -37,6 +38,8 @@ if (SENTRY_DSN) {
 function RootLayout() {
   const colorScheme = useColorScheme();
   const { data: session, isPending, error } = authClient.useSession();
+  const [isRecoveringSession, setIsRecoveringSession] = useState(false);
+  const hasTriedSessionRecovery = useRef(false);
 
   useNotifications();
   usePushTokenRegistration(!!session && !isPending);
@@ -48,7 +51,36 @@ function RootLayout() {
     }
   }, [error]);
 
-  if (isPending) {
+  useEffect(() => {
+    if (
+      isPending ||
+      session ||
+      error ||
+      isRecoveringSession ||
+      hasTriedSessionRecovery.current
+    ) {
+      return;
+    }
+    if (!hasSessionTokenCookie()) return;
+
+    hasTriedSessionRecovery.current = true;
+
+    void Promise.resolve().then(async () => {
+      setIsRecoveringSession(true);
+      try {
+        await authClient.getSession();
+      } catch (sessionError) {
+        console.error("[Auth] Session recovery error:", sessionError);
+        Sentry.captureException(sessionError, {
+          tags: { component: "auth_session_recovery" },
+        });
+      } finally {
+        setIsRecoveringSession(false);
+      }
+    });
+  }, [error, isPending, isRecoveringSession, session]);
+
+  if (isPending || isRecoveringSession) {
     return (
       <GradientBackground continuousRippleWhileVisible>
         <></>
