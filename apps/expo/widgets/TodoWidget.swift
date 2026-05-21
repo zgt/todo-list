@@ -350,14 +350,15 @@ struct CategoryCycleButton: View {
     let currentCategory: CategoryItem?
     var compact: Bool = false
 
-    private var iconSize: CGFloat { compact ? 10 : 12 }
-    private var textFont: Font { compact ? .footnote : .subheadline }
-    private var hPadding: CGFloat { compact ? 10 : 14 }
-    private var vPadding: CGFloat { compact ? 6 : 8 }
+    private var iconSize: CGFloat { compact ? 9 : 12 }
+    private var textFont: Font { compact ? .caption : .subheadline }
+    private var hPadding: CGFloat { compact ? 8 : 14 }
+    private var vPadding: CGFloat { compact ? 5 : 8 }
+    private var cornerRadius: CGFloat { compact ? 14 : 16 }
 
     var body: some View {
         Button(intent: CycleCategoryIntent()) {
-            HStack(spacing: 6) {
+            HStack(spacing: compact ? 5 : 6) {
                 if let category = currentCategory {
                     Circle()
                         .fill(Color(hex: category.color))
@@ -367,24 +368,29 @@ struct CategoryCycleButton: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.textPrimary)
                         .lineLimit(1)
+                        .truncationMode(.tail)
+                        .minimumScaleFactor(0.8)
                 } else {
                     Image(systemName: "tray.full.fill")
-                        .font(.system(size: compact ? 12 : 14))
+                        .font(.system(size: compact ? 11 : 14, weight: .semibold))
                         .foregroundColor(.textMuted)
                     Text("All")
                         .font(textFont)
                         .fontWeight(.semibold)
                         .foregroundColor(.textMuted)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
             .padding(.horizontal, hPadding)
             .padding(.vertical, vPadding)
+            .frame(minWidth: compact ? 62 : nil, maxWidth: compact ? 92 : nil, alignment: .leading)
             .background(Color.surfaceBase)
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(currentCategory != nil ? Color(hex: currentCategory!.color).opacity(0.5) : Color.borderDefault, lineWidth: 1)
             )
-            .cornerRadius(16)
+            .cornerRadius(cornerRadius)
         }
         .buttonStyle(.plain)
     }
@@ -394,6 +400,10 @@ struct CategoryCycleButton: View {
 
 struct SmallWidgetView: View {
     let entry: TodoWidgetEntry
+
+    private let widgetPadding: CGFloat = 8
+    private let progressSize: CGFloat = 52
+    private let progressLineWidth: CGFloat = 5
 
     private var progress: Double {
         guard entry.totalCount > 0 else { return 0 }
@@ -405,59 +415,77 @@ struct SmallWidgetView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Top row: category on left, progress ring on right
-            HStack(alignment: .top) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 CategoryCycleButton(currentCategory: entry.currentCategory, compact: true)
+                    .layoutPriority(1)
 
                 Spacer()
 
-                // Progress ring
                 ZStack {
                     Circle()
-                        .stroke(Color.borderDefault, lineWidth: 4)
+                        .stroke(Color.borderDefault, lineWidth: progressLineWidth)
 
                     Circle()
                         .trim(from: 0, to: entry.totalCount > 0 ? progress : 0)
-                        .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                        .stroke(Color.primaryEmerald, style: StrokeStyle(lineWidth: progressLineWidth, lineCap: .round))
                         .rotationEffect(.degrees(-90))
 
                     if entry.totalCount > 0 {
                         Text("\(entry.completedCount)/\(entry.totalCount)")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundColor(.primaryEmerald)
+                            .minimumScaleFactor(0.75)
+                            .lineLimit(1)
                     } else {
                         Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 14))
+                            .font(.system(size: 16))
                             .foregroundColor(.primaryEmerald)
                     }
                 }
-                .frame(width: 42, height: 42)
+                .frame(width: progressSize, height: progressSize)
             }
 
-            // Task list below
-            if incompleteTasks.isEmpty {
-                Text("All caught up!")
-                    .font(.caption)
-                    .foregroundColor(.textMuted)
-            } else {
-                ForEach(incompleteTasks.prefix(2)) { task in
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(Color.primaryEmerald.opacity(0.5))
-                            .frame(width: 4, height: 4)
-                        Text(task.title)
-                            .font(.caption)
-                            .foregroundColor(.textPrimary)
-                            .lineLimit(1)
+            VStack(alignment: .leading, spacing: 5) {
+                if incompleteTasks.isEmpty {
+                    Text("All caught up!")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.textMuted)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ForEach(incompleteTasks.prefix(3)) { task in
+                        SmallTaskRowView(task: task)
                     }
                 }
             }
-
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .padding(12)
+        .padding(widgetPadding)
         .containerBackground(Color.backgroundDeep, for: .widget)
+    }
+}
+
+struct SmallTaskRowView: View {
+    let task: TaskItem
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Circle()
+                .fill(Color.primaryEmerald.opacity(0.72))
+                .frame(width: 5, height: 5)
+                .alignmentGuide(.firstTextBaseline) { context in
+                    context[VerticalAlignment.center]
+                }
+
+            Text(task.title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.textPrimary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .minimumScaleFactor(0.82)
+        }
+        .frame(maxWidth: .infinity, minHeight: 18, alignment: .leading)
     }
 }
 
@@ -773,22 +801,68 @@ struct TodoWidget: Widget {
             .accessoryCircular,
             .accessoryRectangular
         ])
+        .contentMarginsDisabled()
     }
 }
 
 // MARK: - Preview
 
-#Preview(as: .systemSmall) {
+#Preview("Small - All", as: .systemSmall) {
     TodoWidget()
 } timeline: {
     TodoWidgetEntry(
         date: .now,
         tasks: [
-            TaskItem(id: "1", title: "Buy groceries", completed: false, categoryId: "1", categoryName: "Shopping", categoryColor: "#FFD700", dueDate: nil),
-            TaskItem(id: "2", title: "Call dentist", completed: true, categoryId: "2", categoryName: "Health", categoryColor: "#66D99A", dueDate: nil)
+            TaskItem(id: "1", title: "Unemployment", completed: false, categoryId: "1", categoryName: "Admin", categoryColor: "#66D99A", dueDate: nil),
+            TaskItem(id: "2", title: "Hem curtains", completed: false, categoryId: "2", categoryName: "Home", categoryColor: "#FFD700", dueDate: nil),
+            TaskItem(id: "3", title: "Review weekly budget", completed: false, categoryId: "3", categoryName: "Finance", categoryColor: "#66D99A", dueDate: nil),
+            TaskItem(id: "4", title: "Call dentist", completed: true, categoryId: "4", categoryName: "Health", categoryColor: "#66D99A", dueDate: nil)
         ],
         totalCount: 5,
-        completedCount: 2,
+        completedCount: 1,
+        currentCategory: nil
+    )
+}
+
+#Preview("Small - Category", as: .systemSmall) {
+    TodoWidget()
+} timeline: {
+    TodoWidgetEntry(
+        date: .now,
+        tasks: [
+            TaskItem(id: "1", title: "Send invoice", completed: false, categoryId: "1", categoryName: "Work", categoryColor: "#66D99A", dueDate: nil),
+            TaskItem(id: "2", title: "Prep roadmap notes", completed: false, categoryId: "1", categoryName: "Work", categoryColor: "#66D99A", dueDate: nil),
+            TaskItem(id: "3", title: "Book planning room", completed: false, categoryId: "1", categoryName: "Work", categoryColor: "#66D99A", dueDate: nil)
+        ],
+        totalCount: 7,
+        completedCount: 4,
+        currentCategory: CategoryItem(id: "1", name: "Work", color: "#66D99A")
+    )
+}
+
+#Preview("Small - Long Category", as: .systemSmall) {
+    TodoWidget()
+} timeline: {
+    TodoWidgetEntry(
+        date: .now,
+        tasks: [
+            TaskItem(id: "1", title: "Renew parking permit", completed: false, categoryId: "1", categoryName: "Household Maintenance", categoryColor: "#66D99A", dueDate: nil),
+            TaskItem(id: "2", title: "Order replacement filters", completed: false, categoryId: "1", categoryName: "Household Maintenance", categoryColor: "#66D99A", dueDate: nil)
+        ],
+        totalCount: 12,
+        completedCount: 8,
+        currentCategory: CategoryItem(id: "1", name: "Household Maintenance", color: "#66D99A")
+    )
+}
+
+#Preview("Small - Empty", as: .systemSmall) {
+    TodoWidget()
+} timeline: {
+    TodoWidgetEntry(
+        date: .now,
+        tasks: [],
+        totalCount: 0,
+        completedCount: 0,
         currentCategory: nil
     )
 }
