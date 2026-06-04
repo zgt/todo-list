@@ -4,7 +4,7 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "Tokilist",
-  slug: "tokilist",
+  slug: "todolist",
   scheme: "tokilist",
   version: "1.0.0",
   orientation: "portrait",
