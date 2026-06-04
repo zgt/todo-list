@@ -6,7 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Tokilist",
   slug: "tokilist",
   scheme: "tokilist",
-  version: "1.0.0",
+  version: "1.0.1",
   orientation: "portrait",
   icon: "./assets/icon-dark.png",
   userInterfaceStyle: "automatic",
