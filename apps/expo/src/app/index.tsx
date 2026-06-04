@@ -191,6 +191,7 @@ export default function Index() {
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<
     string | null
   >(null);
+  const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const [rippleTrigger, setRippleTrigger] = useState<number | undefined>(
     undefined,
   );
@@ -241,6 +242,12 @@ export default function Index() {
     new Set(),
   );
   const snoozeSheetRef = useRef<SnoozeSheetRef>(null);
+
+  useEffect(() => {
+    if (selectedListFilter === "deleted" || deletePendingIds.size > 0) {
+      setIsCreateSheetOpen(false);
+    }
+  }, [deletePendingIds.size, selectedListFilter]);
 
   const queryClient = useQueryClient();
 
@@ -945,6 +952,35 @@ export default function Index() {
     [serverTasks],
   );
 
+  const taskFormLists = useMemo(
+    () =>
+      (lists ?? []).map((list) => ({
+        id: list.id,
+        name: list.name,
+        color: list.color,
+      })),
+    [lists],
+  );
+
+  const createInitialData = useMemo<Partial<TaskFormData>>(() => {
+    let dueDate: Date | null = null;
+
+    if (viewMode === "calendar" && calendarSelectedDate) {
+      const [year, month, day] = calendarSelectedDate.split("-").map(Number);
+      dueDate = new Date(year ?? 0, (month ?? 1) - 1, day);
+    }
+
+    return {
+      listId:
+        selectedListFilter &&
+        selectedListFilter !== "personal" &&
+        selectedListFilter !== "deleted"
+          ? selectedListFilter
+          : null,
+      dueDate,
+    };
+  }, [calendarSelectedDate, selectedListFilter, viewMode]);
+
   // Show loading state while session or tasks are loading
   if (isPending || isLoadingTasks) {
     return (
@@ -1276,27 +1312,12 @@ export default function Index() {
             ) : (
               <TaskFormSheet
                 mode="create"
+                isOpen={isCreateSheetOpen}
+                onOpen={() => setIsCreateSheetOpen(true)}
+                onClose={() => setIsCreateSheetOpen(false)}
                 onSubmit={handleCreateSubmit}
-                initialData={{
-                  listId:
-                    selectedListFilter && selectedListFilter !== "personal"
-                      ? selectedListFilter
-                      : null,
-                  dueDate:
-                    viewMode === "calendar" && calendarSelectedDate
-                      ? (() => {
-                          const [y, m, d] = calendarSelectedDate
-                            .split("-")
-                            .map(Number);
-                          return new Date(y ?? 0, (m ?? 1) - 1, d);
-                        })()
-                      : null,
-                }}
-                lists={(lists ?? []).map((l) => ({
-                  id: l.id,
-                  name: l.name,
-                  color: l.color,
-                }))}
+                initialData={createInitialData}
+                lists={taskFormLists}
                 isSubmitting={createMutation.isPending}
               />
             )}
@@ -1329,11 +1350,7 @@ export default function Index() {
                 }
               : undefined
           }
-          lists={(lists ?? []).map((l) => ({
-            id: l.id,
-            name: l.name,
-            color: l.color,
-          }))}
+          lists={taskFormLists}
           isSubmitting={updateMutation.isPending}
           onDelete={handleEditDelete}
         />

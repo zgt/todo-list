@@ -83,6 +83,7 @@ interface TaskList {
 
 interface TaskFormSheetProps {
   onClose?: () => void;
+  onOpen?: () => void;
   onSubmit: (data: TaskFormData) => void | Promise<void>;
   initialData?: Partial<TaskFormData> & {
     id?: string;
@@ -164,6 +165,7 @@ export function TaskFormSheet({
   onDelete,
   onSnooze,
   isOpen,
+  onOpen,
 }: TaskFormSheetProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const titleInputRef = useRef<TextInput>(null);
@@ -432,8 +434,12 @@ export function TaskFormSheet({
     }
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Keyboard.dismiss();
-    if (mode === "create" && isOpen === undefined) {
+    if (mode === "create") {
       resetForm();
+    }
+    if (isOpen !== undefined) {
+      onOpen?.();
+      return;
     }
     debugTaskFormSheet("imperative present scheduled", {
       instanceId,
@@ -446,7 +452,7 @@ export function TaskFormSheet({
       });
       bottomSheetRef.current?.present();
     });
-  }, [instanceId, mode, isOpen, resetForm]);
+  }, [instanceId, mode, isOpen, resetForm, onOpen]);
 
   const handleDismiss = useCallback(() => {
     debugTaskFormSheet("onDismiss", {
@@ -562,7 +568,7 @@ export function TaskFormSheet({
   return (
     <>
       {/* FAB trigger for create mode */}
-      {mode === "create" && isOpen === undefined && (
+      {mode === "create" && (isOpen === undefined || onOpen) && (
         <Pressable
           onPressIn={() => {
             const now = Date.now();
