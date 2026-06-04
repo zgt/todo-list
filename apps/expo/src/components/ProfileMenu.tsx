@@ -1,6 +1,13 @@
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import type { ComponentRef } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Alert, Linking, Pressable, Text as RNText, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
@@ -28,266 +35,288 @@ import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
 
+export interface ProfileMenuRef {
+  present: () => void;
+  dismiss: () => void;
+}
+
 interface ProfileMenuProps {
-  visible: boolean;
-  onClose: () => void;
   user: User;
 }
 
-export function ProfileMenu({ visible, onClose, user }: ProfileMenuProps) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+const MENU_AVATAR_SIZE = 64;
+const MENU_AVATAR_INSET = 2;
 
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [editedName, setEditedName] = useState(user.name);
-  const inputRef = useRef<ComponentRef<typeof BottomSheetTextInput>>(null);
+export const ProfileMenu = forwardRef<ProfileMenuRef, ProfileMenuProps>(
+  ({ user }, ref) => {
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    const bottomSheetRef = useRef<BottomSheetModal>(null);
 
-  const updateNameMutation = useMutation(
-    trpc.user.updateDisplayName.mutationOptions({
-      onSuccess: () => {
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [editedName, setEditedName] = useState(user.name);
+    const inputRef = useRef<ComponentRef<typeof BottomSheetTextInput>>(null);
+
+    useImperativeHandle(ref, () => ({
+      present: () => {
+        bottomSheetRef.current?.present();
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      },
+      dismiss: () => bottomSheetRef.current?.dismiss(),
+    }));
+
+    const updateNameMutation = useMutation(
+      trpc.user.updateDisplayName.mutationOptions({
+        onSuccess: () => {
+          setIsEditingName(false);
+          void queryClient.invalidateQueries();
+          void authClient.getSession();
+        },
+        onError: () => {
+          Alert.alert(
+            "Error",
+            "Could not update display name. Please try again.",
+          );
+        },
+      }),
+    );
+
+    const handleSaveName = () => {
+      const trimmed = editedName.trim();
+      if (!trimmed || trimmed === user.name) {
         setIsEditingName(false);
-        void queryClient.invalidateQueries();
-        void authClient.getSession();
-      },
-      onError: () => {
-        Alert.alert(
-          "Error",
-          "Could not update display name. Please try again.",
-        );
-      },
-    }),
-  );
+        setEditedName(user.name);
+        return;
+      }
+      updateNameMutation.mutate({ name: trimmed });
+    };
 
-  const handleSaveName = () => {
-    const trimmed = editedName.trim();
-    if (!trimmed || trimmed === user.name) {
+    const handleStartEditing = () => {
+      setEditedName(user.name);
+      setIsEditingName(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    };
+
+    const handleDismiss = useCallback(() => {
       setIsEditingName(false);
       setEditedName(user.name);
-      return;
-    }
-    updateNameMutation.mutate({ name: trimmed });
-  };
+    }, [user.name]);
 
-  const handleStartEditing = () => {
-    setEditedName(user.name);
-    setIsEditingName(true);
-    setTimeout(() => inputRef.current?.focus(), 100);
-  };
-
-  const handleDismiss = useCallback(() => {
-    setIsEditingName(false);
-    setEditedName(user.name);
-    onClose();
-  }, [onClose, user.name]);
-
-  useEffect(() => {
-    if (visible) {
-      bottomSheetRef.current?.present();
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } else {
+    const dismissMenu = useCallback(() => {
       bottomSheetRef.current?.dismiss();
-    }
-  }, [visible]);
+    }, []);
 
-  const handleSignOut = async () => {
-    try {
-      await authClient.signOut();
-    } catch (error) {
-      console.error("Sign-out error:", error);
-    } finally {
-      clearSessionTokenCookieMirror();
-      queryClient.clear();
-      onClose();
-    }
-  };
+    const handleSignOut = async () => {
+      try {
+        await authClient.signOut();
+      } catch (error) {
+        console.error("Sign-out error:", error);
+      } finally {
+        clearSessionTokenCookieMirror();
+        queryClient.clear();
+        dismissMenu();
+      }
+    };
 
-  const snapPoints = useMemo(() => ["65%"], []);
+    const snapPoints = useMemo(() => ["65%"], []);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.6}
-      />
-    ),
-    [],
-  );
+    const renderBackdrop = useCallback(
+      (props: BottomSheetBackdropProps) => (
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          opacity={0.6}
+        />
+      ),
+      [],
+    );
 
-  return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      stackBehavior="push"
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      onDismiss={handleDismiss}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{
-        backgroundColor: "#102A2A",
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-      }}
-      handleIndicatorStyle={{ backgroundColor: "#164B49", width: 40 }}
-    >
-      <BottomSheetScrollView style={{ padding: 24 }}>
-        {/* Profile Section */}
-        <View className="mb-6 flex-row items-center gap-4">
-          <View className="overflow-hidden rounded-full border-2 border-[#164B49]">
-            <UserAvatar name={user.name} image={user.image} size={64} />
-          </View>
+    return (
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        stackBehavior="push"
+        index={0}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        onDismiss={handleDismiss}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{
+          backgroundColor: "#102A2A",
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        }}
+        handleIndicatorStyle={{ backgroundColor: "#164B49", width: 40 }}
+      >
+        <BottomSheetScrollView style={{ padding: 24 }}>
+          {/* Profile Section */}
+          <View className="mb-6 flex-row items-center gap-4">
+            <View
+              className="items-center justify-center overflow-hidden rounded-full border-2 border-[#164B49]"
+              style={{ height: MENU_AVATAR_SIZE, width: MENU_AVATAR_SIZE }}
+            >
+              <UserAvatar
+                name={user.name}
+                image={user.image}
+                size={MENU_AVATAR_SIZE - MENU_AVATAR_INSET * 2}
+              />
+            </View>
 
-          <View className="flex-1">
-            {isEditingName ? (
-              <View className="flex-row items-center gap-2">
-                <BottomSheetTextInput
-                  ref={inputRef}
-                  value={editedName}
-                  onChangeText={setEditedName}
-                  onSubmitEditing={handleSaveName}
-                  onBlur={handleSaveName}
-                  maxLength={50}
-                  returnKeyType="done"
-                  autoFocus
-                  style={{
-                    flex: 1,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                    borderColor: "#21716C",
-                    backgroundColor: "#0A1A1A",
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: 18,
-                    height: 48,
-                    color: "#DCE4E4",
-                    textAlignVertical: "center",
-                  }}
-                  placeholderTextColor="#8FA8A8"
-                  placeholder="Display name"
-                  editable={!updateNameMutation.isPending}
-                />
+            <View className="flex-1">
+              {isEditingName ? (
+                <View className="flex-row items-center gap-2">
+                  <BottomSheetTextInput
+                    ref={inputRef}
+                    value={editedName}
+                    onChangeText={setEditedName}
+                    onSubmitEditing={handleSaveName}
+                    onBlur={handleSaveName}
+                    maxLength={50}
+                    returnKeyType="done"
+                    autoFocus
+                    style={{
+                      flex: 1,
+                      borderRadius: 16,
+                      borderWidth: 1,
+                      borderColor: "#21716C",
+                      backgroundColor: "#0A1A1A",
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: 18,
+                      height: 48,
+                      color: "#DCE4E4",
+                      textAlignVertical: "center",
+                    }}
+                    placeholderTextColor="#8FA8A8"
+                    placeholder="Display name"
+                    editable={!updateNameMutation.isPending}
+                  />
+                  <Pressable
+                    onPress={() => {
+                      void Haptics.impactAsync(
+                        Haptics.ImpactFeedbackStyle.Light,
+                      );
+                      handleSaveName();
+                    }}
+                    disabled={updateNameMutation.isPending}
+                    className="rounded-2xl bg-[#50C878] p-2 active:bg-[#388E3C]"
+                  >
+                    <Check size={18} color="#0A1A1A" />
+                  </Pressable>
+                </View>
+              ) : (
                 <Pressable
-                  onPress={() => {
-                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    handleSaveName();
-                  }}
-                  disabled={updateNameMutation.isPending}
-                  className="rounded-2xl bg-[#50C878] p-2 active:bg-[#388E3C]"
+                  onPress={handleStartEditing}
+                  className="flex-row items-center gap-2"
                 >
-                  <Check size={18} color="#0A1A1A" />
+                  <RNText className="text-xl font-semibold text-[#DCE4E4]">
+                    {user.name}
+                  </RNText>
+                  <Pencil size={14} color="#8FA8A8" />
                 </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={handleStartEditing}
-                className="flex-row items-center gap-2"
-              >
-                <RNText className="text-xl font-semibold text-[#DCE4E4]">
-                  {user.name}
-                </RNText>
-                <Pencil size={14} color="#8FA8A8" />
-              </Pressable>
-            )}
-            {user.email && (
-              <RNText className="text-sm text-[#8FA8A8]">{user.email}</RNText>
-            )}
+              )}
+              {user.email && (
+                <RNText className="text-sm text-[#8FA8A8]">{user.email}</RNText>
+              )}
+            </View>
           </View>
-        </View>
 
-        {/* Menu Items */}
-        <View className="gap-2">
-          <Pressable
-            onPress={() => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onClose();
-              router.push("/lists");
-            }}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-          >
-            <Users size={20} color="#50C878" />
-            <RNText className="text-base font-medium text-[#DCE4E4]">
-              My Lists
-            </RNText>
-          </Pressable>
+          {/* Menu Items */}
+          <View className="gap-2">
+            <Pressable
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                dismissMenu();
+                router.push("/lists");
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Users size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                My Lists
+              </RNText>
+            </Pressable>
 
-          <Pressable
-            onPress={() => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onClose();
-              router.push("/settings");
-            }}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-          >
-            <Bell size={20} color="#50C878" />
-            <RNText className="text-base font-medium text-[#DCE4E4]">
-              Notifications
-            </RNText>
-          </Pressable>
+            <Pressable
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                dismissMenu();
+                router.push("/settings");
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Bell size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                Notifications
+              </RNText>
+            </Pressable>
 
-          <Pressable
-            onPress={() => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              onClose();
-              router.push("/profile");
-            }}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-          >
-            <Settings size={20} color="#50C878" />
-            <RNText className="text-base font-medium text-[#DCE4E4]">
-              Account Settings
-            </RNText>
-          </Pressable>
+            <Pressable
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                dismissMenu();
+                router.push("/profile");
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+            >
+              <Settings size={20} color="#50C878" />
+              <RNText className="text-base font-medium text-[#DCE4E4]">
+                Account Settings
+              </RNText>
+            </Pressable>
 
-          <View className="my-2 h-px bg-[#164B49]" />
+            <View className="my-2 h-px bg-[#164B49]" />
 
-          <Pressable
-            onPress={() => void Linking.openURL("https://calayo.net/privacy")}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-            accessibilityLabel="Privacy Policy"
-            accessibilityRole="link"
-          >
-            <Shield size={20} color="#8FA8A8" />
-            <RNText className="text-base font-medium text-[#8FA8A8]">
-              Privacy Policy
-            </RNText>
-          </Pressable>
+            <Pressable
+              onPress={() => void Linking.openURL("https://calayo.net/privacy")}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              accessibilityLabel="Privacy Policy"
+              accessibilityRole="link"
+            >
+              <Shield size={20} color="#8FA8A8" />
+              <RNText className="text-base font-medium text-[#8FA8A8]">
+                Privacy Policy
+              </RNText>
+            </Pressable>
 
-          <Pressable
-            onPress={() => void Linking.openURL("https://calayo.net/terms")}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-            accessibilityLabel="Terms of Service"
-            accessibilityRole="link"
-          >
-            <FileText size={20} color="#8FA8A8" />
-            <RNText className="text-base font-medium text-[#8FA8A8]">
-              Terms of Service
-            </RNText>
-          </Pressable>
+            <Pressable
+              onPress={() => void Linking.openURL("https://calayo.net/terms")}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              accessibilityLabel="Terms of Service"
+              accessibilityRole="link"
+            >
+              <FileText size={20} color="#8FA8A8" />
+              <RNText className="text-base font-medium text-[#8FA8A8]">
+                Terms of Service
+              </RNText>
+            </Pressable>
 
-          <View className="my-2 h-px bg-[#164B49]" />
+            <View className="my-2 h-px bg-[#164B49]" />
 
-          <Pressable
-            onPress={() => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              void handleSignOut();
-            }}
-            className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
-            accessibilityLabel="Sign out"
-            accessibilityRole="button"
-          >
-            <LogOut size={20} color="#E57373" />
-            <RNText className="text-base font-medium text-[#E57373]">
-              Sign Out
-            </RNText>
-          </Pressable>
-        </View>
+            <Pressable
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void handleSignOut();
+              }}
+              className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
+              accessibilityLabel="Sign out"
+              accessibilityRole="button"
+            >
+              <LogOut size={20} color="#E57373" />
+              <RNText className="text-base font-medium text-[#E57373]">
+                Sign Out
+              </RNText>
+            </Pressable>
+          </View>
 
-        {/* Bottom padding for safe area */}
-        <View style={{ height: 16 }} />
-      </BottomSheetScrollView>
-    </BottomSheetModal>
-  );
-}
+          {/* Bottom padding for safe area */}
+          <View style={{ height: 16 }} />
+        </BottomSheetScrollView>
+      </BottomSheetModal>
+    );
+  },
+);
+
+ProfileMenu.displayName = "ProfileMenu";

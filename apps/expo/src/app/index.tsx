@@ -34,6 +34,7 @@ import {
 import type { AppRouter, RouterOutputs } from "@acme/api";
 
 import type { PriorityLevel } from "../components/priority-config";
+import type { ProfileMenuRef } from "../components/ProfileMenu";
 import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
@@ -46,6 +47,7 @@ import {
   rescheduleAllReminders,
   scheduleTaskReminder,
 } from "~/utils/notifications";
+import { deriveParentCompletedFromSubtasks } from "~/utils/task-completion";
 import { CalendarView } from "../components/CalendarView";
 import { GradientBackground } from "../components/GradientBackground";
 import { ProfileButton } from "../components/ProfileButton";
@@ -184,7 +186,7 @@ export default function Index() {
   const { data: session, isPending } = authClient.useSession();
   const { openTask } = useLocalSearchParams<{ openTask?: string }>();
   const router = useRouter();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<ProfileMenuRef>(null);
   const [viewMode, setViewMode] = useState<"stack" | "list" | "calendar">(
     "stack",
   );
@@ -731,31 +733,33 @@ export default function Index() {
         >(trpc.task.all.queryKey());
 
         if (previousTasks) {
+          const now = new Date();
           queryClient.setQueryData<RouterOutputs["task"]["all"]>(
             trpc.task.all.queryKey(),
             previousTasks.map((task) => {
+              const ownsSubtask = task.subtasks.some(
+                (subtask) => subtask.id === updatedSubtask.id,
+              );
+
+              if (!ownsSubtask) return task;
+
               const updatedSubtasks = task.subtasks.map((subtask) =>
                 subtask.id === updatedSubtask.id
                   ? {
                       ...subtask,
                       completed: updatedSubtask.completed ?? subtask.completed,
-                      updatedAt: new Date(),
+                      updatedAt: now,
                     }
                   : subtask,
               );
-              // Auto-complete/un-complete parent based on subtask states
-              const allCompleted =
-                updatedSubtasks.length > 0 &&
-                updatedSubtasks.every((s) => s.completed);
+              const parentCompleted =
+                deriveParentCompletedFromSubtasks(updatedSubtasks);
+
               return {
                 ...task,
                 subtasks: updatedSubtasks,
-                completed: allCompleted,
-                completedAt: allCompleted
-                  ? (task.completedAt ?? new Date())
-                  : updatedSubtask.completed === false
-                    ? null
-                    : task.completedAt,
+                completed: parentCompleted,
+                completedAt: parentCompleted ? (task.completedAt ?? now) : null,
               };
             }),
           );
@@ -1014,7 +1018,7 @@ export default function Index() {
         <Stack.Screen options={{ headerShown: false }} />
 
         <Header
-          onProfilePress={() => setShowProfileMenu(true)}
+          onProfilePress={() => profileMenuRef.current?.present()}
           onRefresh={() => {
             void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             triggerRipple();
@@ -1360,11 +1364,7 @@ export default function Index() {
       <SnoozeSheet ref={snoozeSheetRef} onSnooze={handleSnooze} />
 
       {/* Profile Menu */}
-      <ProfileMenu
-        visible={showProfileMenu}
-        onClose={() => setShowProfileMenu(false)}
-        user={session.user}
-      />
+      <ProfileMenu ref={profileMenuRef} user={session.user} />
     </GradientBackground>
   );
 }

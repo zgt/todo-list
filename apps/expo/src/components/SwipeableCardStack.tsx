@@ -12,6 +12,7 @@ import * as Haptics from "expo-haptics";
 
 import type { PriorityLevel } from "./priority-config";
 import type { LocalTask } from "~/db/client";
+import { deriveParentCompletedFromSubtasks } from "~/utils/task-completion";
 import { SwipeableCard } from "./SwipeableCard";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -220,13 +221,11 @@ export function SwipeableCardStack({
     const updatedSubtasks = subtasks.map((subtask) =>
       subtask.id === subtaskId ? { ...subtask, completed } : subtask,
     );
-    const allCompleted =
-      updatedSubtasks.length > 0 &&
-      updatedSubtasks.every((subtask) => subtask.completed);
+    const parentCompleted = deriveParentCompletedFromSubtasks(updatedSubtasks);
 
     onSubtaskToggle?.(subtaskId, completed);
 
-    if (allCompleted !== task.completed) {
+    if (parentCompleted !== task.completed) {
       scheduleResort();
     }
   };

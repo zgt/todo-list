@@ -52,6 +52,7 @@ export function UserAvatar({ name, image, size }: UserAvatarProps) {
           height: size,
           borderRadius: size / 2,
         }}
+        resizeMode="cover"
       />
     );
   }
@@ -73,6 +74,8 @@ export function UserAvatar({ name, image, size }: UserAvatarProps) {
           fontSize,
           fontWeight: "700",
           lineHeight: fontSize * 1.2,
+          includeFontPadding: false,
+          textAlign: "center",
         }}
       >
         {initials}

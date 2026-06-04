@@ -14,11 +14,15 @@ interface ProfileButtonProps {
 }
 
 const AVATAR_SIZE = 36;
+const AVATAR_INSET = 2;
+const INNER_AVATAR_SIZE = AVATAR_SIZE - AVATAR_INSET * 2;
 
 const styles = StyleSheet.create({
   container: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
+    alignItems: "center",
+    justifyContent: "center",
     overflow: "hidden",
     borderRadius: AVATAR_SIZE / 2,
   },
@@ -51,12 +55,17 @@ export function ProfileButton({ user, onPress }: ProfileButtonProps) {
       accessibilityLabel={`Profile: ${user.name}`}
       accessibilityRole="button"
       accessibilityHint="Open profile menu"
+      hitSlop={8}
     >
       <Animated.View
         style={[styles.container, animatedStyle]}
         className="border-2 border-white/20"
       >
-        <UserAvatar name={user.name} image={user.image} size={AVATAR_SIZE} />
+        <UserAvatar
+          name={user.name}
+          image={user.image}
+          size={INNER_AVATAR_SIZE}
+        />
       </Animated.View>
     </Pressable>
   );
