@@ -293,6 +293,12 @@ export function clearSessionTokenCookieMirror(): void {
   SecureStore.deleteItemAsync(SESSION_TOKEN_MIRROR_KEY).catch(() => undefined);
 }
 
+export function clearExpoAuthSessionStorage(): void {
+  SecureStore.setItem(AUTH_COOKIE_KEY, "{}");
+  SecureStore.setItem(AUTH_SESSION_DATA_KEY, "{}");
+  clearSessionTokenCookieMirror();
+}
+
 export function getSessionTokenCookieHeaderResult(): SessionTokenCookieHeaderResult {
   const cookieJson = getSanitizedCookieJson();
   const { cookies } = sanitizeStoredCookies(cookieJson);

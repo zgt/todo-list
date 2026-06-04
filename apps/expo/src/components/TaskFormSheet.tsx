@@ -182,6 +182,8 @@ export function TaskFormSheet({
   const keyboardHeightRef = useRef(0);
   const [subtaskInputFocused, setSubtaskInputFocused] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isSheetMounted, setIsSheetMounted] = useState(mode === "edit");
+  const pendingPresentRef = useRef<string | null>(null);
   const triggerGuardUntilRef = useRef(0);
   const triggerGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -400,18 +402,66 @@ export function TaskFormSheet({
     setSubtaskInputFocused(false);
   }, [initialData]);
 
+  const presentOnNextFrame = useCallback(
+    (reason: string) => {
+      const frame = requestAnimationFrame(() => {
+        debugTaskFormSheet(`${reason} present()`, {
+          instanceId,
+          mode,
+          hasRef: !!bottomSheetRef.current,
+        });
+        bottomSheetRef.current?.present();
+      });
+
+      return () => cancelAnimationFrame(frame);
+    },
+    [instanceId, mode],
+  );
+
+  const schedulePresent = useCallback(
+    (reason: string) => {
+      debugTaskFormSheet(`${reason} scheduled`, {
+        instanceId,
+        mode,
+        isSheetMounted,
+      });
+
+      if (mode === "create" && !isSheetMounted) {
+        pendingPresentRef.current = reason;
+        setIsSheetMounted(true);
+        return;
+      }
+
+      return presentOnNextFrame(reason);
+    },
+    [instanceId, isSheetMounted, mode, presentOnNextFrame],
+  );
+
+  useEffect(() => {
+    if (mode !== "create" || !isSheetMounted || !pendingPresentRef.current) {
+      return;
+    }
+
+    const reason = pendingPresentRef.current;
+    pendingPresentRef.current = null;
+    return presentOnNextFrame(reason);
+  }, [isSheetMounted, mode, presentOnNextFrame]);
+
   // Controlled by parent state when isOpen is provided.
   useEffect(() => {
     if (isOpen === undefined) return;
-    debugTaskFormSheet("controlled isOpen changed", { mode, isOpen });
+    debugTaskFormSheet("controlled isOpen changed", {
+      instanceId,
+      mode,
+      isOpen,
+    });
     if (isOpen) {
-      debugTaskFormSheet("controlled present()", { mode });
-      bottomSheetRef.current?.present();
+      schedulePresent("controlled");
     } else {
-      debugTaskFormSheet("controlled dismiss()", { mode });
+      debugTaskFormSheet("controlled dismiss()", { instanceId, mode });
       bottomSheetRef.current?.dismiss();
     }
-  }, [mode, isOpen]);
+  }, [instanceId, mode, isOpen, schedulePresent]);
 
   // For create mode: trigger opens the sheet
   const handleOpenSheet = useCallback(() => {
@@ -439,20 +489,11 @@ export function TaskFormSheet({
     }
     if (isOpen !== undefined) {
       onOpen?.();
+      schedulePresent("controlled trigger");
       return;
     }
-    debugTaskFormSheet("imperative present scheduled", {
-      instanceId,
-      mode,
-    });
-    requestAnimationFrame(() => {
-      debugTaskFormSheet("imperative present()", {
-        instanceId,
-        mode,
-      });
-      bottomSheetRef.current?.present();
-    });
-  }, [instanceId, mode, isOpen, resetForm, onOpen]);
+    schedulePresent("imperative");
+  }, [instanceId, mode, isOpen, resetForm, onOpen, schedulePresent]);
 
   const handleDismiss = useCallback(() => {
     debugTaskFormSheet("onDismiss", {
@@ -473,9 +514,13 @@ export function TaskFormSheet({
         });
         triggerGuardTimerRef.current = null;
       }, DISMISS_GUARD_MS);
+      setIsSheetMounted(false);
       return;
     }
     resetForm();
+    if (mode === "create") {
+      setIsSheetMounted(false);
+    }
     onClose?.();
   }, [instanceId, mode, isOpen, resetForm, onClose]);
 
@@ -597,20 +642,21 @@ export function TaskFormSheet({
       )}
 
       {/* Bottom Sheet */}
-      <BSModal
-        ref={bottomSheetRef}
-        stackBehavior="push"
-        snapPoints={snapPoints}
-        enablePanDownToClose
-        keyboardBehavior="extend"
-        keyboardBlurBehavior="restore"
-        onAnimate={handleSheetAnimate}
-        onChange={handleSheetChange}
-        onDismiss={handleDismiss}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={styles.sheetBackground}
-        handleIndicatorStyle={styles.handleIndicator}
-      >
+      {(mode === "edit" || isSheetMounted) && (
+        <BSModal
+          ref={bottomSheetRef}
+          stackBehavior="push"
+          snapPoints={snapPoints}
+          enablePanDownToClose
+          keyboardBehavior="extend"
+          keyboardBlurBehavior="restore"
+          onAnimate={handleSheetAnimate}
+          onChange={handleSheetChange}
+          onDismiss={handleDismiss}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={styles.sheetBackground}
+          handleIndicatorStyle={styles.handleIndicator}
+        >
         <BottomSheetScrollView
           ref={scrollViewRef}
           style={styles.contentContainer}
@@ -1236,7 +1282,8 @@ export function TaskFormSheet({
             </Pressable>
           )}
         </BottomSheetScrollView>
-      </BSModal>
+        </BSModal>
+      )}
 
       {/* Due Date Picker */}
       <CustomDatePicker

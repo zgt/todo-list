@@ -8,7 +8,11 @@ import superjson from "superjson";
 import type { AppRouter } from "@acme/api";
 
 import type { AuthCookieTraceDetails } from "./auth-storage";
-import { getSessionTokenCookieHeaderResult } from "./auth-storage";
+import {
+  clearExpoAuthSessionStorage,
+  getSessionTokenCookieHeaderResult,
+} from "./auth-storage";
+import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
 
 const EXPO_ORIGIN = Linking.createURL("", { scheme: "tokilist" });
@@ -18,6 +22,7 @@ const DEBUG_AUTH =
   process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 const authTraceBySource = new Map<string, AuthCookieTraceDetails>();
 const sentryAuthEvents = new Map<string, number>();
+let authInvalidationPromise: Promise<void> | null = null;
 
 export const queryClient = new QueryClient();
 
@@ -71,6 +76,41 @@ function getRequestUrlForTrace(url: URL | RequestInfo): string {
   return "unknown";
 }
 
+function invalidateExpoAuthSession(
+  source: string,
+  status: number,
+  traceDetails: AuthCookieTraceDetails | undefined,
+): void {
+  if (!traceDetails?.sentCookieNames.length) return;
+  if (authInvalidationPromise) return;
+
+  authInvalidationPromise = Promise.resolve()
+    .then(async () => {
+      console.warn("[AuthTrace][expo-trpc] clearing rejected auth session", {
+        source,
+        status,
+        sentCookieNames: traceDetails.sentCookieNames,
+        sentCookie: traceDetails.sentCookie,
+      });
+
+      try {
+        await authClient.signOut();
+      } catch (error) {
+        console.error("[AuthTrace][expo-trpc] sign-out after auth failure", {
+          source,
+          status,
+          error,
+        });
+      } finally {
+        clearExpoAuthSessionStorage();
+        queryClient.clear();
+      }
+    })
+    .finally(() => {
+      authInvalidationPromise = null;
+    });
+}
+
 async function fetchWithAuthTrace(
   source: string,
   url: URL | RequestInfo,
@@ -84,6 +124,7 @@ async function fetchWithAuthTrace(
   });
 
   if (response.status === 401 || response.status === 403) {
+    const traceDetails = authTraceBySource.get(source);
     captureAuthIssue(
       `trpc-auth-${response.status}`,
       `tRPC auth request failed with ${response.status}`,
@@ -91,9 +132,10 @@ async function fetchWithAuthTrace(
         source,
         url: traceUrl,
         status: response.status,
-        ...(authTraceBySource.get(source) ?? {}),
+        ...(traceDetails ?? {}),
       },
     );
+    invalidateExpoAuthSession(source, response.status, traceDetails);
   }
 
   return response;
