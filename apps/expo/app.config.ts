@@ -10,7 +10,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: "portrait",
   icon: "./assets/icon-dark.png",
   userInterfaceStyle: "automatic",
+  runtimeVersion: {
+    policy: "appVersion",
+  },
   updates: {
+    url: "https://u.expo.dev/02742173-7649-4eb5-a065-307f33cddd7f",
     fallbackToCacheTimeout: 0,
   },
   owner: "zgtf",
