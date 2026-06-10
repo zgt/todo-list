@@ -22,6 +22,8 @@ import {
 } from "lucide-react-native";
 
 import { DemoCardStack, DemoListStack } from "~/components/DemoSwipeableCard";
+import { useSwipeTutorial } from "~/hooks/useSwipeTutorial";
+import { authClient } from "~/utils/auth";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const TOTAL_PAGES = 3;
@@ -415,6 +417,8 @@ function PageTips() {
 export default function SwipeTutorialScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { data: session } = authClient.useSession();
+  const { markSeen } = useSwipeTutorial(session?.user.id);
   const [currentPage, setCurrentPage] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const [contentHeight, setContentHeight] = useState(SCREEN_HEIGHT - 200);
@@ -438,6 +442,8 @@ export default function SwipeTutorialScreen() {
   }, []);
 
   const dismiss = () => {
+    void markSeen();
+
     if (router.canGoBack()) {
       router.back();
     }

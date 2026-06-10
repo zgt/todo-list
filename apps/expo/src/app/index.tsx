@@ -204,8 +204,7 @@ export default function Index() {
   const {
     shouldShow: shouldShowTutorial,
     isLoading: tutorialLoading,
-    markSeen,
-  } = useSwipeTutorial();
+  } = useSwipeTutorial(session?.user.id);
   const tutorialShownRef = useRef(false);
   useEffect(() => {
     if (
@@ -216,7 +215,6 @@ export default function Index() {
       !tutorialShownRef.current
     ) {
       tutorialShownRef.current = true;
-      void markSeen();
       // Delay to ensure layout is stable before presenting modal
       const timer = setTimeout(() => router.push("/swipe-tutorial"), 600);
       return () => clearTimeout(timer);
@@ -226,7 +224,6 @@ export default function Index() {
     shouldShowTutorial,
     session,
     isPending,
-    markSeen,
     router,
   ]);
 
