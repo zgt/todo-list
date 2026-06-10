@@ -188,6 +188,8 @@ export function TaskFormSheet({
   const triggerGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const titleFocusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasFocusedTitleForOpenRef = useRef(false);
 
   useEffect(() => {
     const initialMode = initialModeRef.current;
@@ -204,6 +206,9 @@ export function TaskFormSheet({
         instanceId,
         mode: initialMode,
       });
+      if (titleFocusTimerRef.current) {
+        clearTimeout(titleFocusTimerRef.current);
+      }
     };
   }, [instanceId]);
 
@@ -515,12 +520,14 @@ export function TaskFormSheet({
         triggerGuardTimerRef.current = null;
       }, DISMISS_GUARD_MS);
       setIsSheetMounted(false);
+      hasFocusedTitleForOpenRef.current = false;
       return;
     }
     resetForm();
     if (mode === "create") {
       setIsSheetMounted(false);
     }
+    hasFocusedTitleForOpenRef.current = false;
     onClose?.();
   }, [instanceId, mode, isOpen, resetForm, onClose]);
 
@@ -531,6 +538,19 @@ export function TaskFormSheet({
         mode,
         index,
       });
+
+      if (mode !== "create" || index < 0 || hasFocusedTitleForOpenRef.current) {
+        return;
+      }
+
+      hasFocusedTitleForOpenRef.current = true;
+      if (titleFocusTimerRef.current) {
+        clearTimeout(titleFocusTimerRef.current);
+      }
+      titleFocusTimerRef.current = setTimeout(() => {
+        titleInputRef.current?.focus();
+        titleFocusTimerRef.current = null;
+      }, 150);
     },
     [instanceId, mode],
   );
