@@ -190,6 +190,7 @@ export function TaskFormSheet({
   );
   const titleFocusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasFocusedTitleForOpenRef = useRef(false);
+  const hasDismissedKeyboardForCloseRef = useRef(false);
 
   useEffect(() => {
     const initialMode = initialModeRef.current;
@@ -464,6 +465,8 @@ export function TaskFormSheet({
       schedulePresent("controlled");
     } else {
       debugTaskFormSheet("controlled dismiss()", { instanceId, mode });
+      Keyboard.dismiss();
+      hasDismissedKeyboardForCloseRef.current = true;
       bottomSheetRef.current?.dismiss();
     }
   }, [instanceId, mode, isOpen, schedulePresent]);
@@ -539,6 +542,10 @@ export function TaskFormSheet({
         index,
       });
 
+      if (index >= 0) {
+        hasDismissedKeyboardForCloseRef.current = false;
+      }
+
       if (mode !== "create" || index < 0 || hasFocusedTitleForOpenRef.current) {
         return;
       }
@@ -563,6 +570,11 @@ export function TaskFormSheet({
         fromIndex,
         toIndex,
       });
+
+      if (toIndex < 0 && !hasDismissedKeyboardForCloseRef.current) {
+        Keyboard.dismiss();
+        hasDismissedKeyboardForCloseRef.current = true;
+      }
     },
     [instanceId, mode],
   );
@@ -594,6 +606,8 @@ export function TaskFormSheet({
             : undefined,
       });
       debugTaskFormSheet("submit success, dismiss()", { mode });
+      Keyboard.dismiss();
+      hasDismissedKeyboardForCloseRef.current = true;
       bottomSheetRef.current?.dismiss();
     } catch (error) {
       debugTaskFormSheet("submit error, keeping sheet open", {
@@ -696,7 +710,11 @@ export function TaskFormSheet({
               {mode === "create" ? "New Task" : "Edit Task"}
             </Text>
             <Pressable
-              onPress={() => bottomSheetRef.current?.dismiss()}
+              onPress={() => {
+                Keyboard.dismiss();
+                hasDismissedKeyboardForCloseRef.current = true;
+                bottomSheetRef.current?.dismiss();
+              }}
               hitSlop={12}
             >
               <X size={24} color="#8FA8A8" />
@@ -1261,6 +1279,8 @@ export function TaskFormSheet({
           {mode === "edit" && onSnooze && initialData?.id && (
             <Pressable
               onPress={() => {
+                Keyboard.dismiss();
+                hasDismissedKeyboardForCloseRef.current = true;
                 bottomSheetRef.current?.dismiss();
                 if (initialData.id) onSnooze(initialData.id);
               }}
