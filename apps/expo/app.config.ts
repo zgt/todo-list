@@ -6,6 +6,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: "Tokilist",
   slug: "tokilist",
   scheme: "tokilist",
+  platforms: ["ios", "android"],
   version: "1.0.1",
   orientation: "portrait",
   icon: "./assets/icon-dark.png",
