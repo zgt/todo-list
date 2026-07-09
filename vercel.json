@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/advance-rounds",
-      "schedule": "0 12 * * *"
+      "path": "/api/cron/reminders",
+      "schedule": "0 * * * *"
     }
   ]
 }

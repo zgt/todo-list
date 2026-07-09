@@ -18,10 +18,6 @@
     "./reminders": {
       "types": "./dist/lib/reminders.d.ts",
       "default": "./src/lib/reminders.ts"
-    },
-    "./spotify": {
-      "types": "./dist/lib/spotify.d.ts",
-      "default": "./src/lib/spotify.ts"
     }
   },
   "license": "MIT",
