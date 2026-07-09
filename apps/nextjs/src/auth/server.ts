@@ -8,7 +8,7 @@ import { initAuth } from "@acme/auth";
 
 import { env } from "~/env";
 
-const PRODUCTION_DOMAIN = "https://calayo.net";
+const PRODUCTION_DOMAIN = "https://toki.calayo.net";
 
 const baseUrl =
   env.VERCEL_ENV === "production"

@@ -96,6 +96,9 @@ export function initAuth<
       "https://*.exp.direct",
       "http://localhost:*",
       "https://appleid.apple.com", // Required for Sign in with Apple
+      // Transitional: installs built before the toki.calayo.net migration still
+      // call the apex. Remove once apex API traffic reaches zero.
+      "https://calayo.net",
       options.productionUrl,
       options.baseUrl,
     ],

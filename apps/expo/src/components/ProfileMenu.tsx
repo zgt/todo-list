@@ -270,7 +270,9 @@ export const ProfileMenu = forwardRef<ProfileMenuRef, ProfileMenuProps>(
             <View className="my-2 h-px bg-[#164B49]" />
 
             <Pressable
-              onPress={() => void Linking.openURL("https://calayo.net/privacy")}
+              onPress={() =>
+                void Linking.openURL("https://toki.calayo.net/privacy")
+              }
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Privacy Policy"
               accessibilityRole="link"
@@ -282,7 +284,9 @@ export const ProfileMenu = forwardRef<ProfileMenuRef, ProfileMenuProps>(
             </Pressable>
 
             <Pressable
-              onPress={() => void Linking.openURL("https://calayo.net/terms")}
+              onPress={() =>
+                void Linking.openURL("https://toki.calayo.net/terms")
+              }
               className="flex-row items-center gap-3 rounded-lg p-4 active:bg-[#183F3F]"
               accessibilityLabel="Terms of Service"
               accessibilityRole="link"

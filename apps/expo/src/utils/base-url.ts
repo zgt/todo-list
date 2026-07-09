@@ -18,8 +18,10 @@ export const getBaseUrl = () => {
   const localhost = debuggerHost?.split(":")[0];
 
   if (!localhost) {
-    // Fallback for production if env var not set
-    return "https://calayo.net";
+    // Fallback for production if env var not set. `eas update` does not read
+    // eas.json's build-profile env, so this value is what an OTA ships if
+    // EXPO_PUBLIC_API_URL is absent from the EAS environment.
+    return "https://toki.calayo.net";
   }
   return `http://${localhost}:3000`;
 };
