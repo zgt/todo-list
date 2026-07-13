@@ -24,8 +24,8 @@
 
 | Item | Status | Notes |
 |------|--------|-------|
-| **Privacy Policy** | ✅ | Hosted at calayo.net/privacy, linked in app profile/settings |
-| **Terms of Service** | ✅ | Hosted at calayo.net/terms, linked in app profile/settings |
+| **Privacy Policy** | ✅ | Hosted at toki.calayo.net/privacy, linked in app profile/settings |
+| **Terms of Service** | ✅ | Hosted at toki.calayo.net/terms, linked in app profile/settings |
 | **Account Deletion** | ✅ | "Delete Account" in profile with confirmation dialog, full data wipe |
 | **Privacy Nutrition Labels** | ✅ | Documented below — ready to enter in App Store Connect |
 | **Contact Support** | ✅ | support@calayo.net linked in profile settings with mail icon |

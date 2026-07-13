@@ -92,7 +92,7 @@ export async function processReminders(
   let processed = 0;
   let errors = 0;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://tokilist.com";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://toki.calayo.net";
 
   for (const { task, user: taskUser, preferences } of reminders) {
     try {
