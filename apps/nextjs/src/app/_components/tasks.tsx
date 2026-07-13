@@ -15,6 +15,7 @@ import {
   Check,
   ChevronRight,
   Minus,
+  MoreHorizontal,
   Pencil,
   Plus,
   Repeat,
@@ -29,6 +30,15 @@ import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { Checkbox } from "@acme/ui/checkbox";
 import { CalendarPicker } from "@acme/ui/date-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@acme/ui/dropdown-menu";
 import { Input } from "@acme/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 import { toast } from "@acme/ui/toast";
@@ -1481,15 +1491,66 @@ export function TaskCard(props: {
     }),
   );
 
+  const restoreTask = useMutation(
+    trpc.task.restore.mutationOptions({
+      onError: () => toast.error("Failed to restore task"),
+      onSettled: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
+      },
+    }),
+  );
+
   const deleteTask = useMutation(
     trpc.task.delete.mutationOptions({
+      onMutate: async () => {
+        await queryClient.cancelQueries(trpc.task.all.queryFilter());
+        const previousTasks = queryClient.getQueryData(
+          trpc.task.all.queryKey(),
+        );
+        queryClient.setQueryData(trpc.task.all.queryKey(), (old) =>
+          old?.filter((t) => t.id !== props.task.id),
+        );
+        return { previousTasks };
+      },
+      onError: (_err, _vars, context) => {
+        if (context?.previousTasks) {
+          queryClient.setQueryData(
+            trpc.task.all.queryKey(),
+            context.previousTasks,
+          );
+        }
+        toast.error("Failed to delete task");
+      },
+      onSuccess: () => {
+        toast.success("Task deleted", {
+          action: {
+            label: "Undo",
+            onClick: () => restoreTask.mutate(props.task.id),
+          },
+        });
+      },
+      onSettled: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
+      },
+    }),
+  );
+
+  const snoozeTask = useMutation(
+    trpc.task.snooze.mutationOptions({
       onSuccess: async () => {
         await Promise.all([
           queryClient.invalidateQueries(trpc.task.pathFilter()),
           queryClient.invalidateQueries(trpc.taskList.pathFilter()),
         ]);
-        toast.success("Task deleted");
+        toast.success("Task snoozed!");
       },
+      onError: () => toast.error("Failed to snooze task"),
     }),
   );
 
@@ -1901,53 +1962,130 @@ export function TaskCard(props: {
           </div>
         ) : null}
 
-        {/* Hover Actions - only in collapsed non-editing state - hidden on mobile */}
+        {/* Hover Actions - collapsed non-editing state, desktop only.
+            Reveals on hover and on focus-within so keyboard users can reach
+            the (otherwise off-screen) buttons; the gradient backdrop keeps the
+            ghost icons legible over any badges underneath. */}
         {!isExpanded && !isEditing && (
           <div
             className={cn(
-              "absolute inset-y-0 right-0 z-20 hidden transition-transform duration-300 ease-in-out sm:flex",
+              "absolute inset-y-0 right-0 z-20 hidden items-center gap-1 pr-3 pl-8 transition-transform duration-300 ease-in-out sm:flex",
+              "bg-gradient-to-l from-[#102A2A] via-[#102A2A]/95 to-transparent",
               isAnimatingExpand
                 ? "translate-x-full"
-                : "translate-x-full group-hover:translate-x-0",
+                : "translate-x-full group-hover:translate-x-0 focus-within:translate-x-0",
             )}
           >
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-full w-12 rounded-none bg-amber-500 text-white hover:bg-amber-600 hover:text-white sm:w-16"
+                <button
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-[#8FA8A8] transition-colors hover:bg-amber-500/10 hover:text-amber-400 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
                   aria-label="Snooze task"
                 >
-                  <AlarmClock className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <AlarmClock className="h-4 w-4" />
                   <span className="sr-only">Snooze</span>
-                </Button>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-2" align="end">
                 <SnoozePopoverContent taskId={props.task.id} />
               </PopoverContent>
             </Popover>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-full w-12 rounded-none bg-blue-500 text-white hover:bg-blue-600 hover:text-white sm:w-16"
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-md text-[#8FA8A8] transition-colors hover:bg-[#50C878]/10 hover:text-[#50C878] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
               onClick={handleEditClick}
               aria-label="Edit task"
             >
-              <Pencil className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Pencil className="h-4 w-4" />
               <span className="sr-only">Edit</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-full w-12 rounded-none bg-red-500 text-white hover:bg-red-600 hover:text-white sm:w-16"
+            </button>
+            <button
+              className="flex h-8 w-8 items-center justify-center rounded-md text-[#8FA8A8] transition-colors hover:bg-red-500/10 hover:text-red-400 focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none disabled:opacity-50"
               onClick={() => deleteTask.mutate(props.task.id)}
               disabled={deleteTask.isPending}
               aria-label="Delete task"
             >
-              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Trash2 className="h-4 w-4" />
               <span className="sr-only">Delete</span>
-            </Button>
+            </button>
+          </div>
+        )}
+
+        {/* Mobile action menu - touch widths where hover is unavailable */}
+        {!isExpanded && !isEditing && (
+          <div
+            className="shrink-0 sm:hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-[#8FA8A8] transition-colors hover:bg-white/5 hover:text-[#DCE4E4] focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none"
+                  aria-label="Task actions"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="border-[#164B49] bg-[#102A2A] text-[#DCE4E4]"
+              >
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-[#DCE4E4] focus:bg-[#183F3F] focus:text-[#DCE4E4] data-[state=open]:bg-[#183F3F]">
+                    <AlarmClock className="h-3.5 w-3.5" />
+                    Snooze
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="border-[#164B49] bg-[#102A2A] text-[#DCE4E4]">
+                    <DropdownMenuItem
+                      className="text-[#DCE4E4] focus:bg-[#183F3F] focus:text-[#DCE4E4]"
+                      onSelect={() =>
+                        snoozeTask.mutate({
+                          id: props.task.id,
+                          snoozedUntil: getLaterToday(),
+                        })
+                      }
+                    >
+                      Later Today
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-[#DCE4E4] focus:bg-[#183F3F] focus:text-[#DCE4E4]"
+                      onSelect={() =>
+                        snoozeTask.mutate({
+                          id: props.task.id,
+                          snoozedUntil: getTomorrowAt9am(),
+                        })
+                      }
+                    >
+                      Tomorrow
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-[#DCE4E4] focus:bg-[#183F3F] focus:text-[#DCE4E4]"
+                      onSelect={() =>
+                        snoozeTask.mutate({
+                          id: props.task.id,
+                          snoozedUntil: getNextMondayAt9am(),
+                        })
+                      }
+                    >
+                      Next Week
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem
+                  className="text-[#DCE4E4] focus:bg-[#183F3F] focus:text-[#DCE4E4]"
+                  onSelect={handleEditClick}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => deleteTask.mutate(props.task.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </div>

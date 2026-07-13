@@ -22,7 +22,7 @@ export default async function SettingsPage() {
         <AppSidebar user={session.user} />
 
         <SidebarInset className="flex h-screen flex-1 flex-col bg-transparent">
-          <main className="flex-1 px-6 pt-6 pb-6">
+          <div className="flex-1 px-6 pt-6 pb-6">
             <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-3xl p-8">
               {/* Aurora effect */}
               <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
@@ -73,7 +73,7 @@ export default async function SettingsPage() {
                 </div>
               </div>
             </div>
-          </main>
+          </div>
         </SidebarInset>
       </div>
     </HydrateClient>

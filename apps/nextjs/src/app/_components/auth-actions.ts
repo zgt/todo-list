@@ -5,11 +5,25 @@ import { redirect } from "next/navigation";
 
 import { auth } from "~/auth/server";
 
-export async function signInWithDiscord() {
+// Only allow same-origin relative paths (e.g. "/invite/abc123") as a post-login
+// destination, to avoid being used as an open redirect.
+function resolveCallbackURL(returnUrl?: string) {
+  if (
+    returnUrl &&
+    returnUrl.startsWith("/") &&
+    !returnUrl.startsWith("//") &&
+    !returnUrl.startsWith("/\\")
+  ) {
+    return returnUrl;
+  }
+  return "/";
+}
+
+export async function signInWithDiscord(returnUrl?: string) {
   const res = await auth.api.signInSocial({
     body: {
       provider: "discord",
-      callbackURL: "/",
+      callbackURL: resolveCallbackURL(returnUrl),
     },
   });
   if (!res.url) {
@@ -18,11 +32,11 @@ export async function signInWithDiscord() {
   redirect(res.url);
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(returnUrl?: string) {
   const res = await auth.api.signInSocial({
     body: {
       provider: "google",
-      callbackURL: "/",
+      callbackURL: resolveCallbackURL(returnUrl),
     },
   });
   if (!res.url) {
@@ -31,11 +45,11 @@ export async function signInWithGoogle() {
   redirect(res.url);
 }
 
-export async function signInWithApple() {
+export async function signInWithApple(returnUrl?: string) {
   const res = await auth.api.signInSocial({
     body: {
       provider: "apple",
-      callbackURL: "/",
+      callbackURL: resolveCallbackURL(returnUrl),
     },
   });
   if (!res.url) {

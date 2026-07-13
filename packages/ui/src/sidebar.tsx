@@ -230,6 +230,7 @@ function Sidebar({
       />
       <div
         data-slot="sidebar-container"
+        inert={collapsible === "offcanvas" && state === "collapsed"}
         className={cn(
           "fixed inset-y-0 z-10 flex h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear",
           side === "left"

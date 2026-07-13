@@ -1,5 +1,6 @@
 "use client";
 
+import type { ZoomBehavior } from "d3-zoom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { select } from "d3-selection";
 import { zoom as d3Zoom, zoomIdentity } from "d3-zoom";
@@ -27,8 +28,29 @@ export function CategoryTreeVisualization({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const leaveTimer = useRef<ReturnType<typeof setTimeout>>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
+    null,
+  );
+  // Tracks whether the user has manually panned/zoomed since the last
+  // auto-fit, so a resize doesn't yank the view out from under them.
+  const userInteractedRef = useRef(false);
 
   const { nodes, links } = calculateRadialLayout(tree);
+
+  // Fits the view by centering the tree's origin in the container.
+  // Reused on mount, on resize (when the user hasn't manually moved the
+  // view), and by the "Reset View" button.
+  const fitToViewport = useCallback(() => {
+    if (!svgRef.current || !zoomBehaviorRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const svg = select(svgRef.current);
+    svg.call(
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      zoomBehaviorRef.current.transform as Parameters<typeof svg.call>[0],
+      zoomIdentity.translate(rect.width / 2, rect.height / 2),
+    );
+  }, []);
 
   // Setup d3-zoom
   useEffect(() => {
@@ -39,7 +61,13 @@ export function CategoryTreeVisualization({
       .scaleExtent([0.3, 3])
       .on(
         "zoom",
-        (event: { transform: { x: number; y: number; k: number } }) => {
+        (event: {
+          transform: { x: number; y: number; k: number };
+          sourceEvent?: unknown;
+        }) => {
+          // Programmatic transforms (fitToViewport) don't carry a
+          // sourceEvent; real user gestures (drag/wheel/touch) do.
+          if (event.sourceEvent) userInteractedRef.current = true;
           setTransform({
             x: event.transform.x,
             y: event.transform.y,
@@ -48,21 +76,35 @@ export function CategoryTreeVisualization({
         },
       );
 
+    zoomBehaviorRef.current = zoomBehavior;
     svg.call(zoomBehavior as Parameters<typeof svg.call>[0]);
-
-    // Center the view
-    const rect = svgRef.current.getBoundingClientRect();
-    // d3-zoom API requires passing the transform method like this
-    svg.call(
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      zoomBehavior.transform as Parameters<typeof svg.call>[0],
-      zoomIdentity.translate(rect.width / 2, rect.height / 2),
-    );
 
     return () => {
       svg.on(".zoom", null);
+      zoomBehaviorRef.current = null;
     };
   }, []);
+
+  // Auto-fit on mount and on container resize, unless the user has already
+  // interacted with the view since the last fit.
+  useEffect(() => {
+    const container = svgRef.current;
+    if (!container) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const observer = new ResizeObserver(() => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (!userInteractedRef.current) fitToViewport();
+      }, 150);
+    });
+    observer.observe(container);
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      observer.disconnect();
+    };
+  }, [fitToViewport]);
 
   const handleMouseEnter = useCallback((id: string) => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -75,27 +117,11 @@ export function CategoryTreeVisualization({
   }, []);
 
   const handleResetView = useCallback(() => {
-    if (!svgRef.current) return;
-    const svg = select(svgRef.current);
-    const rect = svgRef.current.getBoundingClientRect();
-    const zoomBehavior = d3Zoom<SVGSVGElement, unknown>().on(
-      "zoom",
-      (event: { transform: { x: number; y: number; k: number } }) => {
-        setTransform({
-          x: event.transform.x,
-          y: event.transform.y,
-          k: event.transform.k,
-        });
-      },
-    );
-    svg.call(zoomBehavior as Parameters<typeof svg.call>[0]);
-    // d3-zoom API requires passing the transform method like this
-    svg.call(
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      zoomBehavior.transform as Parameters<typeof svg.call>[0],
-      zoomIdentity.translate(rect.width / 2, rect.height / 2),
-    );
-  }, []);
+    // Treat an explicit reset as "un-touching" the view so future resizes
+    // resume auto-fitting.
+    userInteractedRef.current = false;
+    fitToViewport();
+  }, [fitToViewport]);
 
   const hoveredNode = hoveredId ? nodes.find((n) => n.id === hoveredId) : null;
 

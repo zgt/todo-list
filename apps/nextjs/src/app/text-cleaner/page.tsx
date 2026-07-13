@@ -12,7 +12,7 @@ export default async function TextCleanerPage() {
       <AppSidebar user={session?.user} />
 
       <SidebarInset className="flex min-h-screen flex-1 flex-col bg-transparent md:h-screen">
-        <main className="flex-1 px-2 py-2 md:px-6 md:pt-6 md:pb-6">
+        <div className="flex-1 px-2 py-2 md:px-6 md:pt-6 md:pb-6">
           <div className="glass-panel relative flex min-h-[calc(100vh-1.5rem)] w-full flex-col overflow-hidden rounded-2xl p-4 md:h-full md:min-h-0 md:rounded-3xl md:p-8">
             {/* Aurora effect */}
             <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
@@ -37,7 +37,7 @@ export default async function TextCleanerPage() {
               <TextCleanerForm />
             </div>
           </div>
-        </main>
+        </div>
       </SidebarInset>
     </div>
   );

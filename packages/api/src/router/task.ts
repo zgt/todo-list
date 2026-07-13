@@ -579,6 +579,47 @@ export const taskRouter = {
       return { success: true };
     }),
 
+  // Restore a soft-deleted task (used by the delete undo action)
+  restore: protectedProcedure
+    .input(z.uuid())
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Fetch the soft-deleted task to check access
+      const existing = await ctx.db.query.Task.findFirst({
+        where: and(eq(Task.id, input), isNotNull(Task.deletedAt)),
+        columns: { userId: true, listId: true },
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Task not found",
+        });
+      }
+
+      // If the task belongs to a list, verify editor access
+      if (existing.listId) {
+        await assertListAccess(ctx.db, userId, existing.listId, "editor");
+      } else if (existing.userId !== userId) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Not authorized to restore this task",
+        });
+      }
+
+      const newDate = new Date();
+      await ctx.db
+        .update(Task)
+        .set({
+          deletedAt: null,
+          lastSyncedAt: newDate,
+        })
+        .where(eq(Task.id, input));
+
+      return { success: true };
+    }),
+
   // Bulk soft delete tasks
   deleteMany: protectedProcedure
     .input(z.array(z.uuid()).min(1).max(100))

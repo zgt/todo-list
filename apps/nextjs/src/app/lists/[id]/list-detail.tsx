@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { notFound, useParams, useRouter } from "next/navigation";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import {
   Check,
   Copy,
@@ -49,15 +53,16 @@ export function ListDetail() {
   const queryClient = useQueryClient();
   const { data: session } = useSession();
 
-  const { data: list } = useQuery({
-    ...trpc.taskList.byId.queryOptions({ id: params.id }),
-    enabled: !!session?.user,
-  });
+  const { data: list } = useSuspenseQuery(
+    trpc.taskList.byId.queryOptions({ id: params.id }),
+  );
+
+  if (!list) notFound();
 
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const isOwner = list ? list.ownerId === session?.user.id : false;
+  const isOwner = list.ownerId === session?.user.id;
 
   const createInvite = useMutation(
     trpc.taskList.createInvite.mutationOptions({
@@ -146,14 +151,6 @@ export function ListDetail() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  if (!list) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-16">
-        <p className="text-xl text-white">List not found</p>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -322,6 +319,9 @@ export function ListDetail() {
                 </code>
                 <button
                   onClick={handleCopyInvite}
+                  aria-label={
+                    copied ? "Invite link copied" : "Copy invite link"
+                  }
                   className={cn(
                     "rounded-md p-2 transition-colors",
                     copied

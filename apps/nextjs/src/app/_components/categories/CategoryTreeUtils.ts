@@ -33,6 +33,17 @@ interface HierarchyInput {
 
 const RADIUS_PER_DEPTH = 150;
 
+// Math.cos/Math.sin are not guaranteed to be bit-identical across JS engines
+// (e.g. Node/V8 on the server vs. the browser's engine on the client), so the
+// last few bits of these floats can differ between SSR and hydration. That
+// tiny difference serializes into different SVG attribute strings and trips
+// React's hydration mismatch check. Rounding to a fixed precision here
+// quantizes away the discrepancy so server and client always render identical
+// markup.
+function round(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export function calculateRadialLayout(roots: CategoryTreeNode[]): {
   nodes: TreeLayoutNode[];
   links: TreeLayoutLink[];
@@ -63,8 +74,8 @@ export function calculateRadialLayout(roots: CategoryTreeNode[]): {
     // d.x = angle in radians, d.y = radius
     const angle = d.x ?? 0;
     const radius = d.y ?? 0;
-    const x = radius * Math.cos(angle - Math.PI / 2);
-    const y = radius * Math.sin(angle - Math.PI / 2);
+    const x = round(radius * Math.cos(angle - Math.PI / 2));
+    const y = round(radius * Math.sin(angle - Math.PI / 2));
 
     nodes.push({
       id: d.data.id,
@@ -88,12 +99,12 @@ export function calculateRadialLayout(roots: CategoryTreeNode[]): {
 
     links.push({
       source: {
-        x: sRadius * Math.cos(sAngle - Math.PI / 2),
-        y: sRadius * Math.sin(sAngle - Math.PI / 2),
+        x: round(sRadius * Math.cos(sAngle - Math.PI / 2)),
+        y: round(sRadius * Math.sin(sAngle - Math.PI / 2)),
       },
       target: {
-        x: tRadius * Math.cos(tAngle - Math.PI / 2),
-        y: tRadius * Math.sin(tAngle - Math.PI / 2),
+        x: round(tRadius * Math.cos(tAngle - Math.PI / 2)),
+        y: round(tRadius * Math.sin(tAngle - Math.PI / 2)),
       },
     });
   });

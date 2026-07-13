@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
@@ -25,7 +26,7 @@ export default async function ListDetailPage({
         <AppSidebar user={session.user} />
 
         <SidebarInset className="flex h-screen flex-1 flex-col bg-transparent">
-          <main className="flex-1 px-6 pt-6 pb-6">
+          <div className="flex-1 px-6 pt-6 pb-6">
             <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-3xl p-8">
               {/* Aurora effect */}
               <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
@@ -42,11 +43,13 @@ export default async function ListDetailPage({
                 </div>
 
                 <div className="custom-scrollbar flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
-                  <ListDetail />
+                  <Suspense fallback={null}>
+                    <ListDetail />
+                  </Suspense>
                 </div>
               </div>
             </div>
-          </main>
+          </div>
         </SidebarInset>
       </div>
     </HydrateClient>

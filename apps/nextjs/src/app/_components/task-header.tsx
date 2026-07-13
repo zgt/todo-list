@@ -115,6 +115,7 @@ export function TaskHeader() {
           size="icon"
           onClick={handleRefresh}
           disabled={isRefreshing}
+          aria-label="Refresh tasks"
           className="bg-surface/50 size-9 rounded-full backdrop-blur-sm transition-opacity disabled:opacity-60 sm:size-12"
         >
           <RefreshCw
@@ -126,6 +127,7 @@ export function TaskHeader() {
         {!isDeletedView && (
           <Button
             size="lg"
+            aria-label="New Task"
             className="bg-primary shadow-glow hover:shadow-glowHover gap-1 rounded-full px-3 text-sm sm:gap-2 sm:px-4 sm:text-base lg:px-6"
             onClick={() => setIsCreating(true)}
           >

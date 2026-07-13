@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@acme/ui/button";
@@ -13,7 +14,7 @@ import { useTRPC } from "~/trpc/react";
 
 export function DisplayNameSettings() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
+  const router = useRouter();
   const { data: session } = useSession();
 
   const currentName = session?.user.name ?? "";
@@ -28,8 +29,8 @@ export function DisplayNameSettings() {
 
   const updateName = useMutation(
     trpc.user.updateDisplayName.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries();
+      onSuccess: () => {
+        router.refresh();
         toast.success("Display name updated");
       },
       onError: () => {

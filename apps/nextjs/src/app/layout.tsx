@@ -19,10 +19,12 @@ export const metadata: Metadata = {
       : "http://localhost:3000",
   ),
   title: "Tokilist",
-  description: "Simple monorepo with shared backend for web & mobile apps",
+  description:
+    "Tokilist is a cross-platform task management app for tasks, categories, shared lists, and reminders.",
   openGraph: {
     title: "Tokilist",
-    description: "Simple monorepo with shared backend for web & mobile apps",
+    description:
+      "Tokilist is a cross-platform task management app for tasks, categories, shared lists, and reminders.",
     url: "https://toki.calayo.net",
     siteName: "Tokilist",
   },
@@ -30,8 +32,6 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "black",
-  maximumScale: 1,
-  userScalable: false,
 };
 
 const geistSans = Geist({

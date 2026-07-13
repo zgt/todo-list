@@ -73,33 +73,35 @@ export function AppSidebar({
       >
         <SidebarContent className="bg-transparent p-0">
           <div className="glass-panel flex h-full flex-col rounded-2xl p-3 sm:rounded-3xl sm:p-4 md:p-4">
-            <SidebarMenu className="gap-2">
-              {navigation.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== "/" && pathname.startsWith(item.href));
+            <nav aria-label="Primary">
+              <SidebarMenu className="gap-2">
+                {navigation.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== "/" && pathname.startsWith(item.href));
 
-                return (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      className={cn(
-                        "h-12 rounded-xl px-4 text-base transition-all duration-300",
-                        isActive
-                          ? "bg-primary/20 text-primary shadow-glow border-primary/20 border"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5",
-                      )}
-                    >
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span className="font-medium">{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+                  return (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className={cn(
+                          "h-12 rounded-xl px-4 text-base transition-all duration-300",
+                          isActive
+                            ? "bg-primary/20 text-primary shadow-glow border-primary/20 border"
+                            : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+                        )}
+                      >
+                        <Link href={item.href}>
+                          <item.icon />
+                          <span className="font-medium">{item.name}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </nav>
 
             {/* Lists Section - only on home page */}
             {user && pathname === "/" && <SidebarListsSection />}

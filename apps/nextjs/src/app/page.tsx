@@ -35,7 +35,7 @@ export default async function HomePage() {
             {/* Top Header Area */}
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-hidden px-2 pt-2 pb-2 sm:px-4 sm:pt-4 sm:pb-4 md:px-6 md:pt-6 md:pb-6">
+            <div className="flex-1 overflow-hidden px-2 pt-2 pb-2 sm:px-4 sm:pt-4 sm:pb-4 md:px-6 md:pt-6 md:pb-6">
               <div className="glass-panel relative flex h-full w-full flex-col overflow-hidden rounded-2xl p-3 sm:rounded-3xl sm:p-6 md:p-8">
                 {/* Aurora effect inside panel */}
                 <div className="pointer-events-none absolute top-0 left-0 h-full w-full overflow-hidden rounded-3xl">
@@ -81,7 +81,7 @@ export default async function HomePage() {
                   </CreateTaskProvider>
                 </div>
               </div>
-            </main>
+            </div>
           </SidebarInset>
         </div>
       </ListFilterProvider>
