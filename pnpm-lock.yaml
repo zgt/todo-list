@@ -328,9 +328,6 @@ importers:
       '@acme/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@acme/validators':
-        specifier: workspace:*
-        version: link:../../packages/validators
       '@headless-tree/core':
         specifier: ^1.6.3
         version: 1.6.3
@@ -473,9 +470,6 @@ importers:
       '@acme/db':
         specifier: workspace:*
         version: link:../db
-      '@acme/validators':
-        specifier: workspace:*
-        version: link:../validators
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.17.0(typescript@5.9.3)
@@ -672,31 +666,6 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.3.6
-
-  packages/validators:
-    dependencies:
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@acme/eslint-config':
-        specifier: workspace:*
-        version: link:../../tooling/eslint
-      '@acme/prettier-config':
-        specifier: workspace:*
-        version: link:../../tooling/prettier
-      '@acme/tsconfig':
-        specifier: workspace:*
-        version: link:../../tooling/typescript
-      eslint:
-        specifier: 'catalog:'
-        version: 9.39.2(jiti@2.6.1)
-      prettier:
-        specifier: 'catalog:'
-        version: 3.8.3
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   tooling/eslint:
     dependencies:

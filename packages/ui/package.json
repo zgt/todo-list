@@ -22,12 +22,9 @@
     "./sheet": "./src/sheet.tsx",
     "./skeleton": "./src/skeleton.tsx",
     "./tooltip": "./src/tooltip.tsx",
-    "./multiple-select": "./src/multiple-select.tsx",
     "./dialog": "./src/dialog.tsx",
-    "./badge": "./src/badge.tsx",
     "./textarea": "./src/textarea.tsx",
     "./avatar": "./src/avatar.tsx",
-    "./table": "./src/table.tsx",
     "./switch": "./src/switch.tsx",
     "./alert-dialog": "./src/alert-dialog.tsx"
   },

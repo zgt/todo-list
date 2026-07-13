@@ -81,56 +81,6 @@ export function PriorityBadge({
   );
 }
 
-// --- PrioritySelector (interactive) ---
-
-export function PrioritySelector({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: string | null | undefined;
-  onChange: (priority: TaskPriority | undefined) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Select
-      value={value ?? "medium"}
-      onValueChange={(v) =>
-        onChange(v === "__none__" ? undefined : (v as TaskPriority))
-      }
-      disabled={disabled}
-    >
-      <SelectTrigger
-        className={cn("bg-background/50 w-full border-0 focus-visible:ring-1")}
-      >
-        <SelectValue placeholder="Priority" />
-      </SelectTrigger>
-      <SelectContent>
-        {(
-          Object.entries(priorityConfig) as [
-            TaskPriority,
-            (typeof priorityConfig)[TaskPriority],
-          ][]
-        ).map(([key, config]) => {
-          const Icon = config.icon;
-          return (
-            <SelectItem key={key} value={key}>
-              <span className="flex items-center gap-2">
-                <Icon
-                  className="size-3.5"
-                  style={{ color: config.color }}
-                  strokeWidth={2.5}
-                />
-                <span>{config.label}</span>
-              </span>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
-}
-
 // --- PrioritySelectorPill (compact inline for TaskCard edit mode) ---
 
 export function PrioritySelectorPill({

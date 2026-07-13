@@ -103,6 +103,10 @@ export function initAuth<
       options.baseUrl,
     ],
     onAPIError: {
+      // Redirect auth failures (e.g. OAuth state_mismatch) to a branded page
+      // instead of Better Auth's default developer-facing error screen. Better
+      // Auth appends the failure as `?error=<code>` to this path.
+      errorURL: "/auth-error",
       onError(error, ctx) {
         console.error("BETTER AUTH API ERROR", error, ctx);
       },

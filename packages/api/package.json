@@ -32,7 +32,6 @@
   "dependencies": {
     "@acme/auth": "workspace:*",
     "@acme/db": "workspace:*",
-    "@acme/validators": "workspace:*",
     "@trpc/server": "catalog:",
     "expo-server-sdk": "^5.0.0",
     "resend": "^6.12.2",

@@ -4,10 +4,10 @@ import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { CategoryListSkeleton } from "../_components/categories/CategoryListSkeleton";
 import { CategoryTree } from "../_components/categories/CategoryTree";
 import { AppSidebar } from "../_components/sidebar-nav";
 import { SignInButtons } from "../_components/sign-in-buttons";
-import { CategoryListSkeleton } from "./category-components";
 
 export default async function CategoriesPage() {
   const session = await getSession();

@@ -11,13 +11,7 @@ const config = {
   allowedDevOrigins: ["192.168.1.135"],
 
   /** Enables hot reloading for local packages without a build step */
-  transpilePackages: [
-    "@acme/api",
-    "@acme/auth",
-    "@acme/db",
-    "@acme/ui",
-    "@acme/validators",
-  ],
+  transpilePackages: ["@acme/api", "@acme/auth", "@acme/db", "@acme/ui"],
   images: {
     remotePatterns: [
       {
