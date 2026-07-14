@@ -106,7 +106,7 @@ export function PrioritySelectorPill({
         className={cn(
           "gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
           "transition-all hover:brightness-110",
-          "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+          "focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
           "shadow-none data-[size]:h-auto [&>[aria-hidden]]:hidden",
         )}
         style={{

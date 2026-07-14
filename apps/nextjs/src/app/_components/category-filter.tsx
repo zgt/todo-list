@@ -77,7 +77,7 @@ function CategoryTreeItem({
   return (
     <>
       <div
-        className="flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+        className="hover:bg-surface-2 flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white"
         style={{ paddingLeft: `${8 + depth * 20}px` }}
         onClick={() => onToggle(node.id)}
       >
@@ -160,7 +160,7 @@ export function CategoryFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1 rounded-full border hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+          className="hover:bg-surface-2 h-8 gap-1 rounded-full border hover:border-emerald-400 hover:text-white"
         >
           <Filter className="mr-2 size-4" />
           Category
@@ -176,7 +176,7 @@ export function CategoryFilter() {
           {tree.length === 0 ? (
             <Link
               href="/categories"
-              className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-[#8FA8A8] hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+              className="text-muted-foreground hover:bg-surface-2 flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:border-emerald-400 hover:text-white"
             >
               <Plus className="size-4" />
               Create a category

@@ -306,7 +306,7 @@ function ParentTreeItem({
   return (
     <>
       <div
-        className="flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+        className="hover:bg-surface-2 flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white"
         style={{ paddingLeft: `${8 + depth * 20}px` }}
         onClick={() => onSelect(isSelected ? undefined : node.id)}
       >
@@ -395,12 +395,12 @@ function ParentPicker({
           type="button"
           className={cn(
             "flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm",
-            "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4]",
-            "transition-all hover:border-[#21716C]",
-            "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+            "border-border-strong bg-surface-2/80 text-foreground",
+            "hover:border-border-focus transition-all",
+            "focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
           )}
         >
-          <span className={cn(!selectedName && "text-[#8FA8A8]")}>
+          <span className={cn(!selectedName && "text-muted-foreground")}>
             {selectedName ?? "None (root)"}
           </span>
           <ChevronDown className="size-4 opacity-50" />
@@ -410,7 +410,7 @@ function ParentPicker({
         <div className="flex flex-col gap-0.5">
           {/* Root option */}
           <div
-            className="flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+            className="hover:bg-surface-2 flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white"
             style={{ paddingLeft: "8px" }}
             onClick={() => {
               onChange(null);
@@ -418,8 +418,10 @@ function ParentPicker({
             }}
           >
             <div className="mr-1 size-4" />
-            <X className="mr-2 size-2.5 text-[#8FA8A8]" />
-            <span className="flex-1 truncate text-[#8FA8A8]">None (root)</span>
+            <X className="text-muted-foreground mr-2 size-2.5" />
+            <span className="text-muted-foreground flex-1 truncate">
+              None (root)
+            </span>
             {displayValue === null && (
               <Check className="text-primary ml-2 size-4" />
             )}

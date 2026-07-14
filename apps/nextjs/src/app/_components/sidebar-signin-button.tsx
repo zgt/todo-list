@@ -11,7 +11,7 @@ import {
 export function SidebarSignInButton() {
   return (
     <div className="flex flex-col gap-2">
-      <div className="mb-1 flex items-center justify-center gap-3 text-xs text-[#8FA8A8]">
+      <div className="text-muted-foreground mb-1 flex items-center justify-center gap-3 text-xs">
         <Link href="/privacy" className="transition-colors hover:text-white">
           Privacy Policy
         </Link>

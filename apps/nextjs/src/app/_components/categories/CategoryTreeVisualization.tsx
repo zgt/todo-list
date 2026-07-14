@@ -142,7 +142,7 @@ export function CategoryTreeVisualization({
               key={i}
               d={radialLinkPath(link)}
               fill="none"
-              stroke="#164B49"
+              stroke="var(--border-strong)"
               strokeWidth={1.5}
               opacity={0.6}
             />
@@ -195,7 +195,7 @@ export function CategoryTreeVisualization({
       {/* Reset button */}
       <button
         onClick={handleResetView}
-        className="absolute right-4 bottom-4 rounded-lg border border-emerald-500/30 bg-[#0A1A1A]/80 px-3 py-1.5 text-xs text-emerald-400 backdrop-blur-sm transition-colors hover:border-emerald-400 hover:text-white"
+        className="bg-surface/80 absolute right-4 bottom-4 rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs text-emerald-400 backdrop-blur-sm transition-colors hover:border-emerald-400 hover:text-white"
       >
         Reset View
       </button>

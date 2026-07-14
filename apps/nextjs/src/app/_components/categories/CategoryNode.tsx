@@ -51,7 +51,7 @@ export function CategoryNode({
         <circle
           r={radius + 6}
           fill="none"
-          stroke="#50C878"
+          stroke="var(--primary)"
           strokeWidth={1.5}
           opacity={0.3}
         />
@@ -73,7 +73,7 @@ export function CategoryNode({
       <text
         y={radius + 16}
         textAnchor="middle"
-        fill={isHovered ? "#fff" : "#DCE4E4"}
+        fill={isHovered ? "#fff" : "var(--foreground)"}
         fontSize={fontSize}
         fontWeight={isHovered || node.isRoot ? 600 : 400}
         style={{

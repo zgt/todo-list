@@ -60,18 +60,18 @@ export function AccountDeletion() {
   };
 
   return (
-    <div className="rounded-2xl border border-[#E57373]/20 bg-[#102A2A]/80 p-6 backdrop-blur-sm">
+    <div className="border-destructive/20 bg-surface-2/80 rounded-2xl border p-6 backdrop-blur-sm">
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-[#E57373]">Danger Zone</h2>
+        <h2 className="text-destructive text-xl font-bold">Danger Zone</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Irreversible actions that affect your account.
         </p>
       </div>
 
-      <div className="rounded-xl border border-[#E57373]/20 bg-[#2A1010]/30 p-5">
+      <div className="border-destructive/20 rounded-xl border bg-[#2A1010]/30 p-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-[#E57373]">
+            <h3 className="text-destructive text-lg font-semibold">
               Delete Account
             </h3>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -84,19 +84,19 @@ export function AccountDeletion() {
             <AlertDialogTrigger asChild>
               <Button
                 variant="destructive"
-                className="shrink-0 bg-[#E57373] text-white hover:bg-[#D32F2F]"
+                className="bg-destructive hover:bg-destructive-hover shrink-0 text-white"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Account
               </Button>
             </AlertDialogTrigger>
 
-            <AlertDialogContent className="border-[#E57373]/30 bg-[#1A0A0A]">
+            <AlertDialogContent className="border-destructive/30 bg-[#1A0A0A]">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-[#E57373]">
+                <AlertDialogTitle className="text-destructive">
                   Delete your account?
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-[#DCE4E4]/70">
+                <AlertDialogDescription className="text-foreground/70">
                   This will permanently delete your account and all associated
                   data including tasks, lists, and preferences. This action is
                   irreversible.
@@ -104,9 +104,10 @@ export function AccountDeletion() {
               </AlertDialogHeader>
 
               <div className="space-y-2">
-                <p className="text-sm text-[#DCE4E4]/70">
-                  Type <span className="font-bold text-[#E57373]">DELETE</span>{" "}
-                  to confirm.
+                <p className="text-foreground/70 text-sm">
+                  Type{" "}
+                  <span className="text-destructive font-bold">DELETE</span> to
+                  confirm.
                 </p>
                 <Input
                   value={confirmText}
@@ -117,7 +118,7 @@ export function AccountDeletion() {
                     }
                   }}
                   placeholder='Type "DELETE" to confirm'
-                  className="border-[#E57373]/30 bg-[#0A1A1A] text-[#DCE4E4] placeholder:text-[#8FA8A8] focus:border-[#E57373]"
+                  className="border-destructive/30 bg-surface text-foreground placeholder:text-muted-foreground focus:border-destructive"
                   disabled={deleteAccount.isPending}
                   autoComplete="off"
                 />
@@ -126,7 +127,7 @@ export function AccountDeletion() {
               <AlertDialogFooter>
                 <AlertDialogCancel
                   disabled={deleteAccount.isPending}
-                  className="border-[#164B49] bg-[#102A2A] text-[#DCE4E4] hover:bg-[#183F3F] hover:text-[#DCE4E4]"
+                  className="border-border-strong bg-surface-2 text-foreground hover:bg-surface-hover hover:text-foreground"
                 >
                   Cancel
                 </AlertDialogCancel>
@@ -134,7 +135,7 @@ export function AccountDeletion() {
                   onClick={handleDelete}
                   disabled={confirmText !== "DELETE" || deleteAccount.isPending}
                   variant="destructive"
-                  className="bg-[#E57373] text-white hover:bg-[#D32F2F] disabled:opacity-50"
+                  className="bg-destructive hover:bg-destructive-hover text-white disabled:opacity-50"
                 >
                   {deleteAccount.isPending ? (
                     <>

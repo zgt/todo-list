@@ -51,7 +51,7 @@ export function DisplayNameSettings() {
   const hasChanges = name.trim() !== currentName;
 
   return (
-    <div className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-6 backdrop-blur-sm">
+    <div className="border-border-strong bg-surface-2/80 rounded-2xl border p-6 backdrop-blur-sm">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-white">Display Name</h2>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -68,7 +68,7 @@ export function DisplayNameSettings() {
           }}
           placeholder="Your display name"
           maxLength={50}
-          className="border-[#164B49] bg-[#0A1A1A] text-[#DCE4E4] placeholder:text-[#8FA8A8] focus:border-[#21716C]"
+          className="border-border-strong bg-surface text-foreground placeholder:text-muted-foreground focus:border-border-focus"
           disabled={updateName.isPending}
         />
         <Button

@@ -5,163 +5,151 @@
 ## Design Philosophy
 
 **Glassmorphic Serenity**: A modern design language featuring:
+
 - Frosted glass effects with translucent surfaces
 - Soft glow effects and ambient lighting
 - Depth through layering and shadows
-- Calm, organic color palette based on teal/emerald hues
+- Calm palette: a fresh green accent (`#4ade80`) over deep teal-black surfaces
 - Tactile, interactive elements with smooth animations
 
 ---
 
 ## Color System
 
-### Color Palette
+### Single source of truth
 
-Built using **HEX color values** from the Emerald Green theme with **OKLCH conversions** for advanced use cases.
+**All color and radius values live in `tooling/tailwind/theme.css`.** This document
+describes what those tokens mean and when to use them — if the two ever disagree,
+`theme.css` wins and this doc is wrong. Use **Tailwind utility classes backed by
+tokens** (`bg-primary`, `text-muted-foreground`, `border-border-strong`); never
+hardcode hex in components.
+
+The palette has **two layers**:
+
+1. **shadcn "Liquid Glass" tokens** — translucent-white surfaces/borders
+   (`--card`, `--border`, `--input`, `--secondary`, `--muted`, `--hover`) used by
+   `@acme/ui` primitives. These are deliberately `rgba(255,255,255, …)` so they read
+   as frosted glass over the ambient background.
+2. **Solid teal app scale** — opaque colors for the task UI's own cards, borders,
+   inputs, and panels (`--surface`, `--surface-2`, `--surface-hover`,
+   `--border-strong`, `--border-focus`). Opaque so `/NN` opacity modifiers work.
 
 #### Core Brand Colors
 
-```css
-/* Primary - Emerald accent */
-Primary: #50C878                    /* Emerald green - Main brand color */
-Primary Bright: #66D99A             /* Brightened for hover/glow effects */
-Primary Dim: #388E3C                /* Darkened for pressed states */
+```text
+Primary — green (Tailwind green-400 family)
+  --primary             #4ade80   Main brand green — CTAs, accents, active
+  --primary-hover       #86efac   Hover / bright (green-300)
+  --primary-foreground  #000000   Ink on primary (labels, icons on green)
 
-/* Text Colors */
-Text Primary: #DCE4E4               /* Main text, high contrast */
-Text Muted: #8FA8A8                 /* Secondary text, descriptions */
-Text Accent: #50C878                /* Highlighted text, links */
+Text
+  --foreground          #e0e7e7   Primary text, high contrast
+  --muted-foreground    #8fa8a8   Secondary text, descriptions, placeholders
 
-/* Surface Colors - Layered depth */
-Background Deep: #0A1A1A            /* Deepest background layer */
-Surface Base: #102A2A               /* Cards, elevated surfaces */
-Surface Hover: #183F3F              /* Hover state for interactive elements */
-Surface Active: #21716C             /* Active/selected state */
+Solid teal surface scale (deep → elevated → hover)
+  --background          #020404   App canvas base (behind the gradient)
+  --surface             #0a1a1a   Deep surface / popover base
+  --surface-2           #102a2a   Elevated surface: cards, inputs, panels
+  --surface-hover       #183f3f   Hover / active surface background
 
-/* Borders */
-Border Default: #164B49             /* Standard borders */
-Border Focused: #21716C             /* Focus/active borders */
-Border Variant: #164B49             /* Subtle dividers */
+Solid borders
+  --border-strong       #164b49   Default solid border & divider
+  --border-focus        #21716c   Focused / active / selected border + ring
+
+Destructive
+  --destructive         #ef4444   Errors, delete
+  --destructive-hover   #dc2626   Destructive hover / pressed (red-600)
 ```
 
-#### Semantic Colors
+#### Semantic Tokens (dark-only)
 
-| Color Role | Light Mode | Dark Mode (Primary) | Hex Value | Usage |
-|------------|------------|---------------------|-----------|-------|
-| **Background** | `oklch(0.98 0.01 145)` | `#0A1A1A` | `rgb(10, 26, 26)` | Base canvas, app background |
-| **Surface** | `oklch(0.95 0.03 145)` | `#102A2A` | `rgb(16, 42, 42)` | Cards, panels, elevated surfaces |
-| **Foreground** | `oklch(0.15 0.05 145)` | `#DCE4E4` | `rgb(220, 228, 228)` | Primary text, icons |
-| **Primary** | `oklch(0.55 0.15 145)` | `#50C878` | `rgb(80, 200, 120)` | CTAs, active elements, emerald accent |
-| **Primary Bright** | `oklch(0.65 0.18 145)` | `#66D99A` | `rgb(102, 217, 154)` | Hover states, glow effects |
-| **Muted** | `oklch(0.95 0.03 145)` | `#102A2A` | `rgb(16, 42, 42)` | Task cards, secondary surfaces |
-| **Muted Foreground** | `oklch(0.45 0.05 145)` | `#8FA8A8` | `rgb(143, 168, 168)` | Descriptions, metadata, placeholders |
-| **Border** | `oklch(0.92 0.02 145)` | `#164B49` | `rgb(22, 75, 73)` | Dividers, outlines |
-| **Border Focused** | `oklch(0.35 0.12 145)` | `#21716C` | `rgb(33, 113, 108)` | Active/focused borders |
-| **Destructive** | `oklch(0.6368 0.2078 25.3313)` | `#E57373` | `rgb(229, 115, 115)` | Delete, errors, warnings |
-| **Success** | `oklch(0.55 0.15 145)` | `#50C878` | `rgb(80, 200, 120)` | Success states, confirmations |
-| **Warning** | `oklch(0.75 0.15 90)` | `#FFD700` | `rgb(255, 215, 0)` | Warnings, cautions |
-| **Info** | `oklch(0.65 0.15 240)` | `#66B2FF` | `rgb(102, 178, 255)` | Info messages, hints |
+The app ships a single dark theme. Value shown is exactly what `theme.css` defines.
 
-#### State Colors
+| Role                   | Token → utility                                                | Value     | Usage                                           |
+| ---------------------- | -------------------------------------------------------------- | --------- | ----------------------------------------------- |
+| **Background**         | `--background` → `bg-background`                               | `#020404` | App canvas base (behind gradient)               |
+| **Surface (deep)**     | `--surface` → `bg-surface`                                     | `#0a1a1a` | Deep surface, popover base, deepest panels      |
+| **Surface (elevated)** | `--surface-2` → `bg-surface-2`                                 | `#102a2a` | Task cards, inputs, dropdowns, panels           |
+| **Surface (hover)**    | `--surface-hover` → `bg-surface-hover`                         | `#183f3f` | Hover / active row & button backgrounds         |
+| **Foreground**         | `--foreground` → `text-foreground`                             | `#e0e7e7` | Primary text, icons                             |
+| **Muted foreground**   | `--muted-foreground` → `text-muted-foreground`                 | `#8fa8a8` | Descriptions, metadata, placeholders            |
+| **Primary**            | `--primary` → `bg-primary` / `text-primary`                    | `#4ade80` | CTAs, active elements, brand green              |
+| **Primary hover**      | `--primary-hover` → `hover:bg-primary-hover`                   | `#86efac` | Hover / bright green                            |
+| **Primary foreground** | `--primary-foreground` → `text-primary-foreground`             | `#000000` | Ink on primary green                            |
+| **Border (default)**   | `--border-strong` → `border-border-strong`                     | `#164b49` | Solid dividers, outlines                        |
+| **Border (focus)**     | `--border-focus` → `border-border-focus` / `ring-border-focus` | `#21716c` | Focused / active / selected borders, focus ring |
+| **Destructive**        | `--destructive` → `text-destructive` / `bg-destructive`        | `#ef4444` | Delete, errors                                  |
+| **Destructive hover**  | `--destructive-hover` → `hover:bg-destructive-hover`           | `#dc2626` | Destructive hover / pressed                     |
 
-```css
-/* Interactive States */
-Hover: #183F3F          /* Element hover background */
-Active: #21716C         /* Element active/pressed background */
-Selected: #183F3F       /* Selected item background */
-Disabled: #0A1A1A       /* Disabled element background */
+> **Glass tokens** (`--card`, `--border`, `--input`, `--muted`, `--secondary`,
+> `--hover`) are translucent white (`rgba(255,255,255, 0.03–0.1)`). Use `bg-card`,
+> `border-border`, etc. for `@acme/ui` components; use the **solid** tokens above for
+> the task UI's own chrome. They are not interchangeable — glass floats over the
+> gradient, solid teal builds structure.
 
-/* Feedback States */
-Error: #E57373          /* Error text and borders */
-Error Background: rgba(229, 115, 115, 0.25)
-Success: #50C878        /* Success text and borders */
-Success Background: rgba(80, 200, 120, 0.25)
-Warning: #FFD700        /* Warning text and borders */
-Warning Background: rgba(255, 215, 0, 0.25)
-Info: #66B2FF           /* Info text and borders */
-Info Background: rgba(102, 178, 255, 0.25)
-```
+#### Priority Colors
 
-#### Category Colors (Pills/Tags)
+Semantic accents for task priority (own tokens, kept distinct from `destructive`
+even though `high` shares its value):
 
-```css
-All: #50C878            /* Emerald - Primary accent */
-Work: #66D99A           /* Light emerald - Professional */
-Chores: #BA68C8         /* Magenta - Domestic */
-Groceries: #FFD700      /* Gold - Shopping */
-Personal: #4DD0E1       /* Cyan - Personal */
-```
+| Priority | Token → utility                              | Value     |
+| -------- | -------------------------------------------- | --------- |
+| High     | `--priority-high` → `text-priority-high`     | `#ef4444` |
+| Medium   | `--priority-medium` → `text-priority-medium` | `#f59e0b` |
+| Low      | `--priority-low` → `text-priority-low`       | `#3b82f6` |
 
-#### Syntax Highlighting Colors
+#### Category / list swatch palette
 
-For code blocks and technical UI elements:
-
-```css
-Keyword: #50C878        /* Emerald - Keywords, constants */
-Function: #66D99A       /* Light emerald - Functions, constructors */
-String: #99E6B3         /* Pale emerald - String literals */
-Number: #FFD700         /* Gold - Numeric values */
-Comment: #8FA8A8        /* Muted - Comments (italic) */
-Operator: #DCE4E4       /* Text primary - Operators */
-Type: #66D99A           /* Light emerald - Types, classes */
-Property: #DCE4E4       /* Text primary - Properties */
-Escape: #FFD700         /* Gold - Escape sequences */
-```
+Shared-list and category colors are **user-chosen data**, not theme tokens. The
+picker offers a fixed swatch palette (`create-list-dialog.tsx` `PRESET_COLORS`):
+`#50C878 #4A90D9 #E57373 #FFB74D #BA68C8 #4DB6AC #F06292 #FFD54F`. These stay as
+literal hex on purpose.
 
 ### Gradients
 
+App background gradient (`apps/nextjs/src/app/styles.css`); `#020404` == `--background`,
+`#051010` is a bespoke mid-stop:
+
 ```css
-/* Deep ambient background gradient */
 background: linear-gradient(
   135deg,
-  #0A1A1A 0%,           /* Background deep */
-  #102A2A 50%,          /* Surface base */
-  #0A1A1A 100%          /* Background deep */
+  var(--background) 0%,
+  #051010 50%,
+  var(--background) 100%
 );
+```
 
-/* Subtle surface gradient for cards */
-card-gradient: linear-gradient(
-  145deg,
-  #102A2A 0%,           /* Surface base */
-  #0A1A1A 100%          /* Background deep */
-);
+Green glow — use the `shadow-glow` / `shadow-glow-hover` utilities (`--primary` =
+`rgb(74, 222, 128)`):
 
-/* Emerald glow gradient for active states */
-glow-gradient: radial-gradient(
-  ellipse at center,
-  rgba(80, 200, 120, 0.4) 0%,   /* Primary with opacity */
-  rgba(80, 200, 120, 0.15) 50%,
-  transparent 100%
-);
+```css
+/* --shadow-glow (active) */
+box-shadow:
+  0 0 20px rgba(74, 222, 128, 0.3),
+  0 0 40px rgba(74, 222, 128, 0.1);
 
-/* Bright emerald glow for hover */
-glow-hover: radial-gradient(
-  ellipse at center,
-  rgba(102, 217, 154, 0.5) 0%,  /* Primary bright with opacity */
-  rgba(102, 217, 154, 0.2) 50%,
-  transparent 100%
-);
+/* --shadow-glow-hover (hover) */
+box-shadow:
+  0 0 30px rgba(74, 222, 128, 0.5),
+  0 0 60px rgba(74, 222, 128, 0.2);
 ```
 
 ### Glass Effects
 
-```css
-/* Frosted glass overlay (web only - backdrop-filter) */
-glass-surface: {
-  background: rgba(16, 42, 42, 0.7);     /* Surface base with transparency */
-  backdrop-filter: blur(12px) saturate(150%);
-  border: 1px solid rgba(33, 113, 108, 0.3);  /* Border focused */
-}
+The frosted-glass look comes from the shadcn glass tokens plus `backdrop-blur`:
 
-/* Approximation for React Native (no backdrop-filter) */
-glass-surface-mobile: {
-  background: rgba(16, 42, 42, 0.85);    /* Higher opacity */
-  shadowColor: #000;
-  shadowOffset: { width: 0, height: 4 };
-  shadowOpacity: 0.3;
-  shadowRadius: 12;
+```css
+/* Frosted glass overlay (web only) */
+.glass {
+  background: var(--card); /* rgba(255,255,255,0.03) */
+  backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid var(--border); /* rgba(255,255,255,0.08) */
 }
 ```
+
+In components, prefer utilities: `bg-card border border-border backdrop-blur-sm`.
+On mobile (no `backdrop-filter`), approximate with a solid surface + shadow:
+`bg-surface-2/90 shadow-lg`.
 
 ---
 
@@ -170,26 +158,28 @@ glass-surface-mobile: {
 ### Font Families
 
 **Primary**: Geist Sans
+
 - Clean, geometric sans-serif
 - Excellent readability at all sizes
 - Versatile weight range (400-700)
 
 **Monospace**: Geist Mono
+
 - For code snippets, IDs, technical data
 - Tabular number alignment
 
 ### Type Scale
 
-| Usage | Size (rem/px) | Weight | Line Height | Letter Spacing |
-|-------|---------------|--------|-------------|----------------|
-| **Display** | 3rem / 48px | 700 | 1.1 | -0.02em |
-| **H1** | 2.25rem / 36px | 700 | 1.2 | -0.02em |
-| **H2** | 1.875rem / 30px | 600 | 1.3 | -0.01em |
-| **H3** | 1.5rem / 24px | 600 | 1.4 | 0em |
-| **Body Large** | 1.125rem / 18px | 400 | 1.6 | 0em |
-| **Body** | 1rem / 16px | 400 | 1.5 | 0em |
-| **Body Small** | 0.875rem / 14px | 400 | 1.5 | 0.01em |
-| **Caption** | 0.75rem / 12px | 500 | 1.4 | 0.02em |
+| Usage          | Size (rem/px)   | Weight | Line Height | Letter Spacing |
+| -------------- | --------------- | ------ | ----------- | -------------- |
+| **Display**    | 3rem / 48px     | 700    | 1.1         | -0.02em        |
+| **H1**         | 2.25rem / 36px  | 700    | 1.2         | -0.02em        |
+| **H2**         | 1.875rem / 30px | 600    | 1.3         | -0.01em        |
+| **H3**         | 1.5rem / 24px   | 600    | 1.4         | 0em            |
+| **Body Large** | 1.125rem / 18px | 400    | 1.6         | 0em            |
+| **Body**       | 1rem / 16px     | 400    | 1.5         | 0em            |
+| **Body Small** | 0.875rem / 14px | 400    | 1.5         | 0.01em         |
+| **Caption**    | 0.75rem / 12px  | 500    | 1.4         | 0.02em         |
 
 ### Font Usage Patterns
 
@@ -244,9 +234,7 @@ Uses 0.25rem (4px) base unit:
 ```tsx
 /* Mobile - Always wrap in SafeAreaView */
 <SafeAreaView className="bg-background">
-  <View className="h-full w-full p-4">
-    {/* Content */}
-  </View>
+  <View className="h-full w-full p-4">{/* Content */}</View>
 </SafeAreaView>
 ```
 
@@ -259,41 +247,26 @@ Uses 0.25rem (4px) base unit:
 **Glassmorphic card** with depth and glow effects:
 
 ```tsx
-<View className="
-  bg-muted
-  rounded-lg
-  p-4
-  flex flex-row items-center gap-4
-  shadow-lg
-">
+<View className="bg-muted flex flex-row items-center gap-4 rounded-lg p-4 shadow-lg">
   {/* Checkbox */}
   <Pressable>
-    <View className="
-      h-6 w-6
-      rounded
-      border-2 border-primary
-      bg-primary
-      items-center justify-center
-    ">
+    <View className="border-primary bg-primary h-6 w-6 items-center justify-center rounded border-2">
       <Text className="text-background text-lg">✓</Text>
     </View>
   </Pressable>
 
   {/* Content */}
   <View className="grow">
-    <Text className="text-foreground text-lg font-semibold">
-      Task Title
-    </Text>
-    <Text className="text-muted-foreground mt-1 text-sm">
-      Task description
-    </Text>
+    <Text className="text-foreground text-lg font-semibold">Task Title</Text>
+    <Text className="text-muted-foreground mt-1 text-sm">Task description</Text>
   </View>
 </View>
 ```
 
 **Visual Properties**:
+
 - Background: Muted surface with subtle translucency
-- Border Radius: 12px (rounded-lg)
+- Border Radius: 24px (rounded-lg)
 - Padding: 16px all sides
 - Shadow: Depth layer with soft spread
 
@@ -308,7 +281,7 @@ Uses 0.25rem (4px) base unit:
   border-2 border-primary
   rounded-full
   px-6 py-2
-  shadow-[0_0_20px_rgba(45,212,191,0.4)]
+  shadow-glow
 ">
   <Text className="text-primary text-sm font-medium">All</Text>
 </Pressable>
@@ -329,20 +302,13 @@ Uses 0.25rem (4px) base unit:
 **Glowing circular button** with ambient light effect:
 
 ```tsx
-<Pressable className="
-  absolute bottom-8 right-8
-  w-16 h-16
-  bg-primary
-  rounded-full
-  items-center justify-center
-  shadow-[0_0_30px_rgba(45,212,191,0.5)]
-  shadow-2xl
-">
+<Pressable className="bg-primary shadow-glow-hover absolute right-8 bottom-8 h-16 w-16 items-center justify-center rounded-full shadow-2xl">
   <Text className="text-primary-foreground text-3xl">+</Text>
 </Pressable>
 ```
 
 **Visual Properties**:
+
 - Size: 64x64px
 - Glow: 30px spread with primary color at 50% opacity
 - Icon: 24px+, centered
@@ -374,6 +340,7 @@ Uses 0.25rem (4px) base unit:
 ```
 
 **States**:
+
 - Unchecked: 2px border, transparent fill
 - Checked: Primary background, white checkmark
 - Hover (web): Slight scale increase
@@ -384,15 +351,7 @@ Uses 0.25rem (4px) base unit:
 **Minimal input** with subtle border:
 
 ```tsx
-<TextInput className="
-  border-input
-  bg-background
-  text-foreground
-  rounded-md
-  border
-  px-3 py-2
-  text-lg
-" />
+<TextInput className="border-input bg-background text-foreground rounded-md border px-3 py-2 text-lg" />
 ```
 
 ### Buttons
@@ -400,15 +359,8 @@ Uses 0.25rem (4px) base unit:
 **Primary CTA button**:
 
 ```tsx
-<Pressable className="
-  bg-primary
-  rounded-md
-  p-3
-  flex items-center
-">
-  <Text className="text-primary-foreground font-semibold">
-    Add Task
-  </Text>
+<Pressable className="bg-primary flex items-center rounded-md p-3">
+  <Text className="text-primary-foreground font-semibold">Add Task</Text>
 </Pressable>
 ```
 
@@ -416,9 +368,7 @@ Uses 0.25rem (4px) base unit:
 
 ```tsx
 <Pressable>
-  <Text className="text-destructive font-bold uppercase text-sm">
-    Delete
-  </Text>
+  <Text className="text-destructive text-sm font-bold uppercase">Delete</Text>
 </Pressable>
 ```
 
@@ -428,61 +378,69 @@ Uses 0.25rem (4px) base unit:
 
 ### Glassmorphism
 
-**Core glass effect** (CSS - web only):
+**Core glass effect** (CSS - web only) — backed by the glass tokens:
 
 ```css
 .glass-card {
-  background: rgba(26, 77, 46, 0.15);
+  background: var(--card); /* rgba(255,255,255,0.03) */
   backdrop-filter: blur(10px) saturate(180%);
   -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(45, 212, 191, 0.3);
+  border: 1px solid var(--border); /* rgba(255,255,255,0.08) */
 }
 ```
 
 **Approximation for React Native**:
 
 ```tsx
-/* Use semi-transparent backgrounds + shadow layers */
-<View className="bg-muted/80 shadow-lg" />
+/* Use a solid surface + shadow layers */
+<View className="bg-surface-2/90 shadow-lg" />
 ```
 
 ### Glow Effects
 
-**Primary glow** (active elements):
+Prefer the `shadow-glow` / `shadow-glow-hover` utilities (green, `--primary`
+`rgb(74,222,128)`) rather than hand-rolled box-shadows:
 
 ```css
+/* --shadow-glow (active elements) */
 box-shadow:
-  0 0 20px rgba(45, 212, 191, 0.4),  /* Inner glow */
-  0 0 40px rgba(45, 212, 191, 0.2);  /* Outer glow */
-```
+  0 0 20px rgba(74, 222, 128, 0.3),
+  0 0 40px rgba(74, 222, 128, 0.1);
 
-**Ambient glow** (FAB, active pills):
-
-```css
+/* --shadow-glow-hover (FAB, active pills) */
 box-shadow:
-  0 0 30px rgba(45, 212, 191, 0.5),
-  0 4px 20px rgba(0, 0, 0, 0.3);
+  0 0 30px rgba(74, 222, 128, 0.5),
+  0 0 60px rgba(74, 222, 128, 0.2);
 ```
 
 ### Shadows
 
-| Level | Elevation | Shadow Value | Usage |
-|-------|-----------|--------------|-------|
-| **2xs** | 1 | `0 2px 10px rgba(0,0,0,0.03)` | Hover states |
-| **sm** | 2 | `0 2px 10px rgba(0,0,0,0.05)` | Cards, inputs |
-| **md** | 3 | `0 2px 10px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.05)` | Modals |
-| **lg** | 4 | `0 2px 10px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.05)` | Popovers |
-| **2xl** | 5 | `0 2px 10px rgba(0,0,0,0.13)` | FAB, overlays |
+Elevation scale from `theme.css`; use `shadow-{2xs,xs,sm,md,lg,xl,2xl}`:
+
+| Level        | Shadow Value                    | Usage                     |
+| ------------ | ------------------------------- | ------------------------- |
+| **2xs / xs** | `0px 2px 10px rgba(0,0,0,0.2)`  | Hover states, subtle lift |
+| **sm**       | `0px 4px 16px rgba(0,0,0,0.3)`  | Cards, inputs             |
+| **md**       | `0px 8px 24px rgba(0,0,0,0.4)`  | Dropdowns, popovers       |
+| **lg**       | `0px 16px 32px rgba(0,0,0,0.5)` | Modals                    |
+| **xl**       | `0px 24px 48px rgba(0,0,0,0.6)` | Large overlays            |
+| **2xl**      | `0px 32px 64px rgba(0,0,0,0.7)` | FAB, top-level overlays   |
 
 ### Border Radius
 
+Driven by a single base token `--radius: 1.5rem` (24px). The scale is derived from
+it in `theme.css` (`@theme inline`), so the whole UI has a soft, rounded feel:
+
 ```
-sm  → 8px   → Small pills, icons
-md  → 10px  → Inputs, small buttons
-lg  → 12px  → Cards, main buttons
-xl  → 16px  → Modal corners
-full → 9999px → Pills, FAB
+--radius-sm → calc(1.5rem - 4px) → 20px → rounded-sm  (small controls, chips)
+--radius-md → calc(1.5rem - 2px) → 22px → rounded-md  (inputs, buttons)
+--radius-lg → 1.5rem             → 24px → rounded-lg  (cards, panels)
+--radius-xl → calc(1.5rem + 4px) → 28px → rounded-xl  (modals, large surfaces)
+rounded-full → 9999px → pills, FAB, avatars
 ```
+
+> These map onto Tailwind's `rounded-{sm,md,lg,xl}` utilities. Note the base is
+> large by design — `rounded-md` is 22px, **not** the Tailwind default 6px.
 
 ---
 
@@ -506,6 +464,7 @@ ease-emphasized: cubic-bezier(0.2, 0, 0, 1)  /* Strong acceleration */
 ### Interactive States
 
 **Button Press**:
+
 ```tsx
 // Scale down slightly on press
 <Pressable
@@ -518,11 +477,13 @@ ease-emphasized: cubic-bezier(0.2, 0, 0, 1)  /* Strong acceleration */
 ```
 
 **Checkbox Toggle**:
+
 - Transition: 200ms ease-smooth
 - Scale: 1 → 1.1 → 1 (bounce)
 - Opacity: Background fade-in
 
 **Card Hover** (web):
+
 ```css
 transition: all 200ms ease-smooth;
 
@@ -540,13 +501,13 @@ transition: all 200ms ease-smooth;
 
 ### Color Adaptations
 
-| Element | Light | Dark | Notes |
-|---------|-------|------|-------|
-| Background gradient | Light teal → white | Deep teal → near black | Maintains ambient feel |
-| Glass cards | White translucent | Dark translucent | More opacity in dark |
-| Glow intensity | Subtle (30% opacity) | Stronger (50% opacity) | Glows pop more in dark |
-| Text contrast | High contrast | Medium contrast | Prevents eye strain |
-| Shadows | Soft, subtle | Deeper, more pronounced | Enhances depth |
+| Element             | Light                | Dark                    | Notes                  |
+| ------------------- | -------------------- | ----------------------- | ---------------------- |
+| Background gradient | Light teal → white   | Deep teal → near black  | Maintains ambient feel |
+| Glass cards         | White translucent    | Dark translucent        | More opacity in dark   |
+| Glow intensity      | Subtle (30% opacity) | Stronger (50% opacity)  | Glows pop more in dark |
+| Text contrast       | High contrast        | Medium contrast         | Prevents eye strain    |
+| Shadows             | Soft, subtle         | Deeper, more pronounced | Enhances depth         |
 
 ### Implementation
 
@@ -554,7 +515,7 @@ transition: all 200ms ease-smooth;
 /* Automatic via ThemeProvider (Next.js) */
 <ThemeProvider>
   <App />
-</ThemeProvider>
+</ThemeProvider>;
 
 /* Manual system preference (Expo) */
 const colorScheme = useColorScheme();
@@ -603,11 +564,13 @@ const colorScheme = useColorScheme();
 ### Web (Next.js)
 
 **Advantages**:
+
 - Full CSS support (backdrop-filter, complex shadows)
 - Hover states, focus-visible
 - Smooth CSS transitions
 
 **Components**:
+
 - Use `@acme/ui` shadcn components
 - Radix UI primitives for accessibility
 - Framer Motion for complex animations (optional)
@@ -615,11 +578,13 @@ const colorScheme = useColorScheme();
 ### Mobile (Expo)
 
 **Limitations**:
+
 - No backdrop-filter (use opacity + shadow layers)
 - No hover states (focus on press states)
 - Limited shadow complexity
 
 **Native Features**:
+
 - StatusBar integration
 - SafeAreaView for notch handling
 - Haptic feedback on interactions
@@ -629,12 +594,12 @@ const colorScheme = useColorScheme();
 
 ```tsx
 /* Responsive spacing */
-className="p-4 md:p-6 lg:p-8"  // Web
-className="p-4"                 // Mobile (consistent)
+className = "p-4 md:p-6 lg:p-8"; // Web
+className = "p-4"; // Mobile (consistent)
 
 /* Typography */
-className="text-lg md:text-xl"  // Web scales up
-className="text-lg"             // Mobile (fixed)
+className = "text-lg md:text-xl"; // Web scales up
+className = "text-lg"; // Mobile (fixed)
 ```
 
 ---
@@ -664,10 +629,12 @@ Create separate implementations using same design tokens:
 
 ```tsx
 // Web: apps/nextjs/src/components/task-card.tsx
-import { Card } from "@acme/ui/card";
 
 // Mobile: apps/expo/src/components/task-card.tsx
 import { View } from "react-native";
+
+import { Card } from "@acme/ui/card";
+
 // Implement with Tailwind classes matching design system
 ```
 
@@ -677,96 +644,80 @@ import { View } from "react-native";
 
 ### Quick Copy-Paste Tokens
 
+> These mirror `tooling/tailwind/theme.css`. In app code, use the Tailwind
+> utilities (`bg-primary`, `text-muted-foreground`, `border-border-strong`), not
+> these literals — they're here for reference only.
+
 ```typescript
-// colors.ts - Emerald Green Theme
+// Values as defined in theme.css (:root)
 export const colors = {
-  brand: {
-    primary: '#50C878',           // Emerald green
-    primaryBright: '#66D99A',     // Light emerald (hover)
-    primaryDim: '#388E3C',        // Dark emerald (pressed)
-  },
-  background: {
-    deep: '#0A1A1A',              // Deepest layer
-    surface: '#102A2A',           // Cards, panels
-    hover: '#183F3F',             // Hover state
-    active: '#21716C',            // Active/selected
-  },
-  text: {
-    primary: '#DCE4E4',           // Main text
-    muted: '#8FA8A8',             // Secondary text
-    accent: '#50C878',            // Highlighted text
-    disabled: '#8FA8A8',          // Disabled text
-  },
-  border: {
-    default: '#164B49',           // Standard borders
-    focused: '#21716C',           // Active/focused
-    variant: '#164B49',           // Subtle dividers
-  },
-  state: {
-    error: '#E57373',
-    errorBg: 'rgba(229, 115, 115, 0.25)',
-    success: '#50C878',
-    successBg: 'rgba(80, 200, 120, 0.25)',
-    warning: '#FFD700',
-    warningBg: 'rgba(255, 215, 0, 0.25)',
-    info: '#66B2FF',
-    infoBg: 'rgba(102, 178, 255, 0.25)',
-  },
-  categories: {
-    all: '#50C878',               // Emerald
-    work: '#66D99A',              // Light emerald
-    chores: '#BA68C8',            // Magenta
-    groceries: '#FFD700',         // Gold
-    personal: '#4DD0E1',          // Cyan
-  },
-  syntax: {
-    keyword: '#50C878',           // Emerald
-    function: '#66D99A',          // Light emerald
-    string: '#99E6B3',            // Pale emerald
-    number: '#FFD700',            // Gold
-    comment: '#8FA8A8',           // Muted
-    operator: '#DCE4E4',          // Text primary
-    type: '#66D99A',              // Light emerald
-    property: '#DCE4E4',          // Text primary
-  },
+  primary: "#4ade80", // --primary (green-400)
+  primaryHover: "#86efac", // --primary-hover (green-300)
+  primaryForeground: "#000000", // --primary-foreground (ink on green)
+
+  foreground: "#e0e7e7", // --foreground (primary text)
+  mutedForeground: "#8fa8a8", // --muted-foreground (secondary text)
+
+  // Solid teal surface scale
+  background: "#020404", // --background (canvas base)
+  surface: "#0a1a1a", // --surface (deep surface / popover)
+  surface2: "#102a2a", // --surface-2 (cards, inputs, panels)
+  surfaceHover: "#183f3f", // --surface-hover (hover/active bg)
+
+  // Solid borders
+  borderStrong: "#164b49", // --border-strong (default border)
+  borderFocus: "#21716c", // --border-focus (focus/active border, ring)
+
+  // Destructive
+  destructive: "#ef4444", // --destructive
+  destructiveHover: "#dc2626", // --destructive-hover
+
+  // Priority accents
+  priorityHigh: "#ef4444", // --priority-high
+  priorityMedium: "#f59e0b", // --priority-medium
+  priorityLow: "#3b82f6", // --priority-low
+
+  // shadcn "glass" tokens (translucent white)
   glass: {
-    surface: 'rgba(16, 42, 42, 0.7)',
-    surfaceMobile: 'rgba(16, 42, 42, 0.85)',
-    highlight: 'rgba(102, 217, 154, 0.08)',
-    border: 'rgba(33, 113, 108, 0.3)',
+    card: "rgba(255, 255, 255, 0.03)", // --card
+    border: "rgba(255, 255, 255, 0.08)", // --border
+    input: "rgba(255, 255, 255, 0.05)", // --input
+    hover: "rgba(255, 255, 255, 0.10)", // --hover
   },
 };
 
 // spacing.ts
 export const spacing = {
-  xs: '0.25rem',   // 4px
-  sm: '0.5rem',    // 8px
-  md: '1rem',      // 16px
-  lg: '1.5rem',    // 24px
-  xl: '2rem',      // 32px
-  '2xl': '3rem',   // 48px
+  xs: "0.25rem", // 4px
+  sm: "0.5rem", // 8px
+  md: "1rem", // 16px
+  lg: "1.5rem", // 24px
+  xl: "2rem", // 32px
+  "2xl": "3rem", // 48px
 };
 
-// borderRadius.ts
+// borderRadius.ts — derived from --radius: 1.5rem
 export const radius = {
-  sm: '8px',
-  md: '10px',
-  lg: '12px',
-  xl: '16px',
-  full: '9999px',
+  sm: "20px", // calc(1.5rem - 4px)
+  md: "22px", // calc(1.5rem - 2px)
+  lg: "24px", // 1.5rem
+  xl: "28px", // calc(1.5rem + 4px)
+  full: "9999px",
 };
 
-// shadows.ts - Dark mode optimized
+// shadows.ts — dark-mode elevation scale (theme.css)
 export const shadows = {
-  '2xs': '0 2px 10px rgba(0, 0, 0, 0.1)',
-  xs: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  sm: '0 2px 10px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.2)',
-  md: '0 2px 10px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2)',
-  lg: '0 2px 10px rgba(0, 0, 0, 0.2), 0 4px 6px rgba(0, 0, 0, 0.2)',
-  xl: '0 2px 10px rgba(0, 0, 0, 0.2), 0 8px 10px rgba(0, 0, 0, 0.2)',
-  '2xl': '0 2px 10px rgba(0, 0, 0, 0.5)',
-  glow: '0 0 20px rgba(80, 200, 120, 0.4), 0 0 40px rgba(80, 200, 120, 0.2)',
-  glowHover: '0 0 30px rgba(102, 217, 154, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3)',
+  "2xs": "0px 2px 10px 0px rgba(0, 0, 0, 0.2)",
+  xs: "0px 2px 10px 0px rgba(0, 0, 0, 0.2)",
+  sm: "0px 4px 16px 0px rgba(0, 0, 0, 0.3)",
+  md: "0px 8px 24px 0px rgba(0, 0, 0, 0.4)",
+  lg: "0px 16px 32px 0px rgba(0, 0, 0, 0.5)",
+  xl: "0px 24px 48px 0px rgba(0, 0, 0, 0.6)",
+  "2xl": "0px 32px 64px 0px rgba(0, 0, 0, 0.7)",
+  // Green glow (--primary #4ade80 = rgb(74, 222, 128))
+  glow: "0 0 20px rgba(74, 222, 128, 0.3), 0 0 40px rgba(74, 222, 128, 0.1)",
+  glowHover:
+    "0 0 30px rgba(74, 222, 128, 0.5), 0 0 60px rgba(74, 222, 128, 0.2)",
 };
 ```
 
@@ -777,60 +728,58 @@ export const shadows = {
 ### Creating a New Task Card
 
 ```tsx
-import { View, Text, Pressable } from 'react-native';
+import { Pressable, Text, View } from "react-native";
 
 <View className="bg-muted rounded-lg p-4 shadow-lg">
   <View className="flex-row items-center gap-4">
     {/* Checkbox */}
     <Pressable>
-      <View className="h-6 w-6 rounded border-2 border-primary bg-primary items-center justify-center">
+      <View className="border-primary bg-primary h-6 w-6 items-center justify-center rounded border-2">
         <Text className="text-background text-lg">✓</Text>
       </View>
     </Pressable>
 
     {/* Content */}
     <View className="flex-1">
-      <Text className="text-foreground text-lg font-semibold">
-        Task Title
-      </Text>
-      <Text className="text-muted-foreground text-sm mt-1">
+      <Text className="text-foreground text-lg font-semibold">Task Title</Text>
+      <Text className="text-muted-foreground mt-1 text-sm">
         Description text
       </Text>
 
       {/* Category Pill */}
-      <View className="bg-primary/20 rounded-full px-3 py-1 self-start mt-2">
+      <View className="bg-primary/20 mt-2 self-start rounded-full px-3 py-1">
         <Text className="text-primary text-sm font-medium">Work</Text>
       </View>
     </View>
   </View>
-</View>
+</View>;
 ```
 
 ### Category Filter Pills
 
 ```tsx
-const categories = ['All', 'Work', 'Chores', 'Groceries'];
-const [active, setActive] = useState('All');
+const categories = ["All", "Work", "Chores", "Groceries"];
+const [active, setActive] = useState("All");
 
 <View className="flex-row gap-2">
-  {categories.map(cat => (
+  {categories.map((cat) => (
     <Pressable
       key={cat}
       onPress={() => setActive(cat)}
-      className={`
-        rounded-full px-6 py-2 border-2
-        ${active === cat
-          ? 'bg-primary/20 border-primary shadow-[0_0_20px_rgba(45,212,191,0.4)]'
-          : 'bg-transparent border-border'
-        }
-      `}
+      className={`rounded-full border-2 px-6 py-2 ${
+        active === cat
+          ? "bg-primary/20 border-primary shadow-glow"
+          : "border-border bg-transparent"
+      } `}
     >
-      <Text className={active === cat ? 'text-primary' : 'text-muted-foreground'}>
+      <Text
+        className={active === cat ? "text-primary" : "text-muted-foreground"}
+      >
         {cat}
       </Text>
     </Pressable>
   ))}
-</View>
+</View>;
 ```
 
 ---
@@ -841,6 +790,7 @@ const [active, setActive] = useState('All');
 **Personality**: Minimalist professional with subtle playfulness
 
 **Copy Guidelines**:
+
 - Use sentence case for task titles
 - Keep descriptions concise (1-2 lines)
 - Empty states: Encouraging, not patronizing
@@ -852,165 +802,59 @@ const [active, setActive] = useState('All');
 
 ---
 
-## Complete Color Mapping Reference
+## Component → Token Reference
 
-### Emerald Green Theme to UI Component Mapping
+Use these token-backed Tailwind utilities. Never hardcode hex in components — the
+one migration exception is the `priority.tsx` config map (see
+`.claude/docs/token-migration-map.md`).
 
-This table shows how each Zed theme color maps to specific UI elements in the app:
+**Task Card** (solid teal, not glass):
 
-| Theme Color | Hex Value | UI Element | Usage Example |
-|-------------|-----------|------------|---------------|
-| **Backgrounds** |
-| `background` | `#0A1A1A` | App background, page canvas | Main screen background |
-| `surface.background` | `#102A2A` | Task cards, panels, modals | Card background |
-| `elevated_surface.background` | `#102A2A` | Dropdowns, popovers | Floating elements |
-| `element.background` | `#102A2A` | Input backgrounds | Text input base |
-| `element.hover` | `#183F3F` | Hover state background | Button/card hover |
-| `element.active` | `#21716C` | Active/pressed state | Button pressed |
-| `element.selected` | `#183F3F` | Selected item background | Active tab, selected row |
-| **Text & Icons** |
-| `text` | `#DCE4E4` | Primary text | Task titles, body text |
-| `text.muted` | `#8FA8A8` | Secondary text | Descriptions, timestamps |
-| `text.accent` | `#50C878` | Highlighted text | Links, emphasized text |
-| `text.placeholder` | `#8FA8A8` | Input placeholders | "What needs to be done?" |
-| `icon` | `#DCE4E4` | Default icons | Navigation icons |
-| `icon.accent` | `#50C878` | Accent icons | Active filter pill icon |
-| **Borders** |
-| `border` | `#164B49` | Standard borders | Card outlines, dividers |
-| `border.focused` | `#21716C` | Focus/active borders | Input focus ring |
-| `border.selected` | `#21716C` | Selected element border | Active pill border |
-| **Interactive Elements** |
-| `drop_target.background` | `#21716C` | Drag-and-drop target | Reorder tasks |
-| `ghost_element.hover` | `#183F3F00` | Transparent hover | Icon buttons |
-| `ghost_element.selected` | `#21716C80` | Ghost selected | Subtle selection |
-| **Status & Feedback** |
-| `error` | `#E57373` | Error text/icons | Validation errors |
-| `error.background` | `rgba(229, 115, 115, 0.25)` | Error backgrounds | Error alerts |
-| `success` | `#50C878` | Success text/icons | Task completed |
-| `success.background` | `rgba(80, 200, 120, 0.25)` | Success backgrounds | Success toasts |
-| `warning` | `#FFD700` | Warning text/icons | Unsaved changes |
-| `warning.background` | `rgba(255, 215, 0, 0.25)` | Warning backgrounds | Warning banners |
-| `info` | `#66B2FF` | Info text/icons | Hints, tooltips |
-| `info.background` | `rgba(102, 178, 255, 0.25)` | Info backgrounds | Info alerts |
-| **Scrollbars** |
-| `scrollbar_thumb.background` | `#183F3F` | Scrollbar thumb | Scroll indicator |
-| `scrollbar.thumb.hover_background` | `#21716C` | Scrollbar hover | Hover scroll indicator |
-| `scrollbar.track.background` | `#102A2A` | Scrollbar track | Scroll background |
-
-### Terminal ANSI Color Usage
-
-For code snippets, technical UI, and syntax highlighting:
-
-| ANSI Color | Hex Value | UI Usage |
-|------------|-----------|----------|
-| `green` | `#50C878` | Success messages, keywords |
-| `bright_green` | `#66D99A` | Function names, highlights |
-| `yellow` | `#FFD700` | Warnings, numbers |
-| `red` | `#E57373` | Errors, destructive actions |
-| `blue` | `#66B2FF` | Info, links, types |
-| `cyan` | `#4DD0E1` | Accent, metadata |
-| `magenta` | `#BA68C8` | Special elements, tags |
-| `white` | `#DCE4E4` | Primary text |
-| `bright_black` | `#164B49` | Muted borders |
-
-### CSS Variable Mapping
-
-For implementing in `tooling/tailwind/theme.css`:
-
-```css
-:root {
-  /* From Zed theme - Dark mode primary */
-  --background: #0A1A1A;                    /* background */
-  --surface: #102A2A;                       /* surface.background */
-  --foreground: #DCE4E4;                    /* text */
-
-  --primary: #50C878;                       /* text.accent / terminal.ansi.green */
-  --primary-bright: #66D99A;                /* terminal.ansi.bright_green */
-  --primary-dim: #388E3C;                   /* terminal.ansi.dim_green */
-
-  --muted: #102A2A;                         /* element.background */
-  --muted-foreground: #8FA8A8;              /* text.muted */
-
-  --border: #164B49;                        /* border */
-  --border-focused: #21716C;                /* border.focused */
-
-  --hover: #183F3F;                         /* element.hover */
-  --active: #21716C;                        /* element.active */
-  --selected: #183F3F;                      /* element.selected */
-
-  --destructive: #E57373;                   /* terminal.ansi.red */
-  --warning: #FFD700;                       /* terminal.ansi.yellow */
-  --success: #50C878;                       /* created */
-  --info: #66B2FF;                          /* terminal.ansi.blue */
-
-  /* Scrollbar */
-  --scrollbar-thumb: #183F3F;               /* scrollbar_thumb.background */
-  --scrollbar-track: #102A2A;               /* scrollbar.track.background */
-
-  /* Shadows (dark mode optimized) */
-  --shadow-color: rgba(0, 0, 0, 0.5);
-
-  /* Glow effects */
-  --glow-primary: rgba(80, 200, 120, 0.4);
-  --glow-hover: rgba(102, 217, 154, 0.5);
-}
+```text
+bg-surface-2               #102a2a
+text-foreground            title        #e0e7e7
+text-muted-foreground      description  #8fa8a8
+border-border-strong       #164b49
+hover:bg-surface-hover     #183f3f
 ```
 
-### Component-Specific Color Applications
+**Category / filter pills**:
 
-**Task Card**:
-```tsx
-background: #102A2A          // surface.background
-text: #DCE4E4                // text
-description: #8FA8A8         // text.muted
-border: #164B49              // border
-hover: #183F3F               // element.hover
-```
-
-**Category Pills**:
-```tsx
-// Active state
-background: rgba(80, 200, 120, 0.2)   // primary with opacity
-border: #21716C                       // border.focused
-text: #50C878                         // text.accent
-glow: 0 0 20px rgba(80, 200, 120, 0.4)
-
-// Inactive state
-background: transparent
-border: #164B49                       // border
-text: #8FA8A8                         // text.muted
+```text
+Active:    bg-primary/20  border-border-focus  text-primary  shadow-glow
+Inactive:  bg-transparent  border-border-strong  text-muted-foreground
 ```
 
 **Floating Action Button (FAB)**:
-```tsx
-background: #50C878          // text.accent (primary)
-icon: #0A1A1A                // background (contrast)
-shadow: rgba(0, 0, 0, 0.5)   // deep shadow
-glow: rgba(80, 200, 120, 0.5) // emerald glow
+
+```text
+bg-primary               #4ade80
+text-primary-foreground  ink on green (#000)
+shadow-glow-hover        ambient green glow
 ```
 
-**Input Fields**:
-```tsx
-background: #102A2A          // element.background
-border: #164B49              // border
-border-focus: #21716C        // border.focused
-text: #DCE4E4                // text
-placeholder: #8FA8A8         // text.placeholder
+**Input fields**:
+
+```text
+bg-surface-2                 #102a2a
+border-border-strong         #164b49
+focus:border-border-focus    #21716c
+text-foreground              #e0e7e7
+placeholder:text-muted-foreground
 ```
 
 **Buttons**:
-```tsx
-// Primary
-background: #50C878          // text.accent
-text: #0A1A1A                // background (high contrast)
-hover: #66D99A               // bright_green
-active: #388E3C              // dim_green
 
-// Ghost
-background: transparent
-text: #DCE4E4                // text
-hover: #183F3F               // element.hover
+```text
+Primary:      bg-primary text-primary-foreground hover:bg-primary-hover    (#4ade80 → #86efac)
+Destructive:  bg-destructive text-white hover:bg-destructive-hover         (#ef4444 → #dc2626)
+Ghost:        bg-transparent text-foreground hover:bg-surface-hover
 ```
+
+> shadcn `@acme/ui` primitives (Dialog, Popover, Card, Button variants) use the
+> **glass** tokens (`bg-card`, `border-border`, `bg-popover`) instead — they layer
+> over the ambient gradient. Reach for solid teal tokens only in the app's own
+> hand-built chrome.
 
 ---
 
@@ -1069,4 +913,4 @@ tooling/
 
 ---
 
-*Last Updated: 2025-12-08*
+_Last Updated: 2026-07-13 — color & radius sections realigned to `tooling/tailwind/theme.css` (Liquid Glass theme)._

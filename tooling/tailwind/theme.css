@@ -27,6 +27,23 @@
   --chart-4: #4dd0e1;
   --chart-5: #ba68c8;
 
+  /* Solid app surfaces & borders — opaque teal scale for the task UI.
+     Kept separate from the translucent-white --card/--border (shadcn "glass").
+     All opaque so `bg-surface-2/80`, `ring-border-focus/20`, etc. work. */
+  --surface-2: #102a2a; /* Elevated solid surface: task cards, inputs, popovers, panels */
+  --surface-hover: #183f3f; /* Hover / active surface background */
+  --border-strong: #164b49; /* Default solid border & divider */
+  --border-focus: #21716c; /* Focused / active / selected border + focus ring */
+
+  /* Interaction companions in the primary / destructive families */
+  --primary-hover: #86efac; /* Primary hover / bright (green-300) */
+  --destructive-hover: #dc2626; /* Destructive hover / pressed (red-600) */
+
+  /* Priority accents */
+  --priority-high: #ef4444; /* High priority */
+  --priority-medium: #f59e0b; /* Medium priority */
+  --priority-low: #3b82f6; /* Low priority */
+
   /* Custom Glass Variables */
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -97,6 +114,16 @@
   --color-surface: var(--surface);
   --color-hover: var(--hover);
 
+  --color-surface-2: var(--surface-2);
+  --color-surface-hover: var(--surface-hover);
+  --color-border-strong: var(--border-strong);
+  --color-border-focus: var(--border-focus);
+  --color-primary-hover: var(--primary-hover);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
@@ -106,9 +133,9 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --shadow-glow:
-    0 0 20px rgba(80, 200, 120, 0.4), 0 0 40px rgba(80, 200, 120, 0.2);
+    0 0 20px rgba(74, 222, 128, 0.4), 0 0 40px rgba(74, 222, 128, 0.2);
   --shadow-glow-hover:
-    0 0 30px rgba(102, 217, 154, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3);
+    0 0 30px rgba(134, 239, 172, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3);
 
   --tracking-tighter: -0.05em;
   --tracking-tight: -0.025em;

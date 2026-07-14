@@ -28,7 +28,7 @@ export function ListFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1 rounded-full border hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+          className="hover:bg-surface-2 h-8 gap-1 rounded-full border hover:border-emerald-400 hover:text-white"
         >
           <List className="mr-2 size-4" />
           List
@@ -46,11 +46,11 @@ export function ListFilter() {
             onClick={() => setSelectedListId(null)}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-              "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
-              selectedListId === null && "bg-[#102A2A] text-white",
+              "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+              selectedListId === null && "bg-surface-2 text-white",
             )}
           >
-            <List className="size-3.5 text-[#8FA8A8]" />
+            <List className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">All Tasks</span>
             {selectedListId === null && (
               <div className="size-2 rounded-full bg-emerald-400" />
@@ -62,11 +62,11 @@ export function ListFilter() {
             onClick={() => setSelectedListId("personal")}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-              "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
-              selectedListId === "personal" && "bg-[#102A2A] text-white",
+              "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+              selectedListId === "personal" && "bg-surface-2 text-white",
             )}
           >
-            <User className="size-3.5 text-[#8FA8A8]" />
+            <User className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">Personal</span>
             {selectedListId === "personal" && (
               <div className="size-2 rounded-full bg-emerald-400" />
@@ -78,11 +78,11 @@ export function ListFilter() {
             onClick={() => setSelectedListId("deleted")}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-              "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
-              selectedListId === "deleted" && "bg-[#102A2A] text-white",
+              "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+              selectedListId === "deleted" && "bg-surface-2 text-white",
             )}
           >
-            <Archive className="size-3.5 text-[#8FA8A8]" />
+            <Archive className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">Deleted</span>
             {selectedListId === "deleted" && (
               <div className="size-2 rounded-full bg-emerald-400" />
@@ -98,13 +98,13 @@ export function ListFilter() {
                 onClick={() => setSelectedListId(list.id)}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
-                  selectedListId === list.id && "bg-[#102A2A] text-white",
+                  "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+                  selectedListId === list.id && "bg-surface-2 text-white",
                 )}
               >
                 <div
                   className="size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
-                  style={{ backgroundColor: list.color ?? "#50C878" }}
+                  style={{ backgroundColor: list.color ?? "var(--primary)" }}
                 />
                 <span className="flex-1 truncate text-left">{list.name}</span>
                 {selectedListId === list.id && (

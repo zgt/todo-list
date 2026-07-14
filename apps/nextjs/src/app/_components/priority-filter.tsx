@@ -15,9 +15,14 @@ const priorities: {
   icon: typeof ArrowUp;
   color: string;
 }[] = [
-  { key: "high", label: "High", icon: ArrowUp, color: "#EF4444" },
-  { key: "medium", label: "Medium", icon: Minus, color: "#F59E0B" },
-  { key: "low", label: "Low", icon: ArrowDown, color: "#3B82F6" },
+  { key: "high", label: "High", icon: ArrowUp, color: "var(--priority-high)" },
+  {
+    key: "medium",
+    label: "Medium",
+    icon: Minus,
+    color: "var(--priority-medium)",
+  },
+  { key: "low", label: "Low", icon: ArrowDown, color: "var(--priority-low)" },
 ];
 
 export function PriorityFilter() {
@@ -37,7 +42,7 @@ export function PriorityFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1 rounded-full border hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white"
+          className="hover:bg-surface-2 h-8 gap-1 rounded-full border hover:border-emerald-400 hover:text-white"
         >
           <SlidersHorizontal className="mr-2 size-4" />
           Priority
@@ -58,8 +63,8 @@ export function PriorityFilter() {
                 onClick={() => togglePriority(key)}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  "hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
-                  isSelected && "bg-[#102A2A] text-white",
+                  "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+                  isSelected && "bg-surface-2 text-white",
                 )}
               >
                 <Icon

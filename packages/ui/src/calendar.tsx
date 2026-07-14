@@ -20,31 +20,32 @@ function Calendar({
         months: "flex flex-col space-y-4",
         month: "space-y-4",
         month_caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium text-[#DCE4E4]",
+        caption_label: "text-sm font-medium text-foreground",
         nav: "space-x-1 flex items-center",
         button_previous: cn(
           buttonVariants({ variant: "outline" }),
-          "hover:text-primary absolute top-4 left-4 z-10 h-7 w-7 border-[#164B49] bg-transparent p-0 opacity-50 hover:opacity-100",
+          "hover:text-primary border-border-strong absolute top-4 left-4 z-10 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         ),
         button_next: cn(
           buttonVariants({ variant: "outline" }),
-          "hover:text-primary absolute top-4 right-4 z-10 h-7 w-7 border-[#164B49] bg-transparent p-0 opacity-50 hover:opacity-100",
+          "hover:text-primary border-border-strong absolute top-4 right-4 z-10 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
         ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex",
-        weekday: "text-[#8FA8A8] rounded-md w-9 font-normal text-[0.8rem]",
+        weekday:
+          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
         day: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-primary/20 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
         day_button: cn(
           buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal text-[#DCE4E4] hover:bg-[#164B49]/50 hover:text-[#DCE4E4] aria-selected:opacity-100",
+          "text-foreground hover:bg-border-strong/50 hover:text-foreground h-9 w-9 p-0 font-normal aria-selected:opacity-100",
         ),
         range_end: "day-range-end",
         selected:
-          "bg-primary text-[#0A1A1A] hover:bg-primary hover:text-[#0A1A1A] focus:bg-primary focus:text-[#0A1A1A]",
+          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         today: "bg-primary/20 text-primary",
         outside:
-          "day-outside text-[#4A6A6A] aria-selected:bg-accent/50 aria-selected:text-[#8FA8A8]",
+          "day-outside text-[#4A6A6A] aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
         disabled: "text-[#4A6A6A] opacity-50",
         range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",

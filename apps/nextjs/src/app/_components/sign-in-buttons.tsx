@@ -78,7 +78,7 @@ export function SignInButtons({ returnUrl }: { returnUrl?: string } = {}) {
           </button>
         </form>
       </div>
-      <div className="flex items-center gap-3 text-xs text-[#8FA8A8]">
+      <div className="text-muted-foreground flex items-center gap-3 text-xs">
         <Link href="/privacy" className="transition-colors hover:text-white">
           Privacy Policy
         </Link>

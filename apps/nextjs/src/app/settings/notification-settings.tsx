@@ -85,7 +85,7 @@ export function NotificationSettings() {
   }
 
   return (
-    <div className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-6 backdrop-blur-sm">
+    <div className="border-border-strong bg-surface-2/80 rounded-2xl border p-6 backdrop-blur-sm">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-white">Notification Settings</h2>
         <p className="text-muted-foreground mt-1 text-sm">
@@ -97,8 +97,8 @@ export function NotificationSettings() {
         {/* Email Reminders */}
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
-            <p className="font-medium text-[#DCE4E4]">Email reminders</p>
-            <p className="text-sm text-[#8FA8A8]">
+            <p className="text-foreground font-medium">Email reminders</p>
+            <p className="text-muted-foreground text-sm">
               Receive reminder notifications via email
             </p>
           </div>
@@ -108,8 +108,8 @@ export function NotificationSettings() {
         {/* Push Reminders */}
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
-            <p className="font-medium text-[#DCE4E4]">Push reminders</p>
-            <p className="text-sm text-[#8FA8A8]">
+            <p className="text-foreground font-medium">Push reminders</p>
+            <p className="text-muted-foreground text-sm">
               Receive push notifications on your devices
             </p>
           </div>
@@ -119,8 +119,8 @@ export function NotificationSettings() {
         {/* Reminder Offset */}
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
-            <p className="font-medium text-[#DCE4E4]">Reminder timing</p>
-            <p className="text-sm text-[#8FA8A8]">
+            <p className="text-foreground font-medium">Reminder timing</p>
+            <p className="text-muted-foreground text-sm">
               When to send the reminder relative to the set time
             </p>
           </div>
@@ -128,7 +128,7 @@ export function NotificationSettings() {
             value={String(reminderOffsetMinutes)}
             onValueChange={(v) => setLocalOffset(Number(v))}
           >
-            <SelectTrigger className="w-48 border-[#164B49] bg-[#0A1A1A]">
+            <SelectTrigger className="border-border-strong bg-surface w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

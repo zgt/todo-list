@@ -40,31 +40,31 @@ export default async function SettingsPage() {
                   <div className="mx-auto w-full max-w-4xl space-y-6">
                     <DisplayNameSettings />
                     <NotificationSettings />
-                    <div className="rounded-2xl border border-[#164B49] bg-[#102A2A]/80 p-6 backdrop-blur-sm">
+                    <div className="border-border-strong bg-surface-2/80 rounded-2xl border p-6 backdrop-blur-sm">
                       <h2 className="mb-4 text-xl font-semibold text-white">
                         Legal & Support
                       </h2>
                       <div className="space-y-2">
                         <Link
                           href="/support"
-                          className="flex items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 px-4 py-3 text-[#DCE4E4] transition-all hover:border-[#21716C] hover:bg-[#183F3F]/60"
+                          className="border-border-strong bg-surface/60 text-foreground hover:border-border-focus hover:bg-surface-hover/60 flex items-center justify-between rounded-xl border px-4 py-3 transition-all"
                         >
                           <span>Support</span>
-                          <span className="text-[#8FA8A8]">&rarr;</span>
+                          <span className="text-muted-foreground">&rarr;</span>
                         </Link>
                         <Link
                           href="/privacy"
-                          className="flex items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 px-4 py-3 text-[#DCE4E4] transition-all hover:border-[#21716C] hover:bg-[#183F3F]/60"
+                          className="border-border-strong bg-surface/60 text-foreground hover:border-border-focus hover:bg-surface-hover/60 flex items-center justify-between rounded-xl border px-4 py-3 transition-all"
                         >
                           <span>Privacy Policy</span>
-                          <span className="text-[#8FA8A8]">&rarr;</span>
+                          <span className="text-muted-foreground">&rarr;</span>
                         </Link>
                         <Link
                           href="/terms"
-                          className="flex items-center justify-between rounded-xl border border-[#164B49] bg-[#0A1A1A]/60 px-4 py-3 text-[#DCE4E4] transition-all hover:border-[#21716C] hover:bg-[#183F3F]/60"
+                          className="border-border-strong bg-surface/60 text-foreground hover:border-border-focus hover:bg-surface-hover/60 flex items-center justify-between rounded-xl border px-4 py-3 transition-all"
                         >
                           <span>Terms of Service</span>
-                          <span className="text-[#8FA8A8]">&rarr;</span>
+                          <span className="text-muted-foreground">&rarr;</span>
                         </Link>
                       </div>
                     </div>

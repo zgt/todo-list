@@ -16,10 +16,10 @@ function toLocalDateKey(d: Date): string {
 }
 
 const PRIORITY_DOT_COLORS: Record<string, string> = {
-  high: "#EF4444",
-  medium: "#F59E0B",
-  low: "#3B82F6",
-  none: "#8FA8A8",
+  high: "var(--priority-high)",
+  medium: "var(--priority-medium)",
+  low: "var(--priority-low)",
+  none: "var(--muted-foreground)",
 };
 
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"] as const;
@@ -159,26 +159,26 @@ export function CalendarView({ tasks }: CalendarViewProps) {
       <div className="mb-3 flex items-center justify-end gap-3 px-1">
         <button
           onClick={goToToday}
-          className="rounded-full border border-[#164B49] px-3 py-0.5 text-xs font-medium text-[#8FA8A8] transition-colors hover:border-[#21716C] hover:text-[#DCE4E4]"
+          className="border-border-strong text-muted-foreground hover:border-border-focus hover:text-foreground rounded-full border px-3 py-0.5 text-xs font-medium transition-colors"
         >
           Today
         </button>
 
-        <h2 className="text-xl font-semibold text-[#DCE4E4]">
+        <h2 className="text-foreground text-xl font-semibold">
           {MONTH_NAMES[currentMonth]} {currentYear}
         </h2>
 
         <div className="flex items-center gap-1">
           <button
             onClick={goToPrevMonth}
-            className="rounded-md p-1.5 text-[#8FA8A8] transition-colors hover:bg-[#164B49]/40 hover:text-[#DCE4E4]"
+            className="text-muted-foreground hover:bg-border-strong/40 hover:text-foreground rounded-md p-1.5 transition-colors"
             aria-label="Previous month"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={goToNextMonth}
-            className="rounded-md p-1.5 text-[#8FA8A8] transition-colors hover:bg-[#164B49]/40 hover:text-[#DCE4E4]"
+            className="text-muted-foreground hover:bg-border-strong/40 hover:text-foreground rounded-md p-1.5 transition-colors"
             aria-label="Next month"
           >
             <ChevronRight className="h-4 w-4" />
@@ -191,7 +191,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
         {WEEKDAYS.map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-medium tracking-wider text-[#8FA8A8] uppercase"
+            className="text-muted-foreground text-center text-xs font-medium tracking-wider uppercase"
           >
             {day}
           </div>
@@ -200,7 +200,7 @@ export function CalendarView({ tasks }: CalendarViewProps) {
 
       {/* Month grid - shrinks when task panel opens */}
       <div
-        className="grid grid-cols-7 rounded-xl border border-[#164B49] bg-[#102A2A]/60 backdrop-blur-sm transition-[flex] duration-300 ease-in-out"
+        className="border-border-strong bg-surface-2/60 grid grid-cols-7 rounded-xl border backdrop-blur-sm transition-[flex] duration-300 ease-in-out"
         style={{
           flex: isPanelOpen ? "0 0 auto" : "1 1 0%",
           gridTemplateRows: `repeat(${weeks.length}, 1fr)`,
@@ -219,8 +219,8 @@ export function CalendarView({ tasks }: CalendarViewProps) {
 
             // Border classes: right border except last col, bottom border except last row
             const borderClasses = [
-              di < 6 ? "border-r border-[#164B49]" : "",
-              wi < weeks.length - 1 ? "border-b border-[#164B49]" : "",
+              di < 6 ? "border-r border-border-strong" : "",
+              wi < weeks.length - 1 ? "border-b border-border-strong" : "",
             ].join(" ");
 
             return (
@@ -228,19 +228,23 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                 key={dateKey}
                 onClick={() => handleDayClick(dateKey)}
                 className={`cursor-pointer overflow-hidden p-1.5 transition-colors ${borderClasses} ${
-                  isSelected ? "bg-[#164B49]/30" : "hover:bg-[#164B49]/20"
+                  isSelected
+                    ? "bg-border-strong/30"
+                    : "hover:bg-border-strong/20"
                 } ${!isCurrentMonth ? "opacity-40" : ""}`}
               >
                 {/* Date number - centered */}
                 <div className="flex justify-center">
                   {isToday ? (
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#50C878] text-xs font-semibold text-[#0A1A1A]">
+                    <span className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold">
                       {date.getDate()}
                     </span>
                   ) : (
                     <span
                       className={`flex h-6 w-6 items-center justify-center text-sm ${
-                        isCurrentMonth ? "text-[#8FA8A8]" : "text-[#4A6A6A]"
+                        isCurrentMonth
+                          ? "text-muted-foreground"
+                          : "text-[#4A6A6A]"
                       }`}
                     >
                       {date.getDate()}
@@ -262,17 +266,17 @@ export function CalendarView({ tasks }: CalendarViewProps) {
                         style={{
                           backgroundColor:
                             PRIORITY_DOT_COLORS[task.priority ?? "none"] ??
-                            "#8FA8A8",
+                            "var(--muted-foreground)",
                         }}
                       />
-                      <span className="truncate text-xs text-[#DCE4E4]">
+                      <span className="text-foreground truncate text-xs">
                         {task.title}
                       </span>
                     </div>
                   ))}
 
                   {overflowCount > 0 && (
-                    <span className="px-1 text-xs text-[#8FA8A8]">
+                    <span className="text-muted-foreground px-1 text-xs">
                       +{overflowCount} more
                     </span>
                   )}
@@ -293,8 +297,8 @@ export function CalendarView({ tasks }: CalendarViewProps) {
       >
         <div className="overflow-hidden">
           {isPanelOpen && (
-            <div className="mt-3 border-t border-[#164B49]/50 pt-3">
-              <h3 className="mb-2 text-sm font-medium text-[#8FA8A8]">
+            <div className="border-border-strong/50 mt-3 border-t pt-3">
+              <h3 className="text-muted-foreground mb-2 text-sm font-medium">
                 {(() => {
                   const key = selectedKey ?? todayKey;
                   const [y, m, d] = key.split("-").map(Number);

@@ -270,7 +270,7 @@ function SidebarTrigger({
       variant="outline"
       size="sm"
       className={cn(
-        "size-8 hover:border-emerald-400 hover:bg-[#102A2A] hover:text-white",
+        "hover:bg-surface-2 size-8 hover:border-emerald-400 hover:text-white",
         className,
       )}
       onClick={(event) => {

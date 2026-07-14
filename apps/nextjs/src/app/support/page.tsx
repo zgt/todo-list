@@ -20,14 +20,14 @@ export default function SupportPage() {
         <div className="relative z-10">
           <Link
             href="/"
-            className="mb-8 inline-block text-sm text-[#8FA8A8] transition-colors hover:text-[#50C878]"
+            className="text-muted-foreground hover:text-primary mb-8 inline-block text-sm transition-colors"
           >
             &larr; Back to Tokilist
           </Link>
 
           <article className="prose prose-invert max-w-none">
             <h1 className="mb-2 text-4xl font-bold text-white">Support</h1>
-            <p className="mb-10 text-[#DCE4E4]">
+            <p className="text-foreground mb-10">
               Need help with Tokilist? We are here to help.
             </p>
 
@@ -36,7 +36,7 @@ export default function SupportPage() {
               <p>
                 <a
                   href="mailto:support@calayo.net"
-                  className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                  className="text-primary hover:text-primary-hover underline transition-colors"
                 >
                   support@calayo.net
                 </a>
@@ -90,7 +90,7 @@ export default function SupportPage() {
                 <li>
                   <Link
                     href="/privacy"
-                    className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                    className="text-primary hover:text-primary-hover underline transition-colors"
                   >
                     Privacy Policy
                   </Link>
@@ -98,7 +98,7 @@ export default function SupportPage() {
                 <li>
                   <Link
                     href="/terms"
-                    className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                    className="text-primary hover:text-primary-hover underline transition-colors"
                   >
                     Terms of Service
                   </Link>
@@ -122,7 +122,7 @@ function Section({
   return (
     <section className="mb-10">
       <h2 className="mb-4 text-2xl font-bold text-white">{title}</h2>
-      <div className="space-y-3 text-[#DCE4E4] [&_li]:text-[#DCE4E4] [&_p]:text-[#DCE4E4] [&_strong]:text-white [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
+      <div className="text-foreground [&_li]:text-foreground [&_p]:text-foreground space-y-3 [&_strong]:text-white [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
         {children}
       </div>
     </section>
@@ -138,7 +138,7 @@ function FAQ({
 }) {
   return (
     <div className="mb-6">
-      <h3 className="text-lg font-semibold text-[#DCE4E4]">{question}</h3>
+      <h3 className="text-foreground text-lg font-semibold">{question}</h3>
       {children}
     </div>
   );

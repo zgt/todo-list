@@ -36,11 +36,11 @@ export function ListPickerPill({
         <button
           className={cn(
             "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
-            "transition-all hover:border-[#21716C]",
-            "focus:ring-2 focus:ring-[#21716C]/20 focus:outline-none",
+            "hover:border-border-focus transition-all",
+            "focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
             selectedList
-              ? "border-white/20 bg-white/5 text-[#DCE4E4]"
-              : "border-[#164B49] bg-[#102A2A]/80 text-[#DCE4E4] hover:bg-[#102A2A]",
+              ? "text-foreground border-white/20 bg-white/5"
+              : "border-border-strong bg-surface-2/80 text-foreground hover:bg-surface-2",
           )}
           disabled={disabled}
         >
@@ -48,7 +48,10 @@ export function ListPickerPill({
             <>
               <span
                 className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: selectedList.color ?? "#8FA8A8" }}
+                style={{
+                  backgroundColor:
+                    selectedList.color ?? "var(--muted-foreground)",
+                }}
               />
               {selectedList.name}
             </>
@@ -61,7 +64,7 @@ export function ListPickerPill({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-48 border-white/10 bg-[#0A1A1A] p-1"
+        className="bg-surface w-48 border-white/10 p-1"
         align="start"
       >
         <div className="flex flex-col gap-0.5">
@@ -71,10 +74,10 @@ export function ListPickerPill({
               "flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
               !value
                 ? "bg-white/10 text-white"
-                : "text-[#DCE4E4] hover:bg-white/5",
+                : "text-foreground hover:bg-white/5",
             )}
           >
-            <span className="h-2.5 w-2.5 rounded-full bg-[#8FA8A8]" />
+            <span className="bg-muted-foreground h-2.5 w-2.5 rounded-full" />
             Personal
           </button>
           {lists?.map((list: TaskListItem) => (
@@ -85,12 +88,14 @@ export function ListPickerPill({
                 "flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
                 value === list.id
                   ? "bg-white/10 text-white"
-                  : "text-[#DCE4E4] hover:bg-white/5",
+                  : "text-foreground hover:bg-white/5",
               )}
             >
               <span
                 className="h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: list.color ?? "#8FA8A8" }}
+                style={{
+                  backgroundColor: list.color ?? "var(--muted-foreground)",
+                }}
               />
               {list.name}
             </button>

@@ -19,7 +19,7 @@ export default function TermsOfServicePage() {
         <div className="relative z-10">
           <Link
             href="/"
-            className="mb-8 inline-block text-sm text-[#8FA8A8] transition-colors hover:text-[#50C878]"
+            className="text-muted-foreground hover:text-primary mb-8 inline-block text-sm transition-colors"
           >
             &larr; Back to Tokilist
           </Link>
@@ -28,7 +28,7 @@ export default function TermsOfServicePage() {
             <h1 className="mb-2 text-4xl font-bold text-white">
               Terms of Service
             </h1>
-            <p className="mb-10 text-sm text-[#8FA8A8]">
+            <p className="text-muted-foreground mb-10 text-sm">
               Last updated: March 5, 2026
             </p>
 
@@ -192,7 +192,7 @@ export default function TermsOfServicePage() {
                 with our{" "}
                 <Link
                   href="/privacy"
-                  className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                  className="text-primary hover:text-primary-hover underline transition-colors"
                 >
                   Privacy Policy
                 </Link>
@@ -233,7 +233,7 @@ export default function TermsOfServicePage() {
               <p>
                 <a
                   href="mailto:support@calayo.net"
-                  className="text-[#50C878] underline transition-colors hover:text-[#66D99A]"
+                  className="text-primary hover:text-primary-hover underline transition-colors"
                 >
                   support@calayo.net
                 </a>
@@ -256,7 +256,7 @@ function Section({
   return (
     <section className="mb-10">
       <h2 className="mb-4 text-2xl font-bold text-white">{title}</h2>
-      <div className="space-y-3 text-[#DCE4E4] [&_li]:text-[#DCE4E4] [&_p]:text-[#DCE4E4] [&_strong]:text-white [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
+      <div className="text-foreground [&_li]:text-foreground [&_p]:text-foreground space-y-3 [&_strong]:text-white [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-6">
         {children}
       </div>
     </section>

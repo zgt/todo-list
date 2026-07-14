@@ -159,12 +159,14 @@ export function ListDetail() {
         <div className="flex items-center gap-4">
           <div
             className="h-12 w-12 rounded-xl"
-            style={{ backgroundColor: list.color ?? "#8FA8A8" }}
+            style={{ backgroundColor: list.color ?? "var(--muted-foreground)" }}
           />
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-white">{list.name}</h1>
             {list.description && (
-              <p className="mt-1 text-sm text-[#8FA8A8]">{list.description}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {list.description}
+              </p>
             )}
           </div>
         </div>
@@ -180,12 +182,12 @@ export function ListDetail() {
           <div className="glass-card rounded-2xl border border-white/10 p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5 text-[#50C878]" />
+                <Eye className="text-primary h-5 w-5" />
                 <div>
                   <h2 className="text-sm font-semibold text-white">
                     Show in filter
                   </h2>
-                  <p className="text-xs text-[#8FA8A8]">
+                  <p className="text-muted-foreground text-xs">
                     Display this list in the top filter bar and sidebar
                   </p>
                 </div>
@@ -207,9 +209,9 @@ export function ListDetail() {
       {/* Members Section */}
       <div className="glass-card rounded-2xl border border-white/10 p-6">
         <div className="mb-4 flex items-center gap-2">
-          <Users className="h-5 w-5 text-[#50C878]" />
+          <Users className="text-primary h-5 w-5" />
           <h2 className="text-lg font-semibold text-white">Members</h2>
-          <span className="text-sm text-[#8FA8A8]">
+          <span className="text-muted-foreground text-sm">
             ({list.members.length})
           </span>
         </div>
@@ -224,7 +226,7 @@ export function ListDetail() {
                 className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3"
               >
                 {/* Avatar */}
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[#164B49]">
+                <div className="bg-border-strong h-10 w-10 shrink-0 overflow-hidden rounded-full">
                   {member.user.image ? (
                     <Image
                       src={member.user.image}
@@ -234,7 +236,7 @@ export function ListDetail() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-sm font-bold text-[#DCE4E4]">
+                    <div className="text-foreground flex h-full w-full items-center justify-center text-sm font-bold">
                       {member.user.name[0]}
                     </div>
                   )}
@@ -245,14 +247,14 @@ export function ListDetail() {
                   <p className="truncate text-sm font-medium text-white">
                     {member.user.name}
                   </p>
-                  <p className="truncate text-xs text-[#8FA8A8]">
+                  <p className="text-muted-foreground truncate text-xs">
                     {member.user.email}
                   </p>
                 </div>
 
                 {/* Role badge / controls */}
                 {isMemberOwner ? (
-                  <div className="flex items-center gap-1.5 rounded-full bg-[#50C878]/10 px-3 py-1 text-xs font-medium text-[#50C878]">
+                  <div className="bg-primary/10 text-primary flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium">
                     <Crown className="h-3 w-3" />
                     Owner
                   </div>
@@ -270,7 +272,7 @@ export function ListDetail() {
                         }
                       }}
                     >
-                      <SelectTrigger className="h-8 w-24 border-white/10 bg-transparent text-xs text-[#DCE4E4]">
+                      <SelectTrigger className="text-foreground h-8 w-24 border-white/10 bg-transparent text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -293,7 +295,7 @@ export function ListDetail() {
                     </button>
                   </div>
                 ) : (
-                  <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-[#8FA8A8]">
+                  <span className="text-muted-foreground rounded-full border border-white/10 px-3 py-1 text-xs">
                     {member.role}
                   </span>
                 )}
@@ -307,14 +309,14 @@ export function ListDetail() {
       {isOwner && (
         <div className="glass-card rounded-2xl border border-white/10 p-6">
           <div className="mb-4 flex items-center gap-2">
-            <LinkIcon className="h-5 w-5 text-[#50C878]" />
+            <LinkIcon className="text-primary h-5 w-5" />
             <h2 className="text-lg font-semibold text-white">Invite People</h2>
           </div>
 
           {inviteCode ? (
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 p-3">
-                <code className="flex-1 truncate text-sm text-[#DCE4E4]">
+                <code className="text-foreground flex-1 truncate text-sm">
                   {window.location.origin}/invite/{inviteCode}
                 </code>
                 <button
@@ -325,8 +327,8 @@ export function ListDetail() {
                   className={cn(
                     "rounded-md p-2 transition-colors",
                     copied
-                      ? "text-[#50C878]"
-                      : "text-[#8FA8A8] hover:text-[#DCE4E4]",
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {copied ? (
@@ -343,7 +345,7 @@ export function ListDetail() {
                   setInviteCode(null);
                   createInvite.mutate({ listId: params.id });
                 }}
-                className="w-fit text-[#8FA8A8] hover:text-[#DCE4E4]"
+                className="text-muted-foreground hover:text-foreground w-fit"
               >
                 Generate new link
               </Button>
@@ -352,7 +354,7 @@ export function ListDetail() {
             <Button
               onClick={() => createInvite.mutate({ listId: params.id })}
               disabled={createInvite.isPending}
-              className="bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]"
+              className="bg-primary text-primary-foreground hover:bg-primary-hover"
             >
               {createInvite.isPending
                 ? "Generating..."
@@ -378,7 +380,7 @@ export function ListDetail() {
                 Delete List
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-white/10 bg-[#0A1A1A]">
+            <AlertDialogContent className="bg-surface border-white/10">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-white">
                   Delete &ldquo;{list.name}&rdquo;?
@@ -389,7 +391,7 @@ export function ListDetail() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-white/10 text-[#DCE4E4]">
+                <AlertDialogCancel className="text-foreground border-white/10">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
@@ -413,7 +415,7 @@ export function ListDetail() {
                 Leave List
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-white/10 bg-[#0A1A1A]">
+            <AlertDialogContent className="bg-surface border-white/10">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-white">
                   Leave &ldquo;{list.name}&rdquo;?
@@ -424,7 +426,7 @@ export function ListDetail() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-white/10 text-[#DCE4E4]">
+                <AlertDialogCancel className="text-foreground border-white/10">
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction

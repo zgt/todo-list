@@ -82,14 +82,14 @@ export function TaskHeader() {
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center rounded-full border border-[#164B49] bg-[#102A2A]/80 p-0.5">
+        <div className="border-border-strong bg-surface-2/80 flex items-center rounded-full border p-0.5">
           <button
             onClick={() => setViewMode("list")}
             className={cn(
               "flex items-center justify-center rounded-full p-1.5 transition-colors",
               viewMode === "list"
                 ? "bg-primary/20 text-primary"
-                : "text-[#8FA8A8] hover:text-[#DCE4E4]",
+                : "text-muted-foreground hover:text-foreground",
             )}
             aria-label="List view"
           >
@@ -101,7 +101,7 @@ export function TaskHeader() {
               "flex items-center justify-center rounded-full p-1.5 transition-colors",
               viewMode === "calendar"
                 ? "bg-primary/20 text-primary"
-                : "text-[#8FA8A8] hover:text-[#DCE4E4]",
+                : "text-muted-foreground hover:text-foreground",
             )}
             aria-label="Calendar view"
           >

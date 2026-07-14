@@ -113,6 +113,7 @@ pnpm ui-add
 **Important**: Always use `pnpm ui-add` when adding new UI components for the web app. Do NOT manually create UI components - use the shadcn CLI which properly sets up Radix UI primitives with correct imports.
 
 After adding components via shadcn, you may need to fix imports:
+
 - Change `lucide-react` imports to `@radix-ui/react-icons`
 - Change `src/lib/utils` imports to `@acme/ui`
 
@@ -131,6 +132,7 @@ pnpm android
 The Expo app is configured for EAS (Expo Application Services) deployment. See `apps/expo/EAS_DEPLOYMENT.md` for complete setup and deployment guide.
 
 **Quick Start:**
+
 ```bash
 cd apps/expo
 
@@ -148,6 +150,7 @@ pnpm build:prod:android # Google Play Store
 ```
 
 **App Configuration:**
+
 - **Bundle ID (iOS):** `com.zgtf.tokilist`
 - **Package Name (Android):** `com.zgtf.tokilist`
 - **App Name:** Tokilist
@@ -191,6 +194,7 @@ Database schemas follow these conventions:
 3. **Export pattern**: Both schemas exported from `packages/db/src/index.ts`
 
 **Important**: The auth schema is auto-generated. To modify auth tables:
+
 1. Edit `packages/auth/script/auth-cli.ts` (Better Auth config)
 2. Run `pnpm auth:generate`
 3. Run `pnpm db:push` to apply changes
@@ -201,18 +205,17 @@ Database naming follows `snake_case` convention (configured in `drizzle.config.t
 
 API routes are defined in `packages/api/src/router/`:
 
-| Router | Purpose |
-|--------|---------|
-| `task.ts` | CRUD, snooze/unsnooze, priority filtering, recurrence |
-| `category.ts` | Hierarchical category tree, breadcrumbs, reparenting |
-| `task-list.ts` | Shared lists, invites, member roles, join/leave |
-| `subtask.ts` | Subtask CRUD, reorder, auto-complete parent logic |
-| `notification.ts` | Push token registration, user preferences, test push |
-| `moderation.ts` | Report content, block/unblock users |
-| `user.ts` | Display name update, account deletion |
-| `sync.ts` | Offline-first push/pull with conflict resolution |
-| `auth.ts` | Session management |
-| `post.ts` | Demo posts (legacy) |
+| Router            | Purpose                                               |
+| ----------------- | ----------------------------------------------------- |
+| `task.ts`         | CRUD, snooze/unsnooze, priority filtering, recurrence |
+| `category.ts`     | Hierarchical category tree, breadcrumbs, reparenting  |
+| `task-list.ts`    | Shared lists, invites, member roles, join/leave       |
+| `subtask.ts`      | Subtask CRUD, reorder, auto-complete parent logic     |
+| `notification.ts` | Push token registration, user preferences, test push  |
+| `moderation.ts`   | Report content, block/unblock users                   |
+| `user.ts`         | Display name update, account deletion                 |
+| `sync.ts`         | Offline-first push/pull with conflict resolution      |
+| `auth.ts`         | Session management                                    |
 
 Define procedures using `publicProcedure` or `protectedProcedure`, register in `packages/api/src/root.ts`.
 
@@ -240,12 +243,14 @@ Current setup uses Discord OAuth and Apple Sign In (optional, iOS). To add provi
 ### Cross-Platform Considerations
 
 **Web (Next.js)**:
+
 - Uses `@acme/ui` components (shadcn/ui with Radix UI)
 - Server components by default
 - Client components marked with `"use client"`
 - Views: stack layout with glassmorphism panels, Aurora effects
 
 **Mobile (Expo)**:
+
 - Cannot use `@acme/ui` components (web-only)
 - Uses React Native components with NativeWind v5
 - Custom checkbox implementation (not Radix UI)
@@ -256,6 +261,7 @@ Current setup uses Discord OAuth and Apple Sign In (optional, iOS). To add provi
 - Swipe gesture tutorial for onboarding
 
 **Shared**:
+
 - tRPC client setup differs (React Query configuration)
 - Auth uses Better Auth Expo adapter for mobile
 - Both use TanStack Query for state management
@@ -273,6 +279,7 @@ Current setup uses Discord OAuth and Apple Sign In (optional, iOS). To add provi
 ### Creating Database Tables
 
 Tables should include:
+
 - UUID primary key with `defaultRandom()`
 - User foreign key for user-scoped data: `references(() => user.id, { onDelete: "cascade" })`
 - Timestamps: `createdAt`, `updatedAt` (with `$onUpdateFn`)
@@ -329,6 +336,7 @@ OBSIDIAN_REST_API_KEY=           # Obsidian Local REST API plugin key
 ### Database Issues
 
 If migrations fail with interactive task error, run directly:
+
 ```bash
 cd packages/db && pnpm push
 ```
@@ -336,6 +344,7 @@ cd packages/db && pnpm push
 ### Auth Schema Not Found
 
 Generate the auth schema:
+
 ```bash
 pnpm auth:generate
 ```
@@ -343,6 +352,7 @@ pnpm auth:generate
 ### Module Resolution Issues
 
 Ensure all internal packages are built:
+
 ```bash
 pnpm build
 ```
@@ -356,12 +366,15 @@ pnpm build
 ## Deployment
 
 ### Web (Vercel)
+
 1. Create a new Vercel project pointing to `apps/nextjs`
 2. Add `POSTGRES_URL` and other env vars
 3. Deploy — Vercel handles Turborepo builds automatically
 
 ### Mobile (EAS)
+
 See `apps/expo/EAS_DEPLOYMENT.md` for complete guide. Quick commands:
+
 ```bash
 cd apps/expo
 eas build --platform ios --profile production
@@ -381,11 +394,12 @@ eas update --auto  # OTA updates (no native changes)
 
 **IMPORTANT**: When creating or modifying UI components, ALWAYS reference `DESIGN_SYSTEM.md` for:
 
-- **Colors**: Use the Emerald Green theme palette (see Color System section)
-  - Primary: `#50C878` (emerald green)
-  - Background: `#0A1A1A` (deep) / `#102A2A` (surface)
-  - Text: `#DCE4E4` (primary) / `#8FA8A8` (muted)
-  - Borders: `#164B49` (default) / `#21716C` (focused)
+- **Colors**: Use the semantic tokens from `tooling/tailwind/theme.css` (Liquid Glass theme) — never hardcode hex in class strings
+  - Primary: `primary` (`#4ade80`) / hover: `primary-hover`
+  - Surfaces: `background` (page) / `surface` (deep) / `surface-2` (cards, inputs) / `surface-hover`
+  - Text: `foreground` (primary) / `muted-foreground` (muted)
+  - Borders: `border-strong` (default solid) / `border-focus` (focused) / `border` (translucent glass)
+  - Priority: `priority-high` / `priority-medium` / `priority-low`
 - **Typography**: Use Geist Sans font with documented type scale
 - **Spacing**: Follow 4px base grid (spacing scale in `DESIGN_SYSTEM.md`)
 - **Components**: Reference component patterns for Task Cards, Pills, FAB, Inputs, Buttons
@@ -396,7 +410,7 @@ eas update --auto  # OTA updates (no native changes)
 
 Before creating any UI component, review these sections in `DESIGN_SYSTEM.md`:
 
-1. **Color System** → Use semantic colors from Emerald Green theme
+1. **Color System** → Use semantic color tokens (theme.css is the source of truth)
 2. **Typography** → Apply correct font sizes and weights from type scale
 3. **Spacing & Layout** → Use spacing scale (xs/sm/md/lg/xl)
 4. **Components** → Follow established patterns for similar elements
@@ -408,38 +422,41 @@ Before creating any UI component, review these sections in `DESIGN_SYSTEM.md`:
 ### Design Tokens Quick Reference
 
 ```typescript
-// Import from design system
-Colors: See "Design Tokens Reference" section
+// Source of truth: tooling/tailwind/theme.css
+Colors: semantic tokens (primary, surface-2, border-strong, muted-foreground, ...)
 Spacing: 4px base (xs: 4px, sm: 8px, md: 16px, lg: 24px, xl: 32px)
-Radius: sm: 8px, md: 10px, lg: 12px, xl: 16px, full: 9999px
+Radius: 1.5rem base → sm: 20px, md: 22px, lg: 24px, xl: 28px, full: 9999px
 Shadows: '2xs' through '2xl' plus 'glow' and 'glowHover'
 ```
 
 ### Component-Specific Guidelines
 
 **Task Cards**:
-- Background: `#102A2A` (surface)
+
+- Background: `bg-surface-2`
 - Padding: 16px (p-4)
-- Border radius: 12px (rounded-lg)
+- Border radius: rounded-lg
 - Shadow: shadow-lg
-- Text: `#DCE4E4` primary, `#8FA8A8` muted
+- Text: `text-foreground` primary, `text-muted-foreground` muted
 
 **Category Pills**:
-- Active: `#50C878` border, emerald glow, 20% opacity background
-- Inactive: `#164B49` border, transparent background
+
+- Active: `border-primary`, glow shadow, `bg-primary/20`
+- Inactive: `border-border-strong`, transparent background
 - Border radius: full (rounded-full)
 - Padding: px-6 py-2
 
 **Buttons**:
-- Primary: `#50C878` background, `#0A1A1A` text
-- Hover: `#66D99A` (primary-bright)
-- Active: `#388E3C` (primary-dim)
-- Border radius: 8px (rounded-md)
+
+- Primary: `bg-primary` background, `text-primary-foreground` text
+- Hover: `bg-primary-hover`
+- Border radius: rounded-md
 
 **Inputs**:
-- Background: `#102A2A`
-- Border: `#164B49` default, `#21716C` focused
-- Text: `#DCE4E4`, placeholder: `#8FA8A8`
-- Border radius: 8px (rounded-md)
+
+- Background: `bg-surface-2`
+- Border: `border-border-strong` default, `border-border-focus` focused
+- Text: `text-foreground`, placeholder: `placeholder:text-muted-foreground`
+- Border radius: rounded-md
 
 **ALWAYS** consult `DESIGN_SYSTEM.md` for complete specifications and visual examples.

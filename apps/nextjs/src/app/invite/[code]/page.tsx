@@ -41,13 +41,13 @@ export default function JoinInvitePage() {
 
   if (!session?.user) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-[#0A1A1A] px-4">
+      <div className="bg-surface flex min-h-screen w-full flex-col items-center justify-center gap-4 px-4">
         <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 p-8 text-center">
-          <Users className="mx-auto mb-4 h-12 w-12 text-[#50C878]" />
+          <Users className="text-primary mx-auto mb-4 h-12 w-12" />
           <h1 className="mb-2 text-xl font-bold text-white">
             You&apos;ve been invited to a list
           </h1>
-          <p className="mb-6 text-sm text-[#8FA8A8]">
+          <p className="text-muted-foreground mb-6 text-sm">
             Please sign in to join this shared list.
           </p>
           <SignInButtons returnUrl={returnUrl} />
@@ -59,15 +59,15 @@ export default function JoinInvitePage() {
   const hasError = joinByInvite.isError;
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 bg-[#0A1A1A] px-4">
+    <div className="bg-surface flex min-h-screen w-full flex-col items-center justify-center gap-4 px-4">
       <div className="glass-card w-full max-w-md rounded-2xl border border-white/10 p-8 text-center">
-        <Users className="mx-auto mb-4 h-12 w-12 text-[#50C878]" />
+        <Users className="text-primary mx-auto mb-4 h-12 w-12" />
         <h1 className="mb-2 text-xl font-bold text-white">Join Shared List</h1>
-        <p className="mb-2 text-sm text-[#8FA8A8]">
+        <p className="text-muted-foreground mb-2 text-sm">
           You&apos;ve been invited to collaborate on a shared task list.
         </p>
-        <p className="mb-6 text-xs text-[#8FA8A8]">
-          Invite code: <code className="text-[#DCE4E4]">{params.code}</code>
+        <p className="text-muted-foreground mb-6 text-xs">
+          Invite code: <code className="text-foreground">{params.code}</code>
         </p>
 
         {hasError && (
@@ -82,15 +82,15 @@ export default function JoinInvitePage() {
             disabled={joinByInvite.isPending || hasError}
             className={
               hasError
-                ? "w-full border border-[#164B49] bg-[#102A2A] text-[#8FA8A8] hover:bg-[#102A2A]"
-                : "w-full bg-[#50C878] text-[#0A1A1A] hover:bg-[#66D99A]"
+                ? "border-border-strong bg-surface-2 text-muted-foreground hover:bg-surface-2 w-full border"
+                : "bg-primary text-primary-foreground hover:bg-primary-hover w-full"
             }
           >
             {joinByInvite.isPending ? "Joining..." : "Join List"}
           </Button>
           <button
             onClick={() => router.push("/")}
-            className="flex items-center justify-center gap-2 text-sm text-[#8FA8A8] transition-colors hover:text-[#DCE4E4]"
+            className="text-muted-foreground hover:text-foreground flex items-center justify-center gap-2 text-sm transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to tasks

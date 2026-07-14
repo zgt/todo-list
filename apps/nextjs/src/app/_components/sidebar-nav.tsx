@@ -162,13 +162,13 @@ export function AppSidebar({
                       <div className="my-1 h-px bg-white/10" />
                       <Link
                         href="/privacy"
-                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#8FA8A8] transition-colors hover:bg-white/5"
+                        className="hover:text-foreground text-muted-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5"
                       >
                         Privacy Policy
                       </Link>
                       <Link
                         href="/terms"
-                        className="hover:text-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#8FA8A8] transition-colors hover:bg-white/5"
+                        className="hover:text-foreground text-muted-foreground flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5"
                       >
                         Terms of Service
                       </Link>
@@ -208,7 +208,7 @@ function SidebarListsSection() {
   return (
     <div className="mt-4 border-t border-white/10 pt-4">
       <div className="mb-2 flex items-center justify-between px-2">
-        <span className="text-xs font-semibold tracking-wider text-[#8FA8A8] uppercase">
+        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Lists
         </span>
         <CreateListDialog />
@@ -224,7 +224,7 @@ function SidebarListsSection() {
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
               selectedListId === null
                 ? "bg-primary/20 text-primary border-primary/20 border"
-                : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
           >
             <span className="font-medium">All Tasks</span>
@@ -240,11 +240,11 @@ function SidebarListsSection() {
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
               selectedListId === "personal"
                 ? "bg-primary/20 text-primary border-primary/20 border"
-                : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
           >
             <div className="flex w-full items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full bg-[#8FA8A8]" />
+              <span className="bg-muted-foreground h-2 w-2 rounded-full" />
               <span className="flex-1 truncate font-medium">Personal</span>
             </div>
           </SidebarMenuButton>
@@ -259,7 +259,7 @@ function SidebarListsSection() {
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
               selectedListId === "deleted"
                 ? "bg-primary/20 text-primary border-primary/20 border"
-                : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
           >
             <div className="flex w-full items-center gap-2.5">
@@ -281,25 +281,27 @@ function SidebarListsSection() {
                   "h-9 rounded-lg px-3 text-sm transition-all duration-200",
                   selectedListId === list.id
                     ? "bg-primary/20 text-primary border-primary/20 border"
-                    : "text-[#8FA8A8] hover:bg-white/5 hover:text-[#DCE4E4]",
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5",
                 )}
               >
                 <div className="flex w-full items-center gap-2.5">
                   <span
                     className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: list.color ?? "#8FA8A8" }}
+                    style={{
+                      backgroundColor: list.color ?? "var(--muted-foreground)",
+                    }}
                   />
                   <span className="flex-1 truncate font-medium">
                     {list.name}
                   </span>
                   <div className="flex items-center gap-1.5">
                     {list.memberCount > 1 && (
-                      <Users className="h-3 w-3 text-[#8FA8A8]" />
+                      <Users className="text-muted-foreground h-3 w-3" />
                     )}
                     <Link
                       href={`/lists/${list.id}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="rounded p-0.5 text-[#8FA8A8] opacity-0 transition-all group-hover/list:opacity-100 hover:bg-white/10 hover:text-[#DCE4E4]"
+                      className="text-muted-foreground hover:text-foreground rounded p-0.5 opacity-0 transition-all group-hover/list:opacity-100 hover:bg-white/10"
                       aria-label={`${list.name} settings`}
                     >
                       <Settings className="h-3 w-3" />
