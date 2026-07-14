@@ -30,8 +30,8 @@ import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { signOut } from "./auth-actions";
 import { CreateListDialog } from "./create-list-dialog";
-import { useListFilter } from "./list-filter-context";
 import { SidebarSignInButton } from "./sidebar-signin-button";
+import { useListFilter } from "./use-task-filters";
 
 const navigation = [
   {
@@ -198,7 +198,8 @@ export function AppSidebar({
 function SidebarListsSection() {
   const trpc = useTRPC();
   const { data: session } = useSession();
-  const { selectedListId, setSelectedListId } = useListFilter();
+  const { selectedListId, setSelectedListId, isTrashView, setTrashView } =
+    useListFilter();
 
   const { data: lists } = useQuery({
     ...trpc.taskList.all.queryOptions(),
@@ -218,11 +219,11 @@ function SidebarListsSection() {
         {/* All Tasks */}
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={selectedListId === null}
+            isActive={selectedListId === null && !isTrashView}
             onClick={() => setSelectedListId(null)}
             className={cn(
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-              selectedListId === null
+              selectedListId === null && !isTrashView
                 ? "bg-primary/20 text-primary border-primary/20 border"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
@@ -234,11 +235,11 @@ function SidebarListsSection() {
         {/* Personal */}
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={selectedListId === "personal"}
+            isActive={selectedListId === "personal" && !isTrashView}
             onClick={() => setSelectedListId("personal")}
             className={cn(
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-              selectedListId === "personal"
+              selectedListId === "personal" && !isTrashView
                 ? "bg-primary/20 text-primary border-primary/20 border"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
@@ -253,11 +254,11 @@ function SidebarListsSection() {
         {/* Deleted / Archived */}
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={selectedListId === "deleted"}
-            onClick={() => setSelectedListId("deleted")}
+            isActive={isTrashView}
+            onClick={() => setTrashView(true)}
             className={cn(
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-              selectedListId === "deleted"
+              isTrashView
                 ? "bg-primary/20 text-primary border-primary/20 border"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
@@ -275,11 +276,11 @@ function SidebarListsSection() {
           .map((list) => (
             <SidebarMenuItem key={list.id} className="group/list">
               <SidebarMenuButton
-                isActive={selectedListId === list.id}
+                isActive={selectedListId === list.id && !isTrashView}
                 onClick={() => setSelectedListId(list.id)}
                 className={cn(
                   "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-                  selectedListId === list.id
+                  selectedListId === list.id && !isTrashView
                     ? "bg-primary/20 text-primary border-primary/20 border"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5",
                 )}

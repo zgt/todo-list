@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { cn } from "@acme/ui";
 import { SidebarProvider } from "@acme/ui/sidebar";
 import { ThemeProvider } from "@acme/ui/theme";
 import { Toaster } from "@acme/ui/toast";
 
-import { DotScreenShader } from "~/components/ui/dot-shader-background-client";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -54,14 +54,13 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         )}
       >
         <ThemeProvider>
-          <TRPCReactProvider>
-            <div className="fixed inset-0 -z-10">
-              <DotScreenShader />
-            </div>
-            <SidebarProvider defaultOpen={false}>
-              {props.children}
-            </SidebarProvider>
-          </TRPCReactProvider>
+          <NuqsAdapter>
+            <TRPCReactProvider>
+              <SidebarProvider defaultOpen={false}>
+                {props.children}
+              </SidebarProvider>
+            </TRPCReactProvider>
+          </NuqsAdapter>
           <Toaster />
         </ThemeProvider>
       </body>

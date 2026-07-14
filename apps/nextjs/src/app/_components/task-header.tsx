@@ -15,9 +15,8 @@ import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { useCreateTask } from "./create-task-context";
 import { ListFilter } from "./list-filter";
-import { useListFilter } from "./list-filter-context";
 import { PriorityFilter } from "./priority-filter";
-import { useViewToggle } from "./view-toggle-context";
+import { useListFilter, useViewToggle } from "./use-task-filters";
 
 export function TaskHeader() {
   const trpc = useTRPC();
@@ -25,8 +24,8 @@ export function TaskHeader() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { setIsCreating } = useCreateTask();
   const { viewMode, setViewMode } = useViewToggle();
-  const { selectedListId } = useListFilter();
-  const isDeletedView = selectedListId === "deleted";
+  const { isTrashView } = useListFilter();
+  const isDeletedView = isTrashView;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

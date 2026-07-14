@@ -126,9 +126,17 @@ const DotMaterial = shaderMaterial(
   `,
 );
 
+// The mouse trail (useTrailTexture) fades over `maxAge` ms; keep the demand
+// loop rendering for a small margin past that so the trail can fully fade out
+// before we stop scheduling frames.
+const TRAIL_MAX_AGE_MS = 400;
+const TRAIL_WAKE_MARGIN_MS = 150;
+const TRAIL_ACTIVE_MS = TRAIL_MAX_AGE_MS + TRAIL_WAKE_MARGIN_MS;
+
 function Scene() {
   const size = useThree((s) => s.size);
   const viewport = useThree((s) => s.viewport);
+  const invalidate = useThree((s) => s.invalidate);
   const rotation = 0;
   const gridSize = 250;
 
@@ -182,14 +190,20 @@ function Scene() {
   const manualRippleTimeRemaining = useRef(0);
   const prevIsMutating = useRef(0);
   const prevIsFetching = useRef(0);
+  const lastPointerMoveTime = useRef(0);
 
   // eslint-disable-next-line react-hooks/immutability -- Three.js shader uniforms are updated inside the render loop.
-  useFrame((state, delta) => {
-    // Clamp delta to prevent large jumps when tab is backgrounded and refocused
+  useFrame((_state, delta) => {
+    // Clamp delta to prevent large jumps when tab is backgrounded/refocused or
+    // when resuming the demand loop after an idle pause (large accumulated delta).
     const clampedDelta = Math.min(delta, 0.05);
 
+    // Advance `time` with the clamped delta rather than clock.elapsedTime: under
+    // frameloop="demand" elapsedTime jumps across paused spans, and accumulation
+    // keeps any time-based motion continuous on resume. (This uniform is
+    // currently unused by the shader, so this is purely defensive.)
     // eslint-disable-next-line react-hooks/immutability
-    dotMaterial.uniforms.time.value = state.clock.elapsedTime;
+    dotMaterial.uniforms.time.value += clampedDelta;
 
     let isActive = false;
 
@@ -243,23 +257,47 @@ function Scene() {
     } else {
       dotMaterial.uniforms.rippleTime.value = 0;
     }
+
+    // Keep the demand loop alive while anything is still visually changing:
+    // an active/ramping ripple, residual visible intensity, or a mouse trail
+    // that is still fading. Once none of these hold we stop scheduling frames
+    // and the last rendered frame (the static idle dot field) persists with
+    // zero further GPU work until the next wake event.
+    const pointerActive =
+      performance.now() - lastPointerMoveTime.current < TRAIL_ACTIVE_MS;
+    const rippleVisible = isActive || nextIntensity > 0.001;
+    if (pointerActive || rippleVisible) {
+      invalidate();
+    }
   });
+
+  // Wake the demand loop on the rising (or falling) edge of query/mutation
+  // activity. A paused useFrame cannot observe these changes itself, so the
+  // invalidate() must happen here where the hook re-renders Scene on change.
+  useEffect(() => {
+    invalidate();
+  }, [isFetching, isMutating, invalidate]);
 
   useEffect(() => {
     const handleTriggerRipple = () => {
       manualRippleTimeRemaining.current = 2.0; // Run for 2 seconds
       dotMaterial.uniforms.rippleTime.value = 0; // Restart
       dotMaterial.uniforms.rippleCenter.value.set(0.5, 0.5);
+      // Wake the demand loop: this event can fire while frames are paused.
+      invalidate();
     };
 
     window.addEventListener("trigger-ripple", handleTriggerRipple);
     return () => {
       window.removeEventListener("trigger-ripple", handleTriggerRipple);
     };
-  }, [dotMaterial]);
+  }, [dotMaterial, invalidate]);
 
   const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
+    lastPointerMoveTime.current = performance.now();
     onMove(e);
+    // Wake the demand loop so the trail can render/fade.
+    invalidate();
   };
 
   useEffect(() => {
@@ -273,16 +311,19 @@ function Scene() {
       const sx = innerWidth / maxDim;
       const sy = innerHeight / maxDim;
 
+      lastPointerMoveTime.current = performance.now();
       onMove({
         uv: new THREE.Vector2((x - 0.5) * sx + 0.5, (y - 0.5) * sy + 0.5),
       });
+      // Wake the demand loop: window mousemove fires while frames are paused.
+      invalidate();
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [onMove]);
+  }, [onMove, invalidate]);
 
   const scale = Math.max(viewport.width, viewport.height) / 2;
 
@@ -305,6 +346,7 @@ export const DotScreenShader = () => {
   return (
     <Canvas
       dpr={[1, 1.5]}
+      frameloop="demand"
       gl={{
         antialias: true,
         powerPreference: "high-performance",

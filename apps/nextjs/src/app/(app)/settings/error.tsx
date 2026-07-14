@@ -2,7 +2,7 @@
 
 import { ErrorBoundaryCard } from "../../_components/error-boundary-card";
 
-export default function ListDetailError({
+export default function SettingsError({
   reset,
 }: {
   error: Error & { digest?: string };

@@ -1,29 +1,22 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
-import { AppSidebar } from "../../_components/sidebar-nav";
-import { ListDetail } from "./list-detail";
+import { AppSidebar } from "../../../_components/sidebar-nav";
+import { BlockedUsersList } from "./blocked-users-list";
 
-export default async function ListDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function BlockedUsersPage() {
   const session = await getSession();
-  if (!session?.user) redirect("/");
 
-  const { id } = await params;
-
-  void prefetch(trpc.taskList.byId.queryOptions({ id }));
+  void prefetch(trpc.moderation.getBlockedUsers.queryOptions());
 
   return (
     <HydrateClient>
       <div className="relative flex min-h-screen w-full">
-        <AppSidebar user={session.user} />
+        <AppSidebar user={session?.user} />
 
         <SidebarInset className="flex h-screen flex-1 flex-col bg-transparent">
           <div className="flex-1 px-6 pt-6 pb-6">
@@ -38,14 +31,22 @@ export default async function ListDetailPage({
                 <div className="mb-8 flex items-center gap-4">
                   <SidebarTrigger />
                   <h1 className="text-3xl font-bold text-white">
-                    List Settings
+                    Blocked Users
                   </h1>
                 </div>
 
-                <div className="custom-scrollbar flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
-                  <Suspense fallback={null}>
-                    <ListDetail />
-                  </Suspense>
+                <div className="custom-scrollbar flex-1 space-y-6 overflow-y-auto px-2 pt-2 pr-4 pb-2">
+                  <div className="mx-auto w-full max-w-2xl">
+                    <Suspense
+                      fallback={
+                        <div className="flex min-h-[400px] items-center justify-center">
+                          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+                        </div>
+                      }
+                    >
+                      <BlockedUsersList />
+                    </Suspense>
+                  </div>
                 </div>
               </div>
             </div>

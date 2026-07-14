@@ -337,7 +337,7 @@ export function InlineCreateTask({
               onClick={() => setIsCreating(false)}
               disabled={createTask.isPending}
               className={cn(
-                "border-border-strong bg-surface-2/80 text-muted-foreground flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+                "border-border-strong bg-surface-2/80 text-muted-foreground flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium",
                 "hover:border-border-focus hover:bg-surface-2 hover:text-foreground transition-all",
               )}
             >
@@ -349,7 +349,7 @@ export function InlineCreateTask({
               onClick={handleSave}
               disabled={createTask.isPending || !title.trim()}
               className={cn(
-                "border-primary/50 bg-primary/20 text-primary flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+                "border-primary/50 bg-primary/20 text-primary flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-medium",
                 "hover:bg-primary/30 transition-all",
                 "disabled:cursor-not-allowed disabled:opacity-50",
               )}

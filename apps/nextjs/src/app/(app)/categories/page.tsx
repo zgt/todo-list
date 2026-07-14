@@ -4,17 +4,14 @@ import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
-import { CategoryListSkeleton } from "../_components/categories/CategoryListSkeleton";
-import { CategoryTree } from "../_components/categories/CategoryTree";
-import { AppSidebar } from "../_components/sidebar-nav";
-import { SignInButtons } from "../_components/sign-in-buttons";
+import { CategoryListSkeleton } from "../../_components/categories/CategoryListSkeleton";
+import { CategoryTree } from "../../_components/categories/CategoryTree";
+import { AppSidebar } from "../../_components/sidebar-nav";
 
 export default async function CategoriesPage() {
   const session = await getSession();
 
-  if (session?.user) {
-    void prefetch(trpc.category.tree.queryOptions());
-  }
+  void prefetch(trpc.category.tree.queryOptions());
 
   return (
     <HydrateClient>
@@ -37,23 +34,11 @@ export default async function CategoriesPage() {
                   <h1 className="text-3xl font-bold text-white">Categories</h1>
                 </div>
 
-                {session?.user ? (
-                  <div className="flex-1">
-                    <Suspense fallback={<CategoryListSkeleton />}>
-                      <CategoryTree />
-                    </Suspense>
-                  </div>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                    <h2 className="mb-2 text-2xl font-bold text-white">
-                      Welcome to Categories
-                    </h2>
-                    <p className="text-muted-foreground mb-6">
-                      Please sign in to manage your categories
-                    </p>
-                    <SignInButtons />
-                  </div>
-                )}
+                <div className="flex-1">
+                  <Suspense fallback={<CategoryListSkeleton />}>
+                    <CategoryTree />
+                  </Suspense>
+                </div>
               </div>
             </div>
           </div>

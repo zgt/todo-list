@@ -1,25 +1,23 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { SidebarInset, SidebarTrigger } from "@acme/ui/sidebar";
 
 import { getSession } from "~/auth/server";
 import { HydrateClient, prefetch, trpc } from "~/trpc/server";
-import { AppSidebar } from "../_components/sidebar-nav";
+import { AppSidebar } from "../../_components/sidebar-nav";
 import { AccountDeletion } from "./account-deletion";
 import { DisplayNameSettings } from "./display-name-settings";
 import { NotificationSettings } from "./notification-settings";
 
 export default async function SettingsPage() {
   const session = await getSession();
-  if (!session?.user) redirect("/");
 
   void prefetch(trpc.notification.getUserPreferences.queryOptions());
 
   return (
     <HydrateClient>
       <div className="relative flex min-h-screen w-full">
-        <AppSidebar user={session.user} />
+        <AppSidebar user={session?.user} />
 
         <SidebarInset className="flex h-screen flex-1 flex-col bg-transparent">
           <div className="flex-1 px-6 pt-6 pb-6">

@@ -1,8 +1,8 @@
 "use client";
 
-import { ErrorBoundaryCard } from "../_components/error-boundary-card";
+import { ErrorBoundaryCard } from "../../../_components/error-boundary-card";
 
-export default function SettingsError({
+export default function ListDetailError({
   reset,
 }: {
   error: Error & { digest?: string };

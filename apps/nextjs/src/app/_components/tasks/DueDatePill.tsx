@@ -26,7 +26,7 @@ export function DueDatePill({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "border-border-strong bg-surface-2/80 text-foreground flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
+            "border-border-strong bg-surface-2/80 text-foreground flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium",
             "hover:border-border-focus hover:bg-surface-2 transition-all",
             "focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
           )}

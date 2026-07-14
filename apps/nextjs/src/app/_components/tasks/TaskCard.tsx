@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -50,8 +51,9 @@ import { CollapsedHoverBadges, ExpandedReadonlyBadges } from "./TaskCardBadges";
 
 // --- Task card ---
 
-export function TaskCard(props: {
+export const TaskCard = memo(function TaskCard(props: {
   task: RouterOutputs["task"]["all"][number];
+  categories?: RouterOutputs["category"]["all"];
 }) {
   const trpc = useTRPC();
   const { data: session } = useSession();
@@ -92,11 +94,14 @@ export function TaskCard(props: {
     hasChanges,
   } = useTaskEditForm(props.task, updateTask);
 
-  // Fetch categories for the select dropdown (only when user is logged in)
-  const { data: categories } = useQuery({
+  // Categories are normally fetched once at the list level and passed down as
+  // a prop to avoid one category.all subscription per card. Fall back to a
+  // self-fetch for consumers that don't provide them (e.g. CalendarView).
+  const { data: fetchedCategories } = useQuery({
     ...trpc.category.all.queryOptions(),
-    enabled: !!session?.user,
+    enabled: !!session?.user && props.categories === undefined,
   });
+  const categories = props.categories ?? fetchedCategories;
 
   const editedCategory = categories?.find((c) => c.id === editedCategoryId);
 
@@ -562,4 +567,4 @@ export function TaskCard(props: {
       </AnimatePresence>
     </div>
   );
-}
+});

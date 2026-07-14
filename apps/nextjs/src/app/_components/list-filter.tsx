@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
-import { useListFilter } from "./list-filter-context";
+import { useListFilter } from "./use-task-filters";
 
 export function ListFilter() {
   const trpc = useTRPC();
@@ -18,7 +18,8 @@ export function ListFilter() {
     ...trpc.taskList.all.queryOptions(),
     enabled: !!session?.user,
   });
-  const { selectedListId, setSelectedListId } = useListFilter();
+  const { selectedListId, setSelectedListId, isTrashView, setTrashView } =
+    useListFilter();
 
   if (!lists) return null;
 
@@ -32,7 +33,7 @@ export function ListFilter() {
         >
           <List className="mr-2 size-4" />
           List
-          {selectedListId !== null && (
+          {(selectedListId !== null || isTrashView) && (
             <div className="bg-primary text-primary-foreground ml-1 flex size-4 items-center justify-center rounded-full text-[10px] font-bold">
               1
             </div>
@@ -47,12 +48,14 @@ export function ListFilter() {
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
               "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-              selectedListId === null && "bg-surface-2 text-white",
+              selectedListId === null &&
+                !isTrashView &&
+                "bg-surface-2 text-white",
             )}
           >
             <List className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">All Tasks</span>
-            {selectedListId === null && (
+            {selectedListId === null && !isTrashView && (
               <div className="size-2 rounded-full bg-emerald-400" />
             )}
           </button>
@@ -63,28 +66,30 @@ export function ListFilter() {
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
               "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-              selectedListId === "personal" && "bg-surface-2 text-white",
+              selectedListId === "personal" &&
+                !isTrashView &&
+                "bg-surface-2 text-white",
             )}
           >
             <User className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">Personal</span>
-            {selectedListId === "personal" && (
+            {selectedListId === "personal" && !isTrashView && (
               <div className="size-2 rounded-full bg-emerald-400" />
             )}
           </button>
 
           {/* Deleted / Archived */}
           <button
-            onClick={() => setSelectedListId("deleted")}
+            onClick={() => setTrashView(true)}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
               "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-              selectedListId === "deleted" && "bg-surface-2 text-white",
+              isTrashView && "bg-surface-2 text-white",
             )}
           >
             <Archive className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">Deleted</span>
-            {selectedListId === "deleted" && (
+            {isTrashView && (
               <div className="size-2 rounded-full bg-emerald-400" />
             )}
           </button>
@@ -99,7 +104,9 @@ export function ListFilter() {
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
                   "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-                  selectedListId === list.id && "bg-surface-2 text-white",
+                  selectedListId === list.id &&
+                    !isTrashView &&
+                    "bg-surface-2 text-white",
                 )}
               >
                 <div
@@ -107,7 +114,7 @@ export function ListFilter() {
                   style={{ backgroundColor: list.color ?? "var(--primary)" }}
                 />
                 <span className="flex-1 truncate text-left">{list.name}</span>
-                {selectedListId === list.id && (
+                {selectedListId === list.id && !isTrashView && (
                   <div className="size-2 rounded-full bg-emerald-400" />
                 )}
               </button>

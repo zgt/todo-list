@@ -1,13 +1,15 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 
+import type { RouterOutputs } from "@acme/api";
+
+import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 import { CalendarView } from "../calendar-view";
 import { useCreateTask } from "../create-task-context";
-import { useListFilter } from "../list-filter-context";
-import { useViewToggle } from "../view-toggle-context";
+import { useListFilter, useViewToggle } from "../use-task-filters";
 import { useFilteredTasks } from "./hooks/useFilteredTasks";
 import { InlineCreateTask } from "./InlineCreateTask";
 import { TaskCard } from "./TaskCard";
@@ -15,17 +17,28 @@ import { TaskCardSkeleton } from "./TaskCardSkeleton";
 
 // --- Task list ---
 
-export function TaskList() {
-  const { selectedListId } = useListFilter();
+type Categories = RouterOutputs["category"]["all"] | undefined;
 
-  if (selectedListId === "deleted") {
-    return <DeletedTaskList />;
+export function TaskList() {
+  const trpc = useTRPC();
+  const { data: session } = useSession();
+  const { isTrashView } = useListFilter();
+
+  // Fetched once here and passed down so cards don't each subscribe to
+  // category.all (one subscription per view instead of one per card).
+  const { data: categories } = useQuery({
+    ...trpc.category.all.queryOptions(),
+    enabled: !!session?.user,
+  });
+
+  if (isTrashView) {
+    return <DeletedTaskList categories={categories} />;
   }
 
-  return <ActiveTaskList />;
+  return <ActiveTaskList categories={categories} />;
 }
 
-function DeletedTaskList() {
+function DeletedTaskList({ categories }: { categories: Categories }) {
   const trpc = useTRPC();
   const { data: tasks } = useSuspenseQuery(trpc.task.deleted.queryOptions());
 
@@ -53,11 +66,11 @@ function DeletedTaskList() {
               type: "spring",
               stiffness: 380,
               damping: 30,
-              delay: i * 0.04,
+              delay: Math.min(i, 8) * 0.04,
             }}
             layout
           >
-            <TaskCard task={task} />
+            <TaskCard task={task} categories={categories} />
           </motion.div>
         ))}
       </AnimatePresence>
@@ -65,7 +78,7 @@ function DeletedTaskList() {
   );
 }
 
-function ActiveTaskList() {
+function ActiveTaskList({ categories }: { categories: Categories }) {
   const trpc = useTRPC();
   const { data: tasks } = useSuspenseQuery(trpc.task.all.queryOptions());
   const { isCreating } = useCreateTask();
@@ -119,11 +132,11 @@ function ActiveTaskList() {
               type: "spring",
               stiffness: 380,
               damping: 30,
-              delay: i * 0.04,
+              delay: Math.min(i, 8) * 0.04,
             }}
             layout
           >
-            <TaskCard task={task} />
+            <TaskCard task={task} categories={categories} />
           </motion.div>
         ))}
       </AnimatePresence>

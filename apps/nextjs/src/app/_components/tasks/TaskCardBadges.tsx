@@ -68,7 +68,7 @@ export function CollapsedHoverBadges({
         <HoverSlideBadge isAnimatingExpand={isAnimatingExpand}>
           <div
             className={cn(
-              "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5",
+              "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium sm:gap-2 sm:px-4 sm:py-1.5",
               isDueDateOverdue
                 ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
                 : "border-border-strong bg-surface-2/80 text-foreground",
@@ -100,7 +100,7 @@ export function CollapsedHoverBadges({
       {editedCategory ? (
         <HoverSlideBadge isAnimatingExpand={isAnimatingExpand}>
           <div
-            className="max-w-[100px] truncate rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:max-w-none sm:px-4 sm:py-1.5"
+            className="max-w-[100px] truncate rounded-full border px-2 py-1 text-xs font-medium sm:max-w-none sm:px-4 sm:py-1.5"
             style={{
               backgroundColor: `${editedCategory.color}60`,
               borderColor: `${editedCategory.color}80`,
@@ -122,7 +122,7 @@ export function CollapsedHoverBadges({
         <HoverSlideBadge isAnimatingExpand={isAnimatingExpand}>
           <div
             className={cn(
-              "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5",
+              "flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium sm:gap-2 sm:px-4 sm:py-1.5",
               getReminderBadgeClasses(task.reminderAt, task.reminderSentAt),
             )}
           >
@@ -137,7 +137,7 @@ export function CollapsedHoverBadges({
       {/* List badge - collapsed row - hidden on mobile */}
       {task.list ? (
         <HoverSlideBadge isAnimatingExpand={isAnimatingExpand}>
-          <div className="text-muted-foreground flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-1.5 sm:px-3 sm:py-1.5">
+          <div className="text-muted-foreground flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-xs font-medium sm:gap-1.5 sm:px-3 sm:py-1.5">
             <span
               className="h-1.5 w-1.5 shrink-0 rounded-full sm:h-2 sm:w-2"
               style={{
@@ -154,7 +154,7 @@ export function CollapsedHoverBadges({
       {/* Recurrence - collapsed row - hidden on mobile */}
       {task.recurrenceRule ? (
         <HoverSlideBadge isAnimatingExpand={isAnimatingExpand}>
-          <div className="border-primary/30 bg-primary/10 text-primary flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium backdrop-blur-md sm:gap-2 sm:px-4 sm:py-1.5">
+          <div className="border-primary/30 bg-primary/10 text-primary flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium sm:gap-2 sm:px-4 sm:py-1.5">
             <Repeat className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             <span className="hidden sm:inline">
               {formatRecurrenceLabel(

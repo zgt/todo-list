@@ -1,9 +1,11 @@
 import type { RouterOutputs } from "@acme/api";
 import type { TaskPriority } from "@acme/db/schema";
 
-import { useCategoryFilter } from "../../category-filter-context";
-import { useListFilter } from "../../list-filter-context";
-import { usePriorityFilter } from "../../priority-filter-context";
+import {
+  useCategoryFilter,
+  useListFilter,
+  usePriorityFilter,
+} from "../../use-task-filters";
 
 // Filters the active task list by the currently selected list, categories, and
 // priorities from their respective filter contexts.

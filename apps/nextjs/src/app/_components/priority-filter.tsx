@@ -7,7 +7,7 @@ import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 
-import { usePriorityFilter } from "./priority-filter-context";
+import { usePriorityFilter } from "./use-task-filters";
 
 const priorities: {
   key: TaskPriority;

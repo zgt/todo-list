@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@acme/ui/popover";
 
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
-import { useCategoryFilter } from "./category-filter-context";
+import { useCategoryFilter } from "./use-task-filters";
 
 interface CategoryNode {
   id: string;

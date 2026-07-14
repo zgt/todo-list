@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorBoundaryCard } from "../_components/error-boundary-card";
+import { ErrorBoundaryCard } from "../../_components/error-boundary-card";
 
 export default function CategoriesError({
   reset,
