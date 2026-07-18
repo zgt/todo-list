@@ -17,7 +17,7 @@ import type { TaskPriority } from "@acme/db/schema";
 import { useSession } from "~/auth/client";
 import { useTRPC } from "~/trpc/react";
 
-type ViewMode = "list" | "calendar";
+type ViewMode = "list" | "calendar" | "cards";
 
 const listParsers = {
   /** null = All Tasks, "personal" = tasks without a list, UUID = specific list */
@@ -135,9 +135,10 @@ export function useSearchFilter() {
 const viewParser = parseAsStringEnum<ViewMode>([
   "list",
   "calendar",
+  "cards",
 ]).withDefault("list");
 
-/** List vs. calendar view toggle, backed by the `?view=` URL param. */
+/** List / calendar / cards view toggle, backed by the `?view=` URL param. */
 export function useViewToggle() {
   const [viewMode, setViewMode] = useQueryState("view", viewParser);
 

@@ -10,6 +10,7 @@ import { useTRPC } from "~/trpc/react";
 import { CalendarView } from "../calendar-view";
 import { useCreateTask } from "../create-task-context";
 import { useListFilter, useViewToggle } from "../use-task-filters";
+import { CardView } from "./cards/CardView";
 import { useFilteredTasks } from "./hooks/useFilteredTasks";
 import { InlineCreateTask } from "./InlineCreateTask";
 import { TaskCard } from "./TaskCard";
@@ -122,6 +123,10 @@ function ActiveTaskList({ categories }: { categories: Categories }) {
 
   if (viewMode === "calendar") {
     return <CalendarView tasks={filteredTasks} />;
+  }
+
+  if (viewMode === "cards") {
+    return <CardView tasks={filteredTasks} categories={categories} />;
   }
 
   return (

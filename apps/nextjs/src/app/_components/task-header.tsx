@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { PlusIcon } from "@radix-ui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, List, RefreshCw, Search } from "lucide-react";
+import {
+  CalendarDays,
+  LayoutGrid,
+  List,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -118,6 +124,18 @@ export function TaskHeader() {
             aria-label="Calendar view"
           >
             <CalendarDays className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("cards")}
+            className={cn(
+              "flex items-center justify-center rounded-full p-1.5 transition-colors",
+              viewMode === "cards"
+                ? "bg-primary/20 text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            aria-label="Card view"
+          >
+            <LayoutGrid className="h-4 w-4" />
           </button>
         </div>
 
