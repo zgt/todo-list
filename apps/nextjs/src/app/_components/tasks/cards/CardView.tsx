@@ -91,9 +91,9 @@ export function CardView({
         </div>
       )}
 
-      {/* Gapless: default stretch alignment makes every card fill its row so
-          tile edges meet flush; the cards' own borders are the only seams. */}
-      <div className="tk-mosaic grid grid-flow-dense grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+      {/* Snug tiling: stretch alignment makes every card fill its row so tile
+          edges line up; a hairline gap keeps the tiles from fusing together. */}
+      <div className="tk-mosaic grid grid-flow-dense grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {entries.map(({ task, weight, dueStatus, snoozed }, i) => (
             <motion.div
