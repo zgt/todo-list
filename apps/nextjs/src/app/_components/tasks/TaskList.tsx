@@ -114,7 +114,7 @@ function ActiveTaskList({ categories }: { categories: Categories }) {
           No tasks match the current filters
         </p>
         <p className="text-muted-foreground mt-2">
-          Try adjusting your list, category, or priority filters
+          Try adjusting your search or your list, category, and priority filters
         </p>
       </div>
     );

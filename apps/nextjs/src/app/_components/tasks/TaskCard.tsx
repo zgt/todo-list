@@ -47,7 +47,11 @@ import {
 } from "./snooze-utils";
 import { SnoozePill, SnoozePopoverContent } from "./SnoozePill";
 import { SubtaskSection } from "./SubtaskSection";
-import { CollapsedHoverBadges, ExpandedReadonlyBadges } from "./TaskCardBadges";
+import {
+  CollapsedHoverBadges,
+  CompactMobileMeta,
+  ExpandedReadonlyBadges,
+} from "./TaskCardBadges";
 
 // --- Task card ---
 
@@ -157,15 +161,24 @@ export const TaskCard = memo(function TaskCard(props: {
           />
         </div>
 
-        {/* Chevron toggle */}
-        <div className="text-muted-foreground shrink-0" aria-hidden="true">
+        {/* Chevron toggle — real control for the expand/collapse of the card */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? "Collapse task" : "Expand task"}
+          className="text-muted-foreground hover:text-foreground focus:ring-border-focus/20 flex size-8 shrink-0 items-center justify-center rounded-md transition-colors focus:ring-2 focus:outline-none"
+        >
           <ChevronRight
             className={cn(
               "h-3 w-3 transition-transform duration-300 sm:h-4 sm:w-4",
               isExpanded && "rotate-90",
             )}
           />
-        </div>
+        </button>
 
         <div className="min-w-0 grow space-y-1 sm:space-y-2">
           {/* Title - inline editable */}
@@ -245,6 +258,15 @@ export const TaskCard = memo(function TaskCard(props: {
               </div>
             </button>
           ) : null}
+
+          {/* Compact metadata — narrow viewports only, where hover badges hide */}
+          {!isExpanded && !isEditing && (
+            <CompactMobileMeta
+              task={props.task}
+              editedDueDate={editedDueDate}
+              isDueDateOverdue={isDueDateOverdue}
+            />
+          )}
         </div>
 
         {/* Collapsed-row hover badges (desktop only) */}

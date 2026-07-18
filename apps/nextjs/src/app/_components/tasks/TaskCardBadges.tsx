@@ -42,6 +42,57 @@ export function HoverSlideBadge({
   );
 }
 
+// Always-visible compact metadata for narrow (<sm) viewports, where the
+// hover-slide badges are hidden. Shows a priority dot (high/low only — medium is
+// the default and stays implicit) and a compact due-date, amber-tinted when
+// overdue to match the card's overdue treatment.
+export function CompactMobileMeta({
+  task,
+  editedDueDate,
+  isDueDateOverdue,
+}: {
+  task: Task;
+  editedDueDate: Date | undefined;
+  isDueDateOverdue: boolean;
+}) {
+  const priorityDot =
+    task.priority === "high" || task.priority === "low" ? task.priority : null;
+
+  if (!priorityDot && !editedDueDate) return null;
+
+  return (
+    <div className="flex items-center gap-2 sm:hidden">
+      {priorityDot && (
+        <>
+          <span
+            className={cn(
+              "size-2 shrink-0 rounded-full",
+              priorityDot === "high" ? "bg-priority-high" : "bg-priority-low",
+            )}
+            aria-hidden="true"
+          />
+          <span className="sr-only">{priorityDot} priority</span>
+        </>
+      )}
+      {editedDueDate && (
+        <span
+          className={cn(
+            "flex items-center gap-1 text-xs font-medium",
+            isDueDateOverdue ? "text-amber-400" : "text-muted-foreground",
+          )}
+        >
+          <Calendar className="h-3 w-3" aria-hidden="true" />
+          {new Date(editedDueDate).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })}
+          {isDueDateOverdue && <span className="sr-only">, overdue</span>}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // Collapsed-row badges (desktop only), revealed on hover.
 export function CollapsedHoverBadges({
   task,

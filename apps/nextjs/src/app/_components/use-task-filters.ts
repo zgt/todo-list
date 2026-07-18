@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  debounce,
   parseAsArrayOf,
   parseAsBoolean,
   parseAsString,
@@ -110,6 +111,24 @@ export function usePriorityFilter() {
     selectedPriorities,
     setSelectedPriorities: (priorities: TaskPriority[]) =>
       void setSelectedPriorities(priorities),
+  };
+}
+
+/**
+ * Free-text search, backed by the `?q=` URL param. The default ("") is kept out
+ * of the URL, and URL writes are debounced so typing doesn't spam history — the
+ * returned value still updates immediately, so consumers filter without lag.
+ */
+const searchParser = parseAsString
+  .withDefault("")
+  .withOptions({ limitUrlUpdates: debounce(200) });
+
+export function useSearchFilter() {
+  const [search, setSearch] = useQueryState("q", searchParser);
+
+  return {
+    search,
+    setSearch: (value: string) => void setSearch(value),
   };
 }
 

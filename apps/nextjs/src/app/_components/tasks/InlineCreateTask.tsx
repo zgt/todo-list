@@ -30,11 +30,13 @@ export function InlineCreateTask({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
-  const { setIsCreating } = useCreateTask();
+  const { setIsCreating, prefillDueDate } = useCreateTask();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState<Date | undefined>(initialDueDate);
+  const [dueDate, setDueDate] = useState<Date | undefined>(
+    initialDueDate ?? prefillDueDate,
+  );
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderAt, setReminderAt] = useState<Date | undefined>();

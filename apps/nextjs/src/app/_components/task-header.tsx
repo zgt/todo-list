@@ -15,8 +15,13 @@ import { useTRPC } from "~/trpc/react";
 import { CategoryFilter } from "./category-filter";
 import { useCreateTask } from "./create-task-context";
 import { ListFilter } from "./list-filter";
+import { MobileFilterSheet } from "./mobile-filter-sheet";
 import { PriorityFilter } from "./priority-filter";
-import { useListFilter, useViewToggle } from "./use-task-filters";
+import {
+  useListFilter,
+  useSearchFilter,
+  useViewToggle,
+} from "./use-task-filters";
 
 export function TaskHeader() {
   const trpc = useTRPC();
@@ -25,6 +30,7 @@ export function TaskHeader() {
   const { setIsCreating } = useCreateTask();
   const { viewMode, setViewMode } = useViewToggle();
   const { isTrashView } = useListFilter();
+  const { search, setSearch } = useSearchFilter();
   const isDeletedView = isTrashView;
 
   const handleRefresh = async () => {
@@ -48,25 +54,22 @@ export function TaskHeader() {
         <SidebarTrigger className="shrink-0" />
 
         {/* Page title */}
-        <h1 className="shrink-0 text-3xl font-bold text-white">Tokilist</h1>
+        <h1 className="shrink-0 text-2xl font-bold text-white sm:text-3xl">
+          Tokilist
+        </h1>
 
         {/* Filters — hidden in Trash view where they have no effect */}
         {!isDeletedView && (
           <>
-            {/* Category Filter */}
-            <div className="shrink-0">
+            {/* Desktop: inline filter pills */}
+            <div className="hidden shrink-0 items-center gap-2 lg:flex">
               <CategoryFilter />
-            </div>
-
-            {/* Priority Filter */}
-            <div className="shrink-0">
               <PriorityFilter />
-            </div>
-
-            {/* List Filter */}
-            <div className="shrink-0">
               <ListFilter />
             </div>
+
+            {/* Mobile/tablet: compact filter + search trigger (bottom sheet) */}
+            <MobileFilterSheet className="shrink-0 lg:hidden" />
           </>
         )}
       </div>
@@ -82,6 +85,9 @@ export function TaskHeader() {
             <Input
               type="search"
               placeholder="Search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search tasks"
               className="border-border bg-surface/50 w-64 rounded-full pl-10 backdrop-blur-sm"
             />
           </div>
