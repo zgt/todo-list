@@ -7,6 +7,39 @@ import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { AppSidebar } from "../../../_components/sidebar-nav";
 import { ListDetail } from "./list-detail";
 
+function ListDetailSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-2xl animate-pulse space-y-6">
+      <div className="glass-card rounded-2xl border border-white/10 p-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-surface-2 h-12 w-12 rounded-xl" />
+          <div className="flex-1 space-y-2">
+            <div className="bg-surface-2 h-6 w-1/3 rounded-md" />
+            <div className="bg-surface-2 h-4 w-1/2 rounded-md" />
+          </div>
+        </div>
+      </div>
+      <div className="glass-card rounded-2xl border border-white/10 p-6">
+        <div className="bg-surface-2 mb-4 h-5 w-28 rounded-md" />
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3"
+            >
+              <div className="bg-surface-2 h-10 w-10 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <div className="bg-surface-2 h-4 w-1/3 rounded-md" />
+                <div className="bg-surface-2 h-3 w-1/2 rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function ListDetailPage({
   params,
 }: {
@@ -41,7 +74,7 @@ export default async function ListDetailPage({
                 </div>
 
                 <div className="custom-scrollbar flex-1 overflow-y-auto px-2 pt-2 pr-4 pb-2">
-                  <Suspense fallback={null}>
+                  <Suspense fallback={<ListDetailSkeleton />}>
                     <ListDetail />
                   </Suspense>
                 </div>

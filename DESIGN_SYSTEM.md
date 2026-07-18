@@ -125,13 +125,13 @@ Green glow — use the `shadow-glow` / `shadow-glow-hover` utilities (`--primary
 ```css
 /* --shadow-glow (active) */
 box-shadow:
-  0 0 20px rgba(74, 222, 128, 0.3),
-  0 0 40px rgba(74, 222, 128, 0.1);
+  0 0 20px rgba(74, 222, 128, 0.4),
+  0 0 40px rgba(74, 222, 128, 0.2);
 
-/* --shadow-glow-hover (hover) */
+/* --shadow-glow-hover (hover; --primary-hover = rgb(134, 239, 172)) */
 box-shadow:
-  0 0 30px rgba(74, 222, 128, 0.5),
-  0 0 60px rgba(74, 222, 128, 0.2);
+  0 0 30px rgba(134, 239, 172, 0.5),
+  0 4px 20px rgba(0, 0, 0, 0.3);
 ```
 
 ### Glass Effects
@@ -404,13 +404,13 @@ Prefer the `shadow-glow` / `shadow-glow-hover` utilities (green, `--primary`
 ```css
 /* --shadow-glow (active elements) */
 box-shadow:
-  0 0 20px rgba(74, 222, 128, 0.3),
-  0 0 40px rgba(74, 222, 128, 0.1);
+  0 0 20px rgba(74, 222, 128, 0.4),
+  0 0 40px rgba(74, 222, 128, 0.2);
 
-/* --shadow-glow-hover (FAB, active pills) */
+/* --shadow-glow-hover (FAB, active pills; --primary-hover = rgb(134, 239, 172)) */
 box-shadow:
-  0 0 30px rgba(74, 222, 128, 0.5),
-  0 0 60px rgba(74, 222, 128, 0.2);
+  0 0 30px rgba(134, 239, 172, 0.5),
+  0 4px 20px rgba(0, 0, 0, 0.3);
 ```
 
 ### Shadows
@@ -714,10 +714,9 @@ export const shadows = {
   lg: "0px 16px 32px 0px rgba(0, 0, 0, 0.5)",
   xl: "0px 24px 48px 0px rgba(0, 0, 0, 0.6)",
   "2xl": "0px 32px 64px 0px rgba(0, 0, 0, 0.7)",
-  // Green glow (--primary #4ade80 = rgb(74, 222, 128))
-  glow: "0 0 20px rgba(74, 222, 128, 0.3), 0 0 40px rgba(74, 222, 128, 0.1)",
-  glowHover:
-    "0 0 30px rgba(74, 222, 128, 0.5), 0 0 60px rgba(74, 222, 128, 0.2)",
+  // Green glow (--primary #4ade80, --primary-hover #86efac)
+  glow: "0 0 20px rgba(74, 222, 128, 0.4), 0 0 40px rgba(74, 222, 128, 0.2)",
+  glowHover: "0 0 30px rgba(134, 239, 172, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3)",
 };
 ```
 

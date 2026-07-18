@@ -127,8 +127,8 @@ export const TaskCard = memo(function TaskCard(props: {
         props.task.completed
           ? "border-primary/50 shadow-glow bg-primary/5 opacity-50"
           : isOverdue
-            ? "hover:shadow-glowHover border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)]"
-            : "hover:shadow-glowHover hover:border-border-focus hover:bg-surface-2",
+            ? "hover:shadow-glow-hover border-amber-500/20 bg-[rgba(255,165,0,0.08)] hover:border-amber-500/30 hover:bg-[rgba(255,165,0,0.12)]"
+            : "hover:shadow-glow-hover hover:border-border-focus hover:bg-surface-2",
       )}
     >
       {/* Collapsed row */}

@@ -127,7 +127,7 @@ export function TaskHeader() {
           <Button
             size="lg"
             aria-label="New Task"
-            className="bg-primary shadow-glow hover:shadow-glowHover gap-1 rounded-full px-3 text-sm sm:gap-2 sm:px-4 sm:text-base lg:px-6"
+            className="bg-primary shadow-glow hover:shadow-glow-hover gap-1 rounded-full px-3 text-sm sm:gap-2 sm:px-4 sm:text-base lg:px-6"
             onClick={() => setIsCreating(true)}
           >
             <span className="hidden font-semibold lg:inline">New Task</span>
