@@ -267,8 +267,9 @@ export const DynamicTaskCard = memo(function DynamicTaskCard({
         ...(glow ? ({ "--tk-glow": glow } as React.CSSProperties) : {}),
       }}
       className={cn(
-        "group relative rounded-2xl outline-none",
-        "focus-visible:ring-border-focus focus-visible:ring-2",
+        "group relative h-full rounded-2xl outline-none",
+        // z-lift on focus so the ring isn't painted over by flush neighbors
+        "focus-visible:ring-border-focus focus-visible:z-20 focus-visible:ring-2",
         canDrag && "cursor-grab active:cursor-grabbing",
         !canDrag && !flipped && "cursor-pointer",
       )}
@@ -284,7 +285,7 @@ export const DynamicTaskCard = memo(function DynamicTaskCard({
           transformStyle: "preserve-3d",
         }}
         className={cn(
-          "relative rounded-2xl border shadow-lg transition-colors duration-300",
+          "relative h-full rounded-2xl border shadow-lg transition-colors duration-300",
           "border-border-strong",
           task.completed
             ? "border-primary/40"
@@ -411,7 +412,7 @@ export const DynamicTaskCard = memo(function DynamicTaskCard({
               transition={{ duration: 0.18, ease: "easeOut" }}
               style={{ transformStyle: "preserve-3d" }}
               className={cn(
-                "flex flex-col",
+                "flex h-full flex-col",
                 hero ? "min-h-44 gap-3 p-5 sm:p-6" : "gap-2.5 p-4",
                 compact ? "min-h-24" : !hero && "min-h-36",
                 task.completed && "opacity-60",

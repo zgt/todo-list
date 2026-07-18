@@ -49,6 +49,9 @@ const CARD_VIEW_CSS = `
     animation: none;
   }
 }
+/* Gapless tessellation: tighten every rounded-2xl inside the mosaic so the
+   corner notches where four tiles meet stay small. */
+.tk-mosaic { --radius-2xl: 0.75rem; }
 `;
 
 /**
@@ -88,7 +91,9 @@ export function CardView({
         </div>
       )}
 
-      <div className="grid grid-flow-dense grid-cols-1 items-start gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
+      {/* Gapless: default stretch alignment makes every card fill its row so
+          tile edges meet flush; the cards' own borders are the only seams. */}
+      <div className="tk-mosaic grid grid-flow-dense grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {entries.map(({ task, weight, dueStatus, snoozed }, i) => (
             <motion.div
