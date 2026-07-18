@@ -14,6 +14,7 @@ import { useFilteredTasks } from "./hooks/useFilteredTasks";
 import { InlineCreateTask } from "./InlineCreateTask";
 import { TaskCard } from "./TaskCard";
 import { TaskCardSkeleton } from "./TaskCardSkeleton";
+import { TrashTaskCard } from "./TrashTaskCard";
 
 // --- Task list ---
 
@@ -45,9 +46,10 @@ function DeletedTaskList({ categories }: { categories: Categories }) {
   if (tasks.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <p className="text-xl font-semibold text-white">No deleted tasks</p>
-        <p className="text-muted-foreground mt-2">
-          Tasks you delete will appear here
+        <p className="text-xl font-semibold text-white">Trash is empty</p>
+        <p className="text-muted-foreground mt-2 max-w-sm">
+          Deleted tasks stay here until you delete them forever. Completed tasks
+          are archived here automatically a day after completion.
         </p>
       </div>
     );
@@ -55,6 +57,10 @@ function DeletedTaskList({ categories }: { categories: Categories }) {
 
   return (
     <div className="flex w-full flex-col gap-4">
+      <p className="text-muted-foreground text-sm">
+        Deleted tasks stay here until you delete them forever. Completed tasks
+        are archived here automatically a day after completion.
+      </p>
       <AnimatePresence mode="popLayout">
         {tasks.map((task, i) => (
           <motion.div
@@ -70,7 +76,7 @@ function DeletedTaskList({ categories }: { categories: Categories }) {
             }}
             layout
           >
-            <TaskCard task={task} categories={categories} />
+            <TrashTaskCard task={task} categories={categories} />
           </motion.div>
         ))}
       </AnimatePresence>

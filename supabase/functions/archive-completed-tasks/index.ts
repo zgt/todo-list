@@ -28,22 +28,24 @@ Deno.serve(async (req) => {
     // Calculate cutoff time: 24 hours ago
     const cutoffTime = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    console.log(
-      `Archiving tasks completed before ${cutoffTime.toISOString()}`,
-    );
+    console.log(`Archiving tasks completed before ${cutoffTime.toISOString()}`);
 
     // Update tasks that are:
     // 1. Marked as completed
     // 2. Completed more than 24 hours ago
     // 3. Not already archived
-    // 4. Not soft deleted
+    // 4. Not soft deleted (user deletions stay distinct in Trash)
     const { data, error, count } = await supabaseClient
       .from("task")
       .update({
-        deleted_at: new Date().toISOString(),
+        archived_at: new Date().toISOString(),
+        // Bump updated_at so the mobile sync pull watermark picks this up
+        // (Drizzle's $onUpdate doesn't apply to Supabase client writes).
+        updated_at: new Date().toISOString(),
       })
       .eq("completed", true)
       .lt("completed_at", cutoffTime.toISOString())
+      .is("archived_at", null)
       .is("deleted_at", null)
       .select("id", { count: "exact" });
 

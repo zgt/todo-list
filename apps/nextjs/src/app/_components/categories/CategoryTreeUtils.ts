@@ -49,9 +49,11 @@ export function calculateRadialLayout(roots: CategoryTreeNode[]): {
   links: TreeLayoutLink[];
 } {
   // Build a virtual root that contains all real roots
+  // Accessible name only — the visible label is suppressed for the hub node
+  // (see CategoryNode) so it doesn't echo the page's "Categories" heading.
   const virtualRoot: HierarchyInput = {
     id: "__root__",
-    name: "Categories",
+    name: "All categories",
     color: "#50C878",
     parentId: null,
     data: null,

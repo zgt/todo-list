@@ -5,15 +5,19 @@ import type { TreeLayoutNode } from "./CategoryTreeUtils";
 interface CategoryNodeProps {
   node: TreeLayoutNode;
   isHovered: boolean;
+  hasActions: boolean;
   onMouseEnter: (id: string) => void;
   onMouseLeave: () => void;
+  onActivate: (id: string) => void;
 }
 
 export function CategoryNode({
   node,
   isHovered,
+  hasActions,
   onMouseEnter,
   onMouseLeave,
+  onActivate,
 }: CategoryNodeProps) {
   const radius = node.isRoot ? 24 : 14;
   const fontSize = node.isRoot ? 14 : 11;
@@ -23,12 +27,14 @@ export function CategoryNode({
       transform={`translate(${node.x},${node.y})`}
       onMouseEnter={() => onMouseEnter(node.id)}
       onMouseLeave={onMouseLeave}
-      style={{ cursor: node.isRoot ? "default" : "pointer" }}
+      onClick={() => onActivate(node.id)}
+      style={{ cursor: "pointer" }}
       role="treeitem"
       aria-label={node.name}
+      aria-expanded={hasActions ? isHovered : undefined}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "Enter") onMouseEnter(node.id);
+        if (e.key === "Enter") onActivate(node.id);
       }}
     >
       {/* Invisible hit area */}
@@ -69,20 +75,22 @@ export function CategoryNode({
         }}
       />
 
-      {/* Label */}
-      <text
-        y={radius + 16}
-        textAnchor="middle"
-        fill={isHovered ? "#fff" : "var(--foreground)"}
-        fontSize={fontSize}
-        fontWeight={isHovered || node.isRoot ? 600 : 400}
-        style={{
-          transition: "fill 200ms ease, font-weight 200ms ease",
-          pointerEvents: "none",
-        }}
-      >
-        {node.name.length > 16 ? `${node.name.slice(0, 14)}…` : node.name}
-      </text>
+      {/* Label — suppressed for the hub node so it doesn't echo the page title */}
+      {!node.isRoot && (
+        <text
+          y={radius + 16}
+          textAnchor="middle"
+          fill={isHovered ? "#fff" : "var(--foreground)"}
+          fontSize={fontSize}
+          fontWeight={isHovered ? 600 : 400}
+          style={{
+            transition: "fill 200ms ease, font-weight 200ms ease",
+            pointerEvents: "none",
+          }}
+        >
+          {node.name.length > 16 ? `${node.name.slice(0, 14)}…` : node.name}
+        </text>
+      )}
     </g>
   );
 }

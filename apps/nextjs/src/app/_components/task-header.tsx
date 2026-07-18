@@ -50,35 +50,42 @@ export function TaskHeader() {
         {/* Page title */}
         <h1 className="shrink-0 text-3xl font-bold text-white">Tokilist</h1>
 
-        {/* Category Filter */}
-        <div className="shrink-0">
-          <CategoryFilter />
-        </div>
+        {/* Filters — hidden in Trash view where they have no effect */}
+        {!isDeletedView && (
+          <>
+            {/* Category Filter */}
+            <div className="shrink-0">
+              <CategoryFilter />
+            </div>
 
-        {/* Priority Filter */}
-        <div className="shrink-0">
-          <PriorityFilter />
-        </div>
+            {/* Priority Filter */}
+            <div className="shrink-0">
+              <PriorityFilter />
+            </div>
 
-        {/* List Filter */}
-        <div className="shrink-0">
-          <ListFilter />
-        </div>
+            {/* List Filter */}
+            <div className="shrink-0">
+              <ListFilter />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Right side controls */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        {/* Search input */}
-        <div className="relative hidden lg:block">
-          <div className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
-            <Search className="h-5 w-5" />
+        {/* Search input — hidden in Trash view where it has no effect */}
+        {!isDeletedView && (
+          <div className="relative hidden lg:block">
+            <div className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
+              <Search className="h-5 w-5" />
+            </div>
+            <Input
+              type="search"
+              placeholder="Search"
+              className="border-border bg-surface/50 w-64 rounded-full pl-10 backdrop-blur-sm"
+            />
           </div>
-          <Input
-            type="search"
-            placeholder="Search"
-            className="border-border bg-surface/50 w-64 rounded-full pl-10 backdrop-blur-sm"
-          />
-        </div>
+        )}
 
         {/* View toggle */}
         <div className="border-border-strong bg-surface-2/80 flex items-center rounded-full border p-0.5">

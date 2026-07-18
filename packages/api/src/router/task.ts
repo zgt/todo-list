@@ -221,7 +221,11 @@ export const taskRouter = {
     .input(z.object({ id: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const task = await ctx.db.query.Task.findFirst({
-        where: and(eq(Task.id, input.id), isNull(Task.deletedAt)),
+        where: and(
+          eq(Task.id, input.id),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+        ),
         with: { category: true, subtasks: true, list: true },
       });
 
@@ -384,7 +388,11 @@ export const taskRouter = {
 
       // Fetch existing task to check access and recurrence info
       const existing = await ctx.db.query.Task.findFirst({
-        where: and(eq(Task.id, id), isNull(Task.deletedAt)),
+        where: and(
+          eq(Task.id, id),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+        ),
         columns: {
           userId: true,
           listId: true,
@@ -546,7 +554,11 @@ export const taskRouter = {
 
       // Fetch existing task to check access
       const existing = await ctx.db.query.Task.findFirst({
-        where: and(eq(Task.id, input), isNull(Task.deletedAt)),
+        where: and(
+          eq(Task.id, input),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+        ),
         columns: { userId: true, listId: true },
       });
 
@@ -585,10 +597,18 @@ export const taskRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Fetch the soft-deleted task to check access
+      // Fetch the trashed/archived task to check access
       const existing = await ctx.db.query.Task.findFirst({
-        where: and(eq(Task.id, input), isNotNull(Task.deletedAt)),
-        columns: { userId: true, listId: true },
+        where: and(
+          eq(Task.id, input),
+          or(isNotNull(Task.deletedAt), isNotNull(Task.archivedAt)),
+        ),
+        columns: {
+          userId: true,
+          listId: true,
+          deletedAt: true,
+          archivedAt: true,
+        },
       });
 
       if (!existing) {
@@ -608,14 +628,51 @@ export const taskRouter = {
         });
       }
 
+      // Un-complete tasks that were auto-archived (not user-deleted) —
+      // otherwise the archive cron would re-archive them on its next run.
+      const wasArchivedOnly =
+        existing.archivedAt !== null && existing.deletedAt === null;
+
       const newDate = new Date();
       await ctx.db
         .update(Task)
         .set({
           deletedAt: null,
+          archivedAt: null,
           lastSyncedAt: newDate,
+          ...(wasArchivedOnly ? { completed: false, completedAt: null } : {}),
         })
         .where(eq(Task.id, input));
+
+      return { success: true };
+    }),
+
+  // Permanently delete a trashed or archived task (irreversible). Subtasks
+  // cascade via the Subtask.taskId FK (onDelete: "cascade").
+  deleteForever: protectedProcedure
+    .input(z.uuid())
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      // Only hard-delete rows the user owns that are already trashed or
+      // archived — never an active task.
+      const deleted = await ctx.db
+        .delete(Task)
+        .where(
+          and(
+            eq(Task.id, input),
+            eq(Task.userId, userId),
+            or(isNotNull(Task.deletedAt), isNotNull(Task.archivedAt)),
+          ),
+        )
+        .returning({ id: Task.id });
+
+      if (deleted.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Task not found",
+        });
+      }
 
       return { success: true };
     }),
@@ -626,7 +683,11 @@ export const taskRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
       const existingTasks = await ctx.db.query.Task.findMany({
-        where: and(inArray(Task.id, input), isNull(Task.deletedAt)),
+        where: and(
+          inArray(Task.id, input),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+        ),
         columns: { id: true, userId: true, listId: true },
       });
       for (const task of existingTasks) {
@@ -661,7 +722,11 @@ export const taskRouter = {
       const userId = ctx.session.user.id;
 
       const existing = await ctx.db.query.Task.findFirst({
-        where: and(eq(Task.id, input.id), isNull(Task.deletedAt)),
+        where: and(
+          eq(Task.id, input.id),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+        ),
         columns: { userId: true, listId: true },
       });
 
@@ -706,7 +771,11 @@ export const taskRouter = {
       const userId = ctx.session.user.id;
 
       const existing = await ctx.db.query.Task.findFirst({
-        where: and(eq(Task.id, input.id), isNull(Task.deletedAt)),
+        where: and(
+          eq(Task.id, input.id),
+          isNull(Task.deletedAt),
+          isNull(Task.archivedAt),
+        ),
         columns: { userId: true, listId: true },
       });
 

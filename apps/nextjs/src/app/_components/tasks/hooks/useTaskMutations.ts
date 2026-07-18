@@ -5,7 +5,8 @@ import { toast } from "@acme/ui/toast";
 import { useTRPC } from "~/trpc/react";
 
 // Task-level mutations for a single task card: optimistic update, optimistic
-// delete with an undo toast, and restore (used by the delete undo action).
+// delete with an undo toast, restore (delete undo + Trash view), and
+// permanent delete-forever (Trash view).
 export function useTaskMutations(taskId: string) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -55,6 +56,19 @@ export function useTaskMutations(taskId: string) {
     }),
   );
 
+  const deleteForeverTask = useMutation(
+    trpc.task.deleteForever.mutationOptions({
+      onSuccess: () => toast.success("Task deleted forever"),
+      onError: () => toast.error("Failed to delete task"),
+      onSettled: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries(trpc.task.pathFilter()),
+          queryClient.invalidateQueries(trpc.taskList.pathFilter()),
+        ]);
+      },
+    }),
+  );
+
   const deleteTask = useMutation(
     trpc.task.delete.mutationOptions({
       onMutate: async () => {
@@ -93,5 +107,5 @@ export function useTaskMutations(taskId: string) {
     }),
   );
 
-  return { updateTask, restoreTask, deleteTask };
+  return { updateTask, restoreTask, deleteTask, deleteForeverTask };
 }

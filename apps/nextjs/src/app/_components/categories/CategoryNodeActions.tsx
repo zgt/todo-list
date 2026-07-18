@@ -6,7 +6,7 @@ interface CategoryNodeActionsProps {
   x: number;
   y: number;
   nodeRadius: number;
-  onEdit: () => void;
+  onEdit?: () => void;
   onAddChild: () => void;
   onDelete?: () => void;
   onMouseEnter: () => void;
@@ -45,12 +45,16 @@ export function CategoryNodeActions({
   onMouseLeave,
 }: CategoryNodeActionsProps) {
   const actions = [
-    {
-      icon: Pencil,
-      onClick: onEdit,
-      label: "Edit category",
-      variant: "default" as const,
-    },
+    ...(onEdit
+      ? [
+          {
+            icon: Pencil,
+            onClick: onEdit,
+            label: "Edit category",
+            variant: "default" as const,
+          },
+        ]
+      : []),
     {
       icon: Plus,
       onClick: onAddChild,

@@ -6,7 +6,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Plus, X } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
 import { cn } from "@acme/ui";
@@ -176,12 +176,21 @@ export function CategoryTree() {
 
   return (
     <div className="flex h-full flex-col">
-      <CategoryTreeVisualization
-        tree={tree}
-        onEdit={openEdit}
-        onAddChild={openAdd}
-        onDelete={setDeleteTarget}
-      />
+      <div className="mb-3 flex items-center justify-end">
+        <Button size="sm" onClick={() => openAdd(null)}>
+          <Plus className="size-4" />
+          New category
+        </Button>
+      </div>
+
+      <div className="min-h-0 flex-1">
+        <CategoryTreeVisualization
+          tree={tree}
+          onEdit={openEdit}
+          onAddChild={openAdd}
+          onDelete={setDeleteTarget}
+        />
+      </div>
 
       {/* Edit / Add dialog */}
       <Dialog
@@ -306,17 +315,16 @@ function ParentTreeItem({
   return (
     <>
       <div
-        className="hover:bg-surface-2 flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white"
+        className="flex items-center gap-1"
         style={{ paddingLeft: `${8 + depth * 20}px` }}
-        onClick={() => onSelect(isSelected ? undefined : node.id)}
       >
         {hasChildren ? (
-          <div
-            className="hover:bg-muted/50 mr-1 flex size-4 items-center justify-center rounded-sm transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
+          <button
+            type="button"
+            aria-label={expanded ? "Collapse" : "Expand"}
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+            className="hover:bg-muted/50 focus-visible:ring-border-focus flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <ChevronDown
               className={cn(
@@ -324,19 +332,26 @@ function ParentTreeItem({
                 !expanded && "-rotate-90",
               )}
             />
-          </div>
+          </button>
         ) : (
-          <div className="mr-1 size-4" />
+          <span className="size-4 shrink-0" />
         )}
 
-        <div
-          className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
-          style={{ backgroundColor: node.color }}
-        />
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          onClick={() => onSelect(isSelected ? undefined : node.id)}
+          className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 flex flex-1 items-center rounded-md border border-transparent px-2 py-1 text-left text-sm hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+        >
+          <span
+            className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
+            style={{ backgroundColor: node.color }}
+          />
 
-        <span className="flex-1 truncate">{node.name}</span>
+          <span className="flex-1 truncate">{node.name}</span>
 
-        {isSelected && <Check className="text-primary ml-2 size-4" />}
+          {isSelected && <Check className="text-primary ml-2 size-4" />}
+        </button>
       </div>
 
       {hasChildren &&
@@ -409,23 +424,25 @@ function ParentPicker({
       <PopoverContent className="w-[280px] p-2" align="start">
         <div className="flex flex-col gap-0.5">
           {/* Root option */}
-          <div
-            className="hover:bg-surface-2 flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white"
+          <button
+            type="button"
+            aria-pressed={displayValue === null}
+            className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 flex items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
             style={{ paddingLeft: "8px" }}
             onClick={() => {
               onChange(null);
               setOpen(false);
             }}
           >
-            <div className="mr-1 size-4" />
+            <span className="mr-1 size-4" />
             <X className="text-muted-foreground mr-2 size-2.5" />
-            <span className="text-muted-foreground flex-1 truncate">
+            <span className="text-muted-foreground flex-1 truncate text-left">
               None (root)
             </span>
             {displayValue === null && (
               <Check className="text-primary ml-2 size-4" />
             )}
-          </div>
+          </button>
 
           {filteredTree.map((node) => (
             <ParentTreeItem

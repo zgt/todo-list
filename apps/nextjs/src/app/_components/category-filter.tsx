@@ -77,18 +77,17 @@ function CategoryTreeItem({
   return (
     <>
       <div
-        className="hover:bg-surface-2 flex cursor-pointer items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white"
+        className="flex items-center gap-1"
         style={{ paddingLeft: `${8 + depth * 20}px` }}
-        onClick={() => onToggle(node.id)}
       >
         {/* Expansion chevron — only for parents */}
         {hasChildren ? (
-          <div
-            className="hover:bg-muted/50 mr-1 flex size-4 items-center justify-center rounded-sm transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExpanded(!expanded);
-            }}
+          <button
+            type="button"
+            aria-label={expanded ? "Collapse" : "Expand"}
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+            className="hover:bg-muted/50 focus-visible:ring-border-focus flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             <ChevronDown
               className={cn(
@@ -96,22 +95,30 @@ function CategoryTreeItem({
                 !expanded && "-rotate-90",
               )}
             />
-          </div>
+          </button>
         ) : (
-          <div className="mr-1 size-4" />
+          <span className="size-4 shrink-0" />
         )}
 
-        {/* Color dot */}
-        <div
-          className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
-          style={{ backgroundColor: node.color }}
-        />
+        {/* Row toggle */}
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          onClick={() => onToggle(node.id)}
+          className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 flex flex-1 items-center rounded-md border border-transparent px-2 py-1 text-left text-sm hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+        >
+          {/* Color dot */}
+          <span
+            className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
+            style={{ backgroundColor: node.color }}
+          />
 
-        {/* Label */}
-        <span className="flex-1 truncate">{node.name}</span>
+          {/* Label */}
+          <span className="flex-1 truncate">{node.name}</span>
 
-        {/* Check */}
-        {isSelected && <Check className="text-primary ml-2 size-4" />}
+          {/* Check */}
+          {isSelected && <Check className="text-primary ml-2 size-4" />}
+        </button>
       </div>
 
       {/* Children */}
