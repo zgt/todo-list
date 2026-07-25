@@ -98,7 +98,10 @@ function classifyTask(title: string): TaskType {
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 function sanitize(name: string): string {
-  return name.replace(/[/\\:*?"<>|#^[\]]/g, "-").trim().slice(0, 100);
+  const cleaned = name.replace(/[/\\:*?"<>|#^[\]]/g, "-").trim().slice(0, 100);
+  // A name that collapses to only dots ("..", ".") would still act as a
+  // path segment with special meaning — never emit one.
+  return /^\.*$/.test(cleaned) ? "untitled" : cleaned;
 }
 
 function ensureDir(dirPath: string): void {

@@ -213,7 +213,18 @@ export const syncRouter = {
 
           if (operation === "create") {
             if (serverTask) {
-              // Task already exists on server - possible duplicate or conflict
+              // Task already exists on server - possible duplicate or
+              // conflict. Only reveal the row to callers who could write it;
+              // otherwise any authenticated user could read arbitrary task
+              // rows by pushing known UUIDs as "create" ops.
+              const authError = await authorizeWrite(serverTask);
+              if (authError) {
+                results.failures.push({
+                  id,
+                  error: "Task not found on server",
+                });
+                continue;
+              }
               results.conflicts.push({
                 id,
                 serverVersion: serverTask.version,
@@ -279,9 +290,11 @@ export const syncRouter = {
               continue;
             }
 
+            // Same message as the missing-row case so an unauthorized caller
+            // cannot use the difference as an existence oracle.
             const authError = await authorizeWrite(serverTask);
             if (authError) {
-              results.failures.push({ id, error: authError });
+              results.failures.push({ id, error: "Task not found on server" });
               continue;
             }
 
@@ -390,9 +403,10 @@ export const syncRouter = {
               continue;
             }
 
+            // Same message as the missing-row case — no existence oracle.
             const authError = await authorizeWrite(serverTask);
             if (authError) {
-              results.failures.push({ id, error: authError });
+              results.failures.push({ id, error: "Task not found on server" });
               continue;
             }
 
