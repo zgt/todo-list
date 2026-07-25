@@ -16,8 +16,8 @@ import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
 
 const EXPO_ORIGIN = Linking.createURL("", { scheme: "tokilist" });
+// Opt-in only — production builds must not trace auth by default.
 const DEBUG_AUTH =
-  process.env.NODE_ENV === "production" ||
   process.env.AUTH_TRACE === "1" ||
   process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 const authTraceBySource = new Map<string, AuthCookieTraceDetails>();
@@ -90,7 +90,6 @@ function invalidateExpoAuthSession(
         source,
         status,
         sentCookieNames: traceDetails.sentCookieNames,
-        sentCookie: traceDetails.sentCookie,
       });
 
       try {

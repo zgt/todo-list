@@ -42,6 +42,7 @@ async function getSessionTraceDetails(
   req: NextRequest,
   response: Response,
 ): Promise<Record<string, unknown>> {
+  if (!DEBUG_AUTH) return {};
   if (!req.nextUrl.pathname.endsWith("/get-session")) return {};
 
   try {

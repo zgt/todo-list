@@ -24,6 +24,11 @@ const GENERIC: ErrorCopy = {
 // Maps Better Auth OAuth error codes to friendly copy. Codes with the same
 // meaning share an entry.
 const ERROR_COPY: Record<string, ErrorCopy> = {
+  account_not_linked: {
+    title: "Use your original sign-in method",
+    description:
+      "An account with this email already exists under a different sign-in provider. Sign in with the provider you originally used.",
+  },
   state_mismatch: {
     title: "Your sign-in session expired",
     description: "Your sign-in session expired. Please try signing in again.",

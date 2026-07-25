@@ -22,7 +22,8 @@ const baseUrl =
  * the production environment, where a stray/leftover env var would silently
  * shorten every user's session.
  */
-const allowDebugSessionOverrides = env.VERCEL_ENV !== "production";
+const allowDebugSessionOverrides =
+  env.VERCEL_ENV !== "production" && env.NODE_ENV !== "production";
 
 export const auth = initAuth({
   baseUrl,
