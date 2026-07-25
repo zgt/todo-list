@@ -103,7 +103,9 @@ export async function getUpcomingReminders(
 
     // Apply the per-user offset precisely now that we have it (G006) — the
     // SQL query above only narrowed candidates down to the widened window.
-    if (!isReminderDue(task.reminderAt, preferences.reminderOffsetMinutes, now)) {
+    if (
+      !isReminderDue(task.reminderAt, preferences.reminderOffsetMinutes, now)
+    ) {
       continue;
     }
 
@@ -169,10 +171,7 @@ export async function processReminders(
         }
       }
     } catch (error) {
-      console.error(
-        `[Reminders] Push failed for task ${task.id}:`,
-        error,
-      );
+      console.error(`[Reminders] Push failed for task ${task.id}:`, error);
       pushOk = false;
     }
 
@@ -206,10 +205,7 @@ export async function processReminders(
 
         await sendEmail({ to: taskUser.email, subject, html });
       } catch (error) {
-        console.error(
-          `[Reminders] Email failed for task ${task.id}:`,
-          error,
-        );
+        console.error(`[Reminders] Email failed for task ${task.id}:`, error);
       }
     }
 

@@ -92,14 +92,11 @@ export function usePushTokenRegistration(enabled: boolean) {
     // Retry on foreground too — covers the case where all backoff attempts
     // were exhausted (e.g. device was offline) rather than leaving the
     // session permanently unregistered.
-    const sub = AppState.addEventListener(
-      "change",
-      (state: AppStateStatus) => {
-        if (state === "active" && registeredForUserRef.current !== userId) {
-          void attemptRegistration();
-        }
-      },
-    );
+    const sub = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active" && registeredForUserRef.current !== userId) {
+        void attemptRegistration();
+      }
+    });
 
     return () => {
       clearRetry();

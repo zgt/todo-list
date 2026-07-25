@@ -21,12 +21,8 @@ import {
  */
 export function useWidgetSync(tasks: WidgetTask[], enabled = true): void {
   const lastSyncRef = useRef<number>(0);
-  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const trailingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trailingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enabled) {
@@ -56,14 +52,11 @@ export function useWidgetSync(tasks: WidgetTask[], enabled = true): void {
       if (trailingTimeoutRef.current) {
         clearTimeout(trailingTimeoutRef.current);
       }
-      trailingTimeoutRef.current = setTimeout(
-        () => {
-          lastSyncRef.current = Date.now();
-          void syncWidget(tasks);
-          trailingTimeoutRef.current = null;
-        },
-        1000 - elapsed,
-      );
+      trailingTimeoutRef.current = setTimeout(() => {
+        lastSyncRef.current = Date.now();
+        void syncWidget(tasks);
+        trailingTimeoutRef.current = null;
+      }, 1000 - elapsed);
     }, 500);
 
     return () => {

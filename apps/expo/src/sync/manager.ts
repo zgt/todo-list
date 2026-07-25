@@ -227,9 +227,7 @@ export class SyncManager {
         }
       }
 
-      console.log(
-        `✅ Pull from server completed: ${totalSynced} tasks synced`,
-      );
+      console.log(`✅ Pull from server completed: ${totalSynced} tasks synced`);
     } catch (error) {
       console.error("❌ Pull from server failed:", error);
       throw error;

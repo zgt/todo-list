@@ -7,8 +7,7 @@ const SESSION_TOKEN_MIRROR_KEY = "expo_session_token_cookie";
 // and trace details must not carry cookie-derived material (they are exported
 // to Sentry via captureAuthIssue in api.tsx).
 const DEBUG_AUTH =
-  process.env.AUTH_TRACE === "1" ||
-  process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
+  process.env.AUTH_TRACE === "1" || process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 
 interface StoredCookie {
   value: string;

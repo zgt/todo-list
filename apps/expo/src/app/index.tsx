@@ -204,10 +204,8 @@ export default function Index() {
     setRippleTrigger((prev) => (prev ?? 0) + 1);
   }, []);
   // Swipe tutorial auto-show on first launch
-  const {
-    shouldShow: shouldShowTutorial,
-    isLoading: tutorialLoading,
-  } = useSwipeTutorial(session?.user.id);
+  const { shouldShow: shouldShowTutorial, isLoading: tutorialLoading } =
+    useSwipeTutorial(session?.user.id);
   const tutorialShownRef = useRef(false);
   useEffect(() => {
     if (
@@ -222,13 +220,7 @@ export default function Index() {
       const timer = setTimeout(() => router.push("/swipe-tutorial"), 600);
       return () => clearTimeout(timer);
     }
-  }, [
-    tutorialLoading,
-    shouldShowTutorial,
-    session,
-    isPending,
-    router,
-  ]);
+  }, [tutorialLoading, shouldShowTutorial, session, isPending, router]);
 
   const { effectiveCategoryIds } = useCategoryFilter();
   const [selectedPriorities, setSelectedPriorities] = useState<PriorityLevel[]>(

@@ -1,6 +1,6 @@
 import { AppState, Platform } from "react-native";
-import NetInfo from "@react-native-community/netinfo";
 import * as Linking from "expo-linking";
+import NetInfo from "@react-native-community/netinfo";
 import * as Sentry from "@sentry/react-native";
 import {
   focusManager,
@@ -14,18 +14,17 @@ import superjson from "superjson";
 import type { AppRouter } from "@acme/api";
 
 import type { AuthCookieTraceDetails } from "./auth-storage";
+import { authClient } from "./auth";
 import {
   clearExpoAuthSessionStorage,
   getSessionTokenCookieHeaderResult,
 } from "./auth-storage";
-import { authClient } from "./auth";
 import { getBaseUrl } from "./base-url";
 
 const EXPO_ORIGIN = Linking.createURL("", { scheme: "tokilist" });
 // Opt-in only — production builds must not trace auth by default.
 const DEBUG_AUTH =
-  process.env.AUTH_TRACE === "1" ||
-  process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
+  process.env.AUTH_TRACE === "1" || process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 const authTraceBySource = new Map<string, AuthCookieTraceDetails>();
 const sentryAuthEvents = new Map<string, number>();
 let authInvalidationPromise: Promise<void> | null = null;

@@ -91,7 +91,10 @@ async function getOtherMemberIdsWithPref(
  * meaningful signal when delivery didn't fully succeed instead of the
  * previous total silence.
  */
-function logPushResult(context: string, result: Awaited<ReturnType<typeof sendPushToUsers>>) {
+function logPushResult(
+  context: string,
+  result: Awaited<ReturnType<typeof sendPushToUsers>>,
+) {
   if (result.failed > 0) {
     console.warn(
       `[Push] ${context}: ${result.failed}/${result.attempted} notification(s) failed`,

@@ -41,9 +41,7 @@ export function checkRateLimit(
   windowMs = WINDOW_MS,
 ): boolean {
   const now = Date.now();
-  const timestamps = (hits.get(key) ?? []).filter(
-    (t) => now - t < windowMs,
-  );
+  const timestamps = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
 
   if (timestamps.length >= limit) {
     hits.set(key, timestamps);

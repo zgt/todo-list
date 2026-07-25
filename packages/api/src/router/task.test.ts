@@ -87,11 +87,7 @@ describe("getNextDueDate (F045)", () => {
 
   describe("yearly — day clamping for Feb 29 anchors", () => {
     it("Feb 29 (leap year) + 1 year clamps to Feb 28 in a non-leap year", () => {
-      const result = getNextDueDate(
-        new Date(2024, 1, 29, 12, 0),
-        "yearly",
-        1,
-      );
+      const result = getNextDueDate(new Date(2024, 1, 29, 12, 0), "yearly", 1);
       expect(result).toEqual(new Date(2025, 1, 28, 12, 0));
     });
 
