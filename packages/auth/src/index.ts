@@ -80,6 +80,15 @@ export function initAuth<
           },
         }),
     },
+    account: {
+      // Never auto-link a second OAuth provider into an existing account on a
+      // provider-attested email match — that allows silent account takeover
+      // when an email address changes hands (GHSA-g38m-r43w-p2q7 class).
+      // Linking additional providers must be an explicit, authenticated flow.
+      accountLinking: {
+        enabled: false,
+      },
+    },
     session: {
       expiresIn: options.sessionExpiresIn ?? 60 * 60 * 24 * 30, // 30 days
       updateAge: options.sessionUpdateAge ?? 60 * 60 * 24, // 24 hours

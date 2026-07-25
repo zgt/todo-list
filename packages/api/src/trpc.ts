@@ -13,21 +13,10 @@ import { z, ZodError } from "zod/v4";
 import type { Auth } from "@acme/auth";
 import { db } from "@acme/db/client";
 
-const DEBUG_AUTH =
-  process.env.NODE_ENV === "production" || process.env.AUTH_TRACE === "1";
-
-function djb2(input: string): string {
-  let hash = 5381;
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (hash * 33) ^ input.charCodeAt(i);
-  }
-  return (hash >>> 0).toString(16);
-}
-
-function cookieFingerprint(cookie: string | null): string {
-  if (!cookie) return "none";
-  return `${cookie.length}:${djb2(cookie)}`;
-}
+// Tracing is strictly opt-in via AUTH_TRACE — never enabled by default in any
+// environment, and never logs cookie-derived material (a stable fingerprint
+// would let anyone with log access correlate every call to one session).
+const DEBUG_AUTH = process.env.AUTH_TRACE === "1";
 
 function getCookieNames(cookie: string | null): string[] {
   if (!cookie) return [];
@@ -68,7 +57,6 @@ export const createTRPCContext = async (opts: {
   const incomingCookie = opts.headers.get("cookie");
   authTrace("resolving session", {
     cookieNames: getCookieNames(incomingCookie),
-    incomingCookie: cookieFingerprint(incomingCookie),
     disableCookieCache: true,
   });
 
@@ -86,7 +74,6 @@ export const createTRPCContext = async (opts: {
     authApi,
     authTrace: {
       cookieNames: getCookieNames(incomingCookie),
-      incomingCookie: cookieFingerprint(incomingCookie),
       disableCookieCache: true,
     },
     session,

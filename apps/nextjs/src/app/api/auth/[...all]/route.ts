@@ -3,20 +3,9 @@ import type { NextRequest } from "next/server";
 import { auth } from "~/auth/server";
 import { env } from "~/env";
 
-const DEBUG_AUTH = env.NODE_ENV === "production" || env.AUTH_TRACE === "1";
-
-function djb2(input: string): string {
-  let hash = 5381;
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (hash * 33) ^ input.charCodeAt(i);
-  }
-  return (hash >>> 0).toString(16);
-}
-
-function cookieFingerprint(cookie: string | null): string {
-  if (!cookie) return "none";
-  return `${cookie.length}:${djb2(cookie)}`;
-}
+// Tracing is strictly opt-in via AUTH_TRACE — never enabled by default in any
+// environment, and never logs query values or cookie-derived material.
+const DEBUG_AUTH = env.AUTH_TRACE === "1";
 
 function getCookieNames(cookie: string | null): string[] {
   if (!cookie) return [];
@@ -73,9 +62,9 @@ const handler = async (req: NextRequest) => {
     traceId,
     method: req.method,
     path: req.nextUrl.pathname,
-    query: req.nextUrl.search,
+    // Param names only — query values carry OAuth authorization codes.
+    queryParamNames: [...req.nextUrl.searchParams.keys()],
     incomingCookieNames: getCookieNames(req.headers.get("cookie")),
-    incomingCookie: cookieFingerprint(req.headers.get("cookie")),
   });
 
   const response = await auth.handler(req);
@@ -85,7 +74,6 @@ const handler = async (req: NextRequest) => {
     traceId,
     status: response.status,
     setCookieNames: getSetCookieNames(response.headers.get("set-cookie")),
-    setCookie: cookieFingerprint(response.headers.get("set-cookie")),
     ...sessionTraceDetails,
   });
 
