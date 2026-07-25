@@ -277,7 +277,7 @@ export const TaskListInvite = pgTable(
       .uuid("list_id")
       .notNull()
       .references(() => TaskList.id, { onDelete: "cascade" }),
-    inviteCode: t.varchar("invite_code", { length: 20 }).notNull().unique(),
+    inviteCode: t.varchar("invite_code", { length: 64 }).notNull().unique(),
     role: t.varchar({ length: 20 }).notNull().default("editor"),
     maxUses: t.integer("max_uses"),
     useCount: t.integer("use_count").notNull().default(0),
