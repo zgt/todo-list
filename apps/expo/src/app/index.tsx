@@ -38,6 +38,7 @@ import type { ProfileMenuRef } from "../components/ProfileMenu";
 import type { SnoozeSheetRef } from "../components/SnoozeSheet";
 import type { TaskFormData } from "../components/TaskFormSheet";
 import { PriorityFilter } from "~/components/priority-filter";
+import { isPushTokenRegistered } from "~/hooks/usePushTokenRegistration";
 import { useSwipeTutorial } from "~/hooks/useSwipeTutorial";
 import { useWidgetActions, useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc, vanillaTrpc } from "~/utils/api";
@@ -314,13 +315,17 @@ export default function Index() {
   // Reschedule local notifications whenever serverTasks/prefs refresh
   // (covers app foreground, pull-to-refresh, and tasks edited on web).
   //
-  // Channel policy (F120): push and local reminders are mutually exclusive
-  // per user, to avoid a duplicate ping for push-enabled users.
-  //   - pushReminders ON  -> server push is the only channel; cancel any
-  //     stale local reminders and stop.
-  //   - pushReminders OFF -> schedule locally at reminderAt - offsetMinutes
-  //     using the server-stored offset (F095), including snoozed tasks
-  //     (F086).
+  // Channel policy (F120, D2): local reminders are cancelled in favor of
+  // push ONLY when pushReminders is on AND this device's push token is
+  // actually registered — otherwise (registration failed, permission
+  // denied, token pruned server-side) a push-on user with no working push
+  // channel would get zero reminders anywhere. In that case we fall back
+  // to local scheduling, same as the push-off path.
+  //   - pushReminders ON  + token registered     -> server push is the
+  //     only channel; cancel any stale local reminders and stop.
+  //   - pushReminders OFF or token not registered -> schedule locally at
+  //     reminderAt - offsetMinutes using the server-stored offset (F095),
+  //     including snoozed tasks (F086).
   // The cancel/reconcile pass always runs, even with zero tasks, so stale
   // local reminders don't linger once everything is completed/deleted
   // (F092) — this effect no longer bails out early on an empty task list.
@@ -329,10 +334,16 @@ export default function Index() {
     if (!serverTasks || !notifPrefs) return;
 
     const { pushReminders, reminderOffsetMinutes } = notifPrefs;
+    const pushTokenRegistered = isPushTokenRegistered(session?.user.id);
+    const cancelLocalOnly = pushReminders && pushTokenRegistered;
 
-    // Build a fingerprint to avoid redundant reschedules. When push is on,
-    // the exact task data doesn't matter — we only need to know to cancel.
-    const fingerprint = pushReminders
+    // Build a fingerprint to avoid redundant reschedules. When cancelling
+    // locally in favor of push, the exact task data doesn't matter — we
+    // only need to know to cancel. Registration state feeds into which
+    // branch this resolves to, so a late-succeeding registration produces
+    // a different fingerprint here and re-runs the effect, instead of
+    // being short-circuited forever by a constant "push-on" string (D2).
+    const fingerprint = cancelLocalOnly
       ? "push-on"
       : [
           reminderOffsetMinutes,
@@ -346,7 +357,7 @@ export default function Index() {
     if (fingerprint === lastRescheduleRef.current) return;
     lastRescheduleRef.current = fingerprint;
 
-    if (pushReminders) {
+    if (cancelLocalOnly) {
       void cancelAllTaskReminders();
       return;
     }
@@ -376,7 +387,7 @@ export default function Index() {
           dueDate: t.reminderAt,
         })),
     );
-  }, [serverTasks, notifPrefs, snoozedTasksData]);
+  }, [serverTasks, notifPrefs, snoozedTasksData, session?.user.id]);
 
   // Handle notification tap: open the task's edit sheet
   useEffect(() => {
@@ -780,7 +791,12 @@ export default function Index() {
         snoozedUntil,
         notifPrefs?.reminderOffsetMinutes ?? 0,
       );
-      await scheduleTaskReminder(taskId, task.title, trigger);
+      // No reminderAt means the server would never push for this task
+      // either — don't manufacture a local-only ping from snoozedUntil
+      // alone (D4).
+      if (trigger) {
+        await scheduleTaskReminder(taskId, task.title, trigger);
+      }
     }
   };
 

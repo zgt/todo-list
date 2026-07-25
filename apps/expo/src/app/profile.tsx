@@ -29,10 +29,10 @@ import {
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
-import { removeRegisteredPushToken } from "~/hooks/usePushTokenRegistration";
 import { queryClient as globalQueryClient, trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
+import { cancelAllTaskReminders } from "~/utils/notifications";
 import { clearWidgetData } from "~/utils/widget";
 
 const APP_VERSION =
@@ -74,10 +74,9 @@ export default function ProfileScreen() {
   const deleteAccountMutation = useMutation(
     trpc.user.deleteAccount.mutationOptions({
       onSuccess: async () => {
-        // Best-effort: revoke the push token server-side before the session
-        // goes away. Must never block sign-out.
-        await removeRegisteredPushToken();
-
+        // No removeRegisteredPushToken() call here (D7): account deletion
+        // cascades push token removal server-side, and by this point the
+        // session is already gone, so the mutate would just 401.
         try {
           await authClient.signOut();
         } catch (error) {
@@ -85,6 +84,9 @@ export default function ProfileScreen() {
         }
         clearSessionTokenCookieMirror();
         clearWidgetData();
+        // Best-effort: this account's locally scheduled task reminders
+        // shouldn't keep firing after deletion (D6).
+        void cancelAllTaskReminders();
         globalQueryClient.clear();
       },
       onError: (error) => {

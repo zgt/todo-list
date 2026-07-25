@@ -83,6 +83,18 @@ function isNonRetryableTaskError(error: unknown): boolean {
   return code === "NOT_FOUND" || code === "FORBIDDEN";
 }
 
+/** Age cap past which a pending widget action is dropped outright (D8):
+ * only NOT_FOUND/FORBIDDEN were treated as poison, so an action that fails
+ * for any other persistent reason (malformed entry, a server 500, an auth
+ * hiccup that never resolves) retried on every foreground forever. 24h is
+ * generous for a same-device queue that's normally drained within seconds. */
+const MAX_PENDING_ACTION_AGE_MS = 24 * 60 * 60 * 1000;
+
+function isStalePendingAction(action: PendingWidgetAction): boolean {
+  const ageMs = Date.now() - new Date(action.timestamp).getTime();
+  return Number.isNaN(ageMs) || ageMs > MAX_PENDING_ACTION_AGE_MS;
+}
+
 /**
  * Hook to process pending widget actions (e.g., task toggles from interactive widget).
  * Reads the pending actions queue from UserDefaults on app foreground and syncs to server.
@@ -124,6 +136,20 @@ export function useWidgetActions(
         let anySucceeded = false;
 
         for (const action of actions) {
+          if (isStalePendingAction(action)) {
+            // Permanently drop actions that have been retried for over 24h
+            // (D8) — whatever's failing (malformed entry, a persistent
+            // server error, an auth hiccup that never resolves) isn't
+            // NOT_FOUND/FORBIDDEN but is clearly never going to succeed, so
+            // don't retry it on every foreground forever.
+            console.warn(
+              "[Widget] Dropping stale pending action (>24h):",
+              action.taskId,
+            );
+            removePendingWidgetAction(action);
+            continue;
+          }
+
           try {
             await updateTaskMutationRef.current({
               id: action.taskId,

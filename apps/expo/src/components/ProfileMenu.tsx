@@ -35,7 +35,13 @@ import { removeRegisteredPushToken } from "~/hooks/usePushTokenRegistration";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
+import { cancelAllTaskReminders } from "~/utils/notifications";
 import { clearWidgetData } from "~/utils/widget";
+
+/** Cap on revoking the push token during sign-out (D7): an offline device
+ * would otherwise stall at the OS socket timeout. A stale row server-side
+ * is an acceptable trade-off for sign-out never hanging. */
+const SIGN_OUT_PUSH_TOKEN_TIMEOUT_MS = 2000;
 
 export interface ProfileMenuRef {
   present: () => void;
@@ -110,8 +116,14 @@ export const ProfileMenu = forwardRef<ProfileMenuRef, ProfileMenuProps>(
 
     const handleSignOut = async () => {
       // Best-effort: revoke the push token server-side before the session
-      // goes away. Must never block sign-out.
-      await removeRegisteredPushToken();
+      // goes away. Must never block sign-out — cap at ~2s so an offline
+      // device doesn't stall waiting on an OS socket timeout (D7).
+      await Promise.race([
+        removeRegisteredPushToken(),
+        new Promise<void>((resolve) =>
+          setTimeout(resolve, SIGN_OUT_PUSH_TOKEN_TIMEOUT_MS),
+        ),
+      ]);
 
       try {
         await authClient.signOut();
@@ -120,6 +132,9 @@ export const ProfileMenu = forwardRef<ProfileMenuRef, ProfileMenuProps>(
       } finally {
         clearSessionTokenCookieMirror();
         clearWidgetData();
+        // Best-effort: the previous account's locally scheduled task
+        // reminders shouldn't keep firing after sign-out (D6).
+        void cancelAllTaskReminders();
         queryClient.clear();
         dismissMenu();
       }

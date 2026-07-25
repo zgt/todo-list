@@ -84,11 +84,12 @@ export function SubtaskSection({
               }}
               className={cn(
                 "size-3.5 shrink-0 rounded border-2 transition-all",
-                // Invisible pseudo-element grows the pointer target to 30px
-                // (past the WCAG 24px minimum) without changing layout; kept
-                // just under the 30px row pitch so neighbouring rows' targets
-                // don't overlap.
-                "relative before:absolute before:-inset-2 before:content-['']",
+                // Invisible pseudo-element grows the pointer target past the
+                // WCAG 24px minimum without changing layout. Vertical reach is
+                // kept tighter than horizontal so it stays inside this row's
+                // ~24-30px pitch — otherwise a click in the band above row N+1
+                // hits N+1's box instead of the one directly under the cursor.
+                "relative before:absolute before:-inset-x-2 before:-inset-y-1 before:content-['']",
                 subtask.completed
                   ? "bg-primary border-primary text-black"
                   : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",

@@ -161,9 +161,12 @@ export const TaskCard = memo(function TaskCard(props: {
           className={cn(
             "size-4 shrink-0 rounded-full border-2 transition-all sm:size-6",
             // The glyph stays small, but an invisible pseudo-element grows
-            // the pointer target past the WCAG 24px minimum (32px here)
-            // without changing layout.
-            "relative before:absolute before:-inset-2 before:content-[''] sm:before:-inset-1",
+            // the pointer target past the WCAG 24px minimum without changing
+            // layout. Horizontal reach is constrained to the glyph itself so
+            // the hit area doesn't bleed into the card body to its left —
+            // that strip used to toggle completion instead of expanding the
+            // card (and was a dead zone when the checkbox is disabled).
+            "relative before:absolute before:-inset-x-1 before:-inset-y-2 before:content-[''] sm:before:-inset-x-0 sm:before:-inset-y-1",
             props.task.completed
               ? "bg-primary border-primary text-black"
               : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",

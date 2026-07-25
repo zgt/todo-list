@@ -185,20 +185,20 @@ export async function cancelAllTaskReminders(): Promise<void> {
  * user's offset (F086). Snoozed tasks are excluded from task.all, so
  * without this they'd simply lose their local reminder for local-only
  * users once a reschedule pass ran.
+ *
+ * Returns null when the task has no reminderAt set — the server never
+ * sends a push for such a task, so a local reminder derived purely from
+ * snoozedUntil would be a local-only ping the server would never send
+ * (D4). Callers must skip scheduling when this returns null.
  */
 export function computeSnoozeReminderTrigger(
   reminderAt: Date | null,
   snoozedUntil: Date,
   offsetMinutes: number,
-): Date {
-  const reminderTriggerMs = reminderAt
-    ? reminderAt.getTime() - offsetMinutes * 60_000
-    : null;
-  const triggerMs =
-    reminderTriggerMs !== null
-      ? Math.max(snoozedUntil.getTime(), reminderTriggerMs)
-      : snoozedUntil.getTime();
-  return new Date(triggerMs);
+): Date | null {
+  if (reminderAt === null) return null;
+  const reminderTriggerMs = reminderAt.getTime() - offsetMinutes * 60_000;
+  return new Date(Math.max(snoozedUntil.getTime(), reminderTriggerMs));
 }
 
 /**
@@ -244,14 +244,18 @@ export async function rescheduleAllReminders(
   );
 
   await Promise.all(
-    snoozedTasks.map((t) =>
-      scheduleTaskReminder(
-        t.id,
-        t.title,
-        computeSnoozeReminderTrigger(t.dueDate, t.snoozedUntil, offsetMinutes),
-        0,
-      ),
-    ),
+    snoozedTasks.map((t) => {
+      const trigger = computeSnoozeReminderTrigger(
+        t.dueDate,
+        t.snoozedUntil,
+        offsetMinutes,
+      );
+      // No reminderAt means the server would never push for this task
+      // either — don't manufacture a local-only ping from snoozedUntil
+      // alone (D4).
+      if (!trigger) return Promise.resolve(null);
+      return scheduleTaskReminder(t.id, t.title, trigger, 0);
+    }),
   );
 }
 

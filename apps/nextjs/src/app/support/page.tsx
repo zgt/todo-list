@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+// Pure static content: opts out of the root layout's cookies() call so this
+// page keeps build-time prerendering (cookies() returns empty under
+// force-static).
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Support - Tokilist",
   description:

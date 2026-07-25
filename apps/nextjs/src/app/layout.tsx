@@ -45,9 +45,11 @@ const geistMono = Geist_Mono({
 });
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
-  // SidebarProvider persists the open/closed state to a `sidebar_state` cookie
-  // on every toggle; seed the initial state from it so the sidebar renders in
-  // the state the user left it. Absent cookie => closed, as before.
+  // Seed the sidebar from the cookie its toggle writes. Routes that render
+  // the sidebar (/, /text-cleaner, (app)/*) are dynamic anyway via
+  // getSession(); the static marketing pages opt out with
+  // `dynamic = "force-static"`, under which cookies() returns empty and the
+  // sidebar (which they don't render) just defaults closed.
   const cookieStore = await cookies();
   const sidebarDefaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 

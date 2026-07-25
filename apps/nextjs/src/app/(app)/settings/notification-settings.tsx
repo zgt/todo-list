@@ -79,6 +79,7 @@ export function NotificationSettings() {
           trpc.notification.getSharedListNotificationPref.queryFilter(),
         );
         setLocalSharedList(null);
+        toast.success("Preferences saved");
       },
       onError: () => {
         toast.error("Failed to save shared list preference");
@@ -86,26 +87,35 @@ export function NotificationSettings() {
     }),
   );
 
+  // Reminder prefs and the shared-list toggle come from separate queries and
+  // are saved via separate mutations, so their "changed" state (and whether
+  // to fire each mutation) must be tracked independently — otherwise a
+  // resolved-undefined reminder-prefs query blocks Save even when only the
+  // shared-list toggle changed, and saving fires the reminder mutation even
+  // when nothing about reminders changed.
+  const reminderPrefsChanged =
+    !!prefs &&
+    (emailReminders !== prefs.emailReminders ||
+      pushReminders !== prefs.pushReminders ||
+      reminderOffsetMinutes !== prefs.reminderOffsetMinutes);
+
   const sharedListChanged =
     !!sharedPrefs && sharedListActivity !== sharedPrefs.sharedListActivity;
 
   const handleSave = () => {
-    updatePrefs.mutate({
-      emailReminders,
-      pushReminders,
-      reminderOffsetMinutes,
-    });
+    if (reminderPrefsChanged) {
+      updatePrefs.mutate({
+        emailReminders,
+        pushReminders,
+        reminderOffsetMinutes,
+      });
+    }
     if (sharedListChanged) {
       updateSharedPref.mutate({ sharedListActivity });
     }
   };
 
-  const hasChanges =
-    !!prefs &&
-    (emailReminders !== prefs.emailReminders ||
-      pushReminders !== prefs.pushReminders ||
-      reminderOffsetMinutes !== prefs.reminderOffsetMinutes ||
-      sharedListChanged);
+  const hasChanges = reminderPrefsChanged || sharedListChanged;
 
   const isSaving = updatePrefs.isPending || updateSharedPref.isPending;
 
