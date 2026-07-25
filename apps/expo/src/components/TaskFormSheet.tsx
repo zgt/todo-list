@@ -145,6 +145,13 @@ const RECURRENCE_OPTIONS: {
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
+  // G032: server + RecurrenceRuleValue already support "custom" (every N
+  // days via recurrenceInterval) — the interval row below already renders
+  // an "every N day(s)" unit label for any non-daily rule via its default
+  // ternary branch, so adding this pill is the only piece that was missing.
+  // Without it, a task already saved with recurrenceRule "custom" showed no
+  // pill highlighted at all when the edit sheet opened.
+  { value: "custom", label: "Custom" },
 ];
 
 const DISMISS_GUARD_MS = 500;
@@ -453,7 +460,13 @@ export function TaskFormSheet({
     return presentOnNextFrame(reason);
   }, [isSheetMounted, mode, presentOnNextFrame]);
 
-  // Controlled by parent state when isOpen is provided.
+  // Controlled by parent state when isOpen is provided. Mounting is derived
+  // during render (see the `isSheetMounted || isOpen` condition below)
+  // rather than synced here via setIsSheetMounted — that used to run inside
+  // this effect, which is exactly what react-hooks/set-state-in-effect
+  // flags. By the time this effect fires the sheet is already mounted
+  // (render already committed with `isOpen` true), so it only needs to
+  // trigger the present()/dismiss() side effect, not any state change.
   useEffect(() => {
     if (isOpen === undefined) return;
     debugTaskFormSheet("controlled isOpen changed", {
@@ -462,14 +475,14 @@ export function TaskFormSheet({
       isOpen,
     });
     if (isOpen) {
-      schedulePresent("controlled");
+      presentOnNextFrame("controlled");
     } else {
       debugTaskFormSheet("controlled dismiss()", { instanceId, mode });
       Keyboard.dismiss();
       hasDismissedKeyboardForCloseRef.current = true;
       bottomSheetRef.current?.dismiss();
     }
-  }, [instanceId, mode, isOpen, schedulePresent]);
+  }, [instanceId, mode, isOpen, presentOnNextFrame]);
 
   // For create mode: trigger opens the sheet
   const handleOpenSheet = useCallback(() => {
@@ -676,7 +689,7 @@ export function TaskFormSheet({
       )}
 
       {/* Bottom Sheet */}
-      {(mode === "edit" || isSheetMounted) && (
+      {(mode === "edit" || isSheetMounted || isOpen) && (
         <BSModal
           ref={bottomSheetRef}
           stackBehavior="push"

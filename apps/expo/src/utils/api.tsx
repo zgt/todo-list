@@ -1,6 +1,12 @@
+import { AppState, Platform } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
 import * as Linking from "expo-linking";
 import * as Sentry from "@sentry/react-native";
-import { QueryClient } from "@tanstack/react-query";
+import {
+  focusManager,
+  onlineManager,
+  QueryClient,
+} from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import superjson from "superjson";
@@ -25,6 +31,27 @@ const sentryAuthEvents = new Map<string, number>();
 let authInvalidationPromise: Promise<void> | null = null;
 
 export const queryClient = new QueryClient();
+
+// G033: React Query never learns about app foreground/reconnect on its own
+// in React Native — wire it to AppState and NetInfo so queries refetch when
+// the app comes back to the foreground or the device regains connectivity
+// (the standard TanStack Query RN recipe). Registered once at module scope.
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
+
+focusManager.setEventListener((handleFocus) => {
+  const subscription = AppState.addEventListener("change", (status) => {
+    if (Platform.OS !== "web") {
+      handleFocus(status === "active");
+    }
+  });
+  return () => {
+    subscription.remove();
+  };
+});
 
 function captureAuthIssue(
   key: string,

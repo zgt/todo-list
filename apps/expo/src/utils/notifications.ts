@@ -180,8 +180,34 @@ export async function cancelAllTaskReminders(): Promise<void> {
 }
 
 /**
+ * Compute the local trigger time for a snoozed task's reminder: whichever
+ * is later, the snooze expiry or the original reminder time minus the
+ * user's offset (F086). Snoozed tasks are excluded from task.all, so
+ * without this they'd simply lose their local reminder for local-only
+ * users once a reschedule pass ran.
+ */
+export function computeSnoozeReminderTrigger(
+  reminderAt: Date | null,
+  snoozedUntil: Date,
+  offsetMinutes: number,
+): Date {
+  const reminderTriggerMs = reminderAt
+    ? reminderAt.getTime() - offsetMinutes * 60_000
+    : null;
+  const triggerMs =
+    reminderTriggerMs !== null
+      ? Math.max(snoozedUntil.getTime(), reminderTriggerMs)
+      : snoozedUntil.getTime();
+  return new Date(triggerMs);
+}
+
+/**
  * Reschedule reminders for all tasks that have due dates.
  * Call on app launch as a safety net.
+ *
+ * `snoozedTasks` covers tasks currently snoozed — they're excluded from the
+ * main active-task list (task.all) but still need a local reminder so
+ * snoozing keeps working for local-only (push-off) users (F086).
  */
 export async function rescheduleAllReminders(
   tasks: {
@@ -192,8 +218,16 @@ export async function rescheduleAllReminders(
     deletedAt: Date | null;
   }[],
   offsetMinutes = 0,
+  snoozedTasks: {
+    id: string;
+    title: string;
+    snoozedUntil: Date;
+    dueDate: Date | null;
+  }[] = [],
 ): Promise<void> {
-  // Cancel all existing task reminders
+  // Cancel all existing task reminders. Always runs, even with an empty
+  // task list, so stale local reminders don't linger once everything is
+  // completed/deleted (F092).
   await cancelAllTaskReminders();
 
   // Reschedule for all active tasks with due dates
@@ -207,6 +241,17 @@ export async function rescheduleAllReminders(
       .map((t) =>
         scheduleTaskReminder(t.id, t.title, t.dueDate, offsetMinutes),
       ),
+  );
+
+  await Promise.all(
+    snoozedTasks.map((t) =>
+      scheduleTaskReminder(
+        t.id,
+        t.title,
+        computeSnoozeReminderTrigger(t.dueDate, t.snoozedUntil, offsetMinutes),
+        0,
+      ),
+    ),
   );
 }
 

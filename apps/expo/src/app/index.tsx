@@ -31,7 +31,7 @@ import {
   Trash2,
 } from "lucide-react-native";
 
-import type { AppRouter, RouterOutputs } from "@acme/api";
+import type { AppRouter, RouterInputs, RouterOutputs } from "@acme/api";
 
 import type { PriorityLevel } from "../components/priority-config";
 import type { ProfileMenuRef } from "../components/ProfileMenu";
@@ -43,7 +43,9 @@ import { useWidgetActions, useWidgetSync } from "~/hooks/useWidgetSync";
 import { trpc, vanillaTrpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import {
+  cancelAllTaskReminders,
   cancelTaskReminder,
+  computeSnoozeReminderTrigger,
   rescheduleAllReminders,
   scheduleTaskReminder,
 } from "~/utils/notifications";
@@ -60,6 +62,7 @@ import { CategoryFilter } from "./_components/category-filter";
 import { useCategoryFilter } from "./_components/category-filter-context";
 
 type ServerTask = RouterOutputs["task"]["all"][number];
+type TaskUpdateFields = Partial<Omit<RouterInputs["task"]["update"], "id">>;
 
 function debugIndex(event: string, details?: Record<string, unknown>) {
   console.log(`[Index ${new Date().toISOString()}] ${event}`, details ?? "");
@@ -242,11 +245,22 @@ export default function Index() {
   );
   const snoozeSheetRef = useRef<SnoozeSheetRef>(null);
 
-  useEffect(() => {
+  // Force-close the create sheet when the trash filter or a pending delete
+  // becomes active. Adjusted during render (the same pattern TaskFormSheet
+  // uses to sync state off prop/state changes) rather than in a useEffect,
+  // which is what react-hooks/set-state-in-effect flagged here.
+  const [prevCloseGuardDeps, setPrevCloseGuardDeps] = useState<
+    [string | null, number]
+  >([selectedListFilter, deletePendingIds.size]);
+  if (
+    selectedListFilter !== prevCloseGuardDeps[0] ||
+    deletePendingIds.size !== prevCloseGuardDeps[1]
+  ) {
+    setPrevCloseGuardDeps([selectedListFilter, deletePendingIds.size]);
     if (selectedListFilter === "deleted" || deletePendingIds.size > 0) {
       setIsCreateSheetOpen(false);
     }
-  }, [deletePendingIds.size, selectedListFilter]);
+  }
 
   const queryClient = useQueryClient();
 
@@ -296,30 +310,81 @@ export default function Index() {
     }),
   );
 
-  // Reschedule local notifications whenever serverTasks refreshes
-  // (covers app foreground, pull-to-refresh, and tasks edited on web)
+  // Snoozed tasks are excluded from task.all (F086) — fetch them separately
+  // so local reminders still fire for them once their snooze lapses.
+  const { data: snoozedTasksData } = useQuery(
+    trpc.task.snoozed.queryOptions(undefined, {
+      enabled: !!session,
+      staleTime: 60 * 1000,
+    }),
+  );
+
+  // Reschedule local notifications whenever serverTasks/prefs refresh
+  // (covers app foreground, pull-to-refresh, and tasks edited on web).
+  //
+  // Channel policy (F120): push and local reminders are mutually exclusive
+  // per user, to avoid a duplicate ping for push-enabled users.
+  //   - pushReminders ON  -> server push is the only channel; cancel any
+  //     stale local reminders and stop.
+  //   - pushReminders OFF -> schedule locally at reminderAt - offsetMinutes
+  //     using the server-stored offset (F095), including snoozed tasks
+  //     (F086).
+  // The cancel/reconcile pass always runs, even with zero tasks, so stale
+  // local reminders don't linger once everything is completed/deleted
+  // (F092) — this effect no longer bails out early on an empty task list.
   const lastRescheduleRef = useRef<string>("");
   useEffect(() => {
-    if (!serverTasks || serverTasks.length === 0) return;
-    if (!notifPrefs?.pushReminders) return;
+    if (!serverTasks || !notifPrefs) return;
 
-    // Build a fingerprint to avoid redundant reschedules
-    const fingerprint = serverTasks
-      .map((t) => `${t.id}:${t.reminderAt?.getTime() ?? 0}:${t.completed}`)
-      .join("|");
+    const { pushReminders, reminderOffsetMinutes } = notifPrefs;
+
+    // Build a fingerprint to avoid redundant reschedules. When push is on,
+    // the exact task data doesn't matter — we only need to know to cancel.
+    const fingerprint = pushReminders
+      ? "push-on"
+      : [
+          reminderOffsetMinutes,
+          ...serverTasks.map(
+            (t) => `${t.id}:${t.reminderAt?.getTime() ?? 0}:${t.completed}`,
+          ),
+          ...(snoozedTasksData ?? []).map(
+            (t) => `s:${t.id}:${t.snoozedUntil?.getTime() ?? 0}`,
+          ),
+        ].join("|");
     if (fingerprint === lastRescheduleRef.current) return;
     lastRescheduleRef.current = fingerprint;
+
+    if (pushReminders) {
+      void cancelAllTaskReminders();
+      return;
+    }
 
     void rescheduleAllReminders(
       serverTasks.map((t) => ({
         id: t.id,
         title: t.title,
-        dueDate: t.reminderAt ?? t.dueDate,
+        // Only reminderAt-bearing tasks get a reminder locally, matching
+        // the server cron (packages/api/src/lib/reminders.ts): a dueDate
+        // alone never triggers a reminder server-side, so it shouldn't
+        // trigger a local one either.
+        dueDate: t.reminderAt,
         completed: t.completed,
         deletedAt: t.deletedAt,
       })),
+      reminderOffsetMinutes,
+      (snoozedTasksData ?? [])
+        .filter(
+          (t): t is typeof t & { snoozedUntil: Date } =>
+            t.snoozedUntil !== null,
+        )
+        .map((t) => ({
+          id: t.id,
+          title: t.title,
+          snoozedUntil: t.snoozedUntil,
+          dueDate: t.reminderAt,
+        })),
     );
-  }, [serverTasks, notifPrefs?.pushReminders]);
+  }, [serverTasks, notifPrefs, snoozedTasksData]);
 
   // Handle notification tap: open the task's edit sheet
   useEffect(() => {
@@ -704,15 +769,26 @@ export default function Index() {
       },
       onSettled: async () => {
         await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+        await queryClient.invalidateQueries(trpc.task.snoozed.queryFilter());
       },
     }),
   );
 
   const handleSnooze = async (taskId: string, snoozedUntil: Date) => {
     await snoozeMutation.mutateAsync({ id: taskId, snoozedUntil });
+    // Channel policy: only schedule a local reminder here when push
+    // reminders are off — the reschedule effect above will otherwise pick
+    // this up via the invalidated task.snoozed query, and scheduling one
+    // unconditionally here duplicated the server push (F120).
+    if (notifPrefs?.pushReminders) return;
     const task = serverTasks?.find((t) => t.id === taskId);
     if (task) {
-      await scheduleTaskReminder(taskId, task.title, snoozedUntil);
+      const trigger = computeSnoozeReminderTrigger(
+        task.reminderAt,
+        snoozedUntil,
+        notifPrefs?.reminderOffsetMinutes ?? 0,
+      );
+      await scheduleTaskReminder(taskId, task.title, trigger);
     }
   };
 
@@ -918,18 +994,55 @@ export default function Index() {
   const handleEditSubmit = async (data: TaskFormData) => {
     if (!editingTask) return;
 
-    await updateMutation.mutateAsync({
-      id: editingTask.id,
-      title: data.title,
-      description: data.description || undefined,
-      categoryId: data.categoryId,
-      dueDate: data.dueDate,
-      priority: data.priority ?? "medium",
-      reminderAt: data.reminderAt,
-      listId: data.listId,
-      recurrenceRule: data.recurrenceRule,
-      recurrenceInterval: data.recurrenceInterval,
-    });
+    // Diff against the snapshot taken when the sheet opened — `editingTask`
+    // is set once in handleTaskPress and doesn't get refreshed while the
+    // sheet is open, so it's a stable baseline. Only send fields the user
+    // actually changed, instead of resubmitting every field from that
+    // snapshot, which used to clobber concurrent edits made elsewhere
+    // (another device, a shared-list collaborator) while this sheet was
+    // open (F088). Full optimistic-concurrency (a version check) is a
+    // server-side follow-up; this only removes the practical clobber.
+    const normalizedDescription = data.description || undefined;
+    const normalizedPriority = data.priority ?? "medium";
+    const updates: TaskUpdateFields = {};
+
+    if (data.title !== editingTask.title) {
+      updates.title = data.title;
+    }
+    if (normalizedDescription !== (editingTask.description ?? undefined)) {
+      updates.description = normalizedDescription;
+    }
+    if (data.categoryId !== editingTask.categoryId) {
+      updates.categoryId = data.categoryId;
+    }
+    if (
+      (data.dueDate?.getTime() ?? null) !==
+      (editingTask.dueDate?.getTime() ?? null)
+    ) {
+      updates.dueDate = data.dueDate;
+    }
+    if (normalizedPriority !== editingTask.priority) {
+      updates.priority = normalizedPriority;
+    }
+    if (
+      (data.reminderAt?.getTime() ?? null) !==
+      (editingTask.reminderAt?.getTime() ?? null)
+    ) {
+      updates.reminderAt = data.reminderAt;
+    }
+    if (data.listId !== editingTask.listId) {
+      updates.listId = data.listId;
+    }
+    if (data.recurrenceRule !== editingTask.recurrenceRule) {
+      updates.recurrenceRule = data.recurrenceRule;
+    }
+    if (data.recurrenceInterval !== editingTask.recurrenceInterval) {
+      updates.recurrenceInterval = data.recurrenceInterval;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await updateMutation.mutateAsync({ id: editingTask.id, ...updates });
+    }
 
     setEditingTask(null);
 
