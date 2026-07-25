@@ -368,8 +368,18 @@ export const syncRouter = {
               updateData.priority = data.priority;
             if (data.orderIndex !== undefined)
               updateData.orderIndex = data.orderIndex;
-            if (data.reminderAt !== undefined)
+            if (data.reminderAt !== undefined) {
               updateData.reminderAt = data.reminderAt;
+              // Parity with task.ts: a changed reminder time re-arms the
+              // cron; without this a synced reminder edit stays marked sent
+              // and never fires.
+              if (
+                (data.reminderAt?.getTime() ?? null) !==
+                (serverTask.reminderAt?.getTime() ?? null)
+              ) {
+                updateData.reminderSentAt = null;
+              }
+            }
             if (data.recurrenceRule !== undefined)
               updateData.recurrenceRule = data.recurrenceRule;
             if (data.recurrenceInterval !== undefined)

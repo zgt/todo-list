@@ -148,9 +148,10 @@ export async function processReminders(
   for (const { task, user: taskUser, preferences } of reminders) {
     // Claim this reminder atomically. If reminderSentAt is no longer NULL
     // (a concurrent/overlapping cron run already claimed it), skip.
+    const claimedAt = new Date();
     const [claimed] = await db
       .update(Task)
-      .set({ reminderSentAt: new Date() })
+      .set({ reminderSentAt: claimedAt })
       .where(and(eq(Task.id, task.id), isNull(Task.reminderSentAt)))
       .returning({ id: Task.id });
 
@@ -164,9 +165,12 @@ export async function processReminders(
           body: task.title,
           data: { type: "task-reminder", taskId: task.id },
         });
-        // Total failure: we attempted to notify at least one device and
-        // none succeeded — un-claim so the next tick retries.
-        if (result.attempted > 0 && result.sent === 0) {
+        // Total failure: nothing was delivered and at least one failure was
+        // recorded (including failures before any ticket was attempted, e.g.
+        // a token lookup error) — un-claim so the next tick retries. A user
+        // with zero registered tokens reports no failures and keeps the
+        // claim, so they aren't retried forever.
+        if (result.sent === 0 && result.failed > 0) {
           pushOk = false;
         }
       }
@@ -176,10 +180,13 @@ export async function processReminders(
     }
 
     if (!pushOk) {
+      // Only roll back OUR claim — if the user snoozed meanwhile (which
+      // nulls reminderSentAt) and another run re-claimed, blanket-nulling
+      // here would let a duplicate send through.
       await db
         .update(Task)
         .set({ reminderSentAt: null })
-        .where(eq(Task.id, task.id));
+        .where(and(eq(Task.id, task.id), eq(Task.reminderSentAt, claimedAt)));
       errors++;
       continue;
     }

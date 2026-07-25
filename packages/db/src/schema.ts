@@ -210,7 +210,7 @@ export const Task = pgTable(
     index("task_reminder_due_idx")
       .on(table.reminderAt)
       .where(
-        sql`${table.reminderSentAt} IS NULL AND ${table.completed} = false AND ${table.deletedAt} IS NULL`,
+        sql`${table.reminderAt} IS NOT NULL AND ${table.reminderSentAt} IS NULL AND ${table.completed} = false AND ${table.deletedAt} IS NULL`,
       ),
     // F031: supports the archive-completed-tasks edge function's predicate
     // (completed = true, completedAt < cutoff, archivedAt IS NULL,
@@ -270,7 +270,9 @@ export const TaskListMember = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     role: t.varchar({ length: 20 }).notNull().default("editor"),
     showInFilter: t.boolean("show_in_filter").notNull().default(true),
-    invitedBy: t.text("invited_by").references(() => user.id),
+    invitedBy: t
+      .text("invited_by")
+      .references(() => user.id, { onDelete: "set null" }),
     joinedAt: t
       .timestamp("joined_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())

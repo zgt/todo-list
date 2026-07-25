@@ -5,6 +5,7 @@ import { and, eq, sql } from "@acme/db";
 import { PushToken, user, UserPreference } from "@acme/db/schema";
 
 import { sendPushToUser } from "../lib/push";
+import { MAX_REMINDER_OFFSET_MINUTES } from "../lib/reminders";
 import { protectedProcedure } from "../trpc";
 
 export const notificationRouter = {
@@ -125,7 +126,12 @@ export const notificationRouter = {
       z.object({
         emailReminders: z.boolean().optional(),
         pushReminders: z.boolean().optional(),
-        reminderOffsetMinutes: z.number().int().min(0).optional(),
+        reminderOffsetMinutes: z
+          .number()
+          .int()
+          .min(0)
+          .max(MAX_REMINDER_OFFSET_MINUTES)
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

@@ -26,16 +26,19 @@ async function handleTaskAction(
   const { taskId } = data;
 
   switch (actionIdentifier) {
+    // Snooze actions go through task.snooze (snoozedUntil) — never rewrite
+    // reminderAt, which is the anchor future recurrence reminders derive
+    // their offset from.
     case TASK_REMINDER_ACTIONS.SNOOZE_10MIN: {
       const snoozeUntil = new Date(Date.now() + 10 * 60 * 1000);
       await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
       try {
-        await vanillaTrpc.task.update.mutate({
+        await vanillaTrpc.task.snooze.mutate({
           id: taskId,
-          reminderAt: snoozeUntil,
+          snoozedUntil: snoozeUntil,
         });
       } catch (err) {
-        console.error("[Notifications] Failed to update reminder:", err);
+        console.error("[Notifications] Failed to snooze task:", err);
       }
       break;
     }
@@ -43,12 +46,12 @@ async function handleTaskAction(
       const snoozeUntil = new Date(Date.now() + 60 * 60 * 1000);
       await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
       try {
-        await vanillaTrpc.task.update.mutate({
+        await vanillaTrpc.task.snooze.mutate({
           id: taskId,
-          reminderAt: snoozeUntil,
+          snoozedUntil: snoozeUntil,
         });
       } catch (err) {
-        console.error("[Notifications] Failed to update reminder:", err);
+        console.error("[Notifications] Failed to snooze task:", err);
       }
       break;
     }

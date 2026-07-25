@@ -1,7 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, asc, eq, isNotNull, ne } from "@acme/db";
+import { and, asc, eq, isNotNull, isNull, ne } from "@acme/db";
 import {
   account,
   Category,
@@ -56,7 +56,7 @@ export const userRouter = {
         const ownedLists = await tx
           .select({ id: TaskList.id, name: TaskList.name })
           .from(TaskList)
-          .where(eq(TaskList.ownerId, userId));
+          .where(and(eq(TaskList.ownerId, userId), isNull(TaskList.deletedAt)));
 
         for (const list of ownedLists) {
           const otherMembers = await tx
@@ -132,7 +132,14 @@ export const userRouter = {
         await tx.delete(Task).where(eq(Task.userId, userId));
         await tx.delete(Category).where(eq(Category.userId, userId));
 
-        // Delete task list memberships and invites created by user
+        // Delete task list memberships and invites created by user.
+        // Surviving members' rows may reference the departing user via
+        // invitedBy (FK with no cascade) — null those out or the final
+        // user delete below fails the FK check and rolls everything back.
+        await tx
+          .update(TaskListMember)
+          .set({ invitedBy: null })
+          .where(eq(TaskListMember.invitedBy, userId));
         await tx
           .delete(TaskListMember)
           .where(eq(TaskListMember.userId, userId));

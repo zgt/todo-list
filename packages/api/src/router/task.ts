@@ -549,8 +549,14 @@ export const taskRouter = {
         updateData.completedAt = updates.completed ? new Date() : null;
       }
 
-      // Reset reminderSentAt when reminderAt changes so the cron re-processes
-      if (updates.reminderAt !== undefined) {
+      // Reset reminderSentAt only when reminderAt actually changes — edit
+      // forms resubmit every field, and re-arming on a no-op value would
+      // re-fire an already-delivered reminder after any unrelated edit.
+      if (
+        updates.reminderAt !== undefined &&
+        (updates.reminderAt?.getTime() ?? null) !==
+          (existing.reminderAt?.getTime() ?? null)
+      ) {
         updateData.reminderSentAt = null;
       }
 
@@ -616,15 +622,24 @@ export const taskRouter = {
                 nextReminderAt = new Date(nextDueDate.getTime() - offset);
               }
 
-              // Snooze the next occurrence until its due date if it's in the future
-              // This prevents clutter when completing recurring tasks early
+              // Snooze the next occurrence until its due date if it's in
+              // the future — prevents clutter when completing recurring
+              // tasks early. Clamped to the next reminder time: the
+              // reminder cron skips snoozed tasks, so snoozing past
+              // reminderAt would swallow the reminder until the due date.
               const now = new Date();
               const startOfDueDate = new Date(nextDueDate);
               startOfDueDate.setHours(0, 0, 0, 0);
-              const snoozedUntil = startOfDueDate > now ? startOfDueDate : null;
+              const snoozeTarget =
+                nextReminderAt && nextReminderAt < startOfDueDate
+                  ? nextReminderAt
+                  : startOfDueDate;
+              const snoozedUntil = snoozeTarget > now ? snoozeTarget : null;
 
               await tx.insert(Task).values({
-                userId,
+                // The series stays owned by its original owner even when a
+                // shared-list co-member completes an occurrence.
+                userId: existing.userId,
                 title: existing.title,
                 description: existing.description,
                 categoryId: existing.categoryId,
