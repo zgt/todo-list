@@ -463,7 +463,9 @@ export const PushToken = pgTable(
   }),
   (table) => [
     index("push_token_user_id_idx").on(table.userId),
-    index("push_token_token_unique").on(table.token),
+    // Genuinely unique: registerToken upserts on this constraint; a plain
+    // index() here allowed concurrent registrations to insert duplicate rows.
+    uniqueIndex("push_token_token_unique").on(table.token),
   ],
 );
 

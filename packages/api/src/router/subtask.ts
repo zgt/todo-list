@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, eq, sql } from "@acme/db";
+import { and, eq, inArray, isNull, sql } from "@acme/db";
 import {
   CreateSubtaskSchema,
   Subtask,
@@ -37,7 +37,7 @@ export const subtaskRouter = {
     .input(z.object({ taskId: z.string().uuid() }))
     .query(async ({ ctx, input }) => {
       const task = await ctx.db.query.Task.findFirst({
-        where: eq(Task.id, input.taskId),
+        where: and(eq(Task.id, input.taskId), isNull(Task.deletedAt)),
       });
 
       if (!task) {
@@ -60,7 +60,7 @@ export const subtaskRouter = {
     .input(CreateSubtaskSchema)
     .mutation(async ({ ctx, input }) => {
       const task = await ctx.db.query.Task.findFirst({
-        where: eq(Task.id, input.taskId),
+        where: and(eq(Task.id, input.taskId), isNull(Task.deletedAt)),
       });
 
       if (!task) {
@@ -106,7 +106,9 @@ export const subtaskRouter = {
         with: { task: true },
       });
 
-      if (!existing) {
+      // Soft-deleted parents are immutable: mutating their subtasks would
+      // flip parent completion and fire pushes for a task nobody can see.
+      if (existing?.task.deletedAt !== null) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Subtask not found or access denied",
@@ -196,7 +198,7 @@ export const subtaskRouter = {
         with: { task: true },
       });
 
-      if (!existing) {
+      if (existing?.task.deletedAt !== null) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Subtask not found or access denied",
@@ -220,12 +222,12 @@ export const subtaskRouter = {
     .input(
       z.object({
         taskId: z.string().uuid(),
-        subtaskIds: z.array(z.string().uuid()),
+        subtaskIds: z.array(z.string().uuid()).max(100),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const task = await ctx.db.query.Task.findFirst({
-        where: eq(Task.id, input.taskId),
+        where: and(eq(Task.id, input.taskId), isNull(Task.deletedAt)),
       });
 
       if (!task) {
@@ -237,22 +239,30 @@ export const subtaskRouter = {
 
       await assertTaskAccess(ctx.db, ctx.session.user.id, task, "editor");
 
-      // Update each subtask's sortOrder in a transaction
-      await ctx.db.transaction(async (tx) => {
-        await Promise.all(
-          input.subtaskIds.map((subtaskId, index) =>
-            tx
-              .update(Subtask)
-              .set({ sortOrder: index })
-              .where(
-                and(
-                  eq(Subtask.id, subtaskId),
-                  eq(Subtask.taskId, input.taskId),
-                ),
-              ),
+      if (input.subtaskIds.length === 0) {
+        return { success: true };
+      }
+
+      // Single batched CASE update instead of one statement per subtask.
+      const orderCases = sql.join(
+        input.subtaskIds.map(
+          (subtaskId, index) =>
+            sql`when ${Subtask.id} = ${subtaskId} then ${index}`,
+        ),
+        sql` `,
+      );
+
+      await ctx.db
+        .update(Subtask)
+        .set({
+          sortOrder: sql`case ${orderCases} else ${Subtask.sortOrder} end`,
+        })
+        .where(
+          and(
+            inArray(Subtask.id, input.subtaskIds),
+            eq(Subtask.taskId, input.taskId),
           ),
         );
-      });
 
       return { success: true };
     }),

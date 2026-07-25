@@ -377,6 +377,7 @@ export const categoryRouter = {
       if (parentId !== undefined && parentId !== current.parentId) {
         let newPath: string[] = [];
         let newDepth = 0;
+        let newParentIdToMarkNonLeaf: string | null = null;
 
         if (parentId !== null) {
           // Prevent setting self as parent
@@ -413,67 +414,76 @@ export const categoryRouter = {
           newPath = [...newParent.path, newParent.id];
           newDepth = newParent.depth + 1;
 
-          // Mark new parent as non-leaf
           if (newParent.isLeaf) {
-            await ctx.db
-              .update(Category)
-              .set({ isLeaf: false })
-              .where(eq(Category.id, newParent.id));
+            newParentIdToMarkNonLeaf = newParent.id;
           }
         }
 
         const depthDiff = newDepth - current.depth;
 
-        // Update this category
-        await ctx.db
-          .update(Category)
-          .set({ ...rest, parentId, path: newPath, depth: newDepth })
-          .where(eq(Category.id, id));
-
-        // Update all descendants: replace old path prefix with new path prefix
-        const descendants = await ctx.db.query.Category.findMany({
-          where: and(
-            eq(Category.userId, ctx.session.user.id),
-            arrayContains(Category.path, [id]),
-          ),
-        });
-
-        for (const child of descendants) {
-          // Replace the portion of path up to and including `id` with new path + id
-          const idxInPath = child.path.indexOf(id);
-          const descendantSuffix = child.path.slice(idxInPath + 1);
-          const updatedPath = [...newPath, id, ...descendantSuffix];
-
-          await ctx.db
-            .update(Category)
-            .set({ path: updatedPath, depth: child.depth + depthDiff })
-            .where(eq(Category.id, child.id));
-        }
-
-        // Check if old parent still has children
-        if (current.parentId) {
-          const oldParentChildCount = await ctx.db
-            .select({ count: sql<number>`count(*)` })
-            .from(Category)
-            .where(
-              and(
-                eq(Category.parentId, current.parentId),
-                eq(Category.userId, ctx.session.user.id),
-                isNull(Category.deletedAt),
-                ne(Category.id, id),
-              ),
-            );
-
-          if (
-            oldParentChildCount[0] &&
-            Number(oldParentChildCount[0].count) === 0
-          ) {
-            await ctx.db
+        // The reparent rewrite spans several statements over the materialized
+        // path tree; run them atomically so a mid-sequence failure cannot
+        // leave the tree partially rewritten.
+        await ctx.db.transaction(async (tx) => {
+          // Mark new parent as non-leaf
+          if (newParentIdToMarkNonLeaf) {
+            await tx
               .update(Category)
-              .set({ isLeaf: true })
-              .where(eq(Category.id, current.parentId));
+              .set({ isLeaf: false })
+              .where(eq(Category.id, newParentIdToMarkNonLeaf));
           }
-        }
+
+          // Update this category
+          await tx
+            .update(Category)
+            .set({ ...rest, parentId, path: newPath, depth: newDepth })
+            .where(eq(Category.id, id));
+
+          // Update all descendants: replace old path prefix with new path prefix
+          const descendants = await tx.query.Category.findMany({
+            where: and(
+              eq(Category.userId, ctx.session.user.id),
+              arrayContains(Category.path, [id]),
+            ),
+          });
+
+          for (const child of descendants) {
+            // Replace the portion of path up to and including `id` with new path + id
+            const idxInPath = child.path.indexOf(id);
+            const descendantSuffix = child.path.slice(idxInPath + 1);
+            const updatedPath = [...newPath, id, ...descendantSuffix];
+
+            await tx
+              .update(Category)
+              .set({ path: updatedPath, depth: child.depth + depthDiff })
+              .where(eq(Category.id, child.id));
+          }
+
+          // Check if old parent still has children
+          if (current.parentId) {
+            const oldParentChildCount = await tx
+              .select({ count: sql<number>`count(*)` })
+              .from(Category)
+              .where(
+                and(
+                  eq(Category.parentId, current.parentId),
+                  eq(Category.userId, ctx.session.user.id),
+                  isNull(Category.deletedAt),
+                  ne(Category.id, id),
+                ),
+              );
+
+            if (
+              oldParentChildCount[0] &&
+              Number(oldParentChildCount[0].count) === 0
+            ) {
+              await tx
+                .update(Category)
+                .set({ isLeaf: true })
+                .where(eq(Category.id, current.parentId));
+            }
+          }
+        });
       } else {
         // Simple update without reparenting
         const updateData: Record<string, unknown> = { ...rest };

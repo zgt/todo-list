@@ -19,32 +19,21 @@ export const notificationRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      // Upsert: if this token already exists (maybe for a different user), update it
-      const existing = await ctx.db.query.PushToken.findFirst({
-        where: eq(PushToken.token, input.token),
-      });
-
-      if (existing) {
-        if (existing.userId === userId) {
-          // Same user, same token — just touch updatedAt
-          await ctx.db
-            .update(PushToken)
-            .set({ updatedAt: new Date() })
-            .where(eq(PushToken.id, existing.id));
-        } else {
-          // Token transferred to a new user (e.g., signed out + signed in as different user)
-          await ctx.db
-            .update(PushToken)
-            .set({ userId, updatedAt: new Date() })
-            .where(eq(PushToken.id, existing.id));
-        }
-      } else {
-        await ctx.db.insert(PushToken).values({
+      // Real upsert on the unique token constraint — the previous
+      // find-then-write raced concurrent registrations into duplicate rows.
+      // A token registered by a different user is transferred to the caller
+      // (signed out + signed in as someone else on the same device).
+      await ctx.db
+        .insert(PushToken)
+        .values({
           userId,
           token: input.token,
           platform: input.platform,
+        })
+        .onConflictDoUpdate({
+          target: PushToken.token,
+          set: { userId, platform: input.platform, updatedAt: new Date() },
         });
-      }
 
       return { success: true };
     }),
