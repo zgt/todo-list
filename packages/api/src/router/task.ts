@@ -18,6 +18,7 @@ import {
 } from "@acme/db";
 import {
   BlockedUser,
+  Category,
   CreateTaskWithSubtasksSchema,
   Subtask,
   Task,
@@ -108,6 +109,32 @@ function serializeTaskDates<
       : null,
     subtasks: task.subtasks?.map(serializeSubtaskDates),
   };
+}
+
+/**
+ * Verify a categoryId (when provided) belongs to the given user and isn't
+ * soft-deleted, to prevent attaching a task to another user's category.
+ */
+async function assertCategoryOwnership(
+  db: Parameters<typeof assertListAccess>[0],
+  categoryId: string,
+  userId: string,
+): Promise<void> {
+  const category = await db.query.Category.findFirst({
+    where: and(
+      eq(Category.id, categoryId),
+      eq(Category.userId, userId),
+      isNull(Category.deletedAt),
+    ),
+    columns: { id: true },
+  });
+
+  if (!category) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Category not found",
+    });
+  }
 }
 
 /** Get all list IDs the user is a member of */
@@ -342,6 +369,15 @@ export const taskRouter = {
         );
       }
 
+      // If assigning to a category, verify it belongs to this user
+      if (taskInput.categoryId) {
+        await assertCategoryOwnership(
+          ctx.db,
+          taskInput.categoryId,
+          ctx.session.user.id,
+        );
+      }
+
       // Use a transaction to create task + subtasks atomically
       const result = await ctx.db.transaction(async (tx) => {
         const [task] = await tx
@@ -434,6 +470,11 @@ export const taskRouter = {
         updates.listId !== existing.listId
       ) {
         await assertListAccess(ctx.db, userId, updates.listId, "editor");
+      }
+
+      // If reassigning to a category, verify it belongs to this user
+      if (updates.categoryId !== undefined && updates.categoryId !== null) {
+        await assertCategoryOwnership(ctx.db, updates.categoryId, userId);
       }
 
       // Build update object

@@ -231,11 +231,30 @@ export const categoryRouter = {
 
       if (!categoryId) return [];
 
+      // Verify the category belongs to this user (or is reachable via a
+      // shared list) before returning any data about it — same scoping as
+      // `byId`/`all`/`tree`.
+      const sharedCategoryIds = await getSharedCategoryIds(ctx.db, userId);
+
       const category = await ctx.db.query.Category.findFirst({
-        where: and(eq(Category.id, categoryId), isNull(Category.deletedAt)),
+        where: and(
+          eq(Category.id, categoryId),
+          isNull(Category.deletedAt),
+          sharedCategoryIds.length > 0
+            ? or(
+                eq(Category.userId, userId),
+                inArray(Category.id, sharedCategoryIds),
+              )
+            : eq(Category.userId, userId),
+        ),
       });
 
-      if (!category) return [];
+      if (!category) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Category not found",
+        });
+      }
 
       // path contains ancestor IDs in order; fetch them all
       const ancestorIds = category.path;

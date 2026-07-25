@@ -174,3 +174,34 @@ export const protectedProcedure = t.procedure
       },
     });
   });
+
+/**
+ * Check a user id against a comma-separated list of admin user ids (as read
+ * from an env var). Empty/unset list means no admins. Exported as a pure
+ * function so it can be unit tested without a tRPC context.
+ */
+export function isAdminUserId(
+  userId: string,
+  adminUserIdsEnv: string | undefined,
+): boolean {
+  if (!adminUserIdsEnv) return false;
+  const adminIds = adminUserIdsEnv
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  return adminIds.includes(userId);
+}
+
+/**
+ * Admin-gated procedure.
+ *
+ * Minimal admin gate until a real role system exists: checks the caller's
+ * user id against the comma-separated ADMIN_USER_IDS env var. If the env var
+ * is unset or empty, there are no admins and every call is FORBIDDEN.
+ */
+export const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!isAdminUserId(ctx.session.user.id, process.env.ADMIN_USER_IDS)) {
+    throw new TRPCError({ code: "FORBIDDEN" });
+  }
+  return next();
+});
