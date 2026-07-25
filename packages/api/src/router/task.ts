@@ -112,29 +112,43 @@ function serializeTaskDates<
 }
 
 /**
- * Verify a categoryId (when provided) belongs to the given user and isn't
- * soft-deleted, to prevent attaching a task to another user's category.
+ * Verify a categoryId (when provided) is usable by the given user: either
+ * owned by them, or reachable through a shared list they belong to (a
+ * co-member legitimately re-saves a task that carries the list owner's
+ * category — see category.all, which exposes exactly that shared set).
+ * Rejects unknown, foreign-and-unshared, and soft-deleted categories.
  */
-async function assertCategoryOwnership(
+async function assertCategoryAccess(
   db: Parameters<typeof assertListAccess>[0],
   categoryId: string,
   userId: string,
 ): Promise<void> {
   const category = await db.query.Category.findFirst({
-    where: and(
-      eq(Category.id, categoryId),
-      eq(Category.userId, userId),
-      isNull(Category.deletedAt),
-    ),
-    columns: { id: true },
+    where: and(eq(Category.id, categoryId), isNull(Category.deletedAt)),
+    columns: { id: true, userId: true },
   });
 
-  if (!category) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Category not found",
-    });
+  if (category) {
+    if (category.userId === userId) return;
+
+    const memberListIds = await getMemberListIds(db, userId);
+    if (memberListIds.length > 0) {
+      const sharedUse = await db.query.Task.findFirst({
+        where: and(
+          eq(Task.categoryId, categoryId),
+          inArray(Task.listId, memberListIds),
+          isNull(Task.deletedAt),
+        ),
+        columns: { id: true },
+      });
+      if (sharedUse) return;
+    }
   }
+
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: "Category not found",
+  });
 }
 
 /** Get all list IDs the user is a member of */
@@ -407,9 +421,9 @@ export const taskRouter = {
         );
       }
 
-      // If assigning to a category, verify it belongs to this user
+      // If assigning to a category, verify the user may use it
       if (taskInput.categoryId) {
-        await assertCategoryOwnership(
+        await assertCategoryAccess(
           ctx.db,
           taskInput.categoryId,
           ctx.session.user.id,
@@ -510,9 +524,15 @@ export const taskRouter = {
         await assertListAccess(ctx.db, userId, updates.listId, "editor");
       }
 
-      // If reassigning to a category, verify it belongs to this user
-      if (updates.categoryId !== undefined && updates.categoryId !== null) {
-        await assertCategoryOwnership(ctx.db, updates.categoryId, userId);
+      // If reassigning to a category, verify the user may use it. An
+      // unchanged categoryId is skipped — edit forms resubmit the full task,
+      // and a co-member must not be blocked by a category they merely kept.
+      if (
+        updates.categoryId !== undefined &&
+        updates.categoryId !== null &&
+        updates.categoryId !== existing.categoryId
+      ) {
+        await assertCategoryAccess(ctx.db, updates.categoryId, userId);
       }
 
       // Build update object
@@ -540,75 +560,91 @@ export const taskRouter = {
       // transaction, so a failure there silently dropped the next
       // occurrence while the completion update still committed. Now both
       // commit together or neither does.
-      const task = await ctx.db.transaction(async (tx) => {
-        const [updated] = await tx
-          .update(Task)
-          .set(updateData)
-          .where(eq(Task.id, id))
-          .returning();
+      // F013: a completion transition is guarded by `completed = false` in
+      // the UPDATE's WHERE so two concurrent completions cannot both fire
+      // the next-occurrence insert and the completion push.
+      const isCompletionTransition =
+        updates.completed === true && !existing.completed;
 
-        if (!updated) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Task not found or update failed",
-          });
-        }
+      const { row: task, completionRaced } = await ctx.db.transaction(
+        async (tx) => {
+          const [updated] = await tx
+            .update(Task)
+            .set(updateData)
+            .where(
+              isCompletionTransition
+                ? and(eq(Task.id, id), eq(Task.completed, false))
+                : eq(Task.id, id),
+            )
+            .returning();
 
-        // Auto-create next recurring task when completing a recurring task
-        if (
-          updates.completed === true &&
-          !existing.completed &&
-          existing.recurrenceRule
-        ) {
-          const interval = existing.recurrenceInterval ?? 1;
-          const nextDueDate = getNextDueDate(
-            existing.dueDate,
-            existing.recurrenceRule,
-            interval,
-          );
-
-          // Only create next occurrence if before end date (or no end date)
-          const shouldCreate =
-            !existing.recurrenceEndDate ||
-            nextDueDate <= existing.recurrenceEndDate;
-
-          if (shouldCreate) {
-            // Calculate new reminder offset relative to due date
-            let nextReminderAt: Date | null = null;
-            if (existing.reminderAt && existing.dueDate) {
-              const offset =
-                existing.dueDate.getTime() - existing.reminderAt.getTime();
-              nextReminderAt = new Date(nextDueDate.getTime() - offset);
+          if (!updated) {
+            if (isCompletionTransition) {
+              // A concurrent request already completed this task; return
+              // the current row and fire no duplicate side-effects.
+              const current = await tx.query.Task.findFirst({
+                where: eq(Task.id, id),
+              });
+              if (current) return { row: current, completionRaced: true };
             }
-
-            // Snooze the next occurrence until its due date if it's in the future
-            // This prevents clutter when completing recurring tasks early
-            const now = new Date();
-            const startOfDueDate = new Date(nextDueDate);
-            startOfDueDate.setHours(0, 0, 0, 0);
-            const snoozedUntil = startOfDueDate > now ? startOfDueDate : null;
-
-            await tx.insert(Task).values({
-              userId,
-              title: existing.title,
-              description: existing.description,
-              categoryId: existing.categoryId,
-              listId: existing.listId,
-              dueDate: nextDueDate,
-              priority: existing.priority,
-              reminderAt: nextReminderAt,
-              snoozedUntil,
-              recurrenceRule: existing.recurrenceRule,
-              recurrenceInterval: existing.recurrenceInterval,
-              recurrenceEndDate: existing.recurrenceEndDate,
-              recurrenceSourceId: existing.recurrenceSourceId ?? id,
-              lastSyncedAt: new Date(),
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Task not found or update failed",
             });
           }
-        }
 
-        return updated;
-      });
+          // Auto-create next recurring task when completing a recurring task
+          if (isCompletionTransition && existing.recurrenceRule) {
+            const interval = existing.recurrenceInterval ?? 1;
+            const nextDueDate = getNextDueDate(
+              existing.dueDate,
+              existing.recurrenceRule,
+              interval,
+            );
+
+            // Only create next occurrence if before end date (or no end date)
+            const shouldCreate =
+              !existing.recurrenceEndDate ||
+              nextDueDate <= existing.recurrenceEndDate;
+
+            if (shouldCreate) {
+              // Calculate new reminder offset relative to due date
+              let nextReminderAt: Date | null = null;
+              if (existing.reminderAt && existing.dueDate) {
+                const offset =
+                  existing.dueDate.getTime() - existing.reminderAt.getTime();
+                nextReminderAt = new Date(nextDueDate.getTime() - offset);
+              }
+
+              // Snooze the next occurrence until its due date if it's in the future
+              // This prevents clutter when completing recurring tasks early
+              const now = new Date();
+              const startOfDueDate = new Date(nextDueDate);
+              startOfDueDate.setHours(0, 0, 0, 0);
+              const snoozedUntil = startOfDueDate > now ? startOfDueDate : null;
+
+              await tx.insert(Task).values({
+                userId,
+                title: existing.title,
+                description: existing.description,
+                categoryId: existing.categoryId,
+                listId: existing.listId,
+                dueDate: nextDueDate,
+                priority: existing.priority,
+                reminderAt: nextReminderAt,
+                snoozedUntil,
+                recurrenceRule: existing.recurrenceRule,
+                recurrenceInterval: existing.recurrenceInterval,
+                recurrenceEndDate: existing.recurrenceEndDate,
+                recurrenceSourceId: existing.recurrenceSourceId ?? id,
+                lastSyncedAt: new Date(),
+              });
+            }
+          }
+
+          return { row: updated, completionRaced: false };
+        },
+      );
 
       // Notify other shared list members (fire-and-forget, best-effort —
       // deliberately outside the transaction above; a push failure must
@@ -622,7 +658,7 @@ export const taskRouter = {
           taskTitle: task.title,
         };
 
-        if (updates.completed === true && !existing.completed) {
+        if (isCompletionTransition && !completionRaced) {
           void pushNotifyTaskCompleted(notifyParams);
         } else if (updates.completed === undefined) {
           void pushNotifyTaskEdited(notifyParams);

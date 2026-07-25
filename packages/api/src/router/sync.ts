@@ -166,17 +166,38 @@ export const syncRouter = {
             where: inArray(Category.id, categoryIds),
           })
         : [];
-      const categoryById = new Map(categoryRows.map((c) => [c.id, c]));
 
-      const isCategoryValid = (categoryId: string | null | undefined) => {
-        if (!categoryId) return true; // null/undefined clears the category
-        const category = categoryById.get(categoryId);
-        return (
-          !!category &&
-          category.userId === userId &&
-          category.deletedAt === null
-        );
-      };
+      const validCategoryIds = new Set(
+        categoryRows
+          .filter((c) => c.deletedAt === null && c.userId === userId)
+          .map((c) => c.id),
+      );
+
+      // Parity with task.ts assertCategoryAccess: a co-member may keep or
+      // apply a category that is already in use inside a shared list they
+      // belong to, even though they don't own it.
+      const foreignCategoryIds = categoryRows
+        .filter((c) => c.deletedAt === null && c.userId !== userId)
+        .map((c) => c.id);
+      if (foreignCategoryIds.length > 0) {
+        const memberListIds = await getMemberListIds(ctx.db, userId);
+        if (memberListIds.length > 0) {
+          const sharedUses = await ctx.db.query.Task.findMany({
+            where: and(
+              inArray(Task.categoryId, foreignCategoryIds),
+              inArray(Task.listId, memberListIds),
+              isNull(Task.deletedAt),
+            ),
+            columns: { categoryId: true },
+          });
+          for (const row of sharedUses) {
+            if (row.categoryId) validCategoryIds.add(row.categoryId);
+          }
+        }
+      }
+
+      const isCategoryValid = (categoryId: string | null | undefined) =>
+        !categoryId || validCategoryIds.has(categoryId);
 
       // G001/G017: cache list-access checks per listId — a batch commonly
       // touches the same shared list from several tasks.

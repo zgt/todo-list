@@ -535,46 +535,58 @@ export const categoryRouter = {
 
       const now = new Date();
 
-      // Soft-delete this category and all descendants
-      // Descendants have this category's id in their path
-      await ctx.db
-        .update(Category)
-        .set({ deletedAt: now })
-        .where(
-          and(
-            eq(Category.userId, ctx.session.user.id),
-            isNull(Category.deletedAt),
-            arrayContains(Category.path, [input]),
-          ),
-        );
-
-      // Also soft-delete the category itself
-      await ctx.db
-        .update(Category)
-        .set({ deletedAt: now })
-        .where(eq(Category.id, input));
-
-      // Update parent's isLeaf if needed
-      if (category.parentId) {
-        const siblingCount = await ctx.db
-          .select({ count: sql<number>`count(*)` })
-          .from(Category)
+      await ctx.db.transaction(async (tx) => {
+        // Soft-delete this category and all descendants
+        // Descendants have this category's id in their path
+        const deletedDescendants = await tx
+          .update(Category)
+          .set({ deletedAt: now })
           .where(
             and(
-              eq(Category.parentId, category.parentId),
               eq(Category.userId, ctx.session.user.id),
               isNull(Category.deletedAt),
-              ne(Category.id, input),
+              arrayContains(Category.path, [input]),
             ),
-          );
+          )
+          .returning({ id: Category.id });
 
-        if (siblingCount[0] && Number(siblingCount[0].count) === 0) {
-          await ctx.db
-            .update(Category)
-            .set({ isLeaf: true })
-            .where(eq(Category.id, category.parentId));
+        // Also soft-delete the category itself
+        await tx
+          .update(Category)
+          .set({ deletedAt: now })
+          .where(eq(Category.id, input));
+
+        // Detach tasks from the deleted subtree — task queries eager-load
+        // the category relation without a deletedAt filter, so a dangling
+        // categoryId would keep surfacing the deleted category's label.
+        const deletedIds = [input, ...deletedDescendants.map((c) => c.id)];
+        await tx
+          .update(Task)
+          .set({ categoryId: null })
+          .where(inArray(Task.categoryId, deletedIds));
+
+        // Update parent's isLeaf if needed
+        if (category.parentId) {
+          const siblingCount = await tx
+            .select({ count: sql<number>`count(*)` })
+            .from(Category)
+            .where(
+              and(
+                eq(Category.parentId, category.parentId),
+                eq(Category.userId, ctx.session.user.id),
+                isNull(Category.deletedAt),
+                ne(Category.id, input),
+              ),
+            );
+
+          if (siblingCount[0] && Number(siblingCount[0].count) === 0) {
+            await tx
+              .update(Category)
+              .set({ isLeaf: true })
+              .where(eq(Category.id, category.parentId));
+          }
         }
-      }
+      });
 
       return { success: true };
     }),
