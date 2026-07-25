@@ -971,14 +971,23 @@ export const taskRouter = {
   // Get all currently snoozed tasks
   snoozed: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
+    const memberListIds = await getMemberListIds(ctx.db, userId);
     const now = new Date();
 
+    // Same visibility as task.all: a task a co-member snoozed disappears
+    // from everyone's All Tasks, so every member needs to see (and be able
+    // to unsnooze) it here — unsnooze already grants editors access.
     const tasks = await ctx.db.query.Task.findMany({
       where: and(
-        eq(Task.userId, userId),
         isNull(Task.deletedAt),
         isNull(Task.archivedAt),
         gt(Task.snoozedUntil, now),
+        memberListIds.length > 0
+          ? or(
+              and(eq(Task.userId, userId), isNull(Task.listId)),
+              inArray(Task.listId, memberListIds),
+            )
+          : eq(Task.userId, userId),
       ),
       orderBy: [asc(Task.snoozedUntil)],
       with: { category: true, subtasks: true, list: true },
