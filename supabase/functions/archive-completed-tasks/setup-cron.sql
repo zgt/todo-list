@@ -3,18 +3,20 @@
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 -- Schedule the archive-completed-tasks function to run every hour
--- Replace 'YOUR_SUPABASE_PROJECT_URL' with your actual Supabase project URL
--- Replace 'YOUR_ANON_KEY' with your Supabase anon key (or service role key for better security)
+-- Replace 'YOUR_PROJECT_REF' with your Supabase project ref (from the
+-- dashboard URL or Project Settings > General)
+-- Replace 'YOUR_SUPABASE_ANON_KEY' with your Supabase anon key (or service
+-- role key for better security) from Project Settings > API
 SELECT cron.schedule(
   'archive-completed-tasks-hourly',
   '0 * * * *',  -- Every hour at the top of the hour (cron format: minute hour day month weekday)
   $$
   SELECT
     net.http_post(
-      url := 'https://lpwebtedgfzpaxtuyhss.supabase.co/functions/v1/archive-completed-tasks',
+      url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/archive-completed-tasks',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwd2VidGVkZ2Z6cGF4dHV5aHNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3MTc3MDEsImV4cCI6MjA4MDI5MzcwMX0.hHCM507jJaldWEYWPBggHniP6TINvsrOcf49g2kN0WI'
+        'Authorization', 'Bearer YOUR_SUPABASE_ANON_KEY'
       ),
       body := '{}'::jsonb
     ) AS request_id;
