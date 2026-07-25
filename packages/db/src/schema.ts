@@ -199,6 +199,8 @@ export const Task = pgTable(
     ),
     index("task_reminder_at_idx").on(table.reminderAt),
     index("task_snoozed_until_idx").on(table.userId, table.snoozedUntil),
+    // Backs sync.pull's keyset pagination ORDER BY (updated_at, id).
+    index("task_updated_at_id_idx").on(table.updatedAt, table.id),
     index("task_recurrence_source_id_idx").on(table.recurrenceSourceId),
     // F048: partial index matching the reminders-due predicate in
     // lib/reminders.ts (reminderAt <= widened lookahead, reminderSentAt
