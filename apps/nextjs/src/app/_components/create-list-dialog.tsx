@@ -21,8 +21,12 @@ import { toast } from "@acme/ui/toast";
 
 import { useTRPC } from "~/trpc/react";
 
+// Swatch data, not theme tokens: these hex values are persisted on the list
+// row and rendered as inline styles. The first entry is the default, aligned
+// with the theme's primary green.
+const DEFAULT_LIST_COLOR = "#4ADE80"; // primary green
 const PRESET_COLORS = [
-  "#50C878", // emerald
+  DEFAULT_LIST_COLOR,
   "#4A90D9", // blue
   "#E57373", // red
   "#FFB74D", // orange
@@ -38,7 +42,7 @@ export function CreateListDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [color, setColor] = useState(PRESET_COLORS[0] ?? "#50C878");
+  const [color, setColor] = useState<string>(DEFAULT_LIST_COLOR);
 
   const createList = useMutation(
     trpc.taskList.create.mutationOptions({
@@ -61,7 +65,7 @@ export function CreateListDialog() {
   const resetForm = () => {
     setName("");
     setDescription("");
-    setColor(PRESET_COLORS[0] ?? "#50C878");
+    setColor(DEFAULT_LIST_COLOR);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -108,7 +112,6 @@ export function CreateListDialog() {
                 placeholder="e.g. Groceries, Work, Shared Project"
                 className="border-border-strong bg-surface-2 placeholder:text-muted-foreground focus:border-border-focus text-white"
                 disabled={createList.isPending}
-                autoFocus
               />
             </div>
 

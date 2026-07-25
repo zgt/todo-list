@@ -12,6 +12,7 @@ import { useCreateTask } from "../create-task-context";
 import { useListFilter, useViewToggle } from "../use-task-filters";
 import { useFilteredTasks } from "./hooks/useFilteredTasks";
 import { InlineCreateTask } from "./InlineCreateTask";
+import { SnoozedTaskCard } from "./SnoozedTaskCard";
 import { TaskCard } from "./TaskCard";
 import { TaskCardSkeleton } from "./TaskCardSkeleton";
 import { TrashTaskCard } from "./TrashTaskCard";
@@ -23,7 +24,7 @@ type Categories = RouterOutputs["category"]["all"] | undefined;
 export function TaskList() {
   const trpc = useTRPC();
   const { data: session } = useSession();
-  const { isTrashView } = useListFilter();
+  const { isTrashView, isSnoozedView } = useListFilter();
 
   // Fetched once here and passed down so cards don't each subscribe to
   // category.all (one subscription per view instead of one per card).
@@ -36,7 +37,56 @@ export function TaskList() {
     return <DeletedTaskList categories={categories} />;
   }
 
+  if (isSnoozedView) {
+    return <SnoozedTaskList categories={categories} />;
+  }
+
   return <ActiveTaskList categories={categories} />;
+}
+
+function SnoozedTaskList({ categories }: { categories: Categories }) {
+  const trpc = useTRPC();
+  const { data: tasks } = useSuspenseQuery(trpc.task.snoozed.queryOptions());
+
+  if (tasks.length === 0) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <p className="text-xl font-semibold text-white">Nothing snoozed</p>
+        <p className="text-muted-foreground mt-2 max-w-sm">
+          Snoozed tasks are hidden from your list until their wake-up time.
+          They&rsquo;ll show up here while they wait.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <p className="text-muted-foreground text-sm">
+        Snoozed tasks are hidden from your list until their wake-up time.
+        Unsnooze one to bring it back now.
+      </p>
+      <AnimatePresence mode="popLayout">
+        {tasks.map((task, i) => (
+          <motion.div
+            key={task.id}
+            initial={{ opacity: 0, y: -12, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{
+              type: "spring",
+              stiffness: 380,
+              damping: 30,
+              delay: Math.min(i, 8) * 0.04,
+            }}
+            layout
+          >
+            <SnoozedTaskCard task={task} categories={categories} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function DeletedTaskList({ categories }: { categories: Categories }) {

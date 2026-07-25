@@ -34,13 +34,13 @@ export function MobileFilterSheet({ className }: { className?: string }) {
   const { search, setSearch } = useSearchFilter();
   const { selectedCategoryIds } = useCategoryFilter();
   const { selectedPriorities } = usePriorityFilter();
-  const { selectedListId, isTrashView } = useListFilter();
+  const { selectedListId, isTrashView, isSnoozedView } = useListFilter();
 
   const activeCount =
     (search.trim() !== "" ? 1 : 0) +
     (selectedCategoryIds.length > 0 ? 1 : 0) +
     (selectedPriorities.length > 0 ? 1 : 0) +
-    (selectedListId !== null || isTrashView ? 1 : 0);
+    (selectedListId !== null || isTrashView || isSnoozedView ? 1 : 0);
 
   return (
     <Sheet>

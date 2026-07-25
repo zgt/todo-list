@@ -105,7 +105,7 @@ function CategoryTreeItem({
           type="button"
           aria-pressed={isSelected}
           onClick={() => onToggle(node.id)}
-          className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 flex flex-1 items-center rounded-md border border-transparent px-2 py-1 text-left text-sm hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+          className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 hover:border-primary flex flex-1 items-center rounded-md border border-transparent px-2 py-1 text-left text-sm hover:text-white focus-visible:ring-2 focus-visible:outline-none"
         >
           {/* Color dot */}
           <span
@@ -167,7 +167,7 @@ export function CategoryFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="hover:bg-surface-2 h-8 gap-1 rounded-full border hover:border-emerald-400 hover:text-white"
+          className="hover:bg-surface-2 hover:border-primary h-8 gap-1 rounded-full border hover:text-white"
         >
           <Filter className="mr-2 size-4" />
           Category
@@ -183,7 +183,7 @@ export function CategoryFilter() {
           {tree.length === 0 ? (
             <Link
               href="/categories"
-              className="text-muted-foreground hover:bg-surface-2 flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:border-emerald-400 hover:text-white"
+              className="text-muted-foreground hover:bg-surface-2 hover:border-primary flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:text-white"
             >
               <Plus className="size-4" />
               Create a category

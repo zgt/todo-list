@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 
 import type { RouterOutputs } from "@acme/api";
@@ -20,6 +20,13 @@ export function SubtaskSection({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const newInputRef = useRef<HTMLInputElement>(null);
+
+  // The inline editor is only mounted after the user clicks a subtask, so
+  // moving focus into it is correct — but as a mount-time ref callback rather
+  // than `autoFocus`, which is about page-load focus stealing.
+  const focusOnMount = useCallback((el: HTMLInputElement | null) => {
+    el?.focus();
+  }, []);
 
   const subtasks = [...task.subtasks].sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -76,7 +83,12 @@ export function SubtaskSection({
                 });
               }}
               className={cn(
-                "size-3.5 rounded border-2 transition-all",
+                "size-3.5 shrink-0 rounded border-2 transition-all",
+                // Invisible pseudo-element grows the pointer target to 30px
+                // (past the WCAG 24px minimum) without changing layout; kept
+                // just under the 30px row pitch so neighbouring rows' targets
+                // don't overlap.
+                "relative before:absolute before:-inset-2 before:content-['']",
                 subtask.completed
                   ? "bg-primary border-primary text-black"
                   : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
@@ -84,8 +96,9 @@ export function SubtaskSection({
             />
             {editingId === subtask.id ? (
               <input
-                autoFocus
+                ref={focusOnMount}
                 value={editingTitle}
+                aria-label={`Edit subtask: ${subtask.title}`}
                 onChange={(e) => setEditingTitle(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {

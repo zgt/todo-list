@@ -288,21 +288,21 @@ export function CategoryTreeVisualization({
 
       {/* Zoom / fit controls */}
       <div className="absolute right-4 bottom-4 flex items-center gap-2">
-        <div className="bg-surface/80 flex items-center rounded-lg border border-emerald-500/30 backdrop-blur-sm">
+        <div className="bg-surface/80 border-primary/30 flex items-center rounded-lg border backdrop-blur-sm">
           <button
             type="button"
             aria-label="Zoom out"
             onClick={() => handleZoomBy(1 / 1.3)}
-            className="focus-visible:ring-border-focus rounded-l-lg px-2 py-1.5 text-emerald-400 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-border-focus text-primary rounded-l-lg px-2 py-1.5 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
           >
             <Minus className="size-4" />
           </button>
-          <div className="h-4 w-px bg-emerald-500/30" />
+          <div className="bg-primary/30 h-4 w-px" />
           <button
             type="button"
             aria-label="Zoom in"
             onClick={() => handleZoomBy(1.3)}
-            className="focus-visible:ring-border-focus rounded-r-lg px-2 py-1.5 text-emerald-400 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-border-focus text-primary rounded-r-lg px-2 py-1.5 transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
           >
             <Plus className="size-4" />
           </button>
@@ -310,7 +310,7 @@ export function CategoryTreeVisualization({
         <button
           type="button"
           onClick={handleResetView}
-          className="bg-surface/80 focus-visible:ring-border-focus rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs text-emerald-400 backdrop-blur-sm transition-colors hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+          className="bg-surface/80 focus-visible:ring-border-focus border-primary/30 text-primary hover:border-primary rounded-lg border px-3 py-1.5 text-xs backdrop-blur-sm transition-colors hover:text-white focus-visible:ring-2 focus-visible:outline-none"
         >
           Reset View
         </button>

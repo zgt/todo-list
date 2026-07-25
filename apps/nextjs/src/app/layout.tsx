@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { cn } from "@acme/ui";
@@ -43,7 +44,13 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-export default function RootLayout(props: { children: React.ReactNode }) {
+export default async function RootLayout(props: { children: React.ReactNode }) {
+  // SidebarProvider persists the open/closed state to a `sidebar_state` cookie
+  // on every toggle; seed the initial state from it so the sidebar renders in
+  // the state the user left it. Absent cookie => closed, as before.
+  const cookieStore = await cookies();
+  const sidebarDefaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
@@ -56,7 +63,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         <ThemeProvider>
           <NuqsAdapter>
             <TRPCReactProvider>
-              <SidebarProvider defaultOpen={false}>
+              <SidebarProvider defaultOpen={sidebarDefaultOpen}>
                 {props.children}
               </SidebarProvider>
             </TRPCReactProvider>

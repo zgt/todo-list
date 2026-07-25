@@ -107,7 +107,7 @@ export function CategoryNodeActions({
                 className={
                   isDanger
                     ? "bg-surface flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-red-500/40 text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/50 hover:text-red-300"
-                    : "bg-surface hover:bg-surface-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/40 text-emerald-400 transition-colors hover:border-emerald-400 hover:text-white"
+                    : "bg-surface hover:bg-surface-2 border-primary/40 text-primary hover:border-primary flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors hover:text-white"
                 }
                 title={action.label}
                 aria-label={action.label}
