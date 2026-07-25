@@ -37,12 +37,65 @@ struct PendingWidgetAction: Codable {
     let timestamp: Date
 }
 
+// MARK: - Lenient ISO8601 Date Decoding
+//
+// JS's `Date.prototype.toISOString()` (used throughout the app to encode
+// dates for the widget's shared JSON payloads) always emits fractional
+// seconds, e.g. "2024-01-01T12:00:00.000Z". `JSONDecoder`'s built-in
+// `.iso8601` strategy uses an `ISO8601DateFormatter` WITHOUT
+// `.withFractionalSeconds`, which cannot parse that format — `date(from:)`
+// returns nil, the `try?` on the decode swallows it, and the whole decode
+// fails silently (widget renders empty / checkbox becomes a no-op). This
+// strategy tries a fractional-seconds formatter first and falls back to the
+// plain formatter, so it accepts both forms.
+enum FlexibleISO8601 {
+    private static let withFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let withoutFractionalSeconds: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
+    static func decode(_ decoder: Decoder) throws -> Date {
+        let container = try decoder.singleValueContainer()
+        let dateString = try container.decode(String.self)
+
+        if let date = withFractionalSeconds.date(from: dateString) {
+            return date
+        }
+        if let date = withoutFractionalSeconds.date(from: dateString) {
+            return date
+        }
+
+        throw DecodingError.dataCorruptedError(
+            in: container,
+            debugDescription: "Expected ISO8601-formatted date string, got: \(dateString)"
+        )
+    }
+}
+
+extension JSONDecoder {
+    /// A `JSONDecoder` configured with `FlexibleISO8601` date decoding.
+    /// Use this instead of manually setting `.dateDecodingStrategy = .iso8601`
+    /// anywhere a payload may contain JS-produced (fractional-second) dates.
+    static var lenientISO8601: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            try FlexibleISO8601.decode(decoder)
+        }
+        return decoder
+    }
+}
+
 func loadPendingActions(from userDefaults: UserDefaults) -> [PendingWidgetAction] {
     guard let json = userDefaults.string(forKey: "pendingWidgetActions"),
           let data = json.data(using: .utf8) else { return [] }
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    return (try? decoder.decode([PendingWidgetAction].self, from: data)) ?? []
+    return (try? JSONDecoder.lenientISO8601.decode([PendingWidgetAction].self, from: data)) ?? []
 }
 
 func savePendingActions(_ actions: [PendingWidgetAction], to userDefaults: UserDefaults) {
@@ -77,10 +130,7 @@ struct ToggleTaskIntent: AppIntent {
             return .result()
         }
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        guard var widgetData = try? decoder.decode(WidgetData.self, from: jsonData) else {
+        guard var widgetData = try? JSONDecoder.lenientISO8601.decode(WidgetData.self, from: jsonData) else {
             return .result()
         }
 
@@ -137,10 +187,7 @@ struct CycleCategoryIntent: AppIntent {
             return .result()
         }
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        guard let widgetData = try? decoder.decode(WidgetData.self, from: jsonData) else {
+        guard let widgetData = try? JSONDecoder.lenientISO8601.decode(WidgetData.self, from: jsonData) else {
             return .result()
         }
         
@@ -275,12 +322,9 @@ struct TodoWidgetProvider: TimelineProvider {
             return (WidgetData(tasks: [], categories: [], totalCount: 0, completedCount: 0, updatedAt: Date()), nil)
         }
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
         var data: WidgetData
         do {
-            data = try decoder.decode(WidgetData.self, from: jsonData)
+            data = try JSONDecoder.lenientISO8601.decode(WidgetData.self, from: jsonData)
         } catch {
             print("Failed to decode widget data: \(error)")
             return (WidgetData(tasks: [], categories: [], totalCount: 0, completedCount: 0, updatedAt: Date()), nil)

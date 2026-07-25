@@ -38,10 +38,7 @@ struct CalendarWidgetProvider: TimelineProvider {
             return WidgetData(tasks: [], categories: [], totalCount: 0, completedCount: 0, updatedAt: Date())
         }
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        return (try? decoder.decode(WidgetData.self, from: jsonData))
+        return (try? JSONDecoder.lenientISO8601.decode(WidgetData.self, from: jsonData))
             ?? WidgetData(tasks: [], categories: [], totalCount: 0, completedCount: 0, updatedAt: Date())
     }
 }

@@ -428,14 +428,16 @@ export default function Index() {
   useWidgetSync(tasks, !!session);
 
   // Process pending widget actions (task toggles from iOS widget)
-  useWidgetActions(
-    async ({ id, completed }) => {
+  const handleWidgetTaskUpdate = useCallback(
+    async ({ id, completed }: { id: string; completed: boolean }) => {
       await vanillaTrpc.task.update.mutate({ id, completed });
     },
-    async () => {
-      await queryClient.invalidateQueries(trpc.task.all.queryFilter());
-    },
+    [],
   );
+  const handleWidgetActionsInvalidate = useCallback(async () => {
+    await queryClient.invalidateQueries(trpc.task.all.queryFilter());
+  }, [queryClient]);
+  useWidgetActions(handleWidgetTaskUpdate, handleWidgetActionsInvalidate);
 
   // tRPC mutation for toggling task completion with optimistic update
   const toggleMutation = useMutation(

@@ -29,9 +29,11 @@ import {
 
 import { GradientBackground } from "~/components/GradientBackground";
 import { UserAvatar } from "~/components/UserAvatar";
+import { removeRegisteredPushToken } from "~/hooks/usePushTokenRegistration";
 import { queryClient as globalQueryClient, trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
+import { clearWidgetData } from "~/utils/widget";
 
 const APP_VERSION =
   Constants.expoConfig?.version ??
@@ -72,12 +74,17 @@ export default function ProfileScreen() {
   const deleteAccountMutation = useMutation(
     trpc.user.deleteAccount.mutationOptions({
       onSuccess: async () => {
+        // Best-effort: revoke the push token server-side before the session
+        // goes away. Must never block sign-out.
+        await removeRegisteredPushToken();
+
         try {
           await authClient.signOut();
         } catch (error) {
           console.error("Sign-out error:", error);
         }
         clearSessionTokenCookieMirror();
+        clearWidgetData();
         globalQueryClient.clear();
       },
       onError: (error) => {

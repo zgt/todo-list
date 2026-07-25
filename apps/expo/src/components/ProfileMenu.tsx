@@ -31,9 +31,11 @@ import {
 
 import type { User } from "~/utils/auth";
 import { UserAvatar } from "~/components/UserAvatar";
+import { removeRegisteredPushToken } from "~/hooks/usePushTokenRegistration";
 import { trpc } from "~/utils/api";
 import { authClient } from "~/utils/auth";
 import { clearSessionTokenCookieMirror } from "~/utils/auth-storage";
+import { clearWidgetData } from "~/utils/widget";
 
 export interface ProfileMenuRef {
   present: () => void;
@@ -107,12 +109,17 @@ export const ProfileMenu = forwardRef<ProfileMenuRef, ProfileMenuProps>(
     }, []);
 
     const handleSignOut = async () => {
+      // Best-effort: revoke the push token server-side before the session
+      // goes away. Must never block sign-out.
+      await removeRegisteredPushToken();
+
       try {
         await authClient.signOut();
       } catch (error) {
         console.error("Sign-out error:", error);
       } finally {
         clearSessionTokenCookieMirror();
+        clearWidgetData();
         queryClient.clear();
         dismissMenu();
       }
