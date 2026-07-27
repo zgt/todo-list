@@ -7,8 +7,8 @@ await jiti.import("./src/env");
 
 /** @type {import("next").NextConfig} */
 const config = {
-  /** Allow dev access via the LAN IP that AUTH_REDIRECT_PROXY_URL points at */
-  allowedDevOrigins: ["192.168.1.135"],
+  /** Allow dev access via the origins AUTH_REDIRECT_PROXY_URL may point at */
+  allowedDevOrigins: ["192.168.1.135", "desktop.taila644c3.ts.net"],
 
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: ["@acme/api", "@acme/auth", "@acme/db", "@acme/ui"],
