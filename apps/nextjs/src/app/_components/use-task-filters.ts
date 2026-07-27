@@ -24,24 +24,30 @@ const listParsers = {
   list: parseAsString,
   /** Trash / deleted pseudo-view, split out of the list filter */
   trash: parseAsBoolean.withDefault(false),
+  /** Snoozed pseudo-view — tasks hidden from `task.all` until they wake up */
+  snoozed: parseAsBoolean.withDefault(false),
 };
 
 /**
- * List filter + trash view, backed by URL search params. The two are mutually
- * exclusive in the UI: selecting a list clears the trash view, and vice versa.
- * Selecting the trash view uses history: "push" so it feels like navigation and
- * the back button returns to the previous filter.
+ * List filter + the trash and snoozed pseudo-views, backed by URL search
+ * params. All three are mutually exclusive in the UI: selecting a list clears
+ * the pseudo-views, and selecting one pseudo-view clears the other. The
+ * pseudo-views use history: "push" so they feel like navigation and the back
+ * button returns to the previous filter.
  */
 export function useListFilter() {
-  const [{ list, trash }, setListState] = useQueryStates(listParsers);
+  const [{ list, trash, snoozed }, setListState] = useQueryStates(listParsers);
 
   return {
     selectedListId: list,
     setSelectedListId: (id: string | null) =>
-      void setListState({ list: id, trash: false }),
+      void setListState({ list: id, trash: false, snoozed: false }),
     isTrashView: trash,
     setTrashView: (on: boolean) =>
-      void setListState({ trash: on }, { history: "push" }),
+      void setListState({ trash: on, snoozed: false }, { history: "push" }),
+    isSnoozedView: snoozed,
+    setSnoozedView: (on: boolean) =>
+      void setListState({ snoozed: on, trash: false }, { history: "push" }),
   };
 }
 

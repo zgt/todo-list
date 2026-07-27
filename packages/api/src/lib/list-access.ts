@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 
 import type { db } from "@acme/db/client";
-import { and, eq } from "@acme/db";
+import { and, eq, isNull } from "@acme/db";
 import { TaskList, TaskListMember } from "@acme/db/schema";
 
 const ROLE_HIERARCHY: Record<string, number> = {
@@ -16,9 +16,10 @@ export async function assertListAccess(
   listId: string,
   minRole: "viewer" | "editor" | "owner",
 ): Promise<{ role: string }> {
-  // Check if user is the list owner
+  // Check if user is the list owner. Soft-deleted lists grant no access to
+  // anyone — without this filter a deleted shared list stays writable.
   const list = await database.query.TaskList.findFirst({
-    where: and(eq(TaskList.id, listId)),
+    where: and(eq(TaskList.id, listId), isNull(TaskList.deletedAt)),
     columns: { ownerId: true },
   });
 

@@ -99,7 +99,7 @@ export class SyncManager {
   }
 
   /**
-   * Ensure sync_meta table has last_sync_timestamp initialized
+   * Ensure sync_meta table has last_sync_timestamp/last_sync_cursor_id initialized
    */
   private async ensureSyncMetaInitialized(): Promise<void> {
     const existing = await db
@@ -116,6 +116,40 @@ export class SyncManager {
       });
       console.log("Initialized last_sync_timestamp to 0");
     }
+
+    const existingCursor = await db
+      .select()
+      .from(syncMeta)
+      .where(eq(syncMeta.key, "last_sync_cursor_id"))
+      .limit(1);
+
+    if (existingCursor.length === 0) {
+      await db.insert(syncMeta).values({
+        key: "last_sync_cursor_id",
+        value: "",
+        updatedAt: new Date(),
+      });
+    }
+  }
+
+  /**
+   * Persist the sync cursor (G004) — the only valid advance is the
+   * server-returned `nextCursor`. Never substitute `Date.now()` here: that
+   * would silently skip tasks updated after the request but not yet seen.
+   */
+  private async persistSyncCursor(
+    updatedAt: number,
+    cursorId: string | null,
+  ): Promise<void> {
+    const now = new Date();
+    await db
+      .update(syncMeta)
+      .set({ value: updatedAt.toString(), updatedAt: now })
+      .where(eq(syncMeta.key, "last_sync_timestamp"));
+    await db
+      .update(syncMeta)
+      .set({ value: cursorId ?? "", updatedAt: now })
+      .where(eq(syncMeta.key, "last_sync_cursor_id"));
   }
 
   /**
@@ -125,57 +159,75 @@ export class SyncManager {
     // Ensure sync_meta is initialized
     await this.ensureSyncMetaInitialized();
 
-    // Get last sync timestamp
+    // Get last sync timestamp + cursor id
     const lastSyncResult = await db
       .select({ value: syncMeta.value })
       .from(syncMeta)
       .where(eq(syncMeta.key, "last_sync_timestamp"))
       .limit(1);
+    const cursorResult = await db
+      .select({ value: syncMeta.value })
+      .from(syncMeta)
+      .where(eq(syncMeta.key, "last_sync_cursor_id"))
+      .limit(1);
 
-    const lastSyncTimestamp = lastSyncResult[0]
+    let cursorTimestamp = lastSyncResult[0]
       ? parseInt(lastSyncResult[0].value, 10)
       : 0;
+    const storedCursorId = cursorResult[0]?.value;
+    let cursorId: string | null =
+      storedCursorId && storedCursorId.length > 0 ? storedCursorId : null;
 
     console.log(
-      `Pulling changes since ${new Date(lastSyncTimestamp).toISOString()}`,
+      `Pulling changes since ${new Date(cursorTimestamp).toISOString()}`,
     );
 
     try {
-      // Fetch changes from server
-      const serverChanges = await vanillaTrpc.sync.pull.query({
-        lastSyncTimestamp,
-        entityTypes: ["task"], // MVP: only tasks
-      });
+      let totalSynced = 0;
+      let hasMore = true;
 
-      console.log(
-        `📥 Received ${serverChanges.tasks.length} tasks from server`,
-      );
+      // G004: page through the server's keyset-paginated response instead of
+      // assuming a single response captures everything past the cursor.
+      while (hasMore) {
+        const serverChanges = await vanillaTrpc.sync.pull.query({
+          lastSyncTimestamp: cursorTimestamp,
+          cursorId,
+          entityTypes: ["task"], // MVP: only tasks
+        });
 
-      // Apply server changes to local database
-      for (const task of serverChanges.tasks) {
-        await this.applyServerTask(
-          task as {
-            id: string;
-            deletedAt?: Date | null;
-            version: number;
-            updatedAt: Date | string | number;
-            [key: string]: unknown;
-          },
+        console.log(
+          `📥 Received ${serverChanges.tasks.length} tasks from server`,
         );
+
+        // Apply server changes to local database
+        for (const task of serverChanges.tasks) {
+          await this.applyServerTask(
+            task as {
+              id: string;
+              deletedAt?: Date | null;
+              version: number;
+              updatedAt: Date | string | number;
+              [key: string]: unknown;
+            },
+          );
+        }
+
+        totalSynced += serverChanges.tasks.length;
+        hasMore = serverChanges.hasMore;
+
+        if (serverChanges.nextCursor) {
+          cursorTimestamp = serverChanges.nextCursor.updatedAt;
+          cursorId = serverChanges.nextCursor.id;
+          // Persist progress after every page so a mid-pagination failure
+          // doesn't force re-fetching pages already applied.
+          await this.persistSyncCursor(cursorTimestamp, cursorId);
+        } else {
+          // No rows returned - nothing to advance past.
+          break;
+        }
       }
 
-      // Update last sync timestamp
-      await db
-        .update(syncMeta)
-        .set({
-          value: Date.now().toString(),
-          updatedAt: new Date(),
-        })
-        .where(eq(syncMeta.key, "last_sync_timestamp"));
-
-      console.log(
-        `✅ Pull from server completed: ${serverChanges.tasks.length} tasks synced`,
-      );
+      console.log(`✅ Pull from server completed: ${totalSynced} tasks synced`);
     } catch (error) {
       console.error("❌ Pull from server failed:", error);
       throw error;

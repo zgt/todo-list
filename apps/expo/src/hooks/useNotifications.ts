@@ -6,13 +6,42 @@ import type {
   NotificationData,
   TaskNotificationData,
 } from "~/utils/notifications";
+import { isPushTokenRegistered } from "~/hooks/usePushTokenRegistration";
 import { vanillaTrpc } from "~/utils/api";
+import { authClient } from "~/utils/auth";
 import {
   configureNotificationHandler,
   requestPermissions,
   scheduleTaskReminder,
   TASK_REMINDER_ACTIONS,
 } from "~/utils/notifications";
+
+/**
+ * Schedules a local snooze reminder unless the server push channel already
+ * covers it (D3): if pushReminders is on AND this device's token is
+ * registered, the server re-fires a push at snooze expiry, so scheduling a
+ * local one too would double-notify. If the prefs check itself fails, fail
+ * open and schedule locally anyway — better a duplicate than silence.
+ */
+async function scheduleLocalSnoozeReminderIfNeeded(
+  taskId: string,
+  title: string,
+  snoozeUntil: Date,
+) {
+  try {
+    const prefs = await vanillaTrpc.notification.getUserPreferences.query();
+    const { data: session } = await authClient.getSession();
+    const pushCovered =
+      prefs.pushReminders && isPushTokenRegistered(session?.user.id);
+    if (pushCovered) return;
+  } catch (error) {
+    console.warn(
+      "[Notifications] Failed to check notification prefs, scheduling local reminder as fallback:",
+      error,
+    );
+  }
+  await scheduleTaskReminder(taskId, title, snoozeUntil);
+}
 
 /**
  * Handle a notification action button tap (snooze or mark done).
@@ -26,29 +55,40 @@ async function handleTaskAction(
   const { taskId } = data;
 
   switch (actionIdentifier) {
+    // Snooze actions go through task.snooze (snoozedUntil) — never rewrite
+    // reminderAt, which is the anchor future recurrence reminders derive
+    // their offset from.
     case TASK_REMINDER_ACTIONS.SNOOZE_10MIN: {
       const snoozeUntil = new Date(Date.now() + 10 * 60 * 1000);
-      await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
+      await scheduleLocalSnoozeReminderIfNeeded(
+        taskId,
+        notificationTitle,
+        snoozeUntil,
+      );
       try {
-        await vanillaTrpc.task.update.mutate({
+        await vanillaTrpc.task.snooze.mutate({
           id: taskId,
-          reminderAt: snoozeUntil,
+          snoozedUntil: snoozeUntil,
         });
       } catch (err) {
-        console.error("[Notifications] Failed to update reminder:", err);
+        console.error("[Notifications] Failed to snooze task:", err);
       }
       break;
     }
     case TASK_REMINDER_ACTIONS.SNOOZE_1HR: {
       const snoozeUntil = new Date(Date.now() + 60 * 60 * 1000);
-      await scheduleTaskReminder(taskId, notificationTitle, snoozeUntil);
+      await scheduleLocalSnoozeReminderIfNeeded(
+        taskId,
+        notificationTitle,
+        snoozeUntil,
+      );
       try {
-        await vanillaTrpc.task.update.mutate({
+        await vanillaTrpc.task.snooze.mutate({
           id: taskId,
-          reminderAt: snoozeUntil,
+          snoozedUntil: snoozeUntil,
         });
       } catch (err) {
-        console.error("[Notifications] Failed to update reminder:", err);
+        console.error("[Notifications] Failed to snooze task:", err);
       }
       break;
     }

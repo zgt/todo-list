@@ -62,7 +62,7 @@ export default async function ListDetailPage({
               {/* Aurora effect */}
               <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
                 <div className="bg-primary/10 absolute top-[-50%] left-[-20%] h-[80%] w-[80%] rounded-full mix-blend-screen blur-[100px]"></div>
-                <div className="absolute right-[-10%] bottom-[-20%] h-[60%] w-[60%] rounded-full bg-emerald-600/10 mix-blend-screen blur-[80px]"></div>
+                <div className="bg-primary/10 absolute right-[-10%] bottom-[-20%] h-[60%] w-[60%] rounded-full mix-blend-screen blur-[80px]"></div>
               </div>
 
               <div className="relative z-10 flex h-full flex-col">

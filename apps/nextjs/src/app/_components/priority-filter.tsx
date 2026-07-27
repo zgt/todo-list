@@ -42,7 +42,7 @@ export function PriorityFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="hover:bg-surface-2 h-8 gap-1 rounded-full border hover:border-emerald-400 hover:text-white"
+          className="hover:bg-surface-2 hover:border-primary h-8 gap-1 rounded-full border hover:text-white"
         >
           <SlidersHorizontal className="mr-2 size-4" />
           Priority
@@ -63,7 +63,7 @@ export function PriorityFilter() {
                 onClick={() => togglePriority(key)}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+                  "hover:bg-surface-2 hover:border-primary hover:text-white",
                   isSelected && "bg-surface-2 text-white",
                 )}
               >

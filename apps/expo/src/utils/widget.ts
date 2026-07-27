@@ -178,7 +178,7 @@ export function syncWidget(tasks: WidgetTask[]): void {
 
 // MARK: - Pending Widget Actions
 
-interface PendingWidgetAction {
+export interface PendingWidgetAction {
   taskId: string;
   action: "toggle";
   completed: boolean;
@@ -196,11 +196,74 @@ export function getPendingWidgetActions(): PendingWidgetAction[] {
   }
 }
 
-export function clearPendingWidgetActions(): void {
+/**
+ * Replaces the entire pending widget actions queue in App Group storage.
+ * Prefer `removePendingWidgetAction` when acknowledging a single processed
+ * action, since it re-reads the queue first and so tolerates actions the
+ * widget extension appended concurrently while we were processing.
+ */
+export function setPendingWidgetActions(actions: PendingWidgetAction[]): void {
   if (Platform.OS !== "ios") return;
   try {
-    setSharedData("pendingWidgetActions", "[]", APP_GROUP_ID);
+    setSharedData(
+      "pendingWidgetActions",
+      JSON.stringify(actions),
+      APP_GROUP_ID,
+    );
   } catch {
     /* non-critical */
+  }
+}
+
+/**
+ * Removes a single action from the pending widget actions queue,
+ * identified by taskId + timestamp (the pair is unique since the widget
+ * extension dedupes by taskId before appending). Re-reads the queue
+ * immediately before writing so a mid-loop failure elsewhere never
+ * clobbers actions added by the widget after we took our initial snapshot.
+ */
+export function removePendingWidgetAction(
+  action: Pick<PendingWidgetAction, "taskId" | "timestamp">,
+): void {
+  if (Platform.OS !== "ios") return;
+  const current = getPendingWidgetActions();
+  const remaining = current.filter(
+    (a) => !(a.taskId === action.taskId && a.timestamp === action.timestamp),
+  );
+  if (remaining.length !== current.length) {
+    setPendingWidgetActions(remaining);
+  }
+}
+
+export function clearPendingWidgetActions(): void {
+  setPendingWidgetActions([]);
+}
+
+// MARK: - Sign-out cleanup
+
+/**
+ * Clears all App Group widget state (task data + pending actions) and
+ * triggers a timeline reload. Must be called on sign-out / account switch
+ * so the previous user's task titles don't linger on the home/lock screen
+ * widgets and their queued toggle actions don't replay under the next
+ * session's account.
+ */
+export function clearWidgetData(): void {
+  if (Platform.OS !== "ios") return;
+
+  try {
+    const emptyData: WidgetData = {
+      tasks: [],
+      categories: [],
+      totalCount: 0,
+      completedCount: 0,
+      updatedAt: new Date().toISOString(),
+    };
+    setSharedData("widgetData", JSON.stringify(emptyData), APP_GROUP_ID);
+    setPendingWidgetActions([]);
+    reloadWidget();
+  } catch (error) {
+    // Log error but don't crash - widget cleanup is not critical to sign-out
+    console.warn("[Widget] Failed to clear data on sign-out:", error);
   }
 }

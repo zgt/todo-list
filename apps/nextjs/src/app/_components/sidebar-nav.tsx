@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AlarmClock,
   Archive,
   HelpCircle,
   Home,
@@ -111,7 +112,7 @@ export function AppSidebar({
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="glass-card flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-white/10 p-3 transition-colors hover:bg-white/5">
-                      <div className="from-primary size-10 rounded-full bg-linear-to-br to-emerald-700 p-[2px]">
+                      <div className="from-primary to-border-focus size-10 rounded-full bg-linear-to-br p-[2px]">
                         {user.image ? (
                           <Image
                             src={user.image}
@@ -198,13 +199,31 @@ export function AppSidebar({
 function SidebarListsSection() {
   const trpc = useTRPC();
   const { data: session } = useSession();
-  const { selectedListId, setSelectedListId, isTrashView, setTrashView } =
-    useListFilter();
+  const {
+    selectedListId,
+    setSelectedListId,
+    isTrashView,
+    setTrashView,
+    isSnoozedView,
+    setSnoozedView,
+  } = useListFilter();
 
   const { data: lists } = useQuery({
     ...trpc.taskList.all.queryOptions(),
     enabled: !!session?.user,
   });
+
+  // Shares its cache entry with the Snoozed view's own query, so opening the
+  // view costs no extra request.
+  const { data: snoozedTasks } = useQuery({
+    ...trpc.task.snoozed.queryOptions(),
+    enabled: !!session?.user,
+  });
+  const snoozedCount = snoozedTasks?.length ?? 0;
+
+  // A list/pseudo-view is only "selected" when no other pseudo-view is on.
+  const isListActive = (id: string | null) =>
+    selectedListId === id && !isTrashView && !isSnoozedView;
 
   return (
     <div className="mt-4 border-t border-white/10 pt-4">
@@ -219,11 +238,11 @@ function SidebarListsSection() {
         {/* All Tasks */}
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={selectedListId === null && !isTrashView}
+            isActive={isListActive(null)}
             onClick={() => setSelectedListId(null)}
             className={cn(
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-              selectedListId === null && !isTrashView
+              isListActive(null)
                 ? "bg-primary/20 text-primary border-primary/20 border"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
@@ -235,11 +254,11 @@ function SidebarListsSection() {
         {/* Personal */}
         <SidebarMenuItem>
           <SidebarMenuButton
-            isActive={selectedListId === "personal" && !isTrashView}
+            isActive={isListActive("personal")}
             onClick={() => setSelectedListId("personal")}
             className={cn(
               "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-              selectedListId === "personal" && !isTrashView
+              isListActive("personal")
                 ? "bg-primary/20 text-primary border-primary/20 border"
                 : "text-muted-foreground hover:text-foreground hover:bg-white/5",
             )}
@@ -247,6 +266,30 @@ function SidebarListsSection() {
             <div className="flex w-full items-center gap-2.5">
               <span className="bg-muted-foreground h-2 w-2 rounded-full" />
               <span className="flex-1 truncate font-medium">Personal</span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {/* Snoozed */}
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            isActive={isSnoozedView}
+            onClick={() => setSnoozedView(true)}
+            className={cn(
+              "h-9 rounded-lg px-3 text-sm transition-all duration-200",
+              isSnoozedView
+                ? "bg-primary/20 text-primary border-primary/20 border"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/5",
+            )}
+          >
+            <div className="flex w-full items-center gap-2.5">
+              <AlarmClock className="h-3.5 w-3.5" />
+              <span className="flex-1 truncate font-medium">Snoozed</span>
+              {snoozedCount > 0 && (
+                <span className="bg-surface-hover text-muted-foreground rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                  {snoozedCount}
+                </span>
+              )}
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -276,11 +319,11 @@ function SidebarListsSection() {
           .map((list) => (
             <SidebarMenuItem key={list.id} className="group/list">
               <SidebarMenuButton
-                isActive={selectedListId === list.id && !isTrashView}
+                isActive={isListActive(list.id)}
                 onClick={() => setSelectedListId(list.id)}
                 className={cn(
                   "h-9 rounded-lg px-3 text-sm transition-all duration-200",
-                  selectedListId === list.id && !isTrashView
+                  isListActive(list.id)
                     ? "bg-primary/20 text-primary border-primary/20 border"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5",
                 )}

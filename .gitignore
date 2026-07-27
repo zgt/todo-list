@@ -82,3 +82,6 @@ screenshots/
 # Local Claude working docs/prompts
 .claude/prompts/
 .claude/docs/
+
+# local credentials, never commit
+creds.txt

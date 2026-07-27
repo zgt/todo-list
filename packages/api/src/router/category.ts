@@ -231,11 +231,30 @@ export const categoryRouter = {
 
       if (!categoryId) return [];
 
+      // Verify the category belongs to this user (or is reachable via a
+      // shared list) before returning any data about it — same scoping as
+      // `byId`/`all`/`tree`.
+      const sharedCategoryIds = await getSharedCategoryIds(ctx.db, userId);
+
       const category = await ctx.db.query.Category.findFirst({
-        where: and(eq(Category.id, categoryId), isNull(Category.deletedAt)),
+        where: and(
+          eq(Category.id, categoryId),
+          isNull(Category.deletedAt),
+          sharedCategoryIds.length > 0
+            ? or(
+                eq(Category.userId, userId),
+                inArray(Category.id, sharedCategoryIds),
+              )
+            : eq(Category.userId, userId),
+        ),
       });
 
-      if (!category) return [];
+      if (!category) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Category not found",
+        });
+      }
 
       // path contains ancestor IDs in order; fetch them all
       const ancestorIds = category.path;
@@ -358,6 +377,7 @@ export const categoryRouter = {
       if (parentId !== undefined && parentId !== current.parentId) {
         let newPath: string[] = [];
         let newDepth = 0;
+        let newParentIdToMarkNonLeaf: string | null = null;
 
         if (parentId !== null) {
           // Prevent setting self as parent
@@ -394,67 +414,76 @@ export const categoryRouter = {
           newPath = [...newParent.path, newParent.id];
           newDepth = newParent.depth + 1;
 
-          // Mark new parent as non-leaf
           if (newParent.isLeaf) {
-            await ctx.db
-              .update(Category)
-              .set({ isLeaf: false })
-              .where(eq(Category.id, newParent.id));
+            newParentIdToMarkNonLeaf = newParent.id;
           }
         }
 
         const depthDiff = newDepth - current.depth;
 
-        // Update this category
-        await ctx.db
-          .update(Category)
-          .set({ ...rest, parentId, path: newPath, depth: newDepth })
-          .where(eq(Category.id, id));
-
-        // Update all descendants: replace old path prefix with new path prefix
-        const descendants = await ctx.db.query.Category.findMany({
-          where: and(
-            eq(Category.userId, ctx.session.user.id),
-            arrayContains(Category.path, [id]),
-          ),
-        });
-
-        for (const child of descendants) {
-          // Replace the portion of path up to and including `id` with new path + id
-          const idxInPath = child.path.indexOf(id);
-          const descendantSuffix = child.path.slice(idxInPath + 1);
-          const updatedPath = [...newPath, id, ...descendantSuffix];
-
-          await ctx.db
-            .update(Category)
-            .set({ path: updatedPath, depth: child.depth + depthDiff })
-            .where(eq(Category.id, child.id));
-        }
-
-        // Check if old parent still has children
-        if (current.parentId) {
-          const oldParentChildCount = await ctx.db
-            .select({ count: sql<number>`count(*)` })
-            .from(Category)
-            .where(
-              and(
-                eq(Category.parentId, current.parentId),
-                eq(Category.userId, ctx.session.user.id),
-                isNull(Category.deletedAt),
-                ne(Category.id, id),
-              ),
-            );
-
-          if (
-            oldParentChildCount[0] &&
-            Number(oldParentChildCount[0].count) === 0
-          ) {
-            await ctx.db
+        // The reparent rewrite spans several statements over the materialized
+        // path tree; run them atomically so a mid-sequence failure cannot
+        // leave the tree partially rewritten.
+        await ctx.db.transaction(async (tx) => {
+          // Mark new parent as non-leaf
+          if (newParentIdToMarkNonLeaf) {
+            await tx
               .update(Category)
-              .set({ isLeaf: true })
-              .where(eq(Category.id, current.parentId));
+              .set({ isLeaf: false })
+              .where(eq(Category.id, newParentIdToMarkNonLeaf));
           }
-        }
+
+          // Update this category
+          await tx
+            .update(Category)
+            .set({ ...rest, parentId, path: newPath, depth: newDepth })
+            .where(eq(Category.id, id));
+
+          // Update all descendants: replace old path prefix with new path prefix
+          const descendants = await tx.query.Category.findMany({
+            where: and(
+              eq(Category.userId, ctx.session.user.id),
+              arrayContains(Category.path, [id]),
+            ),
+          });
+
+          for (const child of descendants) {
+            // Replace the portion of path up to and including `id` with new path + id
+            const idxInPath = child.path.indexOf(id);
+            const descendantSuffix = child.path.slice(idxInPath + 1);
+            const updatedPath = [...newPath, id, ...descendantSuffix];
+
+            await tx
+              .update(Category)
+              .set({ path: updatedPath, depth: child.depth + depthDiff })
+              .where(eq(Category.id, child.id));
+          }
+
+          // Check if old parent still has children
+          if (current.parentId) {
+            const oldParentChildCount = await tx
+              .select({ count: sql<number>`count(*)` })
+              .from(Category)
+              .where(
+                and(
+                  eq(Category.parentId, current.parentId),
+                  eq(Category.userId, ctx.session.user.id),
+                  isNull(Category.deletedAt),
+                  ne(Category.id, id),
+                ),
+              );
+
+            if (
+              oldParentChildCount[0] &&
+              Number(oldParentChildCount[0].count) === 0
+            ) {
+              await tx
+                .update(Category)
+                .set({ isLeaf: true })
+                .where(eq(Category.id, current.parentId));
+            }
+          }
+        });
       } else {
         // Simple update without reparenting
         const updateData: Record<string, unknown> = { ...rest };
@@ -506,46 +535,58 @@ export const categoryRouter = {
 
       const now = new Date();
 
-      // Soft-delete this category and all descendants
-      // Descendants have this category's id in their path
-      await ctx.db
-        .update(Category)
-        .set({ deletedAt: now })
-        .where(
-          and(
-            eq(Category.userId, ctx.session.user.id),
-            isNull(Category.deletedAt),
-            arrayContains(Category.path, [input]),
-          ),
-        );
-
-      // Also soft-delete the category itself
-      await ctx.db
-        .update(Category)
-        .set({ deletedAt: now })
-        .where(eq(Category.id, input));
-
-      // Update parent's isLeaf if needed
-      if (category.parentId) {
-        const siblingCount = await ctx.db
-          .select({ count: sql<number>`count(*)` })
-          .from(Category)
+      await ctx.db.transaction(async (tx) => {
+        // Soft-delete this category and all descendants
+        // Descendants have this category's id in their path
+        const deletedDescendants = await tx
+          .update(Category)
+          .set({ deletedAt: now })
           .where(
             and(
-              eq(Category.parentId, category.parentId),
               eq(Category.userId, ctx.session.user.id),
               isNull(Category.deletedAt),
-              ne(Category.id, input),
+              arrayContains(Category.path, [input]),
             ),
-          );
+          )
+          .returning({ id: Category.id });
 
-        if (siblingCount[0] && Number(siblingCount[0].count) === 0) {
-          await ctx.db
-            .update(Category)
-            .set({ isLeaf: true })
-            .where(eq(Category.id, category.parentId));
+        // Also soft-delete the category itself
+        await tx
+          .update(Category)
+          .set({ deletedAt: now })
+          .where(eq(Category.id, input));
+
+        // Detach tasks from the deleted subtree — task queries eager-load
+        // the category relation without a deletedAt filter, so a dangling
+        // categoryId would keep surfacing the deleted category's label.
+        const deletedIds = [input, ...deletedDescendants.map((c) => c.id)];
+        await tx
+          .update(Task)
+          .set({ categoryId: null })
+          .where(inArray(Task.categoryId, deletedIds));
+
+        // Update parent's isLeaf if needed
+        if (category.parentId) {
+          const siblingCount = await tx
+            .select({ count: sql<number>`count(*)` })
+            .from(Category)
+            .where(
+              and(
+                eq(Category.parentId, category.parentId),
+                eq(Category.userId, ctx.session.user.id),
+                isNull(Category.deletedAt),
+                ne(Category.id, input),
+              ),
+            );
+
+          if (siblingCount[0] && Number(siblingCount[0].count) === 0) {
+            await tx
+              .update(Category)
+              .set({ isLeaf: true })
+              .where(eq(Category.id, category.parentId));
+          }
         }
-      }
+      });
 
       return { success: true };
     }),

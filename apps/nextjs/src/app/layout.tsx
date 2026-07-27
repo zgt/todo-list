@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { cn } from "@acme/ui";
@@ -43,7 +44,15 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-export default function RootLayout(props: { children: React.ReactNode }) {
+export default async function RootLayout(props: { children: React.ReactNode }) {
+  // Seed the sidebar from the cookie its toggle writes. Routes that render
+  // the sidebar (/, /text-cleaner, (app)/*) are dynamic anyway via
+  // getSession(); the static marketing pages opt out with
+  // `dynamic = "force-static"`, under which cookies() returns empty and the
+  // sidebar (which they don't render) just defaults closed.
+  const cookieStore = await cookies();
+  const sidebarDefaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
@@ -56,7 +65,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         <ThemeProvider>
           <NuqsAdapter>
             <TRPCReactProvider>
-              <SidebarProvider defaultOpen={false}>
+              <SidebarProvider defaultOpen={sidebarDefaultOpen}>
                 {props.children}
               </SidebarProvider>
             </TRPCReactProvider>

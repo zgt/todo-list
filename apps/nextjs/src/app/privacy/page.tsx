@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+// Pure static content: opts out of the root layout's cookies() call so this
+// page keeps build-time prerendering (cookies() returns empty under
+// force-static).
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Privacy Policy - Tokilist",
   description: "Privacy Policy for the Tokilist application",
@@ -13,7 +18,7 @@ export default function PrivacyPolicyPage() {
         {/* Aurora effect */}
         <div className="pointer-events-none absolute top-0 left-0 h-full w-full rounded-3xl">
           <div className="bg-primary/10 absolute top-[-50%] left-[-20%] h-[80%] w-[80%] rounded-full mix-blend-screen blur-[100px]"></div>
-          <div className="absolute right-[-10%] bottom-[-20%] h-[60%] w-[60%] rounded-full bg-emerald-600/10 mix-blend-screen blur-[80px]"></div>
+          <div className="bg-primary/10 absolute right-[-10%] bottom-[-20%] h-[60%] w-[60%] rounded-full mix-blend-screen blur-[80px]"></div>
         </div>
 
         <div className="relative z-10">

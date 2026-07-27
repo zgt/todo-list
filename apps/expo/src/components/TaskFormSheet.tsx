@@ -145,6 +145,13 @@ const RECURRENCE_OPTIONS: {
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
+  // G032: server + RecurrenceRuleValue already support "custom" (every N
+  // days via recurrenceInterval) — the interval row below already renders
+  // an "every N day(s)" unit label for any non-daily rule via its default
+  // ternary branch, so adding this pill is the only piece that was missing.
+  // Without it, a task already saved with recurrenceRule "custom" showed no
+  // pill highlighted at all when the edit sheet opened.
+  { value: "custom", label: "Custom" },
 ];
 
 const DISMISS_GUARD_MS = 500;
@@ -453,7 +460,13 @@ export function TaskFormSheet({
     return presentOnNextFrame(reason);
   }, [isSheetMounted, mode, presentOnNextFrame]);
 
-  // Controlled by parent state when isOpen is provided.
+  // Controlled by parent state when isOpen is provided. Mounting is derived
+  // during render (see the `isSheetMounted || isOpen` condition below)
+  // rather than synced here via setIsSheetMounted — that used to run inside
+  // this effect, which is exactly what react-hooks/set-state-in-effect
+  // flags. By the time this effect fires the sheet is already mounted
+  // (render already committed with `isOpen` true), so it only needs to
+  // trigger the present()/dismiss() side effect, not any state change.
   useEffect(() => {
     if (isOpen === undefined) return;
     debugTaskFormSheet("controlled isOpen changed", {
@@ -462,14 +475,14 @@ export function TaskFormSheet({
       isOpen,
     });
     if (isOpen) {
-      schedulePresent("controlled");
+      presentOnNextFrame("controlled");
     } else {
       debugTaskFormSheet("controlled dismiss()", { instanceId, mode });
       Keyboard.dismiss();
       hasDismissedKeyboardForCloseRef.current = true;
       bottomSheetRef.current?.dismiss();
     }
-  }, [instanceId, mode, isOpen, schedulePresent]);
+  }, [instanceId, mode, isOpen, presentOnNextFrame]);
 
   // For create mode: trigger opens the sheet
   const handleOpenSheet = useCallback(() => {
@@ -676,7 +689,7 @@ export function TaskFormSheet({
       )}
 
       {/* Bottom Sheet */}
-      {(mode === "edit" || isSheetMounted) && (
+      {(mode === "edit" || isSheetMounted || isOpen) && (
         <BSModal
           ref={bottomSheetRef}
           stackBehavior="push"
@@ -691,637 +704,641 @@ export function TaskFormSheet({
           backgroundStyle={styles.sheetBackground}
           handleIndicatorStyle={styles.handleIndicator}
         >
-        <BottomSheetScrollView
-          ref={scrollViewRef}
-          style={styles.contentContainer}
-          contentContainerStyle={[
-            styles.scrollContent,
-            subtaskInputFocused &&
-              keyboardHeight > 0 && { paddingBottom: keyboardHeight },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          onLayout={(e: LayoutChangeEvent) => {
-            scrollViewHeight.current = e.nativeEvent.layout.height;
-          }}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>
-              {mode === "create" ? "New Task" : "Edit Task"}
-            </Text>
-            <Pressable
-              onPress={() => {
-                Keyboard.dismiss();
-                hasDismissedKeyboardForCloseRef.current = true;
-                bottomSheetRef.current?.dismiss();
-              }}
-              hitSlop={12}
-            >
-              <X size={24} color="#8FA8A8" />
-            </Pressable>
-          </View>
+          <BottomSheetScrollView
+            ref={scrollViewRef}
+            style={styles.contentContainer}
+            contentContainerStyle={[
+              styles.scrollContent,
+              subtaskInputFocused &&
+                keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+            ]}
+            keyboardShouldPersistTaps="handled"
+            onLayout={(e: LayoutChangeEvent) => {
+              scrollViewHeight.current = e.nativeEvent.layout.height;
+            }}
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>
+                {mode === "create" ? "New Task" : "Edit Task"}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  hasDismissedKeyboardForCloseRef.current = true;
+                  bottomSheetRef.current?.dismiss();
+                }}
+                hitSlop={12}
+              >
+                <X size={24} color="#8FA8A8" />
+              </Pressable>
+            </View>
 
-          {/* Title */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Title</Text>
-            <BottomSheetTextInput
-              ref={
-                titleInputRef as React.RefObject<
-                  React.ComponentRef<typeof BottomSheetTextInput>
-                >
-              }
-              value={title}
-              onChangeText={setTitle}
-              placeholder="What needs to be done?"
-              placeholderTextColor="#4A6A6A"
-              autoCorrect={true}
-              autoCapitalize="sentences"
-              style={styles.input}
-            />
-          </View>
+            {/* Title */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>Title</Text>
+              <BottomSheetTextInput
+                ref={
+                  titleInputRef as React.RefObject<
+                    React.ComponentRef<typeof BottomSheetTextInput>
+                  >
+                }
+                value={title}
+                onChangeText={setTitle}
+                placeholder="What needs to be done?"
+                placeholderTextColor="#4A6A6A"
+                autoCorrect={true}
+                autoCapitalize="sentences"
+                style={styles.input}
+              />
+            </View>
 
-          {/* Description */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Description</Text>
-            <BottomSheetTextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Add details..."
-              placeholderTextColor="#4A6A6A"
-              autoCorrect={true}
-              autoCapitalize="sentences"
-              multiline
-              textAlignVertical="top"
-              style={[styles.input, styles.textArea]}
-            />
-          </View>
+            {/* Description */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>Description</Text>
+              <BottomSheetTextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Add details..."
+                placeholderTextColor="#4A6A6A"
+                autoCorrect={true}
+                autoCapitalize="sentences"
+                multiline
+                textAlignVertical="top"
+                style={[styles.input, styles.textArea]}
+              />
+            </View>
 
-          {/* Category & List */}
-          <View style={styles.fieldContainer}>
-            <View style={{ flexDirection: "row", gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Category</Text>
-                <CategoryWheelPicker
-                  selectedCategoryId={categoryId}
-                  onCategoryChange={setCategoryId}
-                />
-              </View>
-              {lists && lists.length > 0 && (
+            {/* Category & List */}
+            <View style={styles.fieldContainer}>
+              <View style={{ flexDirection: "row", gap: 12 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>List</Text>
-                  <ListPickerSheet
-                    selectedListId={listId}
-                    onListChange={setListId}
-                    lists={lists}
+                  <Text style={styles.label}>Category</Text>
+                  <CategoryWheelPicker
+                    selectedCategoryId={categoryId}
+                    onCategoryChange={setCategoryId}
                   />
                 </View>
-              )}
-            </View>
-          </View>
-
-          {/* Subtasks (edit mode) */}
-          {mode === "edit" && taskId && (
-            <View
-              style={styles.fieldContainerLarge}
-              onLayout={(e) => {
-                subtaskSectionY.current = e.nativeEvent.layout.y;
-              }}
-            >
-              <Text style={styles.label}>
-                Subtasks
-                {subtasks.length > 0 && (
-                  <Text style={styles.subtaskCount}>
-                    {" "}
-                    ({subtasks.filter((s) => s.completed).length}/
-                    {subtasks.length})
-                  </Text>
-                )}
-              </Text>
-
-              {subtasks.map((subtask) => (
-                <View key={subtask.id} style={styles.subtaskRow}>
-                  {/* Checkbox */}
-                  <Pressable
-                    onPress={() => {
-                      const newCompleted = !subtask.completed;
-                      setSubtasks((prev) =>
-                        prev.map((s) =>
-                          s.id === subtask.id
-                            ? { ...s, completed: newCompleted }
-                            : s,
-                        ),
-                      );
-                      updateSubtask.mutate({
-                        id: subtask.id,
-                        completed: newCompleted,
-                      });
-                    }}
-                    hitSlop={8}
-                  >
-                    <View
-                      style={[
-                        styles.checkbox,
-                        subtask.completed
-                          ? styles.checkboxChecked
-                          : styles.checkboxUnchecked,
-                      ]}
-                    >
-                      {subtask.completed && (
-                        <Text style={styles.checkmark}>✓</Text>
-                      )}
-                    </View>
-                  </Pressable>
-
-                  {/* Title — tap to edit inline */}
-                  {editingSubtaskId === subtask.id ? (
-                    <BottomSheetTextInput
-                      value={editingSubtaskTitle}
-                      onChangeText={setEditingSubtaskTitle}
-                      autoFocus
-                      autoCorrect={true}
-                      autoCapitalize="sentences"
-                      returnKeyType="done"
-                      onSubmitEditing={() => {
-                        const trimmed = editingSubtaskTitle.trim();
-                        if (trimmed && trimmed !== subtask.title) {
-                          setSubtasks((prev) =>
-                            prev.map((s) =>
-                              s.id === subtask.id
-                                ? { ...s, title: trimmed }
-                                : s,
-                            ),
-                          );
-                          updateSubtask.mutate({
-                            id: subtask.id,
-                            title: trimmed,
-                          });
-                        }
-                        setEditingSubtaskId(null);
-                      }}
-                      onBlur={() => {
-                        const trimmed = editingSubtaskTitle.trim();
-                        if (trimmed && trimmed !== subtask.title) {
-                          setSubtasks((prev) =>
-                            prev.map((s) =>
-                              s.id === subtask.id
-                                ? { ...s, title: trimmed }
-                                : s,
-                            ),
-                          );
-                          updateSubtask.mutate({
-                            id: subtask.id,
-                            title: trimmed,
-                          });
-                        }
-                        setEditingSubtaskId(null);
-                      }}
-                      style={styles.subtaskEditInput}
+                {lists && lists.length > 0 && (
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>List</Text>
+                    <ListPickerSheet
+                      selectedListId={listId}
+                      onListChange={setListId}
+                      lists={lists}
                     />
-                  ) : (
+                  </View>
+                )}
+              </View>
+            </View>
+
+            {/* Subtasks (edit mode) */}
+            {mode === "edit" && taskId && (
+              <View
+                style={styles.fieldContainerLarge}
+                onLayout={(e) => {
+                  subtaskSectionY.current = e.nativeEvent.layout.y;
+                }}
+              >
+                <Text style={styles.label}>
+                  Subtasks
+                  {subtasks.length > 0 && (
+                    <Text style={styles.subtaskCount}>
+                      {" "}
+                      ({subtasks.filter((s) => s.completed).length}/
+                      {subtasks.length})
+                    </Text>
+                  )}
+                </Text>
+
+                {subtasks.map((subtask) => (
+                  <View key={subtask.id} style={styles.subtaskRow}>
+                    {/* Checkbox */}
                     <Pressable
-                      style={styles.subtaskTitlePressable}
                       onPress={() => {
-                        setEditingSubtaskId(subtask.id);
-                        setEditingSubtaskTitle(subtask.title);
+                        const newCompleted = !subtask.completed;
+                        setSubtasks((prev) =>
+                          prev.map((s) =>
+                            s.id === subtask.id
+                              ? { ...s, completed: newCompleted }
+                              : s,
+                          ),
+                        );
+                        updateSubtask.mutate({
+                          id: subtask.id,
+                          completed: newCompleted,
+                        });
                       }}
+                      hitSlop={8}
                     >
-                      <Text
+                      <View
                         style={[
-                          styles.subtaskTitle,
-                          subtask.completed && styles.subtaskTitleCompleted,
+                          styles.checkbox,
+                          subtask.completed
+                            ? styles.checkboxChecked
+                            : styles.checkboxUnchecked,
                         ]}
                       >
-                        {subtask.title}
-                      </Text>
+                        {subtask.completed && (
+                          <Text style={styles.checkmark}>✓</Text>
+                        )}
+                      </View>
+                    </Pressable>
+
+                    {/* Title — tap to edit inline */}
+                    {editingSubtaskId === subtask.id ? (
+                      <BottomSheetTextInput
+                        value={editingSubtaskTitle}
+                        onChangeText={setEditingSubtaskTitle}
+                        autoFocus
+                        autoCorrect={true}
+                        autoCapitalize="sentences"
+                        returnKeyType="done"
+                        onSubmitEditing={() => {
+                          const trimmed = editingSubtaskTitle.trim();
+                          if (trimmed && trimmed !== subtask.title) {
+                            setSubtasks((prev) =>
+                              prev.map((s) =>
+                                s.id === subtask.id
+                                  ? { ...s, title: trimmed }
+                                  : s,
+                              ),
+                            );
+                            updateSubtask.mutate({
+                              id: subtask.id,
+                              title: trimmed,
+                            });
+                          }
+                          setEditingSubtaskId(null);
+                        }}
+                        onBlur={() => {
+                          const trimmed = editingSubtaskTitle.trim();
+                          if (trimmed && trimmed !== subtask.title) {
+                            setSubtasks((prev) =>
+                              prev.map((s) =>
+                                s.id === subtask.id
+                                  ? { ...s, title: trimmed }
+                                  : s,
+                              ),
+                            );
+                            updateSubtask.mutate({
+                              id: subtask.id,
+                              title: trimmed,
+                            });
+                          }
+                          setEditingSubtaskId(null);
+                        }}
+                        style={styles.subtaskEditInput}
+                      />
+                    ) : (
+                      <Pressable
+                        style={styles.subtaskTitlePressable}
+                        onPress={() => {
+                          setEditingSubtaskId(subtask.id);
+                          setEditingSubtaskTitle(subtask.title);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.subtaskTitle,
+                            subtask.completed && styles.subtaskTitleCompleted,
+                          ]}
+                        >
+                          {subtask.title}
+                        </Text>
+                      </Pressable>
+                    )}
+
+                    {/* Delete button */}
+                    <Pressable
+                      onPress={() => {
+                        setSubtasks((prev) =>
+                          prev.filter((s) => s.id !== subtask.id),
+                        );
+                        deleteSubtask.mutate({ id: subtask.id });
+                      }}
+                      hitSlop={8}
+                    >
+                      <X size={14} color="#8FA8A8" />
+                    </Pressable>
+                  </View>
+                ))}
+
+                {/* Add subtask input */}
+                <View
+                  style={styles.addSubtaskRow}
+                  onLayout={(e) => {
+                    addSubtaskRowY.current =
+                      subtaskSectionY.current + e.nativeEvent.layout.y;
+                  }}
+                >
+                  <BottomSheetTextInput
+                    ref={
+                      newSubtaskInputRef as React.RefObject<
+                        React.ComponentRef<typeof BottomSheetTextInput>
+                      >
+                    }
+                    value={newSubtaskTitle}
+                    onChangeText={setNewSubtaskTitle}
+                    placeholder="Add a subtask..."
+                    placeholderTextColor="#4A6A6A"
+                    autoCorrect={true}
+                    autoCapitalize="sentences"
+                    returnKeyType="done"
+                    onFocus={() => {
+                      setSubtaskInputFocused(true);
+                      setTimeout(() => scrollToSubtaskInput(), 400);
+                    }}
+                    onBlur={() => setSubtaskInputFocused(false)}
+                    onSubmitEditing={handleAddSubtask}
+                    style={styles.addSubtaskInput}
+                  />
+                  {newSubtaskTitle.trim().length > 0 && (
+                    <Pressable
+                      onPress={handleAddSubtask}
+                      disabled={createSubtask.isPending}
+                      style={[
+                        styles.addSubtaskButton,
+                        createSubtask.isPending && { opacity: 0.5 },
+                      ]}
+                      hitSlop={8}
+                    >
+                      <Check size={16} color="#0A1A1A" strokeWidth={3} />
                     </Pressable>
                   )}
-
-                  {/* Delete button */}
-                  <Pressable
-                    onPress={() => {
-                      setSubtasks((prev) =>
-                        prev.filter((s) => s.id !== subtask.id),
-                      );
-                      deleteSubtask.mutate({ id: subtask.id });
-                    }}
-                    hitSlop={8}
-                  >
-                    <X size={14} color="#8FA8A8" />
-                  </Pressable>
                 </View>
-              ))}
+              </View>
+            )}
 
-              {/* Add subtask input */}
+            {/* Subtasks (create mode — local-only until submit) */}
+            {mode === "create" && (
               <View
-                style={styles.addSubtaskRow}
+                style={styles.fieldContainerLarge}
                 onLayout={(e) => {
-                  addSubtaskRowY.current =
-                    subtaskSectionY.current + e.nativeEvent.layout.y;
+                  subtaskSectionY.current = e.nativeEvent.layout.y;
                 }}
               >
-                <BottomSheetTextInput
-                  ref={
-                    newSubtaskInputRef as React.RefObject<
-                      React.ComponentRef<typeof BottomSheetTextInput>
-                    >
-                  }
-                  value={newSubtaskTitle}
-                  onChangeText={setNewSubtaskTitle}
-                  placeholder="Add a subtask..."
-                  placeholderTextColor="#4A6A6A"
-                  autoCorrect={true}
-                  autoCapitalize="sentences"
-                  returnKeyType="done"
-                  onFocus={() => {
-                    setSubtaskInputFocused(true);
-                    setTimeout(() => scrollToSubtaskInput(), 400);
-                  }}
-                  onBlur={() => setSubtaskInputFocused(false)}
-                  onSubmitEditing={handleAddSubtask}
-                  style={styles.addSubtaskInput}
-                />
-                {newSubtaskTitle.trim().length > 0 && (
-                  <Pressable
-                    onPress={handleAddSubtask}
-                    disabled={createSubtask.isPending}
-                    style={[
-                      styles.addSubtaskButton,
-                      createSubtask.isPending && { opacity: 0.5 },
-                    ]}
-                    hitSlop={8}
-                  >
-                    <Check size={16} color="#0A1A1A" strokeWidth={3} />
-                  </Pressable>
-                )}
-              </View>
-            </View>
-          )}
+                <Text style={styles.label}>
+                  Subtasks
+                  {pendingSubtasks.length > 0 && (
+                    <Text style={styles.subtaskCount}>
+                      {" "}
+                      ({pendingSubtasks.length})
+                    </Text>
+                  )}
+                </Text>
 
-          {/* Subtasks (create mode — local-only until submit) */}
-          {mode === "create" && (
-            <View
-              style={styles.fieldContainerLarge}
-              onLayout={(e) => {
-                subtaskSectionY.current = e.nativeEvent.layout.y;
-              }}
-            >
-              <Text style={styles.label}>
-                Subtasks
                 {pendingSubtasks.length > 0 && (
-                  <Text style={styles.subtaskCount}>
-                    {" "}
-                    ({pendingSubtasks.length})
-                  </Text>
-                )}
-              </Text>
-
-              {pendingSubtasks.length > 0 && (
-                <ScrollView
-                  ref={pendingSubtasksScrollRef}
-                  style={styles.pendingSubtasksList}
-                  nestedScrollEnabled
-                >
-                  {pendingSubtasks.map((ps) => (
-                    <View key={ps.localId} style={styles.subtaskRow}>
-                      <View
-                        style={[styles.checkbox, styles.checkboxUnchecked]}
-                      />
-                      <Text style={[styles.subtaskTitle, { flex: 1 }]}>
-                        {ps.title}
-                      </Text>
-                      <Pressable
-                        onPress={() =>
-                          setPendingSubtasks((prev) =>
-                            prev.filter((s) => s.localId !== ps.localId),
-                          )
-                        }
-                        hitSlop={8}
-                      >
-                        <X size={14} color="#8FA8A8" />
-                      </Pressable>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-
-              {/* Add subtask input */}
-              <View
-                style={styles.addSubtaskRow}
-                onLayout={(e) => {
-                  addSubtaskRowY.current =
-                    subtaskSectionY.current + e.nativeEvent.layout.y;
-                }}
-              >
-                <BottomSheetTextInput
-                  ref={
-                    newSubtaskInputRef as React.RefObject<
-                      React.ComponentRef<typeof BottomSheetTextInput>
-                    >
-                  }
-                  value={newSubtaskTitle}
-                  onChangeText={setNewSubtaskTitle}
-                  placeholder="Add a subtask..."
-                  placeholderTextColor="#4A6A6A"
-                  autoCorrect={true}
-                  autoCapitalize="sentences"
-                  returnKeyType="done"
-                  onFocus={() => {
-                    setSubtaskInputFocused(true);
-                    setTimeout(() => scrollToSubtaskInput(), 400);
-                  }}
-                  onBlur={() => setSubtaskInputFocused(false)}
-                  onSubmitEditing={handleAddSubtask}
-                  style={[
-                    styles.addSubtaskInput,
-                    {
-                      fontSize: 16,
-                      height: 48,
-                      textAlignVertical: "center",
-                      borderRadius: 16,
-                    },
-                  ]}
-                />
-                {newSubtaskTitle.trim().length > 0 && (
-                  <Pressable
-                    onPress={handleAddSubtask}
-                    style={styles.addSubtaskButton}
-                    hitSlop={8}
+                  <ScrollView
+                    ref={pendingSubtasksScrollRef}
+                    style={styles.pendingSubtasksList}
+                    nestedScrollEnabled
                   >
-                    <Check size={16} color="#0A1A1A" strokeWidth={3} />
-                  </Pressable>
+                    {pendingSubtasks.map((ps) => (
+                      <View key={ps.localId} style={styles.subtaskRow}>
+                        <View
+                          style={[styles.checkbox, styles.checkboxUnchecked]}
+                        />
+                        <Text style={[styles.subtaskTitle, { flex: 1 }]}>
+                          {ps.title}
+                        </Text>
+                        <Pressable
+                          onPress={() =>
+                            setPendingSubtasks((prev) =>
+                              prev.filter((s) => s.localId !== ps.localId),
+                            )
+                          }
+                          hitSlop={8}
+                        >
+                          <X size={14} color="#8FA8A8" />
+                        </Pressable>
+                      </View>
+                    ))}
+                  </ScrollView>
                 )}
+
+                {/* Add subtask input */}
+                <View
+                  style={styles.addSubtaskRow}
+                  onLayout={(e) => {
+                    addSubtaskRowY.current =
+                      subtaskSectionY.current + e.nativeEvent.layout.y;
+                  }}
+                >
+                  <BottomSheetTextInput
+                    ref={
+                      newSubtaskInputRef as React.RefObject<
+                        React.ComponentRef<typeof BottomSheetTextInput>
+                      >
+                    }
+                    value={newSubtaskTitle}
+                    onChangeText={setNewSubtaskTitle}
+                    placeholder="Add a subtask..."
+                    placeholderTextColor="#4A6A6A"
+                    autoCorrect={true}
+                    autoCapitalize="sentences"
+                    returnKeyType="done"
+                    onFocus={() => {
+                      setSubtaskInputFocused(true);
+                      setTimeout(() => scrollToSubtaskInput(), 400);
+                    }}
+                    onBlur={() => setSubtaskInputFocused(false)}
+                    onSubmitEditing={handleAddSubtask}
+                    style={[
+                      styles.addSubtaskInput,
+                      {
+                        fontSize: 16,
+                        height: 48,
+                        textAlignVertical: "center",
+                        borderRadius: 16,
+                      },
+                    ]}
+                  />
+                  {newSubtaskTitle.trim().length > 0 && (
+                    <Pressable
+                      onPress={handleAddSubtask}
+                      style={styles.addSubtaskButton}
+                      hitSlop={8}
+                    >
+                      <Check size={16} color="#0A1A1A" strokeWidth={3} />
+                    </Pressable>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Due Date | Reminder | Priority */}
+            <View style={styles.fieldContainer}>
+              <View style={{ gap: 8 }}>
+                {/* Due Date - full width button */}
+                <Pressable
+                  onPress={() => {
+                    if (dueDate) {
+                      setShowDatePicker(true);
+                    } else {
+                      setDueDate(new Date());
+                      setShowDatePicker(true);
+                    }
+                  }}
+                  style={[
+                    styles.compactIconButton,
+                    dueDate && styles.compactIconButtonActive,
+                  ]}
+                >
+                  <Calendar size={20} color={dueDate ? "#50C878" : "#8FA8A8"} />
+                  <Text
+                    style={[
+                      styles.compactIconLabel,
+                      !dueDate && { color: "#8FA8A8" },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {dueDate ? formatDate(dueDate) : "Due date"}
+                  </Text>
+                  {dueDate && (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setDueDate(null);
+                        setShowDatePicker(false);
+                      }}
+                      hitSlop={8}
+                      style={{ marginLeft: "auto" }}
+                    >
+                      <X size={16} color="#ef4444" />
+                    </Pressable>
+                  )}
+                </Pressable>
+
+                {/* Reminder - full width button */}
+                <Pressable
+                  onPress={() => {
+                    if (reminderAt) {
+                      setPendingReminderDate(reminderAt);
+                      setShowReminderDatePicker(true);
+                    } else {
+                      const defaultReminder = dueDate
+                        ? new Date(dueDate.getTime() - 30 * 60 * 1000)
+                        : new Date(Date.now() + 60 * 60 * 1000);
+                      setPendingReminderDate(defaultReminder);
+                      setShowReminderDatePicker(true);
+                    }
+                  }}
+                  style={[
+                    styles.compactIconButton,
+                    reminderAt && styles.compactIconButtonActive,
+                  ]}
+                >
+                  <Bell size={20} color={reminderAt ? "#50C878" : "#8FA8A8"} />
+                  <Text
+                    style={[
+                      styles.compactIconLabel,
+                      !reminderAt && { color: "#8FA8A8" },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {reminderAt ? formatDateTime(reminderAt) : "Reminder"}
+                  </Text>
+                  {reminderAt && (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setReminderAt(null);
+                        setShowReminderDatePicker(false);
+                        setShowReminderTimePicker(false);
+                      }}
+                      hitSlop={8}
+                      style={{ marginLeft: "auto" }}
+                    >
+                      <X size={16} color="#ef4444" />
+                    </Pressable>
+                  )}
+                </Pressable>
+
+                {/* Priority - full width segment */}
+                <View style={styles.compactPriorityRow}>
+                  {PRIORITY_OPTIONS.map((opt) => {
+                    const isActive = priority === opt.value;
+                    return (
+                      <Pressable
+                        key={opt.value}
+                        onPress={() => setPriority(opt.value)}
+                        style={[
+                          styles.compactPriorityButton,
+                          {
+                            backgroundColor: isActive
+                              ? `${opt.color}25`
+                              : "transparent",
+                            borderRightWidth: opt.value !== "high" ? 1 : 0,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: isActive ? "700" : "500",
+                            color: isActive ? opt.color : "#8FA8A8",
+                          }}
+                        >
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
             </View>
-          )}
 
-          {/* Due Date | Reminder | Priority */}
-          <View style={styles.fieldContainer}>
-            <View style={{ gap: 8 }}>
-              {/* Due Date - full width button */}
-              <Pressable
-                onPress={() => {
-                  if (dueDate) {
-                    setShowDatePicker(true);
-                  } else {
-                    setDueDate(new Date());
-                    setShowDatePicker(true);
-                  }
-                }}
-                style={[
-                  styles.compactIconButton,
-                  dueDate && styles.compactIconButtonActive,
-                ]}
+            {/* Recurrence */}
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>Repeat</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.pillRow}
               >
-                <Calendar size={20} color={dueDate ? "#50C878" : "#8FA8A8"} />
-                <Text
+                <Pressable
+                  onPress={() => setRecurrenceRule(null)}
                   style={[
-                    styles.compactIconLabel,
-                    !dueDate && { color: "#8FA8A8" },
+                    styles.pill,
+                    recurrenceRule === null
+                      ? styles.pillActiveGreen
+                      : styles.pillInactive,
                   ]}
-                  numberOfLines={1}
                 >
-                  {dueDate ? formatDate(dueDate) : "Due date"}
-                </Text>
-                {dueDate && (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setDueDate(null);
-                      setShowDatePicker(false);
-                    }}
-                    hitSlop={8}
-                    style={{ marginLeft: "auto" }}
+                  <Text
+                    style={[
+                      styles.pillText,
+                      {
+                        color: recurrenceRule === null ? "#50C878" : "#8FA8A8",
+                      },
+                    ]}
                   >
-                    <X size={16} color="#ef4444" />
-                  </Pressable>
-                )}
-              </Pressable>
-
-              {/* Reminder - full width button */}
-              <Pressable
-                onPress={() => {
-                  if (reminderAt) {
-                    setPendingReminderDate(reminderAt);
-                    setShowReminderDatePicker(true);
-                  } else {
-                    const defaultReminder = dueDate
-                      ? new Date(dueDate.getTime() - 30 * 60 * 1000)
-                      : new Date(Date.now() + 60 * 60 * 1000);
-                    setPendingReminderDate(defaultReminder);
-                    setShowReminderDatePicker(true);
-                  }
-                }}
-                style={[
-                  styles.compactIconButton,
-                  reminderAt && styles.compactIconButtonActive,
-                ]}
-              >
-                <Bell size={20} color={reminderAt ? "#50C878" : "#8FA8A8"} />
-                <Text
-                  style={[
-                    styles.compactIconLabel,
-                    !reminderAt && { color: "#8FA8A8" },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {reminderAt ? formatDateTime(reminderAt) : "Reminder"}
-                </Text>
-                {reminderAt && (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setReminderAt(null);
-                      setShowReminderDatePicker(false);
-                      setShowReminderTimePicker(false);
-                    }}
-                    hitSlop={8}
-                    style={{ marginLeft: "auto" }}
-                  >
-                    <X size={16} color="#ef4444" />
-                  </Pressable>
-                )}
-              </Pressable>
-
-              {/* Priority - full width segment */}
-              <View style={styles.compactPriorityRow}>
-                {PRIORITY_OPTIONS.map((opt) => {
-                  const isActive = priority === opt.value;
+                    None
+                  </Text>
+                </Pressable>
+                {RECURRENCE_OPTIONS.map((opt) => {
+                  const isActive = recurrenceRule === opt.value;
                   return (
                     <Pressable
                       key={opt.value}
-                      onPress={() => setPriority(opt.value)}
+                      onPress={() => setRecurrenceRule(opt.value)}
                       style={[
-                        styles.compactPriorityButton,
-                        {
-                          backgroundColor: isActive
-                            ? `${opt.color}25`
-                            : "transparent",
-                          borderRightWidth: opt.value !== "high" ? 1 : 0,
-                        },
+                        styles.pill,
+                        isActive ? styles.pillActiveGreen : styles.pillInactive,
                       ]}
                     >
-                      <Text
+                      <View
                         style={{
-                          fontSize: 14,
-                          fontWeight: isActive ? "700" : "500",
-                          color: isActive ? opt.color : "#8FA8A8",
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
                         }}
                       >
-                        {opt.label}
-                      </Text>
+                        {isActive && <Repeat size={12} color="#50C878" />}
+                        <Text
+                          style={[
+                            styles.pillText,
+                            { color: isActive ? "#50C878" : "#8FA8A8" },
+                          ]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </View>
                     </Pressable>
                   );
                 })}
-              </View>
-            </View>
-          </View>
-
-          {/* Recurrence */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Repeat</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pillRow}
-            >
-              <Pressable
-                onPress={() => setRecurrenceRule(null)}
-                style={[
-                  styles.pill,
-                  recurrenceRule === null
-                    ? styles.pillActiveGreen
-                    : styles.pillInactive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    { color: recurrenceRule === null ? "#50C878" : "#8FA8A8" },
-                  ]}
-                >
-                  None
-                </Text>
-              </Pressable>
-              {RECURRENCE_OPTIONS.map((opt) => {
-                const isActive = recurrenceRule === opt.value;
-                return (
+              </ScrollView>
+              {recurrenceRule && recurrenceRule !== "daily" && (
+                <View style={styles.intervalRow}>
+                  <Text style={styles.intervalLabel}>Every</Text>
                   <Pressable
-                    key={opt.value}
-                    onPress={() => setRecurrenceRule(opt.value)}
-                    style={[
-                      styles.pill,
-                      isActive ? styles.pillActiveGreen : styles.pillInactive,
-                    ]}
+                    onPress={() =>
+                      setRecurrenceInterval(Math.max(1, recurrenceInterval - 1))
+                    }
+                    style={styles.intervalButton}
                   >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      {isActive && <Repeat size={12} color="#50C878" />}
-                      <Text
-                        style={[
-                          styles.pillText,
-                          { color: isActive ? "#50C878" : "#8FA8A8" },
-                        ]}
-                      >
-                        {opt.label}
-                      </Text>
-                    </View>
+                    <Text style={styles.intervalButtonText}>−</Text>
                   </Pressable>
-                );
-              })}
-            </ScrollView>
-            {recurrenceRule && recurrenceRule !== "daily" && (
-              <View style={styles.intervalRow}>
-                <Text style={styles.intervalLabel}>Every</Text>
-                <Pressable
-                  onPress={() =>
-                    setRecurrenceInterval(Math.max(1, recurrenceInterval - 1))
-                  }
-                  style={styles.intervalButton}
-                >
-                  <Text style={styles.intervalButtonText}>−</Text>
-                </Pressable>
-                <Text style={styles.intervalValue}>{recurrenceInterval}</Text>
-                <Pressable
-                  onPress={() =>
-                    setRecurrenceInterval(Math.min(365, recurrenceInterval + 1))
-                  }
-                  style={styles.intervalButton}
-                >
-                  <Text style={styles.intervalButtonText}>+</Text>
-                </Pressable>
-                <Text style={styles.intervalUnit}>
-                  {recurrenceRule === "weekly"
-                    ? recurrenceInterval === 1
-                      ? "week"
-                      : "weeks"
-                    : recurrenceRule === "monthly"
+                  <Text style={styles.intervalValue}>{recurrenceInterval}</Text>
+                  <Pressable
+                    onPress={() =>
+                      setRecurrenceInterval(
+                        Math.min(365, recurrenceInterval + 1),
+                      )
+                    }
+                    style={styles.intervalButton}
+                  >
+                    <Text style={styles.intervalButtonText}>+</Text>
+                  </Pressable>
+                  <Text style={styles.intervalUnit}>
+                    {recurrenceRule === "weekly"
                       ? recurrenceInterval === 1
-                        ? "month"
-                        : "months"
-                      : recurrenceRule === "yearly"
+                        ? "week"
+                        : "weeks"
+                      : recurrenceRule === "monthly"
                         ? recurrenceInterval === 1
-                          ? "year"
-                          : "years"
-                        : recurrenceInterval === 1
-                          ? "day"
-                          : "days"}
-                </Text>
-              </View>
+                          ? "month"
+                          : "months"
+                        : recurrenceRule === "yearly"
+                          ? recurrenceInterval === 1
+                            ? "year"
+                            : "years"
+                          : recurrenceInterval === 1
+                            ? "day"
+                            : "days"}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Snooze Button (edit mode only) */}
+            {mode === "edit" && onSnooze && initialData?.id && (
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  hasDismissedKeyboardForCloseRef.current = true;
+                  bottomSheetRef.current?.dismiss();
+                  if (initialData.id) onSnooze(initialData.id);
+                }}
+                style={styles.snoozeButton}
+              >
+                <AlarmClock size={18} color="#50C878" />
+                <Text style={styles.snoozeButtonText}>Snooze</Text>
+              </Pressable>
             )}
-          </View>
 
-          {/* Snooze Button (edit mode only) */}
-          {mode === "edit" && onSnooze && initialData?.id && (
+            {/* Submit Button */}
             <Pressable
-              onPress={() => {
-                Keyboard.dismiss();
-                hasDismissedKeyboardForCloseRef.current = true;
-                bottomSheetRef.current?.dismiss();
-                if (initialData.id) onSnooze(initialData.id);
-              }}
-              style={styles.snoozeButton}
-            >
-              <AlarmClock size={18} color="#50C878" />
-              <Text style={styles.snoozeButtonText}>Snooze</Text>
-            </Pressable>
-          )}
-
-          {/* Submit Button */}
-          <Pressable
-            onPress={handleSubmit}
-            disabled={!canSubmit}
-            style={[
-              styles.submitButton,
-              !canSubmit && styles.submitButtonDisabled,
-            ]}
-          >
-            <Text
+              onPress={handleSubmit}
+              disabled={!canSubmit}
               style={[
-                styles.submitButtonText,
-                !canSubmit && styles.submitButtonTextDisabled,
+                styles.submitButton,
+                !canSubmit && styles.submitButtonDisabled,
               ]}
             >
-              {isSubmitting
-                ? "Saving..."
-                : mode === "create"
-                  ? "Create Task"
-                  : "Save Changes"}
-            </Text>
-          </Pressable>
-
-          {/* Delete Button (edit mode only) */}
-          {mode === "edit" && onDelete && (
-            <Pressable onPress={handleDelete} style={styles.deleteButton}>
-              <Trash2 size={18} color="#ef4444" />
-              <Text style={styles.deleteButtonText}>Delete Task</Text>
+              <Text
+                style={[
+                  styles.submitButtonText,
+                  !canSubmit && styles.submitButtonTextDisabled,
+                ]}
+              >
+                {isSubmitting
+                  ? "Saving..."
+                  : mode === "create"
+                    ? "Create Task"
+                    : "Save Changes"}
+              </Text>
             </Pressable>
-          )}
-        </BottomSheetScrollView>
+
+            {/* Delete Button (edit mode only) */}
+            {mode === "edit" && onDelete && (
+              <Pressable onPress={handleDelete} style={styles.deleteButton}>
+                <Trash2 size={18} color="#ef4444" />
+                <Text style={styles.deleteButtonText}>Delete Task</Text>
+              </Pressable>
+            )}
+          </BottomSheetScrollView>
         </BSModal>
       )}
 

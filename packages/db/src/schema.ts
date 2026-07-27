@@ -199,7 +199,27 @@ export const Task = pgTable(
     ),
     index("task_reminder_at_idx").on(table.reminderAt),
     index("task_snoozed_until_idx").on(table.userId, table.snoozedUntil),
+    // Backs sync.pull's keyset pagination ORDER BY (updated_at, id).
+    index("task_updated_at_id_idx").on(table.updatedAt, table.id),
     index("task_recurrence_source_id_idx").on(table.recurrenceSourceId),
+    // F048: partial index matching the reminders-due predicate in
+    // lib/reminders.ts (reminderAt <= widened lookahead, reminderSentAt
+    // NULL, completed = false, deletedAt NULL). snoozedUntil isn't part of
+    // this predicate since its bound ("now") isn't a compile-time constant
+    // a partial index can encode — that filter still runs at query time.
+    index("task_reminder_due_idx")
+      .on(table.reminderAt)
+      .where(
+        sql`${table.reminderAt} IS NOT NULL AND ${table.reminderSentAt} IS NULL AND ${table.completed} = false AND ${table.deletedAt} IS NULL`,
+      ),
+    // F031: supports the archive-completed-tasks edge function's predicate
+    // (completed = true, completedAt < cutoff, archivedAt IS NULL,
+    // deletedAt IS NULL).
+    index("task_archive_candidate_idx")
+      .on(table.completedAt)
+      .where(
+        sql`${table.completed} = true AND ${table.archivedAt} IS NULL AND ${table.deletedAt} IS NULL`,
+      ),
     check(
       "task_priority_valid",
       sql`${table.priority} IS NULL OR ${table.priority} IN ('high', 'medium', 'low')`,
@@ -250,7 +270,9 @@ export const TaskListMember = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     role: t.varchar({ length: 20 }).notNull().default("editor"),
     showInFilter: t.boolean("show_in_filter").notNull().default(true),
-    invitedBy: t.text("invited_by").references(() => user.id),
+    invitedBy: t
+      .text("invited_by")
+      .references(() => user.id, { onDelete: "set null" }),
     joinedAt: t
       .timestamp("joined_at", { withTimezone: true, mode: "date" })
       .$defaultFn(() => new Date())
@@ -277,7 +299,7 @@ export const TaskListInvite = pgTable(
       .uuid("list_id")
       .notNull()
       .references(() => TaskList.id, { onDelete: "cascade" }),
-    inviteCode: t.varchar("invite_code", { length: 20 }).notNull().unique(),
+    inviteCode: t.varchar("invite_code", { length: 64 }).notNull().unique(),
     role: t.varchar({ length: 20 }).notNull().default("editor"),
     maxUses: t.integer("max_uses"),
     useCount: t.integer("use_count").notNull().default(0),
@@ -312,13 +334,23 @@ export const reportReasonEnum = pgEnum("report_reason", [
   "OTHER",
 ]);
 
+// F115: LEAGUE/SUBMISSION/ROUND are dead — leftovers from a removed
+// music-league feature. Nothing in the codebase writes or reads them
+// (moderation.ts and content-filter.ts only ever use TASK/USER/COMMENT).
+// They're kept in the enum rather than removed because Postgres doesn't
+// support dropping enum values via a simple ALTER TYPE — removing them
+// cleanly requires recreating the type (rename old type, create new one
+// with the reduced value set, migrate all dependent columns, drop old
+// type), which is a real migration to write and run, not a schema-code
+// tweak. Left as a deprecation comment per audit guidance; safe to do the
+// full enum recreation as a follow-up if it's ever worth the churn.
 export const contentTypeEnum = pgEnum("content_type", [
-  "LEAGUE",
-  "SUBMISSION",
+  "LEAGUE", // deprecated — dead, do not use
+  "SUBMISSION", // deprecated — dead, do not use
   "TASK",
   "USER",
   "COMMENT",
-  "ROUND",
+  "ROUND", // deprecated — dead, do not use
 ]);
 
 // UGC Moderation Tables
@@ -463,7 +495,9 @@ export const PushToken = pgTable(
   }),
   (table) => [
     index("push_token_user_id_idx").on(table.userId),
-    index("push_token_token_unique").on(table.token),
+    // Genuinely unique: registerToken upserts on this constraint; a plain
+    // index() here allowed concurrent registrations to insert duplicate rows.
+    uniqueIndex("push_token_token_unique").on(table.token),
   ],
 );
 
@@ -502,17 +536,6 @@ export const userPreferenceRelations = relations(UserPreference, ({ one }) => ({
     fields: [UserPreference.userId],
     references: [user.id],
   }),
-}));
-
-export const ThemeTemplate = pgTable("theme_template", (t) => ({
-  id: t
-    .text()
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: t.text("name").notNull(),
-  description: t.text("description").notNull(),
-  category: t.text("category").notNull(),
 }));
 
 // Existing Schemas

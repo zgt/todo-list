@@ -111,11 +111,7 @@ const AgendaTaskRow = memo(
         </View>
 
         {/* Priority badge */}
-        <PriorityBadge
-          priority={task.priority}
-          size="sm"
-          showLabel={false}
-        />
+        <PriorityBadge priority={task.priority} size="sm" showLabel={false} />
 
         {/* Category dot */}
         {task.category && (

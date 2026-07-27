@@ -37,9 +37,9 @@ function SnoozeCustomPicker({ onSnooze }: { onSnooze: (date: Date) => void }) {
     <div className="flex flex-col">
       <CalendarPicker date={date} onDateChange={handleDateSelect} />
       <div className="border-border-strong border-t px-3 py-2.5">
-        <label className="text-muted-foreground/70 mb-1.5 block text-[10px] font-semibold tracking-wider uppercase">
+        <p className="text-muted-foreground/70 mb-1.5 block text-[10px] font-semibold tracking-wider uppercase">
           Time
-        </label>
+        </p>
         <TimePicker
           hours={hours}
           minutes={minutes}

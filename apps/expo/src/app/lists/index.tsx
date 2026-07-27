@@ -90,11 +90,7 @@ export default function ListsScreen() {
               paddingHorizontal: 32,
             }}
           >
-            <Users
-              size={48}
-              color="#8FA8A8"
-              style={{ marginBottom: 16 }}
-            />
+            <Users size={48} color="#8FA8A8" style={{ marginBottom: 16 }} />
             <Text
               style={{
                 fontSize: 18,

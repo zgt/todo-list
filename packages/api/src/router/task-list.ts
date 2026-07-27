@@ -2,7 +2,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 
-import { and, eq, inArray, isNull, notInArray, or, sql } from "@acme/db";
+import { and, eq, inArray, isNull, lt, notInArray, or, sql } from "@acme/db";
 import {
   BlockedUser,
   CreateTaskListSchema,
@@ -13,7 +13,9 @@ import {
   UpdateTaskListSchema,
 } from "@acme/db/schema";
 
+import { generateInviteCode } from "../lib/invite-code";
 import { assertListAccess } from "../lib/list-access";
+import { checkRateLimit } from "../lib/rate-limit";
 import { protectedProcedure } from "../trpc";
 
 export const taskListRouter = {
@@ -218,6 +220,18 @@ export const taskListRouter = {
         .set({ listId: null })
         .where(eq(Task.listId, input.id));
 
+      // Revoke outstanding invites so stale links can't be used to join
+      // a list that no longer exists
+      await ctx.db
+        .update(TaskListInvite)
+        .set({ deletedAt: new Date() })
+        .where(
+          and(
+            eq(TaskListInvite.listId, input.id),
+            isNull(TaskListInvite.deletedAt),
+          ),
+        );
+
       return { success: true };
     }),
 
@@ -240,7 +254,7 @@ export const taskListRouter = {
         "owner",
       );
 
-      const inviteCode = crypto.randomUUID().slice(0, 8);
+      const inviteCode = generateInviteCode();
       const expiresAt = input.expiresInHours
         ? new Date(Date.now() + input.expiresInHours * 60 * 60 * 1000)
         : undefined;
@@ -262,6 +276,19 @@ export const taskListRouter = {
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
+      // Invite codes carry 128 bits of entropy, so brute-forcing them is
+      // infeasible on its own — this is defense-in-depth on top of that,
+      // not the primary protection. Per-instance memory only: on
+      // serverless/multi-instance deployments each instance tracks its
+      // own counters, so a real distributed limit would need a shared
+      // store (Redis/Upstash) if this needs to be a hard guarantee.
+      if (!checkRateLimit(`join-invite:${userId}`, 10)) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Too many invite attempts. Please try again in a minute.",
+        });
+      }
+
       const invite = await ctx.db.query.TaskListInvite.findFirst({
         where: and(
           eq(TaskListInvite.inviteCode, input.inviteCode),
@@ -277,19 +304,19 @@ export const taskListRouter = {
         });
       }
 
+      // Reject invites to lists that have since been soft-deleted
+      if (invite.list.deletedAt) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "This list no longer exists",
+        });
+      }
+
       // Check expiry
       if (invite.expiresAt && new Date() > invite.expiresAt) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invite has expired",
-        });
-      }
-
-      // Check max uses
-      if (invite.maxUses && invite.useCount >= invite.maxUses) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Invite has reached maximum uses",
         });
       }
 
@@ -308,18 +335,37 @@ export const taskListRouter = {
         });
       }
 
-      // Add member and increment use count
-      await ctx.db.insert(TaskListMember).values({
-        listId: invite.listId,
-        userId,
-        role: invite.role,
-        invitedBy: invite.createdBy,
-      });
+      // Atomically claim a use before inserting membership, so concurrent
+      // joins can't both read useCount < maxUses and overshoot the cap.
+      await ctx.db.transaction(async (tx) => {
+        const [claimed] = await tx
+          .update(TaskListInvite)
+          .set({ useCount: sql`${TaskListInvite.useCount} + 1` })
+          .where(
+            and(
+              eq(TaskListInvite.id, invite.id),
+              or(
+                isNull(TaskListInvite.maxUses),
+                lt(TaskListInvite.useCount, TaskListInvite.maxUses),
+              ),
+            ),
+          )
+          .returning({ id: TaskListInvite.id });
 
-      await ctx.db
-        .update(TaskListInvite)
-        .set({ useCount: invite.useCount + 1 })
-        .where(eq(TaskListInvite.id, invite.id));
+        if (!claimed) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invite has reached maximum uses",
+          });
+        }
+
+        await tx.insert(TaskListMember).values({
+          listId: invite.listId,
+          userId,
+          role: invite.role,
+          invitedBy: invite.createdBy,
+        });
+      });
 
       return {
         id: invite.list.id,

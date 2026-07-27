@@ -17,6 +17,14 @@ const baseUrl =
       ? `https://${env.VERCEL_URL}`
       : (env.AUTH_REDIRECT_PROXY_URL ?? `http://localhost:3000`);
 
+/**
+ * AUTH_DEBUG_* session-lifetime overrides are debug-only: never honor them in
+ * the production environment, where a stray/leftover env var would silently
+ * shorten every user's session.
+ */
+const allowDebugSessionOverrides =
+  env.VERCEL_ENV !== "production" && env.NODE_ENV !== "production";
+
 export const auth = initAuth({
   baseUrl,
   productionUrl: env.AUTH_REDIRECT_PROXY_URL ?? PRODUCTION_DOMAIN,
@@ -28,14 +36,14 @@ export const auth = initAuth({
   appleBundleId: env.AUTH_APPLE_BUNDLE_ID,
   googleClientId: env.AUTH_GOOGLE_ID,
   googleClientSecret: env.AUTH_GOOGLE_SECRET,
-  sessionExpiresIn: env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC
-    ? Number(env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC)
+  sessionExpiresIn: allowDebugSessionOverrides
+    ? env.AUTH_DEBUG_SESSION_EXPIRES_IN_SEC
     : undefined,
-  sessionUpdateAge: env.AUTH_DEBUG_UPDATE_AGE_SEC
-    ? Number(env.AUTH_DEBUG_UPDATE_AGE_SEC)
+  sessionUpdateAge: allowDebugSessionOverrides
+    ? env.AUTH_DEBUG_UPDATE_AGE_SEC
     : undefined,
-  sessionCookieCacheMaxAge: env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC
-    ? Number(env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC)
+  sessionCookieCacheMaxAge: allowDebugSessionOverrides
+    ? env.AUTH_DEBUG_COOKIE_CACHE_MAX_AGE_SEC
     : undefined,
   extraPlugins: [nextCookies()],
   enableOAuthProxy: true, // Enable OAuth proxy for Expo OAuth support

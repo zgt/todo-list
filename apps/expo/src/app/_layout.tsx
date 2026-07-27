@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Constants from "expo-constants";
-import { Stack } from "expo-router";
+import * as Linking from "expo-linking";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Sentry from "@sentry/react-native";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -35,11 +36,74 @@ if (SENTRY_DSN) {
   });
 }
 
+// F085: a signed-out deep link into tokilist://invite/<code> renders
+// AuthGuard instead of the Stack, so the /invite/[code] screen never mounts
+// and the code is dropped. Stash the code here (module-level — simplest
+// option that survives the same JS session across the OAuth redirect; the
+// app isn't killed for in-app browser sign-in) and resume navigation to it
+// once sign-in succeeds.
+//
+// D11: the stash carries a 15-minute TTL (discarded at consumption time if
+// stale) so an invite tapped long before the user actually finishes signing
+// in doesn't silently resurrect and redirect them later, and the code is
+// only extracted from an actual `invite/<code>` URL PATH (via expo-linking's
+// parser), not merely a substring anywhere in the URL — e.g. a `?next=`
+// query param containing the text "invite/" would previously match the old
+// regex-over-the-raw-string approach.
+const PENDING_INVITE_TTL_MS = 15 * 60 * 1000;
+
+interface PendingInvite {
+  code: string;
+  storedAt: number;
+}
+
+let pendingInvite: PendingInvite | null = null;
+
+function extractInviteCode(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const { hostname, path } = Linking.parse(url);
+
+  // Custom-scheme deep links (tokilist://invite/<code>, the only form this
+  // app currently issues) put "invite" in `hostname` and the code in
+  // `path` — expo-linking's URL-based parser treats the segment right
+  // after `scheme://` as authority/host, not path.
+  if (hostname === "invite") {
+    const code = path?.split("/")[0];
+    return code ? decodeURIComponent(code) : null;
+  }
+
+  // Other URL forms (e.g. the Expo Go dev client's `exp://host/--/invite/
+  // <code>`, or a future universal link) surface "invite/<code>" as the
+  // path itself.
+  if (path?.startsWith("invite/")) {
+    const code = path.split("/")[1];
+    return code ? decodeURIComponent(code) : null;
+  }
+
+  return null;
+}
+
+function stashPendingInvite(code: string) {
+  pendingInvite = { code, storedAt: Date.now() };
+}
+
+/** Consume the stashed invite code, discarding it if past its TTL (D11). */
+function consumePendingInvite(): string | null {
+  const invite = pendingInvite;
+  pendingInvite = null;
+  if (!invite) return null;
+  if (Date.now() - invite.storedAt > PENDING_INVITE_TTL_MS) return null;
+  return invite.code;
+}
+
 function RootLayout() {
   const colorScheme = useColorScheme();
   const { data: session, isPending, error } = authClient.useSession();
   const [isRecoveringSession, setIsRecoveringSession] = useState(false);
   const hasTriedSessionRecovery = useRef(false);
+  const router = useRouter();
+  const wasUnauthenticatedRef = useRef(false);
+  const hasHandledPendingInviteRef = useRef(false);
 
   useNotifications();
   usePushTokenRegistration(!!session && !isPending);
@@ -50,6 +114,43 @@ function RootLayout() {
       Sentry.captureException(error, { tags: { component: "auth_session" } });
     }
   }, [error]);
+
+  // Capture an invite deep link (cold start or foreground tap) so it can be
+  // resumed after sign-in even if AuthGuard is showing right now.
+  useEffect(() => {
+    void Linking.getInitialURL().then((url) => {
+      const code = extractInviteCode(url);
+      if (code) stashPendingInvite(code);
+    });
+
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      const code = extractInviteCode(url);
+      if (code) stashPendingInvite(code);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  // Once the user was seen signed-out (i.e. AuthGuard would have rendered),
+  // resume to the stashed invite code the first time a session appears.
+  useEffect(() => {
+    if (isPending) return;
+    if (error || !session) {
+      wasUnauthenticatedRef.current = true;
+      return;
+    }
+    if (
+      !wasUnauthenticatedRef.current ||
+      hasHandledPendingInviteRef.current ||
+      !pendingInvite
+    ) {
+      return;
+    }
+
+    hasHandledPendingInviteRef.current = true;
+    const code = consumePendingInvite();
+    if (code) router.push(`/invite/${code}` as never);
+  }, [error, isPending, session, router]);
 
   useEffect(() => {
     if (

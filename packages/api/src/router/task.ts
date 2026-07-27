@@ -18,6 +18,7 @@ import {
 } from "@acme/db";
 import {
   BlockedUser,
+  Category,
   CreateTaskWithSubtasksSchema,
   Subtask,
   Task,
@@ -110,6 +111,46 @@ function serializeTaskDates<
   };
 }
 
+/**
+ * Verify a categoryId (when provided) is usable by the given user: either
+ * owned by them, or reachable through a shared list they belong to (a
+ * co-member legitimately re-saves a task that carries the list owner's
+ * category — see category.all, which exposes exactly that shared set).
+ * Rejects unknown, foreign-and-unshared, and soft-deleted categories.
+ */
+async function assertCategoryAccess(
+  db: Parameters<typeof assertListAccess>[0],
+  categoryId: string,
+  userId: string,
+): Promise<void> {
+  const category = await db.query.Category.findFirst({
+    where: and(eq(Category.id, categoryId), isNull(Category.deletedAt)),
+    columns: { id: true, userId: true },
+  });
+
+  if (category) {
+    if (category.userId === userId) return;
+
+    const memberListIds = await getMemberListIds(db, userId);
+    if (memberListIds.length > 0) {
+      const sharedUse = await db.query.Task.findFirst({
+        where: and(
+          eq(Task.categoryId, categoryId),
+          inArray(Task.listId, memberListIds),
+          isNull(Task.deletedAt),
+        ),
+        columns: { id: true },
+      });
+      if (sharedUse) return;
+    }
+  }
+
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: "Category not found",
+  });
+}
+
 /** Get all list IDs the user is a member of */
 async function getMemberListIds(
   db: Parameters<typeof assertListAccess>[0],
@@ -122,37 +163,71 @@ async function getMemberListIds(
   return memberships.map((m) => m.listId);
 }
 
-/** Calculate the next due date based on recurrence rule and interval */
-function getNextDueDate(
+/**
+ * Add whole months to a date, clamping the day-of-month to the last valid day
+ * of the target month instead of overflowing (e.g. Jan 31 + 1 month lands on
+ * Feb 28, not "Mar 3"). Preserves time-of-day.
+ *
+ * NOTE (F045): this clamps against the *previous* occurrence's day, not the
+ * recurrence's original anchor day. Without additional state to carry the
+ * original anchor (the schema has no such field, and looking it up via
+ * recurrenceSourceId on every completion would add a query + assumes the
+ * source task's original due date is still reachable), a task anchored on
+ * the 31st will drift to the 28th/29th/30th once it passes through a short
+ * month and stay there — it will not "jump back" to the 31st in a later long
+ * month. This is an accepted simplification; preserving the true anchor is a
+ * follow-up if it turns out to matter in practice.
+ */
+function addMonthsClamped(date: Date, months: number): Date {
+  const day = date.getDate();
+  const next = new Date(date);
+  next.setDate(1); // avoid month-overflow while advancing the month
+  next.setMonth(next.getMonth() + months);
+  const lastDayOfTargetMonth = new Date(
+    next.getFullYear(),
+    next.getMonth() + 1,
+    0,
+  ).getDate();
+  next.setDate(Math.min(day, lastDayOfTargetMonth));
+  return next;
+}
+
+/**
+ * Calculate the next due date based on a recurrence rule and interval.
+ * Extracted as a pure function so it can be unit tested directly (F045).
+ *
+ * NOTE (F014): this is plain local wall-clock `Date` arithmetic with no
+ * explicit timezone anchor. Across a DST transition the resulting
+ * time-of-day can shift by an hour (e.g. a 9am reminder recurring over a
+ * clock change). Accepted as a simplification — a full timezone-aware
+ * recurrence system is out of scope here.
+ */
+export function getNextDueDate(
   currentDueDate: Date | null,
   rule: string,
   interval: number,
 ): Date {
   const base = currentDueDate ?? new Date();
-  const next = new Date(base);
 
   switch (rule) {
-    case "daily":
-      next.setDate(next.getDate() + interval);
-      break;
-    case "weekly":
-      next.setDate(next.getDate() + 7 * interval);
-      break;
     case "monthly":
-      next.setMonth(next.getMonth() + interval);
-      break;
+      return addMonthsClamped(base, interval);
     case "yearly":
-      next.setFullYear(next.getFullYear() + interval);
-      break;
+      return addMonthsClamped(base, interval * 12);
+    case "weekly": {
+      const next = new Date(base);
+      next.setDate(next.getDate() + 7 * interval);
+      return next;
+    }
+    case "daily":
     case "custom":
-      // For custom, interval represents days
+    default: {
+      // "custom" and the fallback both treat `interval` as a day count.
+      const next = new Date(base);
       next.setDate(next.getDate() + interval);
-      break;
-    default:
-      next.setDate(next.getDate() + interval);
+      return next;
+    }
   }
-
-  return next;
 }
 
 export const taskRouter = {
@@ -210,6 +285,10 @@ export const taskRouter = {
         or(isNotNull(Task.deletedAt), isNotNull(Task.archivedAt)),
       ),
       orderBy: [desc(Task.deletedAt), desc(Task.archivedAt)],
+      // Trash is expected to stay small (auto-archived tasks age out, and
+      // deleteForever/restore keep it churning); a sane cap avoids an
+      // unbounded scan rather than building full pagination (F033).
+      limit: 500,
       with: { category: true, subtasks: true, list: true },
     });
 
@@ -342,6 +421,15 @@ export const taskRouter = {
         );
       }
 
+      // If assigning to a category, verify the user may use it
+      if (taskInput.categoryId) {
+        await assertCategoryAccess(
+          ctx.db,
+          taskInput.categoryId,
+          ctx.session.user.id,
+        );
+      }
+
       // Use a transaction to create task + subtasks atomically
       const result = await ctx.db.transaction(async (tx) => {
         const [task] = await tx
@@ -436,6 +524,17 @@ export const taskRouter = {
         await assertListAccess(ctx.db, userId, updates.listId, "editor");
       }
 
+      // If reassigning to a category, verify the user may use it. An
+      // unchanged categoryId is skipped — edit forms resubmit the full task,
+      // and a co-member must not be blocked by a category they merely kept.
+      if (
+        updates.categoryId !== undefined &&
+        updates.categoryId !== null &&
+        updates.categoryId !== existing.categoryId
+      ) {
+        await assertCategoryAccess(ctx.db, updates.categoryId, userId);
+      }
+
       // Build update object
       const updateData: Record<string, unknown> = {
         ...updates,
@@ -450,25 +549,121 @@ export const taskRouter = {
         updateData.completedAt = updates.completed ? new Date() : null;
       }
 
-      // Reset reminderSentAt when reminderAt changes so the cron re-processes
-      if (updates.reminderAt !== undefined) {
+      // Reset reminderSentAt only when reminderAt actually changes — edit
+      // forms resubmit every field, and re-arming on a no-op value would
+      // re-fire an already-delivered reminder after any unrelated edit.
+      if (
+        updates.reminderAt !== undefined &&
+        (updates.reminderAt?.getTime() ?? null) !==
+          (existing.reminderAt?.getTime() ?? null)
+      ) {
         updateData.reminderSentAt = null;
       }
 
-      const [task] = await ctx.db
-        .update(Task)
-        .set(updateData)
-        .where(eq(Task.id, id))
-        .returning();
+      // Wrap the completion update + next-occurrence insert in one
+      // transaction (F022): previously the next-occurrence insert was a
+      // fire-and-forget `void insert(...).catch(console.error)` outside any
+      // transaction, so a failure there silently dropped the next
+      // occurrence while the completion update still committed. Now both
+      // commit together or neither does.
+      // F013: a completion transition is guarded by `completed = false` in
+      // the UPDATE's WHERE so two concurrent completions cannot both fire
+      // the next-occurrence insert and the completion push.
+      const isCompletionTransition =
+        updates.completed === true && !existing.completed;
 
-      if (!task) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Task not found or update failed",
-        });
-      }
+      const { row: task, completionRaced } = await ctx.db.transaction(
+        async (tx) => {
+          const [updated] = await tx
+            .update(Task)
+            .set(updateData)
+            .where(
+              isCompletionTransition
+                ? and(eq(Task.id, id), eq(Task.completed, false))
+                : eq(Task.id, id),
+            )
+            .returning();
 
-      // Notify other shared list members (fire-and-forget)
+          if (!updated) {
+            if (isCompletionTransition) {
+              // A concurrent request already completed this task; return
+              // the current row and fire no duplicate side-effects.
+              const current = await tx.query.Task.findFirst({
+                where: eq(Task.id, id),
+              });
+              if (current) return { row: current, completionRaced: true };
+            }
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Task not found or update failed",
+            });
+          }
+
+          // Auto-create next recurring task when completing a recurring task
+          if (isCompletionTransition && existing.recurrenceRule) {
+            const interval = existing.recurrenceInterval ?? 1;
+            const nextDueDate = getNextDueDate(
+              existing.dueDate,
+              existing.recurrenceRule,
+              interval,
+            );
+
+            // Only create next occurrence if before end date (or no end date)
+            const shouldCreate =
+              !existing.recurrenceEndDate ||
+              nextDueDate <= existing.recurrenceEndDate;
+
+            if (shouldCreate) {
+              // Calculate new reminder offset relative to due date
+              let nextReminderAt: Date | null = null;
+              if (existing.reminderAt && existing.dueDate) {
+                const offset =
+                  existing.dueDate.getTime() - existing.reminderAt.getTime();
+                nextReminderAt = new Date(nextDueDate.getTime() - offset);
+              }
+
+              // Snooze the next occurrence until its due date if it's in
+              // the future — prevents clutter when completing recurring
+              // tasks early. Clamped to the next reminder time: the
+              // reminder cron skips snoozed tasks, so snoozing past
+              // reminderAt would swallow the reminder until the due date.
+              const now = new Date();
+              const startOfDueDate = new Date(nextDueDate);
+              startOfDueDate.setHours(0, 0, 0, 0);
+              const snoozeTarget =
+                nextReminderAt && nextReminderAt < startOfDueDate
+                  ? nextReminderAt
+                  : startOfDueDate;
+              const snoozedUntil = snoozeTarget > now ? snoozeTarget : null;
+
+              await tx.insert(Task).values({
+                // The series stays owned by its original owner even when a
+                // shared-list co-member completes an occurrence.
+                userId: existing.userId,
+                title: existing.title,
+                description: existing.description,
+                categoryId: existing.categoryId,
+                listId: existing.listId,
+                dueDate: nextDueDate,
+                priority: existing.priority,
+                reminderAt: nextReminderAt,
+                snoozedUntil,
+                recurrenceRule: existing.recurrenceRule,
+                recurrenceInterval: existing.recurrenceInterval,
+                recurrenceEndDate: existing.recurrenceEndDate,
+                recurrenceSourceId: existing.recurrenceSourceId ?? id,
+                lastSyncedAt: new Date(),
+              });
+            }
+          }
+
+          return { row: updated, completionRaced: false };
+        },
+      );
+
+      // Notify other shared list members (fire-and-forget, best-effort —
+      // deliberately outside the transaction above; a push failure must
+      // never roll back an already-committed task update).
       if (existing.listId) {
         const notifyParams = {
           listId: existing.listId,
@@ -478,68 +673,10 @@ export const taskRouter = {
           taskTitle: task.title,
         };
 
-        if (updates.completed === true && !existing.completed) {
+        if (isCompletionTransition && !completionRaced) {
           void pushNotifyTaskCompleted(notifyParams);
         } else if (updates.completed === undefined) {
           void pushNotifyTaskEdited(notifyParams);
-        }
-      }
-
-      // Auto-create next recurring task when completing a recurring task
-      if (
-        updates.completed === true &&
-        !existing.completed &&
-        existing.recurrenceRule
-      ) {
-        const interval = existing.recurrenceInterval ?? 1;
-        const nextDueDate = getNextDueDate(
-          existing.dueDate,
-          existing.recurrenceRule,
-          interval,
-        );
-
-        // Only create next occurrence if before end date (or no end date)
-        const shouldCreate =
-          !existing.recurrenceEndDate ||
-          nextDueDate <= existing.recurrenceEndDate;
-
-        if (shouldCreate) {
-          // Calculate new reminder offset relative to due date
-          let nextReminderAt: Date | null = null;
-          if (existing.reminderAt && existing.dueDate) {
-            const offset =
-              existing.dueDate.getTime() - existing.reminderAt.getTime();
-            nextReminderAt = new Date(nextDueDate.getTime() - offset);
-          }
-
-          // Snooze the next occurrence until its due date if it's in the future
-          // This prevents clutter when completing recurring tasks early
-          const now = new Date();
-          const startOfDueDate = new Date(nextDueDate);
-          startOfDueDate.setHours(0, 0, 0, 0);
-          const snoozedUntil = startOfDueDate > now ? startOfDueDate : null;
-
-          void ctx.db
-            .insert(Task)
-            .values({
-              userId,
-              title: existing.title,
-              description: existing.description,
-              categoryId: existing.categoryId,
-              listId: existing.listId,
-              dueDate: nextDueDate,
-              priority: existing.priority,
-              reminderAt: nextReminderAt,
-              snoozedUntil,
-              recurrenceRule: existing.recurrenceRule,
-              recurrenceInterval: existing.recurrenceInterval,
-              recurrenceEndDate: existing.recurrenceEndDate,
-              recurrenceSourceId: existing.recurrenceSourceId ?? id,
-              lastSyncedAt: new Date(),
-            })
-            .catch((err) =>
-              console.error("Failed to create recurring task:", err),
-            );
         }
       }
 
@@ -690,15 +827,21 @@ export const taskRouter = {
         ),
         columns: { id: true, userId: true, listId: true },
       });
+      // Dedupe listIds so each shared list is only access-checked once,
+      // instead of once per task (F029).
+      const listIdsToCheck = new Set<string>();
       for (const task of existingTasks) {
         if (task.listId) {
-          await assertListAccess(ctx.db, userId, task.listId, "editor");
+          listIdsToCheck.add(task.listId);
         } else if (task.userId !== userId) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Not authorized",
           });
         }
+      }
+      for (const listId of listIdsToCheck) {
+        await assertListAccess(ctx.db, userId, listId, "editor");
       }
       const validIds = existingTasks.map((t) => t.id);
       if (validIds.length === 0) return { deletedCount: 0 };
@@ -743,11 +886,22 @@ export const taskRouter = {
         });
       }
 
+      // F109/F011: snoozing must NEVER overwrite reminderAt. reminderAt is
+      // the user's true reminder time and is also the anchor the recurring
+      // next-occurrence generator derives its offset from — overwriting it
+      // with the snooze target corrupted that offset for every future
+      // occurrence, and left `unsnooze` with a bogus reminderAt to "restore"
+      // (there was nothing coherent to restore it to). Instead, snoozing is
+      // expressed purely via snoozedUntil: the reminders-due query (see
+      // lib/reminders.ts) skips any task whose snoozedUntil is still in the
+      // future, and reminderSentAt is reset here so that once the snooze
+      // window elapses, the *original* reminder re-fires exactly once
+      // (rather than firing early while still snoozed, or never firing
+      // again because it was already marked sent).
       const [task] = await ctx.db
         .update(Task)
         .set({
           snoozedUntil: input.snoozedUntil,
-          reminderAt: input.snoozedUntil,
           reminderSentAt: null,
           updatedAt: new Date(),
         })
@@ -792,6 +946,12 @@ export const taskRouter = {
         });
       }
 
+      // F011: reminderAt is intentionally left untouched — since `snooze`
+      // no longer overwrites it (see above), there's no corrupted state to
+      // restore here. Clearing snoozedUntil is sufficient: if the
+      // underlying reminderAt is already due and reminderSentAt is null
+      // (reset by the snooze call), the next cron tick delivers it
+      // immediately, which is the correct "un-snoozed" behavior.
       const [task] = await ctx.db
         .update(Task)
         .set({ snoozedUntil: null, updatedAt: new Date() })
@@ -811,14 +971,23 @@ export const taskRouter = {
   // Get all currently snoozed tasks
   snoozed: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
+    const memberListIds = await getMemberListIds(ctx.db, userId);
     const now = new Date();
 
+    // Same visibility as task.all: a task a co-member snoozed disappears
+    // from everyone's All Tasks, so every member needs to see (and be able
+    // to unsnooze) it here — unsnooze already grants editors access.
     const tasks = await ctx.db.query.Task.findMany({
       where: and(
-        eq(Task.userId, userId),
         isNull(Task.deletedAt),
         isNull(Task.archivedAt),
         gt(Task.snoozedUntil, now),
+        memberListIds.length > 0
+          ? or(
+              and(eq(Task.userId, userId), isNull(Task.listId)),
+              inArray(Task.listId, memberListIds),
+            )
+          : eq(Task.userId, userId),
       ),
       orderBy: [asc(Task.snoozedUntil)],
       with: { category: true, subtasks: true, list: true },

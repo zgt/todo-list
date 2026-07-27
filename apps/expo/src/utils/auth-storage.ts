@@ -3,10 +3,11 @@ import * as SecureStore from "expo-secure-store";
 const AUTH_COOKIE_KEY = "expo_cookie";
 const AUTH_SESSION_DATA_KEY = "expo_session_data";
 const SESSION_TOKEN_MIRROR_KEY = "expo_session_token_cookie";
+// Tracing is strictly opt-in — never enabled by default in production builds,
+// and trace details must not carry cookie-derived material (they are exported
+// to Sentry via captureAuthIssue in api.tsx).
 const DEBUG_AUTH =
-  process.env.NODE_ENV === "production" ||
-  process.env.AUTH_TRACE === "1" ||
-  process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
+  process.env.AUTH_TRACE === "1" || process.env.EXPO_PUBLIC_AUTH_TRACE === "1";
 
 interface StoredCookie {
   value: string;
@@ -29,7 +30,6 @@ interface SessionTokenMirror {
 export interface AuthCookieTraceDetails {
   storedCookieNames: string[];
   sentCookieNames: string[];
-  sentCookie: string;
   fallbackUsed: boolean;
   hasSessionDataCache: boolean;
   sessionDataCacheExpiresInSec: number | null;
@@ -96,19 +96,6 @@ function cookieNameKind(name: string): "sessionToken" | "sessionData" | null {
   if (unprefixed.endsWith("-session_data")) return "sessionData";
 
   return null;
-}
-
-function djb2(input: string): string {
-  let hash = 5381;
-  for (let i = 0; i < input.length; i += 1) {
-    hash = (hash * 33) ^ input.charCodeAt(i);
-  }
-  return (hash >>> 0).toString(16);
-}
-
-function cookieFingerprint(cookie: string | null): string {
-  if (!cookie) return "none";
-  return `${cookie.length}:${djb2(cookie)}`;
 }
 
 function traceAuthCookies(
@@ -311,7 +298,6 @@ export function getSessionTokenCookieHeaderResult(): SessionTokenCookieHeaderRes
     const traceDetails = {
       ...baseTraceDetails,
       sentCookieNames: sessionTokenCookies.map(([name]) => name),
-      sentCookie: cookieFingerprint(cookieHeader),
       fallbackUsed: false,
       hasTokenMirror: !!mirror,
       tokenMirrorExpiresInSec: secondsUntil(mirror?.expires ?? null),
@@ -324,7 +310,6 @@ export function getSessionTokenCookieHeaderResult(): SessionTokenCookieHeaderRes
   const traceDetails = {
     ...baseTraceDetails,
     sentCookieNames: mirror?.cookieNames ?? [],
-    sentCookie: cookieFingerprint(mirror?.cookieHeader ?? null),
     fallbackUsed: !!mirror,
     hasTokenMirror: !!mirror,
     tokenMirrorExpiresInSec: secondsUntil(mirror?.expires ?? null),

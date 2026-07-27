@@ -33,16 +33,26 @@ export function NotificationSettings() {
     trpc.notification.getUserPreferences.queryOptions(),
   );
 
+  // Shared-list activity lives in the user's JSON preferences and has its own
+  // procedure pair, so it's queried and saved separately from the reminder
+  // preferences above.
+  const { data: sharedPrefs, isLoading: isLoadingShared } = useQuery(
+    trpc.notification.getSharedListNotificationPref.queryOptions(),
+  );
+
   // Track local overrides; null means "use server value"
   const [localEmail, setLocalEmail] = useState<boolean | null>(null);
   const [localPush, setLocalPush] = useState<boolean | null>(null);
   const [localOffset, setLocalOffset] = useState<number | null>(null);
+  const [localSharedList, setLocalSharedList] = useState<boolean | null>(null);
 
   // Derived values: local override ?? server value ?? defaults
   const emailReminders = localEmail ?? prefs?.emailReminders ?? false;
   const pushReminders = localPush ?? prefs?.pushReminders ?? true;
   const reminderOffsetMinutes =
     localOffset ?? prefs?.reminderOffsetMinutes ?? 15;
+  const sharedListActivity =
+    localSharedList ?? sharedPrefs?.sharedListActivity ?? true;
 
   const updatePrefs = useMutation(
     trpc.notification.updateUserPreferences.mutationOptions({
@@ -62,21 +72,54 @@ export function NotificationSettings() {
     }),
   );
 
-  const handleSave = () => {
-    updatePrefs.mutate({
-      emailReminders,
-      pushReminders,
-      reminderOffsetMinutes,
-    });
-  };
+  const updateSharedPref = useMutation(
+    trpc.notification.updateSharedListNotificationPref.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(
+          trpc.notification.getSharedListNotificationPref.queryFilter(),
+        );
+        setLocalSharedList(null);
+        toast.success("Preferences saved");
+      },
+      onError: () => {
+        toast.error("Failed to save shared list preference");
+      },
+    }),
+  );
 
-  const hasChanges =
-    prefs &&
+  // Reminder prefs and the shared-list toggle come from separate queries and
+  // are saved via separate mutations, so their "changed" state (and whether
+  // to fire each mutation) must be tracked independently — otherwise a
+  // resolved-undefined reminder-prefs query blocks Save even when only the
+  // shared-list toggle changed, and saving fires the reminder mutation even
+  // when nothing about reminders changed.
+  const reminderPrefsChanged =
+    !!prefs &&
     (emailReminders !== prefs.emailReminders ||
       pushReminders !== prefs.pushReminders ||
       reminderOffsetMinutes !== prefs.reminderOffsetMinutes);
 
-  if (isLoading) {
+  const sharedListChanged =
+    !!sharedPrefs && sharedListActivity !== sharedPrefs.sharedListActivity;
+
+  const handleSave = () => {
+    if (reminderPrefsChanged) {
+      updatePrefs.mutate({
+        emailReminders,
+        pushReminders,
+        reminderOffsetMinutes,
+      });
+    }
+    if (sharedListChanged) {
+      updateSharedPref.mutate({ sharedListActivity });
+    }
+  };
+
+  const hasChanges = reminderPrefsChanged || sharedListChanged;
+
+  const isSaving = updatePrefs.isPending || updateSharedPref.isPending;
+
+  if (isLoading || isLoadingShared) {
     return (
       <div className="flex items-center justify-center p-8">
         <p className="text-muted-foreground">Loading preferences...</p>
@@ -116,6 +159,21 @@ export function NotificationSettings() {
           <Switch checked={pushReminders} onCheckedChange={setLocalPush} />
         </div>
 
+        {/* Shared List Activity */}
+        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
+          <div>
+            <p className="text-foreground font-medium">Shared list activity</p>
+            <p className="text-muted-foreground text-sm">
+              Get notified when someone edits or completes a task in a list you
+              share
+            </p>
+          </div>
+          <Switch
+            checked={sharedListActivity}
+            onCheckedChange={setLocalSharedList}
+          />
+        </div>
+
         {/* Reminder Offset */}
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
           <div>
@@ -145,10 +203,10 @@ export function NotificationSettings() {
       <div className="mt-6">
         <Button
           onClick={handleSave}
-          disabled={updatePrefs.isPending || !hasChanges}
+          disabled={isSaving || !hasChanges}
           className="bg-primary hover:bg-primary/90 text-black"
         >
-          {updatePrefs.isPending ? "Saving..." : "Save Preferences"}
+          {isSaving ? "Saving..." : "Save Preferences"}
         </Button>
       </div>
     </div>
