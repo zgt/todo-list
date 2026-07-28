@@ -33,8 +33,6 @@ This is a Turborepo monorepo for a cross-platform Tokilist application — a tas
 
 **Push Notifications**: Expo Push Notification Service integration with per-user preferences (push/email toggles, configurable reminder offset). Scheduled reminders via cron job. Shared list activity notifications.
 
-**Obsidian Sync**: Sync tasks to an Obsidian vault as markdown files via `scripts/sync-tasks-to-obsidian.ts`. Requires Obsidian Local REST API plugin and env vars (`OBSIDIAN_SYNC_API_KEY`, `TOKILIST_USER_ID`, `OBSIDIAN_REST_API_KEY`).
-
 ## Development Commands
 
 ### Initial Setup
@@ -169,7 +167,6 @@ packages/
   ├── auth/            # Better Auth configuration
   ├── db/              # Drizzle schema and client
   └── ui/              # Shared UI components (shadcn/ui)
-scripts/               # Obsidian sync utilities
 supabase/              # Edge functions (task archiving)
 tooling/
   ├── eslint/          # ESLint configurations
@@ -325,10 +322,8 @@ EXPO_PUBLIC_EAS_PROJECT_ID=      # EAS Project ID (get from `eas init`)
 # Email (optional)
 RESEND_API_KEY=                  # Resend API key for email notifications
 
-# Obsidian Sync (optional)
-OBSIDIAN_SYNC_API_KEY=           # Obsidian sync API key
-TOKILIST_USER_ID=                # User ID for sync
-OBSIDIAN_REST_API_KEY=           # Obsidian Local REST API plugin key
+# Moderation (optional)
+ADMIN_USER_IDS=                  # Comma-separated user IDs allowed to read content reports
 ```
 
 ## Troubleshooting

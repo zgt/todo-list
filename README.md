@@ -46,13 +46,6 @@ A cross-platform task management app built as a Turborepo monorepo with shared b
 - Shared list activity notifications
 - Scheduled reminders via server-side cron job
 
-### Obsidian Sync
-Sync tasks to an Obsidian vault as markdown files.
-
-- **Script:** `scripts/sync-tasks-to-obsidian.ts`
-- **Usage:** `npx tsx scripts/sync-tasks-to-obsidian.ts`
-- Requires Obsidian Local REST API plugin and env vars (`OBSIDIAN_SYNC_API_KEY`, `TOKILIST_USER_ID`, `OBSIDIAN_REST_API_KEY`)
-
 ## Getting Started
 
 ```bash
@@ -127,7 +120,6 @@ packages/
   ├── auth/          # Better Auth config
   ├── db/            # Drizzle schema + client
   └── ui/            # Shared UI components
-scripts/             # Obsidian sync utilities
 supabase/            # Edge functions (task archiving)
 tooling/             # Shared ESLint, Prettier, Tailwind, TypeScript configs
 ```

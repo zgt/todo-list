@@ -17,8 +17,6 @@ export const env = createEnv({
    */
   server: {
     POSTGRES_URL: z.url(),
-    OBSIDIAN_SYNC_API_KEY: z.string().optional(),
-    OBSIDIAN_SYNC_USER_ID: z.string().optional(),
     CRON_SECRET: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
   },
