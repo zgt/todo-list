@@ -1,7 +1,5 @@
 "use client";
 
-import { Fragment } from "react";
-
 import { cn } from "@acme/ui";
 
 interface ConstellationSubtask {
@@ -9,66 +7,97 @@ interface ConstellationSubtask {
   completed: boolean;
 }
 
-const MAX_DOTS = 10;
+/** Above this many subtasks the segmented bar becomes a continuous fill. */
+const MAX_SEGMENTS = 8;
 
 /**
- * Subtask progress as a constellation: completed subtasks are lit stars joined
- * by a glowing thread, the next one up ("the frontier") pulses softly, and the
- * rest wait as hollow dots. Reduced motion: the frontier pulse is disabled via
- * the tk-* CSS (see CardView) and the constellation reads statically.
+ * Subtask progress as a constellation bar: completed subtasks are lit segments,
+ * the next one up ("the frontier") glows softly, and the rest wait dim. Short
+ * lists stay segmented so you can still count them; long ones collapse to a
+ * single proportional fill. Reduced motion: the frontier pulse is disabled via
+ * the tk-* CSS (see CardView) and the bar reads statically.
+ *
+ * `dense` is the compact-tile form — no label, bar and count share one line.
  */
 export function SubtaskConstellation({
   subtasks,
   className,
+  dense = false,
 }: {
   subtasks: ConstellationSubtask[];
   className?: string;
+  dense?: boolean;
 }) {
+  const total = subtasks.length;
   const done = subtasks.filter((s) => s.completed).length;
-  const shown = subtasks.slice(0, MAX_DOTS);
-  const frontierIndex = shown.findIndex((s) => !s.completed);
+  const allDone = total > 0 && done === total;
+  const frontier = subtasks.findIndex((s) => !s.completed);
 
-  return (
-    <div
-      role="img"
-      aria-label={`${done} of ${subtasks.length} subtasks complete`}
-      className={cn("flex items-center", className)}
-    >
-      {shown.map((s, i) => (
-        <Fragment key={s.id}>
-          {i > 0 && (
-            <span
-              aria-hidden
-              className={cn(
-                "h-px w-2.5 sm:w-3",
-                shown[i - 1]?.completed ? "bg-primary/50" : "bg-border-strong",
-              )}
-            />
-          )}
+  const bar =
+    total <= MAX_SEGMENTS ? (
+      <div aria-hidden className="flex h-1.5 items-stretch gap-1">
+        {subtasks.map((s, i) => (
           <span
-            aria-hidden
+            key={s.id}
             className={cn(
-              "size-2 shrink-0 rounded-full",
+              "min-w-0 flex-1 rounded-full transition-colors duration-300",
               s.completed
                 ? "bg-primary shadow-[0_0_8px_var(--color-primary)]"
-                : i === frontierIndex
-                  ? "tk-frontier border-primary/60 bg-primary/30 border"
-                  : "border-border-focus border",
+                : i === frontier
+                  ? "tk-frontier bg-primary/35"
+                  : "bg-border-strong",
             )}
           />
-        </Fragment>
-      ))}
-      {subtasks.length > MAX_DOTS && (
-        <span aria-hidden className="text-muted-foreground ml-1.5 text-[10px]">
-          +{subtasks.length - MAX_DOTS}
-        </span>
+        ))}
+      </div>
+    ) : (
+      <div aria-hidden className="bg-border-strong h-1.5 rounded-full">
+        <div
+          style={{ width: `${Math.round((done / total) * 100)}%` }}
+          className="bg-primary h-full rounded-full shadow-[0_0_8px_var(--color-primary)] transition-[width] duration-300"
+        />
+      </div>
+    );
+
+  const count = (
+    <span
+      className={cn(
+        "shrink-0 text-[11px] font-semibold tabular-nums",
+        allDone ? "text-primary" : "text-muted-foreground",
       )}
-      <span
-        aria-hidden
-        className="text-muted-foreground ml-2 text-[11px] font-medium tabular-nums"
+    >
+      {done}
+      {/* Hierarchy from weight, not alpha: `muted-foreground/60` put the
+          denominator at ~3.2:1 on the glass (and ~2.1:1 on a completed tile,
+          which the slab now dims as a unit) — it is content, not decoration. */}
+      <span className="text-muted-foreground font-normal">/{total}</span>
+    </span>
+  );
+
+  const label = `${done} of ${total} subtasks complete`;
+
+  if (dense) {
+    return (
+      <div
+        role="img"
+        aria-label={label}
+        className={cn("flex min-w-0 items-center gap-2", className)}
       >
-        {done}/{subtasks.length}
-      </span>
+        <div className="min-w-0 flex-1">{bar}</div>
+        {count}
+      </div>
+    );
+  }
+
+  return (
+    <div role="img" aria-label={label} className={cn("min-w-0", className)}>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-muted-foreground text-[10px] font-semibold tracking-wider uppercase">
+          {allDone ? "All subtasks done" : "Subtasks"}
+        </span>
+        {count}
+      </div>
+      {bar}
     </div>
   );
 }

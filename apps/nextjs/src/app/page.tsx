@@ -43,7 +43,13 @@ export default async function HomePage() {
                 <CreateTaskProvider>
                   <TaskHeader />
 
-                  <div className="custom-scrollbar mt-3 flex-1 overflow-y-auto px-0 pt-2 pr-2 pb-2 sm:mt-6 sm:px-2 sm:pr-4">
+                  {/* Horizontal padding here is not decoration — `overflow-y-auto`
+                      forces this box to clip horizontally too, and it clips at the
+                      PADDING edge. The card view's tiles carry a 28px glow and tilt
+                      in 3D on hover, both of which project outside the tile's own
+                      box; with the old 8px the leading edge and its glow were sliced
+                      off by a hard vertical line in the first and last columns. */}
+                  <div className="custom-scrollbar mt-3 flex-1 overflow-y-auto px-0 pt-2 pr-2 pb-2 sm:mt-6 sm:px-12">
                     {session?.user ? (
                       <Suspense
                         fallback={

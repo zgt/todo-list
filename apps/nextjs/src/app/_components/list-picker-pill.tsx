@@ -38,6 +38,7 @@ export function ListPickerPill({
             "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium backdrop-blur-md",
             "hover:border-border-focus transition-all",
             "focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
+            "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
             selectedList
               ? "text-foreground border-white/20 bg-white/5"
               : "border-border-strong bg-surface-2/80 text-foreground hover:bg-surface-2",

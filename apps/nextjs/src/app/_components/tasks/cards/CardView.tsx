@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import type { RouterOutputs } from "@acme/api";
@@ -9,7 +9,7 @@ import { cn } from "@acme/ui";
 import { useCreateTask } from "../../create-task-context";
 import { InlineCreateTask } from "../InlineCreateTask";
 import { buildCardEntries, seededJitter } from "./card-utils";
-import { DynamicTaskCard } from "./DynamicTaskCard";
+import { DynamicTaskCard, FLIP_EASE, FLIP_MS } from "./DynamicTaskCard";
 import { useFinePointer } from "./useCardTilt";
 
 /**
@@ -30,9 +30,11 @@ const CARD_VIEW_CSS = `
   0%, 100% { opacity: 0.45; }
   50% { opacity: 1; }
 }
+/* The "next up" subtask segment. Opacity only — this now lights a bar segment
+   rather than a dot, and a scale pulse would make the bar visibly jitter. */
 @keyframes tk-frontier {
-  0%, 100% { transform: scale(1); opacity: 0.65; }
-  50% { transform: scale(1.4); opacity: 1; }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
 }
 @keyframes tk-urgent {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--priority-medium) 45%, transparent); }
@@ -74,8 +76,29 @@ export function CardView({
 
   const entries = useMemo(() => buildCardEntries(tasks), [tasks]);
 
+  // Cards mid-flip resize on the flip's timing; everything else keeps the
+  // snappy reorder spring. A Set rather than a single id because more than one
+  // card can be open at once.
+  const [flipping, setFlipping] = useState<ReadonlySet<string>>(new Set());
+  const handleFlipActive = useCallback((taskId: string, active: boolean) => {
+    setFlipping((prev) => {
+      if (prev.has(taskId) === active) return prev;
+      const next = new Set(prev);
+      if (active) next.add(taskId);
+      else next.delete(taskId);
+      return next;
+    });
+  }, []);
+
   return (
-    <div className="w-full">
+    // `@container`, not viewport breakpoints: the mosaic lives inside a panel
+    // whose width the collapsible sidebar changes by 256px. Keyed off the
+    // viewport, `sm:grid-cols-2` handed out 184px tiles at a 768px viewport
+    // with the sidebar open — narrower than the 180px of 44px action targets a
+    // tile has to carry, and a tile cannot clip them (overflow would flatten
+    // the preserve-3d parallax). Measuring the panel instead makes the column
+    // count fall back to 1 exactly when the panel is too narrow to hold two.
+    <div className="@container w-full">
       <style>{CARD_VIEW_CSS}</style>
 
       {finePointer && !reducedMotion && (
@@ -93,13 +116,15 @@ export function CardView({
 
       {/* Snug tiling: stretch alignment makes every card fill its row so tile
           edges line up; a hairline gap keeps the tiles from fusing together. */}
-      <div className="tk-mosaic grid grid-flow-dense grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="tk-mosaic grid grid-flow-dense grid-cols-1 gap-2 @md:grid-cols-2 @3xl:grid-cols-3">
         <AnimatePresence mode="popLayout">
           {entries.map(({ task, weight, dueStatus, snoozed }, i) => (
             <motion.div
               key={task.id}
               layout={!reducedMotion}
-              className={cn(weight === "hero" && "sm:col-span-2")}
+              // Must track the grid's own breakpoint: a `span 2` in a
+              // single-column grid would materialise an implicit second column.
+              className={cn(weight === "hero" && "@md:col-span-2")}
               initial={
                 reducedMotion
                   ? { opacity: 0 }
@@ -139,12 +164,19 @@ export function CardView({
                 // Stagger the deal on mount…
                 delay: Math.min(i, 9) * 0.055,
                 // …but never delay reflows when the mosaic re-sorts.
-                layout: {
-                  type: "spring",
-                  stiffness: 320,
-                  damping: 28,
-                  delay: 0,
-                },
+                layout: flipping.has(task.id)
+                  ? // Grow/shrink in lockstep with the card's own rotation.
+                    {
+                      duration: FLIP_MS / 1000,
+                      ease: FLIP_EASE,
+                      delay: 0,
+                    }
+                  : {
+                      type: "spring",
+                      stiffness: 320,
+                      damping: 28,
+                      delay: 0,
+                    },
               }}
             >
               <DynamicTaskCard
@@ -153,6 +185,7 @@ export function CardView({
                 weight={weight}
                 dueStatus={dueStatus}
                 snoozed={snoozed}
+                onFlipActive={handleFlipActive}
               />
             </motion.div>
           ))}

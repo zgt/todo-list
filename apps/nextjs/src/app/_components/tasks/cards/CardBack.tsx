@@ -34,11 +34,18 @@ export function CardBack({
   categories,
   updateTask,
   onClose,
+  padding,
 }: {
   task: Task;
   categories: RouterOutputs["category"]["all"] | undefined;
   updateTask: UpdateTaskMutation;
   onClose: () => void;
+  /**
+   * The front face's padding for this tile's weight (FACE_METRICS[weight].pad).
+   * Both faces must share it — the back face had its own `p-4 sm:p-5`, so
+   * flipping a hero or standard tile shifted every field sideways mid-flip.
+   */
+  padding: string;
 }) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
@@ -107,7 +114,7 @@ export function CardBack({
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 sm:p-5">
+    <div className={cn("flex flex-col gap-3", padding)}>
       <Input
         ref={titleInputRef}
         value={title}
@@ -138,10 +145,16 @@ export function CardBack({
           "border-border-strong bg-surface-2 text-foreground placeholder:text-muted-foreground w-full resize-y border",
           "focus:border-border-focus focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
           "rounded-lg px-3 py-2 text-sm leading-relaxed",
+          "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         )}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Recessed well: the pills are `bg-surface-2/80`, the same value as the
+          card's own glass, so on a card face they'd read as flat. Dropping them
+          onto the darker `surface` gives back the pill-vs-card separation
+          without touching the shared pill components (which the list view and
+          the create panel also render, on their own backgrounds). */}
+      <div className="border-border-strong/40 bg-surface/60 flex flex-wrap items-center gap-2 rounded-lg border p-2.5">
         <PrioritySelectorPill
           value={priority}
           onChange={setPriority}

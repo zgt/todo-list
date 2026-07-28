@@ -72,6 +72,7 @@ export function ReminderPill({
             "flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium",
             "hover:border-border-focus transition-all",
             "focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
+            "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
             value
               ? "border-amber-500/50 bg-amber-500/10 text-amber-400"
               : "border-border-strong bg-surface-2/80 text-foreground hover:bg-surface-2",
