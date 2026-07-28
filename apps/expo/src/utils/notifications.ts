@@ -180,8 +180,34 @@ export async function cancelAllTaskReminders(): Promise<void> {
 }
 
 /**
+ * Compute the local trigger time for a snoozed task's reminder: whichever
+ * is later, the snooze expiry or the original reminder time minus the
+ * user's offset (F086). Snoozed tasks are excluded from task.all, so
+ * without this they'd simply lose their local reminder for local-only
+ * users once a reschedule pass ran.
+ *
+ * Returns null when the task has no reminderAt set — the server never
+ * sends a push for such a task, so a local reminder derived purely from
+ * snoozedUntil would be a local-only ping the server would never send
+ * (D4). Callers must skip scheduling when this returns null.
+ */
+export function computeSnoozeReminderTrigger(
+  reminderAt: Date | null,
+  snoozedUntil: Date,
+  offsetMinutes: number,
+): Date | null {
+  if (reminderAt === null) return null;
+  const reminderTriggerMs = reminderAt.getTime() - offsetMinutes * 60_000;
+  return new Date(Math.max(snoozedUntil.getTime(), reminderTriggerMs));
+}
+
+/**
  * Reschedule reminders for all tasks that have due dates.
  * Call on app launch as a safety net.
+ *
+ * `snoozedTasks` covers tasks currently snoozed — they're excluded from the
+ * main active-task list (task.all) but still need a local reminder so
+ * snoozing keeps working for local-only (push-off) users (F086).
  */
 export async function rescheduleAllReminders(
   tasks: {
@@ -192,8 +218,16 @@ export async function rescheduleAllReminders(
     deletedAt: Date | null;
   }[],
   offsetMinutes = 0,
+  snoozedTasks: {
+    id: string;
+    title: string;
+    snoozedUntil: Date;
+    dueDate: Date | null;
+  }[] = [],
 ): Promise<void> {
-  // Cancel all existing task reminders
+  // Cancel all existing task reminders. Always runs, even with an empty
+  // task list, so stale local reminders don't linger once everything is
+  // completed/deleted (F092).
   await cancelAllTaskReminders();
 
   // Reschedule for all active tasks with due dates
@@ -207,6 +241,21 @@ export async function rescheduleAllReminders(
       .map((t) =>
         scheduleTaskReminder(t.id, t.title, t.dueDate, offsetMinutes),
       ),
+  );
+
+  await Promise.all(
+    snoozedTasks.map((t) => {
+      const trigger = computeSnoozeReminderTrigger(
+        t.dueDate,
+        t.snoozedUntil,
+        offsetMinutes,
+      );
+      // No reminderAt means the server would never push for this task
+      // either — don't manufacture a local-only ping from snoozedUntil
+      // alone (D4).
+      if (!trigger) return Promise.resolve(null);
+      return scheduleTaskReminder(t.id, t.title, trigger, 0);
+    }),
   );
 }
 

@@ -9,7 +9,8 @@
  * Env vars:
  *   TOKILIST_API_URL  (default: http://localhost:3000)
  *   OBSIDIAN_SYNC_API_KEY
- *   TOKILIST_USER_ID
+ *   TOKILIST_USER_ID  (must match the server's OBSIDIAN_SYNC_USER_ID, which
+ *                      is the account the API key is allowed to read)
  *   VAULT_PATH        (default: /home/m/Documents/Vault/Tokidian)
  */
 
@@ -97,7 +98,10 @@ function classifyTask(title: string): TaskType {
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 function sanitize(name: string): string {
-  return name.replace(/[/\\:*?"<>|#^[\]]/g, "-").trim().slice(0, 100);
+  const cleaned = name.replace(/[/\\:*?"<>|#^[\]]/g, "-").trim().slice(0, 100);
+  // A name that collapses to only dots ("..", ".") would still act as a
+  // path segment with special meaning — never emit one.
+  return /^\.*$/.test(cleaned) ? "untitled" : cleaned;
 }
 
 function ensureDir(dirPath: string): void {
@@ -357,20 +361,75 @@ function findCommissionFile(commissionName: string): string | null {
   const directFile = join(commissionsDir, `${sanitized}.md`);
   if (existsSync(directFile)) return directFile;
 
-  // Fuzzy match: search for files containing the name
+  // Case-insensitive exact match only. A substring match here used to pick the
+  // first commission whose name merely contained the task title, silently
+  // updating the wrong commission's checklist.
+  const target = sanitized.toLowerCase();
   const entries = readdirSync(commissionsDir);
   for (const entry of entries) {
     const entryPath = join(commissionsDir, entry);
-    if (entry.toLowerCase().includes(commissionName.toLowerCase())) {
-      if (statSync(entryPath).isFile() && entry.endsWith(".md")) return entryPath;
-      if (statSync(entryPath).isDirectory()) {
-        const files = readdirSync(entryPath).filter((f) => f.endsWith(".md"));
-        if (files.length > 0) return join(entryPath, files[0]!);
-      }
+    const entryName = entry.replace(/\.md$/, "").toLowerCase();
+    if (entryName !== target) continue;
+    if (statSync(entryPath).isFile() && entry.endsWith(".md")) return entryPath;
+    if (statSync(entryPath).isDirectory()) {
+      const files = readdirSync(entryPath).filter((f) => f.endsWith(".md"));
+      if (files.length > 0) return join(entryPath, files[0]!);
     }
   }
 
   return null;
+}
+
+// ─── task_id Note Lookup ─────────────────────────────────────────────
+
+// Per-root index of task_id frontmatter → note path, so a renamed or
+// reclassified task updates its existing note instead of orphaning it.
+const taskIdIndexCache = new Map<string, Map<string, string>>();
+
+function getTaskIdIndex(rootDir: string): Map<string, string> {
+  const cached = taskIdIndexCache.get(rootDir);
+  if (cached) return cached;
+
+  const index = new Map<string, string>();
+  if (existsSync(rootDir)) {
+    const stack = [rootDir];
+    while (stack.length > 0) {
+      const dir = stack.pop()!;
+      for (const entry of readdirSync(dir)) {
+        const entryPath = join(dir, entry);
+        const stat = statSync(entryPath);
+        if (stat.isDirectory()) {
+          stack.push(entryPath);
+        } else if (entry.endsWith(".md")) {
+          const head = readFileSync(entryPath, "utf-8").slice(0, 500);
+          const match = /^task_id: "([^"]+)"$/m.exec(head);
+          if (match?.[1]) index.set(match[1], entryPath);
+        }
+      }
+    }
+  }
+  taskIdIndexCache.set(rootDir, index);
+  return index;
+}
+
+/**
+ * If a note for this task already exists (by task_id frontmatter) at a
+ * different path — the task was renamed or reclassified — move it to the new
+ * path so the rewrite below updates one note instead of creating a duplicate.
+ */
+function relocateExistingNote(searchRoot: string, taskId: string, filePath: string): void {
+  const index = getTaskIdIndex(searchRoot);
+  const existing = index.get(taskId);
+  if (!existing || existing === filePath || !existsSync(existing)) return;
+
+  if (DRY_RUN) {
+    console.log(`  [dry-run] Would move ${existing} → ${filePath}`);
+    return;
+  }
+  ensureDir(dirname(filePath));
+  renameSync(existing, filePath);
+  index.set(taskId, filePath);
+  console.log(`  Moved existing note (task_id match): ${existing.replace(VAULT_PATH + "/", "")} → ${filePath.replace(VAULT_PATH + "/", "")}`);
 }
 
 // ─── Vault Operations ────────────────────────────────────────────────
@@ -424,6 +483,7 @@ function routeCodingTask(task: Task): void {
   if (!subCat) {
     const filePath = join(VAULT_PATH, "Coding", "Ideas", `${sanitize(task.title)}.md`);
     console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+    relocateExistingNote(join(VAULT_PATH, "Coding"), task.id, filePath);
     writeFile(filePath, codingTaskFile({
       id: task.id,
       title: task.title,
@@ -436,7 +496,8 @@ function routeCodingTask(task: Task): void {
     return;
   }
 
-  const project = subCat;
+  // Sanitized: this becomes a filesystem path segment below.
+  const project = sanitize(subCat);
 
   // If the task has subtasks, it's a container — expand each subtask as its own file
   if (task.subtasks.length > 0) {
@@ -445,6 +506,7 @@ function routeCodingTask(task: Task): void {
       const folder = type === "bug" ? "Bugs" : "Features";
       const filePath = join(VAULT_PATH, "Coding", "Projects", project, folder, `${sanitize(subtask.title)}.md`);
       console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+      relocateExistingNote(join(VAULT_PATH, "Coding"), subtask.id, filePath);
       writeFile(filePath, codingTaskFile({
         id: subtask.id,
         title: subtask.title,
@@ -463,6 +525,7 @@ function routeCodingTask(task: Task): void {
   const folder = type === "bug" ? "Bugs" : "Features";
   const filePath = join(VAULT_PATH, "Coding", "Projects", project, folder, `${sanitize(task.title)}.md`);
   console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+  relocateExistingNote(join(VAULT_PATH, "Coding"), task.id, filePath);
   writeFile(filePath, codingTaskFile({
     id: task.id,
     title: task.title,
@@ -502,6 +565,7 @@ function routeSewingTask(task: Task): void {
       for (const subtask of task.subtasks) {
         const filePath = join(VAULT_PATH, "Fashion", folder, sanitize(task.title), `${sanitize(subtask.title)}.md`);
         console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+        relocateExistingNote(join(VAULT_PATH, "Fashion"), subtask.id, filePath);
         writeFile(filePath, fashionTaskFile({
           id: subtask.id,
           title: subtask.title,
@@ -515,6 +579,7 @@ function routeSewingTask(task: Task): void {
     } else {
       const filePath = join(VAULT_PATH, "Fashion", folder, `${sanitize(task.title)}.md`);
       console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+      relocateExistingNote(join(VAULT_PATH, "Fashion"), task.id, filePath);
       writeFile(filePath, fashionTaskFile({
         id: task.id,
         title: task.title,
@@ -531,6 +596,7 @@ function routeSewingTask(task: Task): void {
   // Fallback: Sewing with unknown sub-category
   const filePath = join(VAULT_PATH, "Fashion", sanitize(subCat ?? "General"), `${sanitize(task.title)}.md`);
   console.log(`  → ${filePath.replace(VAULT_PATH + "/", "")}`);
+  relocateExistingNote(join(VAULT_PATH, "Fashion"), task.id, filePath);
   writeFile(filePath, fashionTaskFile({
     id: task.id,
     title: task.title,

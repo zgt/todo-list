@@ -147,9 +147,15 @@ export function ListDetail() {
   const handleCopyInvite = async () => {
     if (!inviteCode) return;
     const url = `${window.location.origin}/invite/${inviteCode}`;
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      // Rejects when the clipboard permission is denied or the page isn't a
+      // secure context — surface it instead of leaving an unhandled rejection.
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Couldn't copy the invite link — copy it manually");
+    }
   };
 
   return (

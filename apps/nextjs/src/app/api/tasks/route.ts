@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { and, desc, eq, inArray, isNull } from "@acme/db";
@@ -6,20 +7,35 @@ import { Category, Task } from "@acme/db/schema";
 
 import { env } from "~/env";
 
+/** Constant-time string comparison to avoid leaking the API key via timing. */
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 export async function GET(request: Request) {
   const apiKey = request.headers.get("x-api-key");
   const expectedKey = env.OBSIDIAN_SYNC_API_KEY;
 
-  if (!expectedKey || apiKey !== expectedKey) {
+  if (!expectedKey || !apiKey || !safeEqual(apiKey, expectedKey)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userId = new URL(request.url).searchParams.get("user_id");
+  // The key authenticates a single, server-configured user — never trust
+  // a client-supplied user_id, or a leaked key could read anyone's tasks.
+  const userId = env.OBSIDIAN_SYNC_USER_ID;
   if (!userId) {
     return NextResponse.json(
-      { error: "user_id query param required" },
-      { status: 400 },
+      { error: "Obsidian sync is not configured for a user" },
+      { status: 403 },
     );
+  }
+
+  const requestedUserId = new URL(request.url).searchParams.get("user_id");
+  if (requestedUserId && requestedUserId !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const tasks = await db.query.Task.findMany({

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useId } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -33,6 +33,7 @@ import { useTRPC } from "~/trpc/react";
 import { CategoryTreePicker } from "../category-tree-picker";
 import { ListPickerPill } from "../list-picker-pill";
 import { PrioritySelectorPill } from "../priority";
+import { isDueDateOverdue } from "./due-date-utils";
 import { DueDatePill } from "./DueDatePill";
 import { useSnoozeMutation } from "./hooks/useSnoozeMutation";
 import { useTaskEditForm } from "./hooks/useTaskEditForm";
@@ -61,6 +62,7 @@ export const TaskCard = memo(function TaskCard(props: {
 }) {
   const trpc = useTRPC();
   const { data: session } = useSession();
+  const descriptionFieldId = useId();
 
   const { updateTask, deleteTask } = useTaskMutations(props.task.id);
   const snoozeTask = useSnoozeMutation();
@@ -109,11 +111,10 @@ export const TaskCard = memo(function TaskCard(props: {
 
   const editedCategory = categories?.find((c) => c.id === editedCategoryId);
 
-  // Determine if task is overdue (past due date or overdue reminder, and not completed)
-  const isDueDateOverdue =
-    !props.task.completed &&
-    !!props.task.dueDate &&
-    new Date(props.task.dueDate) < new Date();
+  // Determine if task is overdue (past due date or overdue reminder, and not
+  // completed). An all-day due date only counts as overdue once its day ends.
+  const isDueDatePast =
+    !props.task.completed && isDueDateOverdue(props.task.dueDate);
   const isReminderOverdue =
     !props.task.completed &&
     !!props.task.reminderAt &&
@@ -121,7 +122,7 @@ export const TaskCard = memo(function TaskCard(props: {
       props.task.reminderAt,
       props.task.reminderSentAt ?? null,
     ) === "overdue";
-  const isOverdue = isDueDateOverdue || isReminderOverdue;
+  const isOverdue = isDueDatePast || isReminderOverdue;
 
   return (
     <div
@@ -135,8 +136,12 @@ export const TaskCard = memo(function TaskCard(props: {
             : "hover:shadow-glow-hover hover:border-border-focus hover:bg-surface-2",
       )}
     >
-      {/* Collapsed row */}
+      {/* Collapsed row. The click handler is a pointer-only convenience that
+          duplicates the chevron button below, which is the real, focusable and
+          keyboard-operable expand/collapse control — so the row itself stays
+          presentational rather than becoming a second (nested) widget. */}
       <div
+        role="presentation"
         className={cn(
           "flex flex-row items-center gap-2 p-3 sm:gap-4 sm:p-6",
           !isEditing && "cursor-pointer",
@@ -147,19 +152,26 @@ export const TaskCard = memo(function TaskCard(props: {
           }
         }}
       >
-        <div onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={props.task.completed}
-            onCheckedChange={handleToggleComplete}
-            disabled={updateTask.isPending || isEditing}
-            className={cn(
-              "size-4 shrink-0 rounded-full border-2 transition-all sm:size-6",
-              props.task.completed
-                ? "bg-primary border-primary text-black"
-                : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
-            )}
-          />
-        </div>
+        <Checkbox
+          checked={props.task.completed}
+          onCheckedChange={handleToggleComplete}
+          // Keep a checkbox click from also toggling the row's expand/collapse.
+          onClick={(e) => e.stopPropagation()}
+          disabled={updateTask.isPending || isEditing}
+          className={cn(
+            "size-4 shrink-0 rounded-full border-2 transition-all sm:size-6",
+            // The glyph stays small, but an invisible pseudo-element grows
+            // the pointer target past the WCAG 24px minimum without changing
+            // layout. Horizontal reach is constrained to the glyph itself so
+            // the hit area doesn't bleed into the card body to its left —
+            // that strip used to toggle completion instead of expanding the
+            // card (and was a dead zone when the checkbox is disabled).
+            "relative before:absolute before:-inset-x-1 before:-inset-y-2 before:content-[''] sm:before:-inset-x-0 sm:before:-inset-y-1",
+            props.task.completed
+              ? "bg-primary border-primary text-black"
+              : "data-[state=checked]:bg-primary data-[state=checked]:border-primary border-white/30",
+          )}
+        />
 
         {/* Chevron toggle — real control for the expand/collapse of the card */}
         <button
@@ -264,7 +276,7 @@ export const TaskCard = memo(function TaskCard(props: {
             <CompactMobileMeta
               task={props.task}
               editedDueDate={editedDueDate}
-              isDueDateOverdue={isDueDateOverdue}
+              isDueDateOverdue={isDueDatePast}
             />
           )}
         </div>
@@ -276,7 +288,7 @@ export const TaskCard = memo(function TaskCard(props: {
             editedDueDate={editedDueDate}
             editedCategory={editedCategory}
             isAnimatingExpand={isAnimatingExpand}
-            isDueDateOverdue={isDueDateOverdue}
+            isDueDateOverdue={isDueDatePast}
           />
         )}
 
@@ -330,13 +342,12 @@ export const TaskCard = memo(function TaskCard(props: {
 
         {/* Mobile action menu - touch widths where hover is unavailable */}
         {!isExpanded && !isEditing && (
-          <div
-            className="shrink-0 sm:hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="shrink-0 sm:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
+                  // Keep opening the menu from also toggling the row.
+                  onClick={(e) => e.stopPropagation()}
                   className="text-muted-foreground hover:text-foreground focus:ring-border-focus/20 flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-white/5 focus:ring-2 focus:outline-none"
                   aria-label="Task actions"
                 >
@@ -428,10 +439,14 @@ export const TaskCard = memo(function TaskCard(props: {
                 <div className="border-border-strong/60 border-t pt-3">
                   {isEditing ? (
                     <div className="max-w-2xl">
-                      <label className="text-muted-foreground/70 mb-1.5 block text-[10px] font-semibold tracking-wider uppercase">
+                      <label
+                        htmlFor={descriptionFieldId}
+                        className="text-muted-foreground/70 mb-1.5 block text-[10px] font-semibold tracking-wider uppercase"
+                      >
                         Description
                       </label>
                       <textarea
+                        id={descriptionFieldId}
                         value={editedDescription}
                         onChange={(e) => setEditedDescription(e.target.value)}
                         onKeyDown={(e) => {
@@ -445,7 +460,6 @@ export const TaskCard = memo(function TaskCard(props: {
                           "focus:border-border-focus focus:ring-border-focus/20 focus:ring-2 focus:outline-none",
                           "rounded-lg px-3 py-2.5 text-sm leading-relaxed",
                         )}
-                        aria-label="Edit task description"
                         disabled={updateTask.isPending}
                       />
                     </div>
@@ -506,7 +520,7 @@ export const TaskCard = memo(function TaskCard(props: {
                 <ExpandedReadonlyBadges
                   task={props.task}
                   editedCategory={editedCategory}
-                  isDueDateOverdue={isDueDateOverdue}
+                  isDueDateOverdue={isDueDatePast}
                 />
               )}
 

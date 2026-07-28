@@ -8,6 +8,7 @@ import { cn } from "@acme/ui";
 
 import { useCreateTask } from "./create-task-context";
 import { InlineCreateTask, TaskCard } from "./tasks";
+import { isDueDateOverdue } from "./tasks/due-date-utils";
 
 type Task = RouterOutputs["task"]["all"][number];
 
@@ -120,13 +121,13 @@ export function CalendarView({ tasks }: CalendarViewProps) {
     [tasks],
   );
 
-  // Incomplete tasks whose due date is before today.
-  const overdueCount = useMemo(() => {
-    const start = fromLocalDateKey(todayKey);
-    return tasks.filter(
-      (t) => !t.completed && t.dueDate && new Date(t.dueDate) < start,
-    ).length;
-  }, [tasks, todayKey]);
+  // Incomplete tasks past their due date. Shares the task card's rule so an
+  // all-day task due today isn't counted overdue until the day is over.
+  const overdueCount = useMemo(
+    () =>
+      tasks.filter((t) => !t.completed && isDueDateOverdue(t.dueDate)).length,
+    [tasks],
+  );
 
   const selectedTasks = useMemo(
     () => (selectedKey ? (tasksByDate.get(selectedKey) ?? []) : []),

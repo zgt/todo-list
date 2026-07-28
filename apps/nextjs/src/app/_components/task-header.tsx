@@ -35,9 +35,11 @@ export function TaskHeader() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { setIsCreating } = useCreateTask();
   const { viewMode, setViewMode } = useViewToggle();
-  const { isTrashView } = useListFilter();
+  const { isTrashView, isSnoozedView } = useListFilter();
   const { search, setSearch } = useSearchFilter();
-  const isDeletedView = isTrashView;
+  // Trash and Snoozed are read-only pseudo-views: the filters, search box and
+  // New Task button have no effect there, so they're hidden.
+  const isPseudoView = isTrashView || isSnoozedView;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -64,8 +66,8 @@ export function TaskHeader() {
           Tokilist
         </h1>
 
-        {/* Filters — hidden in Trash view where they have no effect */}
-        {!isDeletedView && (
+        {/* Filters — hidden in the read-only Trash/Snoozed views */}
+        {!isPseudoView && (
           <>
             {/* Desktop: inline filter pills */}
             <div className="hidden shrink-0 items-center gap-2 lg:flex">
@@ -82,8 +84,8 @@ export function TaskHeader() {
 
       {/* Right side controls */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        {/* Search input — hidden in Trash view where it has no effect */}
-        {!isDeletedView && (
+        {/* Search input — hidden in the read-only Trash/Snoozed views */}
+        {!isPseudoView && (
           <div className="relative hidden lg:block">
             <div className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
               <Search className="h-5 w-5" />
@@ -153,8 +155,8 @@ export function TaskHeader() {
           />
         </Button>
 
-        {/* New Task button (hidden when viewing deleted tasks) */}
-        {!isDeletedView && (
+        {/* New Task button (hidden in the Trash/Snoozed views) */}
+        {!isPseudoView && (
           <Button
             size="lg"
             aria-label="New Task"

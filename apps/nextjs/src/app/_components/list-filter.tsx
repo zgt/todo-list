@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Archive, List, User } from "lucide-react";
+import { AlarmClock, Archive, List, User } from "lucide-react";
 
 import { cn } from "@acme/ui";
 import { Button } from "@acme/ui/button";
@@ -18,10 +18,20 @@ export function ListFilter() {
     ...trpc.taskList.all.queryOptions(),
     enabled: !!session?.user,
   });
-  const { selectedListId, setSelectedListId, isTrashView, setTrashView } =
-    useListFilter();
+  const {
+    selectedListId,
+    setSelectedListId,
+    isTrashView,
+    setTrashView,
+    isSnoozedView,
+    setSnoozedView,
+  } = useListFilter();
 
   if (!lists) return null;
+
+  // A list entry is only "selected" when no pseudo-view is active.
+  const isListActive = (id: string | null) =>
+    selectedListId === id && !isTrashView && !isSnoozedView;
 
   return (
     <Popover>
@@ -29,11 +39,11 @@ export function ListFilter() {
         <Button
           variant="outline"
           size="sm"
-          className="hover:bg-surface-2 h-8 gap-1 rounded-full border hover:border-emerald-400 hover:text-white"
+          className="hover:bg-surface-2 hover:border-primary h-8 gap-1 rounded-full border hover:text-white"
         >
           <List className="mr-2 size-4" />
           List
-          {(selectedListId !== null || isTrashView) && (
+          {(selectedListId !== null || isTrashView || isSnoozedView) && (
             <div className="bg-primary text-primary-foreground ml-1 flex size-4 items-center justify-center rounded-full text-[10px] font-bold">
               1
             </div>
@@ -47,16 +57,14 @@ export function ListFilter() {
             onClick={() => setSelectedListId(null)}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-              "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-              selectedListId === null &&
-                !isTrashView &&
-                "bg-surface-2 text-white",
+              "hover:bg-surface-2 hover:border-primary hover:text-white",
+              isListActive(null) && "bg-surface-2 text-white",
             )}
           >
             <List className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">All Tasks</span>
-            {selectedListId === null && !isTrashView && (
-              <div className="size-2 rounded-full bg-emerald-400" />
+            {isListActive(null) && (
+              <div className="bg-primary size-2 rounded-full" />
             )}
           </button>
 
@@ -65,16 +73,30 @@ export function ListFilter() {
             onClick={() => setSelectedListId("personal")}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-              "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-              selectedListId === "personal" &&
-                !isTrashView &&
-                "bg-surface-2 text-white",
+              "hover:bg-surface-2 hover:border-primary hover:text-white",
+              isListActive("personal") && "bg-surface-2 text-white",
             )}
           >
             <User className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">Personal</span>
-            {selectedListId === "personal" && !isTrashView && (
-              <div className="size-2 rounded-full bg-emerald-400" />
+            {isListActive("personal") && (
+              <div className="bg-primary size-2 rounded-full" />
+            )}
+          </button>
+
+          {/* Snoozed */}
+          <button
+            onClick={() => setSnoozedView(true)}
+            className={cn(
+              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
+              "hover:bg-surface-2 hover:border-primary hover:text-white",
+              isSnoozedView && "bg-surface-2 text-white",
+            )}
+          >
+            <AlarmClock className="text-muted-foreground size-3.5" />
+            <span className="flex-1 text-left">Snoozed</span>
+            {isSnoozedView && (
+              <div className="bg-primary size-2 rounded-full" />
             )}
           </button>
 
@@ -83,15 +105,13 @@ export function ListFilter() {
             onClick={() => setTrashView(true)}
             className={cn(
               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-              "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
+              "hover:bg-surface-2 hover:border-primary hover:text-white",
               isTrashView && "bg-surface-2 text-white",
             )}
           >
             <Archive className="text-muted-foreground size-3.5" />
             <span className="flex-1 text-left">Deleted</span>
-            {isTrashView && (
-              <div className="size-2 rounded-full bg-emerald-400" />
-            )}
+            {isTrashView && <div className="bg-primary size-2 rounded-full" />}
           </button>
 
           {/* User's lists (only those with showInFilter enabled) */}
@@ -103,10 +123,8 @@ export function ListFilter() {
                 onClick={() => setSelectedListId(list.id)}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  "hover:bg-surface-2 hover:border-emerald-400 hover:text-white",
-                  selectedListId === list.id &&
-                    !isTrashView &&
-                    "bg-surface-2 text-white",
+                  "hover:bg-surface-2 hover:border-primary hover:text-white",
+                  isListActive(list.id) && "bg-surface-2 text-white",
                 )}
               >
                 <div
@@ -114,8 +132,8 @@ export function ListFilter() {
                   style={{ backgroundColor: list.color ?? "var(--primary)" }}
                 />
                 <span className="flex-1 truncate text-left">{list.name}</span>
-                {selectedListId === list.id && !isTrashView && (
-                  <div className="size-2 rounded-full bg-emerald-400" />
+                {isListActive(list.id) && (
+                  <div className="bg-primary size-2 rounded-full" />
                 )}
               </button>
             ))}

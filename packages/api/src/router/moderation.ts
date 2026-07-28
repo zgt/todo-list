@@ -5,17 +5,18 @@ import { z } from "zod/v4";
 import { and, eq } from "@acme/db";
 import { BlockedUser, Report } from "@acme/db/schema";
 
-import { protectedProcedure } from "../trpc";
+import { flagContentIfNeeded } from "../lib/content-filter";
+import { adminProcedure, protectedProcedure } from "../trpc";
 
 export const moderationRouter = {
   reportContent: protectedProcedure
     .input(
       z.object({
         contentType: z.enum(["TASK", "USER", "COMMENT"]),
-        contentId: z.string().min(1),
-        reportedUserId: z.string().optional(),
+        contentId: z.string().min(1).max(255),
+        reportedUserId: z.string().max(255).optional(),
         reason: z.enum(["SPAM", "OFFENSIVE", "HARASSMENT", "OTHER"]),
-        details: z.string().max(1000).optional(),
+        details: z.string().max(2000).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -29,14 +30,31 @@ export const moderationRouter = {
         });
       }
 
-      await ctx.db.insert(Report).values({
-        reporterId: userId,
-        reportedUserId: input.reportedUserId ?? null,
-        contentType: input.contentType,
-        contentId: input.contentId,
-        reason: input.reason,
-        details: input.details ?? null,
-      });
+      const [report] = await ctx.db
+        .insert(Report)
+        .values({
+          reporterId: userId,
+          reportedUserId: input.reportedUserId ?? null,
+          contentType: input.contentType,
+          contentId: input.contentId,
+          reason: input.reason,
+          details: input.details ?? null,
+        })
+        .returning();
+
+      if (!report) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create report",
+        });
+      }
+
+      // Run the free-text details through the same content filter used for
+      // task titles — still store the report either way, but also flag it
+      // for review if it matches the blocklist (same pattern as tasks).
+      if (input.details) {
+        void flagContentIfNeeded("COMMENT", report.id, input.details);
+      }
 
       return { success: true };
     }),
@@ -114,8 +132,9 @@ export const moderationRouter = {
     return blocked.map((b) => b.blockedUserId);
   }),
 
-  // Admin-only: list reports (for future admin panel)
-  getReports: protectedProcedure
+  // Admin-only: list reports (for the admin panel). Gated by adminProcedure
+  // — a minimal check against ADMIN_USER_IDS until a real role system exists.
+  getReports: adminProcedure
     .input(
       z
         .object({
@@ -125,8 +144,6 @@ export const moderationRouter = {
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      // For now, any authenticated user can view reports
-      // TODO: Add admin role check when admin system is built
       const reports = await ctx.db.query.Report.findMany({
         where: input?.status ? eq(Report.status, input.status) : undefined,
         with: {
@@ -139,4 +156,37 @@ export const moderationRouter = {
 
       return reports;
     }),
+
+  // Admin-only: transition a report through its review lifecycle.
+  setReportStatus: adminProcedure
+    .input(
+      z.object({
+        reportId: z.string().uuid(),
+        status: z.enum(["REVIEWED", "DISMISSED"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [updated] = await ctx.db
+        .update(Report)
+        .set({ status: input.status })
+        .where(eq(Report.id, input.reportId))
+        .returning();
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Report not found",
+        });
+      }
+
+      return updated;
+    }),
+
+  // Admin-only: list auto-flagged content (most recent first).
+  getFlags: adminProcedure.query(async ({ ctx }) => {
+    return ctx.db.query.ContentFlag.findMany({
+      orderBy: (table, { desc }) => desc(table.createdAt),
+      limit: 100,
+    });
+  }),
 } satisfies TRPCRouterRecord;

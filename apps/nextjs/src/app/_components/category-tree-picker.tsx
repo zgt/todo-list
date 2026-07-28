@@ -96,7 +96,7 @@ function TreeItem({
           type="button"
           aria-pressed={isSelected}
           onClick={() => onSelect(isSelected ? undefined : node.id)}
-          className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 flex flex-1 items-center rounded-md border border-transparent px-2 py-1 text-left text-sm hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+          className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 hover:border-primary flex flex-1 items-center rounded-md border border-transparent px-2 py-1 text-left text-sm hover:text-white focus-visible:ring-2 focus-visible:outline-none"
         >
           <span
             className="mr-2 size-2.5 rounded-full ring-1 ring-black/10 ring-inset dark:ring-white/20"
@@ -194,7 +194,7 @@ export function CategoryTreePicker({
           <button
             type="button"
             aria-pressed={!value}
-            className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 flex items-center rounded-md border border-transparent px-2 py-1 text-sm hover:border-emerald-400 hover:text-white focus-visible:ring-2 focus-visible:outline-none"
+            className="hover:bg-surface-2 focus-visible:border-border-focus focus-visible:ring-border-focus/40 hover:border-primary flex items-center rounded-md border border-transparent px-2 py-1 text-sm hover:text-white focus-visible:ring-2 focus-visible:outline-none"
             style={{ paddingLeft: "8px" }}
             onClick={() => {
               onChange(undefined);
